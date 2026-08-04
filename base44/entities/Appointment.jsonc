@@ -1,0 +1,79 @@
+{
+  "name": "Appointment",
+  "type": "object",
+  "properties": {
+    "patient_id": {
+      "type": "string",
+      "title": "Paciente"
+    },
+    "patient_name": {
+      "type": "string",
+      "title": "Nombre del paciente (desnormalizado)"
+    },
+    "service_id": {
+      "type": "string",
+      "title": "Servicio"
+    },
+    "service_name": {
+      "type": "string",
+      "title": "Nombre del servicio (desnormalizado)"
+    },
+    "start_datetime": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Inicio"
+    },
+    "end_datetime": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Fin"
+    },
+    "status": {
+      "type": "string",
+      "title": "Estado",
+      "enum": [
+        "pending",
+        "confirmed",
+        "cancelled",
+        "completed",
+        "no_show"
+      ],
+      "default": "pending"
+    },
+    "origin": {
+      "type": "string",
+      "title": "Origen",
+      "enum": [
+        "manual",
+        "whatsapp",
+        "public_link",
+        "google_calendar"
+      ],
+      "default": "manual"
+    },
+    "recurring_rule_id": {
+      "type": "string",
+      "title": "Regla de recurrencia (si aplica)"
+    },
+    "notes": {
+      "type": "string",
+      "title": "Notas de la cita"
+    },
+    "reminders_sent": {
+      "type": "number",
+      "title": "Recordatorios enviados",
+      "default": 0
+    },
+    "google_event_id": {
+      "type": "string",
+      "title": "ID evento en Google Calendar"
+    }
+  },
+  "required": [
+    "patient_id",
+    "service_id",
+    "start_datetime",
+    "end_datetime",
+    "status"
+  ]
+}

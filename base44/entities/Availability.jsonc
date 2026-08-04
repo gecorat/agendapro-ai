@@ -1,0 +1,44 @@
+{
+  "name": "Availability",
+  "type": "object",
+  "properties": {
+    "day_of_week": {
+      "type": "number",
+      "title": "D\u00eda de la semana (0=domingo, 6=s\u00e1bado)"
+    },
+    "start_time": {
+      "type": "string",
+      "title": "Hora de inicio (HH:mm)"
+    },
+    "end_time": {
+      "type": "string",
+      "title": "Hora de fin (HH:mm)"
+    },
+    "type": {
+      "type": "string",
+      "title": "Tipo",
+      "enum": [
+        "work",
+        "break",
+        "holiday",
+        "block"
+      ],
+      "default": "work"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "title": "Fecha espec\u00edfica (para feriados/bloqueos)"
+    },
+    "label": {
+      "type": "string",
+      "title": "Etiqueta (ej. Feriado, Almuerzo)"
+    }
+  },
+  "required": [
+    "day_of_week",
+    "start_time",
+    "end_time",
+    "type"
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "name": "RecurringRule",
+  "type": "object",
+  "properties": {
+    "patient_id": {
+      "type": "string",
+      "title": "Paciente"
+    },
+    "service_id": {
+      "type": "string",
+      "title": "Servicio"
+    },
+    "frequency": {
+      "type": "string",
+      "title": "Frecuencia",
+      "enum": [
+        "weekly",
+        "biweekly",
+        "monthly"
+      ],
+      "default": "weekly"
+    },
+    "day_of_week": {
+      "type": "number",
+      "title": "D\u00eda de la semana (0-6)",
+      "default": 1
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "title": "Fecha de inicio"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "title": "Fecha de fin (opcional)"
+    },
+    "time": {
+      "type": "string",
+      "title": "Hora (HH:mm)"
+    },
+    "active": {
+      "type": "boolean",
+      "title": "Activa",
+      "default": true
+    }
+  },
+  "required": [
+    "patient_id",
+    "service_id",
+    "frequency",
+    "start_date",
+    "time"
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "name": "Service",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Nombre del servicio"
+    },
+    "description": {
+      "type": "string",
+      "title": "Descripci\u00f3n"
+    },
+    "duration_minutes": {
+      "type": "number",
+      "title": "Duraci\u00f3n (minutos)",
+      "default": 30
+    },
+    "margin_minutes": {
+      "type": "number",
+      "title": "Margen entre citas (minutos)",
+      "default": 0
+    },
+    "color": {
+      "type": "string",
+      "title": "Color para la agenda",
+      "default": "#3b82f6"
+    },
+    "price": {
+      "type": "number",
+      "title": "Precio (opcional)"
+    },
+    "follow_up_days": {
+      "type": "number",
+      "title": "D\u00edas para seguimiento/recordatorio de control",
+      "default": 0
+    },
+    "active": {
+      "type": "boolean",
+      "title": "Activo",
+      "default": true
+    }
+  },
+  "required": [
+    "name",
+    "duration_minutes"
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "name": "Patient",
+  "type": "object",
+  "properties": {
+    "first_name": {
+      "type": "string",
+      "title": "Nombre"
+    },
+    "last_name": {
+      "type": "string",
+      "title": "Apellido"
+    },
+    "phone": {
+      "type": "string",
+      "title": "Tel\u00e9fono (WhatsApp)"
+    },
+    "email": {
+      "type": "string",
+      "title": "Email",
+      "format": "email"
+    },
+    "notes": {
+      "type": "string",
+      "title": "Notas internas"
+    },
+    "contact_preference": {
+      "type": "string",
+      "title": "Preferencia de contacto",
+      "enum": [
+        "whatsapp",
+        "email",
+        "both"
+      ],
+      "default": "whatsapp"
+    },
+    "consent_reminders": {
+      "type": "boolean",
+      "title": "Consiente recibir recordatorios",
+      "default": true
+    },
+    "no_show_count": {
+      "type": "number",
+      "title": "Ausencias",
+      "default": 0
+    },
+    "cancellation_count": {
+      "type": "number",
+      "title": "Cancelaciones",
+      "default": 0
+    },
+    "next_follow_up_date": {
+      "type": "string",
+      "format": "date",
+      "title": "Pr\u00f3ximo seguimiento"
+    },
+    "last_appointment_date": {
+      "type": "string",
+      "format": "date",
+      "title": "\u00daltima cita"
+    }
+  },
+  "required": [
+    "first_name",
+    "phone"
+  ]
+}

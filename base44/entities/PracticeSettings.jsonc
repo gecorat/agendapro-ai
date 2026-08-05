@@ -1,0 +1,68 @@
+{
+  "name": "PracticeSettings",
+  "type": "object",
+  "properties": {
+    "professional_type": {
+      "type": "string",
+      "title": "Tipo de profesional",
+      "enum": [
+        "dentist",
+        "psychologist",
+        "doctor",
+        "physiotherapist",
+        "nutritionist",
+        "other"
+      ],
+      "default": "dentist"
+    },
+    "practice_name": {
+      "type": "string",
+      "title": "Nombre del consultorio / profesional"
+    },
+    "specialty": {
+      "type": "string",
+      "title": "Especialidad"
+    },
+    "address": {
+      "type": "string",
+      "title": "Direcci\u00f3n"
+    },
+    "phone": {
+      "type": "string",
+      "title": "Tel\u00e9fono del consultorio"
+    },
+    "professional_email": {
+      "type": "string",
+      "title": "Email de contacto",
+      "format": "email"
+    },
+    "google_calendar_connected": {
+      "type": "boolean",
+      "title": "Google Calendar conectado",
+      "default": false
+    },
+    "whatsapp_connected": {
+      "type": "boolean",
+      "title": "WhatsApp conectado",
+      "default": false
+    },
+    "plan": {
+      "type": "string",
+      "title": "Plan",
+      "enum": [
+        "trial",
+        "base",
+        "pro"
+      ],
+      "default": "trial"
+    },
+    "trial_ends_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Fin del per\u00edodo de prueba"
+    }
+  },
+  "required": [
+    "professional_type"
+  ]
+}

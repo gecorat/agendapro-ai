@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import PatientForm from "@/components/PatientForm";
+import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 
 export default function Patients() {
   const [patients, setPatients] = useState([]);
@@ -13,6 +14,8 @@ export default function Patients() {
   const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
+  const { preset } = usePracticeSettings();
+  const patientLabelLower = preset.patientLabel.toLowerCase();
 
   useEffect(() => {
     load();
@@ -64,12 +67,12 @@ export default function Patients() {
     <div className="p-4 md:p-6 max-w-6xl mx-auto space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-heading font-semibold">Pacientes</h1>
-          <p className="text-muted-foreground text-sm">{patients.length} pacientes</p>
+          <h1 className="text-2xl font-heading font-semibold">{preset.patientLabel}</h1>
+          <p className="text-muted-foreground text-sm">{patients.length} {patientLabelLower}</p>
         </div>
         <Button onClick={openNew}>
           <Plus className="w-4 h-4 mr-1" />
-          Nuevo paciente
+          Nuevo {patientLabelLower.slice(0, -1)}
         </Button>
       </div>
 
@@ -91,7 +94,7 @@ export default function Patients() {
         <div className="text-center py-16">
           <Users className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
           <p className="text-muted-foreground">
-            {search ? "Sin resultados" : "Todavía no hay pacientes"}
+            {search ? "Sin resultados" : `Todavía no hay ${patientLabelLower}`}
           </p>
         </div>
       ) : (

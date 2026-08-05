@@ -2,19 +2,15 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Calendar, Users, LayoutDashboard, Settings, LogOut, CalendarClock, Menu, X } from "lucide-react";
-
-const navItems = [
-  { label: "Panel", path: "/", icon: LayoutDashboard },
-  { label: "Agenda", path: "/agenda", icon: Calendar },
-  { label: "Pacientes", path: "/pacientes", icon: Users },
-  { label: "Configuración", path: "/configuracion", icon: Settings },
-];
+import { usePracticeSettings } from "@/hooks/usePracticeSettings";
+import Onboarding from "@/pages/Onboarding";
 
 export default function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { settings, loading: loadingSettings, preset, reload } = usePracticeSettings();
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -25,7 +21,26 @@ export default function AppLayout() {
     navigate("/login");
   };
 
+  if (loadingSettings) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!settings) {
+    return <Onboarding onConfigured={reload} />;
+  }
+
   const isActive = (path) => (path === "/" ? location.pathname === "/" : location.pathname.startsWith(path));
+
+  const navItems = [
+    { label: "Panel", path: "/", icon: LayoutDashboard },
+    { label: "Agenda", path: "/agenda", icon: Calendar },
+    { label: preset.patientLabel, path: "/pacientes", icon: Users },
+    { label: "Configuración", path: "/configuracion", icon: Settings },
+  ];
 
   const SidebarContent = (
     <div className="flex h-full flex-col">
@@ -35,7 +50,9 @@ export default function AppLayout() {
         </div>
         <div>
           <p className="font-heading font-semibold text-sm leading-tight">AgendaPro</p>
-          <p className="text-xs text-muted-foreground">Recepcionista virtual</p>
+          <p className="text-xs text-muted-foreground">
+            {settings.practice_name || "Recepcionista virtual"}
+          </p>
         </div>
       </div>
 

@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import PracticeProfileSection from "@/components/PracticeProfileSection";
 
 const days = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
@@ -60,12 +61,20 @@ export default function Settings() {
       </div>
 
       <Tabs defaultValue="services">
-        <TabsList className="grid grid-cols-4 w-full">
+        <TabsList className="grid grid-cols-5 w-full">
+          <TabsTrigger value="profile">Perfil</TabsTrigger>
           <TabsTrigger value="services">Servicios</TabsTrigger>
           <TabsTrigger value="hours">Horarios</TabsTrigger>
           <TabsTrigger value="integrations">Integraciones</TabsTrigger>
           <TabsTrigger value="plan">Plan</TabsTrigger>
         </TabsList>
+
+        {/* Perfil */}
+        <TabsContent value="profile" className="mt-4">
+          <Card className="p-6">
+            <PracticeProfileSection />
+          </Card>
+        </TabsContent>
 
         {/* Servicios */}
         <TabsContent value="services" className="space-y-4 mt-4">

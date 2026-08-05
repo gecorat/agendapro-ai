@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -12,9 +12,14 @@ import Dashboard from "@/pages/Dashboard";
 import Agenda from "@/pages/Agenda";
 import Patients from "@/pages/Patients";
 import Settings from "@/pages/Settings";
+import PublicBooking from "@/pages/PublicBooking";
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const location = useLocation();
+
+  // La página pública de reservas no requiere login
+  if (location.pathname.startsWith('/reservar')) return null;
 
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
@@ -59,6 +64,9 @@ function App() {
       <QueryClientProvider client={queryClientInstance}>
         <Router>
           <ScrollToTop />
+          <Routes>
+            <Route path="/reservar" element={<PublicBooking />} />
+          </Routes>
           <AuthenticatedApp />
         </Router>
         <Toaster />

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { Plus, Pencil, Trash2, Clock, Calendar, MessageCircle, Mail, CheckCircle2, XCircle } from "lucide-react";
+import { Plus, Pencil, Trash2, Clock, Calendar, MessageCircle, Mail, CheckCircle2, XCircle, Check } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -153,6 +153,8 @@ export default function Settings() {
             <p className="text-sm text-muted-foreground">Conectá tus cuentas para automatizar</p>
           </div>
 
+          <PublicLinkCard />
+
           <IntegrationCard
             icon={Calendar}
             name="Google Calendar"
@@ -206,6 +208,36 @@ export default function Settings() {
         service={editing}
       />
     </div>
+  );
+}
+
+function PublicLinkCard() {
+  const [copied, setCopied] = useState(false);
+  const url = (typeof window !== "undefined" ? window.location.origin : "") + "/reservar";
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+    }
+  };
+
+  return (
+    <Card className="p-4">
+      <p className="font-medium mb-1">Enlace público de reservas</p>
+      <p className="text-sm text-muted-foreground mb-3">
+        Compartí este link con tus {("pacientes")}. Reservan solos, sin escribirte.
+      </p>
+      <div className="flex gap-2">
+        <Input value={url} readOnly className="font-mono text-xs" />
+        <Button variant="outline" size="sm" onClick={copy} className="shrink-0">
+          {copied ? <Check className="w-4 h-4" /> : "Copiar"}
+        </Button>
+      </div>
+    </Card>
   );
 }
 

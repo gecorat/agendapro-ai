@@ -14,6 +14,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import PracticeProfileSection from "@/components/PracticeProfileSection";
+import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 
 const days = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
@@ -212,12 +213,13 @@ export default function Settings() {
 }
 
 function PublicLinkCard() {
+  const { settings } = usePracticeSettings();
   const [copied, setCopied] = useState(false);
-  const [userId, setUserId] = useState(null);
-  useEffect(() => { base44.auth.me().then((u) => setUserId(u.id)).catch(() => {}); }, []);
-  const url = (typeof window !== "undefined" ? window.location.origin : "") + (userId ? `/p/${userId}` : "/reservar");
+  const handle = (settings?.handle || "").replace(/^@/, "");
+  const url = (typeof window !== "undefined" ? window.location.origin : "") + (handle ? `/u/${handle}` : "");
 
   const copy = async () => {
+    if (!url) return;
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
@@ -233,12 +235,16 @@ function PublicLinkCard() {
       <p className="text-sm text-muted-foreground mb-3">
         Compartí este link con tus {("pacientes")}. Reservan solos, sin escribirte.
       </p>
-      <div className="flex gap-2">
-        <Input value={url} readOnly className="font-mono text-xs" />
-        <Button variant="outline" size="sm" onClick={copy} className="shrink-0">
-          {copied ? <Check className="w-4 h-4" /> : "Copiar"}
-        </Button>
-      </div>
+      {handle ? (
+        <div className="flex gap-2">
+          <Input value={url} readOnly className="font-mono text-xs" />
+          <Button variant="outline" size="sm" onClick={copy} className="shrink-0">
+            {copied ? <Check className="w-4 h-4" /> : "Copiar"}
+          </Button>
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">Elegí tu @usuario en la pestaña <strong>Perfil</strong> para activar tu enlace.</p>
+      )}
     </Card>
   );
 }

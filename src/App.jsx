@@ -20,7 +20,7 @@ const AuthenticatedApp = () => {
   const location = useLocation();
 
   // La página pública de reservas no requiere login
-  if (location.pathname.startsWith('/p/')) return null;
+  if (location.pathname.startsWith('/u/')) return null;
 
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
@@ -67,7 +67,7 @@ function App() {
         <Router>
           <ScrollToTop />
           <Routes>
-            <Route path="/p/:professionalId" element={<PublicBooking />} />
+            <Route path="/u/:handle" element={<PublicBooking />} />
           </Routes>
           <AuthenticatedApp />
         </Router>

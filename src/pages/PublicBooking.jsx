@@ -74,7 +74,8 @@ function formatLongDate(d) {
 }
 
 export default function PublicBooking() {
-  const { professionalId } = useParams();
+  const { handle } = useParams();
+  const cleanHandle = (handle || "").replace(/^@/, "");
   const [settings, setSettings] = useState(null);
   const [services, setServices] = useState([]);
   const [appointments, setAppointments] = useState([]);
@@ -90,25 +91,31 @@ export default function PublicBooking() {
   const [saving, setSaving] = useState(false);
   const [created, setCreated] = useState(null);
 
+  const professionalId = settings?.created_by_id || null;
+
   useEffect(() => {
     (async () => {
       try {
-        const [settingsList, servs, appts, avail] = await Promise.all([
-          base44.entities.PracticeSettings.filter({ created_by_id: professionalId }),
-          base44.entities.Service.filter({ created_by_id: professionalId, active: true }),
-          base44.entities.Appointment.filter({ created_by_id: professionalId }),
-          base44.entities.Availability.filter({ created_by_id: professionalId }),
+        const settingsList = await base44.entities.PracticeSettings.filter({ handle: cleanHandle });
+        const s = settingsList?.[0];
+        if (!s || s.published === false) { setNotFound(true); return; }
+        setSettings(s);
+        const pid = s.created_by_id;
+        const [servs, appts, avail] = await Promise.all([
+          base44.entities.Service.filter({ created_by_id: pid, active: true }),
+          base44.entities.Appointment.filter({ created_by_id: pid }),
+          base44.entities.Availability.filter({ created_by_id: pid }),
         ]);
-        if (!settingsList?.length) { setNotFound(true); return; }
-        setSettings(settingsList[0]);
         setServices(servs || []);
         setAppointments(appts || []);
         setAvailability(avail || []);
+      } catch {
+        setNotFound(true);
       } finally {
         setLoading(false);
       }
     })();
-  }, [professionalId]);
+  }, [cleanHandle]);
 
   const upcomingDays = useMemo(() => {
     const days = [];
@@ -126,23 +133,23 @@ export default function PublicBooking() {
   }, [date, service, availability, appointments]);
 
   const handleConfirm = useCallback(async () => {
-    if (!service || !slot || !form.first_name || !form.phone) return;
+    if (!service || !slot || !form.first_name || !form.phone || !professionalId) return;
     setSaving(true);
     try {
       const end = new Date(slot.getTime() + (service.duration_minutes || 30) * 60000);
-      const existing = await base44.entities.Patient.filter({ phone: form.phone, created_by_id: professionalId });
+      const existing = await base44.entities.Patient.filter({ phone: form.phone, professional_id: professionalId });
       let patient = existing?.[0];
       if (!patient) {
         patient = await base44.entities.Patient.create({
           first_name: form.first_name, last_name: form.last_name, phone: form.phone, email: form.email,
-          contact_preference: "whatsapp", consent_reminders: true,
+          contact_preference: "whatsapp", consent_reminders: true, professional_id: professionalId,
         });
       }
       const appt = await base44.entities.Appointment.create({
         patient_id: patient.id, patient_name: `${patient.first_name} ${patient.last_name || ""}`.trim(),
         service_id: service.id, service_name: service.name,
         start_datetime: slot.toISOString(), end_datetime: end.toISOString(),
-        status: "confirmed", origin: "public_link",
+        status: "pending", origin: "public_link", professional_id: professionalId,
       });
       setCreated({ appointment: appt, patient });
       setStep(4);
@@ -165,31 +172,39 @@ export default function PublicBooking() {
         <div>
           <CalendarClock className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
           <p className="font-heading font-semibold">No se encontró el profesional</p>
-          <p className="text-sm text-muted-foreground mt-1">El enlace no es válido o fue desactivado.</p>
+          <p className="text-sm text-muted-foreground mt-1">El enlace no es válido o la página está desactivada.</p>
         </div>
       </div>
     );
   }
 
+  const brand = settings?.page_color || "#0f172a";
+
   return (
-    <div className="min-h-screen bg-slate-50 py-8 px-4">
-      <div className="max-w-lg mx-auto">
-        <div className="text-center mb-6">
-          <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center mx-auto mb-3">
-            <CalendarClock className="w-7 h-7 text-primary-foreground" />
-          </div>
+    <div className="min-h-screen bg-slate-50">
+      {/* Header con color de marca */}
+      <div className="w-full" style={{ backgroundColor: brand }}>
+        <div className="max-w-lg mx-auto px-4 py-8 text-center text-white">
+          {settings?.photo_url && (
+            <img src={settings.photo_url} alt={settings.practice_name} className="w-20 h-20 rounded-full object-cover mx-auto mb-3 border-2 border-white/40" />
+          )}
           <h1 className="text-xl font-heading font-semibold">{settings?.practice_name || "Reservá tu turno"}</h1>
-          {settings?.specialty && <p className="text-sm text-muted-foreground">{settings.specialty}</p>}
+          {settings?.specialty && <p className="text-sm text-white/80">{settings.specialty}</p>}
           {settings?.address && (
-            <p className="text-xs text-muted-foreground flex items-center justify-center gap-1 mt-1"><MapPin className="w-3 h-3" /> {settings.address}</p>
+            <p className="text-xs text-white/70 flex items-center justify-center gap-1 mt-1"><MapPin className="w-3 h-3" /> {settings.address}</p>
+          )}
+          {settings?.description && (
+            <p className="text-sm text-white/90 mt-3 max-w-md mx-auto">{settings.description}</p>
           )}
         </div>
+      </div>
 
+      <div className="max-w-lg mx-auto px-4 py-6">
         {step < 4 && (
           <div className="flex items-center justify-center gap-2 mb-5 text-xs">
             {[1, 2, 3].map((s) => (
               <React.Fragment key={s}>
-                <span className={`w-6 h-6 rounded-full flex items-center justify-center ${step >= s ? "bg-primary text-primary-foreground" : "bg-slate-200 text-slate-500"}`}>
+                <span className={`w-6 h-6 rounded-full flex items-center justify-center ${step >= s ? "text-white" : "bg-slate-200 text-slate-500"}`} style={step >= s ? { backgroundColor: brand } : {}}>
                   {step > s ? <Check className="w-3 h-3" /> : s}
                 </span>
                 {s < 3 && <div className="w-8 h-px bg-slate-300" />}
@@ -206,7 +221,7 @@ export default function PublicBooking() {
             ) : (
               <div className="space-y-2">
                 {services.map((s) => (
-                  <button key={s.id} onClick={() => { setService(s); setStep(2); }} className="w-full text-left p-4 rounded-lg border-2 border-slate-200 hover:border-primary transition-colors flex items-center justify-between">
+                  <button key={s.id} onClick={() => { setService(s); setStep(2); }} className="w-full text-left p-4 rounded-lg border-2 border-slate-200 hover:border-slate-400 transition-colors flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-3 h-10 rounded-full" style={{ background: s.color || "#3b82f6" }} />
                       <div>
@@ -235,7 +250,7 @@ export default function PublicBooking() {
                 {upcomingDays.map((d) => {
                   const selected = date && d.toDateString() === date.toDateString();
                   return (
-                    <button key={d.toISOString()} onClick={() => { setDate(d); setSlot(null); }} className={`p-2 rounded-lg border text-center transition-colors ${selected ? "border-primary bg-primary/5" : "border-slate-200 hover:border-primary/40"}`}>
+                    <button key={d.toISOString()} onClick={() => { setDate(d); setSlot(null); }} className={`p-2 rounded-lg border text-center transition-colors ${selected ? "border-transparent text-white" : "border-slate-200 hover:border-slate-400"}`} style={selected ? { backgroundColor: brand } : {}}>
                       <p className="text-xs text-muted-foreground capitalize">{d.toLocaleDateString("es-AR", { weekday: "short" })}</p>
                       <p className="font-medium text-sm">{d.getDate()}</p>
                     </button>
@@ -251,13 +266,13 @@ export default function PublicBooking() {
                 ) : (
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                     {slots.map((s) => (
-                      <button key={s.toISOString()} onClick={() => setSlot(s)} className={`p-2 rounded-lg border text-sm transition-colors ${slot && slot.toISOString() === s.toISOString() ? "border-primary bg-primary text-primary-foreground" : "border-slate-200 hover:border-primary/40"}`}>{formatSlot(s)}</button>
+                      <button key={s.toISOString()} onClick={() => setSlot(s)} className={`p-2 rounded-lg border text-sm transition-colors ${slot && slot.toISOString() === s.toISOString() ? "border-transparent text-white" : "border-slate-200 hover:border-slate-400"}`} style={slot && slot.toISOString() === s.toISOString() ? { backgroundColor: brand } : {}}>{formatSlot(s)}</button>
                     ))}
                   </div>
                 )}
               </div>
             )}
-            <Button className="w-full" disabled={!slot} onClick={() => setStep(3)}>Continuar</Button>
+            <Button className="w-full" style={{ backgroundColor: brand }} disabled={!slot} onClick={() => setStep(3)}>Continuar</Button>
           </Card>
         )}
 
@@ -277,28 +292,24 @@ export default function PublicBooking() {
             </div>
             <div className="space-y-2"><Label htmlFor="phone">Teléfono (WhatsApp) *</Label><Input id="phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+54 9 11 1234 5678" required /></div>
             <div className="space-y-2"><Label htmlFor="email">Email</Label><Input id="email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
-            <Button className="w-full" disabled={saving || !form.first_name || !form.phone} onClick={handleConfirm}>
-              {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Confirmar turno
+            <Button className="w-full" style={{ backgroundColor: brand }} disabled={saving || !form.first_name || !form.phone} onClick={handleConfirm}>
+              {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Solicitar turno
             </Button>
+            <p className="text-xs text-muted-foreground text-center">Tu solicitud será confirmada por el profesional.</p>
           </Card>
         )}
 
         {step === 4 && created && (
           <Card className="p-6 text-center space-y-3">
             <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center mx-auto"><Check className="w-7 h-7 text-emerald-600" /></div>
-            <h2 className="font-heading font-semibold text-lg">¡Turno confirmado!</h2>
+            <h2 className="font-heading font-semibold text-lg">¡Solicitud enviada!</h2>
             <p className="text-sm text-muted-foreground">{service?.name}</p>
             <p className="font-medium capitalize">{date && formatLongDate(date)} · {slot && formatSlot(slot)}</p>
             <p className="text-sm text-muted-foreground">{settings?.practice_name || "Consultorio"}{settings?.address ? ` · ${settings.address}` : ""}</p>
-            <div className="pt-2">
-              <p className="text-xs text-muted-foreground">Guardá esta referencia: <span className="font-mono">{created.appointment.id.slice(-8)}</span></p>
-              <p className="text-xs text-muted-foreground mt-1">Recibirás un recordatorio próximo a la fecha.</p>
-            </div>
+            <p className="text-sm text-muted-foreground pt-2">El profesional confirmará tu turno. Guardá esta referencia: <span className="font-mono">{created.appointment.id.slice(-8)}</span></p>
             <Button variant="outline" className="mt-2" onClick={() => { setStep(1); setService(null); setDate(null); setSlot(null); setForm({ first_name: "", last_name: "", phone: "", email: "" }); setCreated(null); }}>Reservar otro turno</Button>
           </Card>
         )}
-
-        <p className="text-center text-xs text-slate-400 mt-6">Reservas online · AgendaPro</p>
       </div>
     </div>
   );

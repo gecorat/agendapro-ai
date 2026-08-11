@@ -36,6 +36,30 @@
       "title": "Email de contacto",
       "format": "email"
     },
+    "handle": {
+      "type": "string",
+      "title": "Usuario p\u00fablico (@)",
+      "description": "Nombre \u00fanico para tu enlace de reservas, sin espacios ni @"
+    },
+    "photo_url": {
+      "type": "string",
+      "title": "Foto de perfil",
+      "format": "url"
+    },
+    "page_color": {
+      "type": "string",
+      "title": "Color de la p\u00e1gina p\u00fablica",
+      "default": "#0f172a"
+    },
+    "description": {
+      "type": "string",
+      "title": "Descripci\u00f3n / presentaci\u00f3n"
+    },
+    "published": {
+      "type": "boolean",
+      "title": "P\u00e1gina p\u00fablica publicada",
+      "default": true
+    },
     "google_calendar_connected": {
       "type": "boolean",
       "title": "Google Calendar conectado",
@@ -64,5 +88,44 @@
   },
   "required": [
     "professional_type"
-  ]
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
 }

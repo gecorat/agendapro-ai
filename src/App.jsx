@@ -13,13 +13,14 @@ import Agenda from "@/pages/Agenda";
 import Patients from "@/pages/Patients";
 import Settings from "@/pages/Settings";
 import PublicBooking from "@/pages/PublicBooking";
+import Admin from "@/pages/Admin";
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
   const location = useLocation();
 
   // La página pública de reservas no requiere login
-  if (location.pathname.startsWith('/reservar')) return null;
+  if (location.pathname.startsWith('/p/')) return null;
 
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
@@ -50,6 +51,7 @@ const AuthenticatedApp = () => {
         <Route path="/agenda" element={<Agenda />} />
         <Route path="/pacientes" element={<Patients />} />
         <Route path="/configuracion" element={<Settings />} />
+        <Route path="/admin" element={<Admin />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
@@ -65,7 +67,7 @@ function App() {
         <Router>
           <ScrollToTop />
           <Routes>
-            <Route path="/reservar" element={<PublicBooking />} />
+            <Route path="/p/:professionalId" element={<PublicBooking />} />
           </Routes>
           <AuthenticatedApp />
         </Router>

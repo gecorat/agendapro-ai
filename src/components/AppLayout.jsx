@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Calendar, Users, LayoutDashboard, Settings, LogOut, CalendarClock, Menu, X } from "lucide-react";
+import { Calendar, Users, LayoutDashboard, Settings, LogOut, CalendarClock, Menu, X, Shield } from "lucide-react";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import Onboarding from "@/pages/Onboarding";
 
@@ -9,11 +9,12 @@ export default function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [userLoading, setUserLoading] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { settings, loading: loadingSettings, preset, reload } = usePracticeSettings();
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    base44.auth.me().then((u) => { setUser(u); setUserLoading(false); }).catch(() => setUserLoading(false));
   }, []);
 
   const handleLogout = async () => {
@@ -21,7 +22,7 @@ export default function AppLayout() {
     navigate("/login");
   };
 
-  if (loadingSettings) {
+  if (loadingSettings || userLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin" />
@@ -29,7 +30,7 @@ export default function AppLayout() {
     );
   }
 
-  if (!settings) {
+  if (!settings && user?.role !== "admin") {
     return <Onboarding onConfigured={reload} />;
   }
 
@@ -41,6 +42,9 @@ export default function AppLayout() {
     { label: preset.patientLabel, path: "/pacientes", icon: Users },
     { label: "Configuración", path: "/configuracion", icon: Settings },
   ];
+  if (user?.role === "admin") {
+    navItems.push({ label: "Administración", path: "/admin", icon: Shield });
+  }
 
   const SidebarContent = (
     <div className="flex h-full flex-col">
@@ -51,7 +55,7 @@ export default function AppLayout() {
         <div>
           <p className="font-heading font-semibold text-sm leading-tight">AgendaPro</p>
           <p className="text-xs text-muted-foreground">
-            {settings.practice_name || "Recepcionista virtual"}
+            {settings?.practice_name || "Recepcionista virtual"}
           </p>
         </div>
       </div>

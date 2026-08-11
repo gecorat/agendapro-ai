@@ -213,7 +213,9 @@ export default function Settings() {
 
 function PublicLinkCard() {
   const [copied, setCopied] = useState(false);
-  const url = (typeof window !== "undefined" ? window.location.origin : "") + "/reservar";
+  const [userId, setUserId] = useState(null);
+  useEffect(() => { base44.auth.me().then((u) => setUserId(u.id)).catch(() => {}); }, []);
+  const url = (typeof window !== "undefined" ? window.location.origin : "") + (userId ? `/p/${userId}` : "/reservar");
 
   const copy = async () => {
     try {

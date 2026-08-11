@@ -1,0 +1,52 @@
+{
+  "name": "BotConfig",
+  "type": "object",
+  "properties": {
+    "system_prompt": {
+      "type": "string",
+      "title": "Instrucciones del bot (system prompt)"
+    },
+    "model": {
+      "type": "string",
+      "title": "Modelo de IA",
+      "enum": [
+        "automatic",
+        "gemini_3_flash",
+        "gpt_5_mini",
+        "gpt_5_4",
+        "claude_sonnet_4_6"
+      ],
+      "default": "automatic"
+    },
+    "active": {
+      "type": "boolean",
+      "title": "Activo",
+      "default": true
+    }
+  },
+  "required": [
+    "system_prompt"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

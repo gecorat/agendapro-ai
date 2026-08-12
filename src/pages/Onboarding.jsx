@@ -34,9 +34,8 @@ export default function Onboarding({ onConfigured }) {
       const trialOrigin = inviteCode ? "invitation" : "landing";
 
       const me = await base44.auth.me();
-      const existing = await base44.entities.PracticeSettings.filter({ created_by_id: me.id });
-      const mine = existing?.find((r) => r.created_by_id === me.id);
-      let record;
+      const all = await base44.entities.PracticeSettings.list();
+      const mine = all.find((r) => r.created_by_id === me.id);
       const baseData = {
         ...form,
         professional_type: type,
@@ -45,6 +44,7 @@ export default function Onboarding({ onConfigured }) {
         trial_origin: trialOrigin,
         invitation_code: inviteCode || undefined,
       };
+      let record;
       if (mine) {
         record = await base44.entities.PracticeSettings.update(mine.id, baseData);
       } else {

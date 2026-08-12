@@ -9,8 +9,8 @@ export function usePracticeSettings() {
   const load = useCallback(async () => {
     try {
       const me = await base44.auth.me();
-      const list = await base44.entities.PracticeSettings.filter({ created_by_id: me.id });
-      setSettings(list?.[0] || null);
+      const list = await base44.entities.PracticeSettings.list();
+      setSettings(list?.find((r) => r.created_by_id === me.id) || null);
     } catch {
       setSettings(null);
     } finally {

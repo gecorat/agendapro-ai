@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { waitUntil } from "base44:runtime";
-import { getPlatformConfig, findPracticeByAccount, hmacSha256, orchestrateConversation } from "../../shared/zernio.ts";
+import { getPlatformConfig, findPracticeByAccount, hmacSha256 } from "../../shared/zernio.ts";
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -15,12 +15,13 @@ export default async function(req: Request): Promise<Response> {
     const plat = await getPlatformConfig(base44);
 
     const secret = plat?.zernio_webhook_secret;
-    if (secret) {
-      const sig = req.headers.get("X-Zernio-Signature") || req.headers.get("X-Late-Signature");
-      if (!sig) return Response.json({ error: "No signature provided" }, { status: 401 });
-      const computed = await hmacSha256(secret, rawBody);
-      if (sig !== computed) return Response.json({ error: "Invalid signature" }, { status: 400 });
+    if (!secret) {
+      return Response.json({ error: "Webhook secret not configured" }, { status: 401 });
     }
+    const sig = req.headers.get("X-Zernio-Signature") || req.headers.get("X-Late-Signature");
+    if (!sig) return Response.json({ error: "No signature provided" }, { status: 401 });
+    const computed = await hmacSha256(secret, rawBody);
+    if (sig !== computed) return Response.json({ error: "Invalid signature" }, { status: 401 });
 
     const msg = payload.message || {};
     const conv = payload.conversation || {};
@@ -52,14 +53,13 @@ export default async function(req: Request): Promise<Response> {
     });
 
     waitUntil(
-      orchestrateConversation(base44, {
-        fromPhone,
-        professionalId,
-        conversationId,
-        accountId,
-        practice,
+      base44.asServiceRole.functions.invoke("zernioConversation", {
+        phone: fromPhone,
         text,
-      }).catch((e) => console.error("orchestrateConversation error:", e?.message || e))
+        accountId,
+        conversationId,
+        internalToken: secret,
+      }).catch((e) => console.error("zernioConversation invoke error:", e?.message || e))
     );
 
     return Response.json({ ok: true });

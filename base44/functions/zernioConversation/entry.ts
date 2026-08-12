@@ -1,14 +1,20 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
-import { orchestrateConversation, findPracticeByAccount } from "../../shared/zernio.ts";
+import { orchestrateConversation, findPracticeByAccount, getPlatformConfig } from "../../shared/zernio.ts";
 
 export default async function(req: Request): Promise<Response> {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json();
-    const { phone, text, accountId, conversationId } = body;
+    const { phone, text, accountId, conversationId, internalToken } = body;
 
     if (!phone || !text) {
       return Response.json({ error: 'phone and text required' }, { status: 400 });
+    }
+
+    const plat = await getPlatformConfig(base44);
+    const secret = plat?.zernio_webhook_secret;
+    if (!secret || !internalToken || internalToken !== secret) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const practice = accountId ? await findPracticeByAccount(base44, accountId) : null;

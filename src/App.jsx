@@ -14,13 +14,19 @@ import Patients from "@/pages/Patients";
 import Settings from "@/pages/Settings";
 import PublicBooking from "@/pages/PublicBooking";
 import Admin from "@/pages/Admin";
+import Landing from "@/pages/Landing";
+import BotPreview from "@/pages/BotPreview";
+import Login from "@/pages/Login";
+import Register from "@/pages/Register";
+import ForgotPassword from "@/pages/ForgotPassword";
+import ResetPassword from "@/pages/ResetPassword";
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated } = useAuth();
   const location = useLocation();
 
-  // La página pública de reservas no requiere login
-  if (location.pathname.startsWith('/u/')) return null;
+  const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/reset-password"];
+  if (location.pathname.startsWith("/u/") || PUBLIC_PATHS.includes(location.pathname)) return null;
 
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
@@ -31,15 +37,14 @@ const AuthenticatedApp = () => {
     );
   }
 
-  // Handle authentication errors
-  if (authError) {
-    if (authError.type === 'user_not_registered') {
-      return <UserNotRegisteredError />;
-    } else if (authError.type === 'auth_required') {
-      // Redirect to login automatically
-      navigateToLogin();
-      return null;
-    }
+  // Not authenticated → show public landing
+  if (!isAuthenticated) {
+    return <Landing />;
+  }
+
+  // Handle authentication errors for registered users
+  if (authError && authError.type === "user_not_registered") {
+    return <UserNotRegisteredError />;
   }
 
   // Render the main app
@@ -51,6 +56,7 @@ const AuthenticatedApp = () => {
         <Route path="/agenda" element={<Agenda />} />
         <Route path="/pacientes" element={<Patients />} />
         <Route path="/configuracion" element={<Settings />} />
+        <Route path="/bot" element={<BotPreview />} />
         <Route path="/admin" element={<Admin />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
@@ -68,6 +74,10 @@ function App() {
           <ScrollToTop />
           <Routes>
             <Route path="/u/:handle" element={<PublicBooking />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
           </Routes>
           <AuthenticatedApp />
         </Router>

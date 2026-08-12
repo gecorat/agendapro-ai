@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Calendar, Users, LayoutDashboard, Settings, LogOut, CalendarClock, Menu, X, Shield } from "lucide-react";
+import { Calendar, Users, LayoutDashboard, Settings, LogOut, CalendarClock, Menu, X, Shield, MessageCircle } from "lucide-react";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import Onboarding from "@/pages/Onboarding";
+import TrialBanner from "@/components/TrialBanner";
 
 export default function AppLayout() {
   const location = useLocation();
@@ -40,6 +41,7 @@ export default function AppLayout() {
     { label: "Panel", path: "/", icon: LayoutDashboard },
     { label: "Agenda", path: "/agenda", icon: Calendar },
     { label: preset.patientLabel, path: "/pacientes", icon: Users },
+    { label: "Probar el bot", path: "/bot", icon: MessageCircle },
     { label: "Configuración", path: "/configuracion", icon: Settings },
   ];
   if (user?.role === "admin") {
@@ -124,6 +126,7 @@ export default function AppLayout() {
         </header>
 
         <main className="flex-1 overflow-y-auto">
+          <TrialBanner />
           <Outlet />
         </main>
       </div>

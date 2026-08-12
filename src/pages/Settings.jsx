@@ -15,6 +15,9 @@ import {
 } from "@/components/ui/dialog";
 import PracticeProfileSection from "@/components/PracticeProfileSection";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
+import PlanGate from "@/components/PlanGate";
+import { getPlanStatus, PLAN_PRICES, PLAN_LABELS } from "@/lib/plan-utils";
+import { Link } from "react-router-dom";
 
 const days = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
@@ -162,12 +165,7 @@ export default function Settings() {
             description="Sincronización bidireccional de citas"
             connected={false}
           />
-          <IntegrationCard
-            icon={MessageCircle}
-            name="WhatsApp"
-            description="Asistente de reservas y recordatorios"
-            connected={false}
-          />
+          <WhatsAppCard />
           <IntegrationCard
             icon={Mail}
             name="Email"
@@ -177,28 +175,8 @@ export default function Settings() {
         </TabsContent>
 
         {/* Plan */}
-        <TabsContent value="plan" className="space-y-4 mt-4">
-          <div>
-            <h2 className="font-heading font-semibold">Tu plan</h2>
-            <p className="text-sm text-muted-foreground">Gestión de suscripción</p>
-          </div>
-          <div className="grid sm:grid-cols-2 gap-4">
-            <Card className="p-5 border-2 border-primary">
-              <p className="font-heading font-semibold">Base</p>
-              <p className="text-2xl font-heading font-bold mt-1">USD 59<span className="text-sm font-normal text-muted-foreground">/mes</span></p>
-              <p className="text-sm text-muted-foreground mt-1">Hasta 100 citas mensuales</p>
-            </Card>
-            <Card className="p-5">
-              <p className="font-heading font-semibold">Pro</p>
-              <p className="text-2xl font-heading font-bold mt-1">USD 79<span className="text-sm font-normal text-muted-foreground">/mes</span></p>
-              <p className="text-sm text-muted-foreground mt-1">Citas ilimitadas</p>
-            </Card>
-          </div>
-          <Card className="p-4 bg-amber-50 border-amber-200">
-            <p className="text-sm text-amber-800">
-              Estás en período de prueba (14 días). Elegí tu plan antes de que termine.
-            </p>
-          </Card>
+        <TabsContent value="plan" className="mt-4">
+          <PlanSection />
         </TabsContent>
       </Tabs>
 
@@ -208,6 +186,89 @@ export default function Settings() {
         onSaved={load}
         service={editing}
       />
+    </div>
+  );
+}
+
+function WhatsAppCard() {
+  const { settings } = usePracticeSettings();
+  const status = getPlanStatus(settings);
+  if (status.hasPaidPlan) {
+    return <IntegrationCard icon={MessageCircle} name="WhatsApp" description="Asistente de reservas y recordatorios" connected={false} />;
+  }
+  return (
+    <Card className="p-4">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
+          <MessageCircle className="w-5 h-5 text-muted-foreground" />
+        </div>
+        <div>
+          <p className="font-medium">WhatsApp</p>
+          <p className="text-sm text-muted-foreground">Asistente de reservas y recordatorios</p>
+        </div>
+      </div>
+      <PlanGate
+        feature="Bot de WhatsApp"
+        requiredPlan="pro"
+        description="El bot responde, agenda y recuerda citas a tus pacientes por WhatsApp. Disponible desde el plan Pro."
+      />
+    </Card>
+  );
+}
+
+function PlanSection() {
+  const { settings } = usePracticeSettings();
+  const status = getPlanStatus(settings);
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="font-heading font-semibold">Tu plan</h2>
+        <p className="text-sm text-muted-foreground">Gestión de suscripción</p>
+      </div>
+      <Card className="p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-muted-foreground">Plan actual</p>
+            <p className="font-heading font-semibold text-lg">{PLAN_LABELS[status.plan] || "—"}</p>
+          </div>
+          {status.isTrial && (
+            <span className={`text-sm font-medium px-3 py-1 rounded-full ${status.trialExpired ? "bg-destructive/10 text-destructive" : "bg-amber-100 text-amber-700"}`}>
+              {status.trialExpired ? "Prueba expirada" : `${status.daysLeft} días restantes`}
+            </span>
+          )}
+        </div>
+        {status.isTrial && !status.trialExpired && (
+          <p className="text-xs text-muted-foreground mt-2">Estás en período de prueba. Elegí tu plan antes de que termine.</p>
+        )}
+        {status.trialExpired && (
+          <p className="text-xs text-destructive mt-2">Tu prueba terminó. Contactanos para activar tu plan.</p>
+        )}
+      </Card>
+      <div className="grid sm:grid-cols-2 gap-4">
+        <Card className={`p-5 ${status.plan === "pro" ? "border-2 border-primary" : ""}`}>
+          <p className="font-heading font-semibold">Pro</p>
+          <p className="text-2xl font-heading font-bold mt-1">{PLAN_PRICES.pro}<span className="text-sm font-normal text-muted-foreground"> ARS/mes</span></p>
+          <ul className="text-sm text-muted-foreground mt-2 space-y-1">
+            <li>· Bot de WhatsApp con IA</li>
+            <li>· Agenda y reservas online</li>
+            <li>· Recordatorios automáticos</li>
+            <li>· Hasta 200 citas mensuales</li>
+          </ul>
+        </Card>
+        <Card className={`p-5 ${status.plan === "premium" ? "border-2 border-primary" : ""}`}>
+          <p className="font-heading font-semibold">Premium</p>
+          <p className="text-2xl font-heading font-bold mt-1">{PLAN_PRICES.premium}<span className="text-sm font-normal text-muted-foreground"> ARS/mes</span></p>
+          <ul className="text-sm text-muted-foreground mt-2 space-y-1">
+            <li>· Todo lo de Pro</li>
+            <li>· Citas ilimitadas</li>
+            <li>· Bandeja de chats con toma de control</li>
+            <li>· Soporte prioritario</li>
+          </ul>
+        </Card>
+      </div>
+      <Card className="p-4 bg-accent/40">
+        <p className="text-sm">Para activar o cambiar tu plan, contactanos. La recurrencia automática con Mercado Pago se habilita próximamente.</p>
+      </Card>
     </div>
   );
 }

@@ -1,9 +1,10 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { Lock, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PLAN_PRICES, PLAN_LABELS } from "@/lib/plan-utils";
 
-export default function PlanGate({ feature, requiredPlan = "pro", description, onUpgrade }) {
+export default function PlanGate({ feature, requiredPlan = "pro", description }) {
   const price = PLAN_PRICES[requiredPlan] || "";
   return (
     <div className="relative rounded-xl border border-dashed border-border bg-accent/40 p-6 text-center">
@@ -20,7 +21,9 @@ export default function PlanGate({ feature, requiredPlan = "pro", description, o
         <span className="text-muted-foreground">{price} ARS / mes</span>
       </div>
       <div className="mt-4">
-        <Button onClick={onUpgrade}>Pasar a {PLAN_LABELS[requiredPlan]}</Button>
+        <Button asChild>
+          <Link to="/configuracion">Pasar a {PLAN_LABELS[requiredPlan]}</Link>
+        </Button>
       </div>
       <p className="text-xs text-muted-foreground mt-2">
         Contactanos para activar tu plan. La recurrencia automática con Mercado Pago se habilita próximamente.

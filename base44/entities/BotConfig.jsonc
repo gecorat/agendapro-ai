@@ -18,6 +18,11 @@
       ],
       "default": "automatic"
     },
+    "bot_preview_limit": {
+      "type": "number",
+      "title": "Tope de mensajes de la demo del bot",
+      "default": 20
+    },
     "active": {
       "type": "boolean",
       "title": "Activo",

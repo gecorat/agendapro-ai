@@ -28,22 +28,27 @@ export default function Onboarding({ onConfigured }) {
       const trialEnd = new Date();
       trialEnd.setDate(trialEnd.getDate() + 14);
 
+      const inviteCode = (typeof localStorage !== "undefined" && localStorage.getItem("agendapro_invite_code")) || null;
+      const trialOrigin = inviteCode ? "invitation" : "landing";
+
       const existing = await base44.entities.PracticeSettings.filter({});
       let record;
+      const baseData = {
+        ...form,
+        professional_type: type,
+        plan: "trial",
+        trial_ends_at: trialEnd.toISOString(),
+        trial_origin: trialOrigin,
+        invitation_code: inviteCode || undefined,
+      };
       if (existing?.[0]) {
-        record = await base44.entities.PracticeSettings.update(existing[0].id, {
-          ...form,
-          professional_type: type,
-          plan: "trial",
-          trial_ends_at: trialEnd.toISOString(),
-        });
+        record = await base44.entities.PracticeSettings.update(existing[0].id, baseData);
       } else {
-        record = await base44.entities.PracticeSettings.create({
-          ...form,
-          professional_type: type,
-          plan: "trial",
-          trial_ends_at: trialEnd.toISOString(),
-        });
+        record = await base44.entities.PracticeSettings.create(baseData);
+      }
+
+      if (inviteCode && typeof localStorage !== "undefined") {
+        localStorage.removeItem("agendapro_invite_code");
       }
 
       if (applyServices) {

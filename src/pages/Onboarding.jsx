@@ -33,7 +33,8 @@ export default function Onboarding({ onConfigured }) {
       const inviteCode = (typeof localStorage !== "undefined" && localStorage.getItem("agendapro_invite_code")) || null;
       const trialOrigin = inviteCode ? "invitation" : "landing";
 
-      const existing = await base44.entities.PracticeSettings.filter({});
+      const me = await base44.auth.me();
+      const existing = await base44.entities.PracticeSettings.filter({ created_by_id: me.id });
       let record;
       const baseData = {
         ...form,

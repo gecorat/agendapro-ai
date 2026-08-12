@@ -79,6 +79,16 @@
       "title": "WhatsApp conectado",
       "default": false
     },
+    "zernio_account_id": {
+      "type": "string",
+      "title": "Zernio \u2014 Account ID",
+      "description": "ID de la cuenta de WhatsApp conectada en Zernio para este profesional"
+    },
+    "zernio_phone": {
+      "type": "string",
+      "title": "N\u00famero de WhatsApp del profesional",
+      "description": "N\u00famero que usa el profesional para recibir mensajes (con c\u00f3digo de pa\u00eds)"
+    },
     "plan": {
       "type": "string",
       "title": "Plan",

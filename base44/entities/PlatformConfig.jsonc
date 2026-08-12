@@ -14,6 +14,16 @@
       "type": "string",
       "title": "Zernio \u2014 API Key (proveedor de WhatsApp)"
     },
+    "zernio_account_id": {
+      "type": "string",
+      "title": "Zernio \u2014 Account ID (cuenta por defecto)",
+      "description": "Account ID de la cuenta de WhatsApp principal en Zernio. Cada profesional puede tener el suyo en su configuraci\u00f3n."
+    },
+    "zernio_webhook_secret": {
+      "type": "string",
+      "title": "Zernio \u2014 Webhook Secret",
+      "description": "Secreto compartido para verificar la firma de los webhooks entrantes de Zernio. Configurarlo tambi\u00e9n en el dashboard de Zernio al crear el webhook."
+    },
     "bot_preview_limit": {
       "type": "number",
       "title": "Tope de mensajes de la demo del bot",

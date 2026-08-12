@@ -134,6 +134,7 @@ function ReviewCard({ review, onReload }) {
   const [message, setMessage] = useState(review.request_message || "");
   const [saving, setSaving] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
+  const [sendingWa, setSendingWa] = useState(false);
 
   useEffect(() => {
     setMessage(review.request_message || "");
@@ -177,6 +178,27 @@ function ReviewCard({ review, onReload }) {
       toast({ title: "No se pudo enviar el email", description: "Es posible que tu plan no permita enviar a este destinatario. Usá WhatsApp como alternativa.", variant: "destructive" });
     } finally {
       setSendingEmail(false);
+    }
+  };
+
+  const sendWhatsApp = async () => {
+    if (!review.patient_phone) {
+      toast({ title: "Sin teléfono", description: "Este paciente no tiene teléfono cargado.", variant: "destructive" });
+      return;
+    }
+    setSendingWa(true);
+    try {
+      const res = await base44.functions.invoke("zernioSendMessage", {
+        phone: review.patient_phone,
+        message: fullText,
+      });
+      await base44.entities.ReviewRequest.update(review.id, { status: "sent", sent_at: new Date().toISOString() });
+      toast({ title: "WhatsApp enviado", description: "Cuando el paciente responda, vas a ver su reseña acá." });
+      onReload();
+    } catch (err) {
+      toast({ title: "No se pudo enviar por WhatsApp", description: err?.response?.data?.error || err.message, variant: "destructive" });
+    } finally {
+      setSendingWa(false);
     }
   };
 
@@ -225,10 +247,13 @@ function ReviewCard({ review, onReload }) {
             <p className="text-xs text-blue-600">Enviada — esperando respuesta del paciente.</p>
           )}
           <div className="flex flex-wrap gap-2">
+            <Button size="sm" onClick={sendWhatsApp} disabled={sendingWa}>
+              {sendingWa ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Send className="w-3.5 h-3.5 mr-1" />} Enviar WhatsApp
+            </Button>
             {waUrl ? (
               <Button size="sm" variant="outline" asChild>
                 <a href={waUrl} target="_blank" rel="noopener noreferrer">
-                  <MessageCircle className="w-3.5 h-3.5 mr-1 text-emerald-600" /> WhatsApp
+                  <MessageCircle className="w-3.5 h-3.5 mr-1 text-emerald-600" /> Abrir WhatsApp
                 </a>
               </Button>
             ) : null}

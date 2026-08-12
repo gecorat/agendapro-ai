@@ -1,0 +1,87 @@
+{
+  "name": "Conversation",
+  "type": "object",
+  "properties": {
+    "phone": {
+      "type": "string",
+      "title": "Tel\u00e9fono del paciente"
+    },
+    "professional_id": {
+      "type": "string",
+      "title": "Profesional titular"
+    },
+    "role": {
+      "type": "string",
+      "title": "Rol",
+      "enum": [
+        "user",
+        "assistant"
+      ]
+    },
+    "text": {
+      "type": "string",
+      "title": "Mensaje"
+    },
+    "conversation_id": {
+      "type": "string",
+      "title": "ID de conversaci\u00f3n en Zernio"
+    },
+    "account_id": {
+      "type": "string",
+      "title": "Account ID de Zernio"
+    }
+  },
+  "required": [
+    "phone",
+    "role",
+    "text"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.professional_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {},
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.professional_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.professional_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

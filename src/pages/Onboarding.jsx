@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { CalendarClock, ArrowRight, Check, Loader2 } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 import { PROFESSIONAL_TYPES, getPreset, getTypeLabel } from "@/lib/professional-presets";
 
 export default function Onboarding({ onConfigured }) {
@@ -19,6 +20,7 @@ export default function Onboarding({ onConfigured }) {
   });
   const [applyServices, setApplyServices] = useState(true);
   const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
 
   const preset = getPreset(type);
 
@@ -64,6 +66,8 @@ export default function Onboarding({ onConfigured }) {
       }
 
       onConfigured?.();
+    } catch (err) {
+      toast({ title: "Error al guardar", description: err.message, variant: "destructive" });
     } finally {
       setSaving(false);
     }

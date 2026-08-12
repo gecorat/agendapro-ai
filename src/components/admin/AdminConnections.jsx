@@ -26,6 +26,8 @@ export default function AdminConnections() {
   const [mpToken, setMpToken] = useState("");
   const [mpKey, setMpKey] = useState("");
   const [zernioKey, setZernioKey] = useState("");
+  const [zernioAccountId, setZernioAccountId] = useState("");
+  const [webhookSecret, setWebhookSecret] = useState("");
   const [previewLimit, setPreviewLimit] = useState(20);
 
   const [botConfig, setBotConfig] = useState(null);
@@ -44,6 +46,8 @@ export default function AdminConnections() {
       setMpToken(p?.mercadopago_access_token || "");
       setMpKey(p?.mercadopago_public_key || "");
       setZernioKey(p?.zernio_api_key || "");
+      setZernioAccountId(p?.zernio_account_id || "");
+      setWebhookSecret(p?.zernio_webhook_secret || "");
 
       const b = botList?.[0] || null;
       setBotConfig(b);
@@ -64,6 +68,8 @@ export default function AdminConnections() {
         mercadopago_access_token: mpToken,
         mercadopago_public_key: mpKey,
         zernio_api_key: zernioKey,
+        zernio_account_id: zernioAccountId,
+        zernio_webhook_secret: webhookSecret,
       };
       if (plat) {
         await base44.entities.PlatformConfig.update(plat.id, data);
@@ -128,10 +134,25 @@ export default function AdminConnections() {
           <MessageCircle className="w-5 h-5 text-primary" />
           <h2 className="font-heading font-semibold">Proveedor de WhatsApp (Zernio)</h2>
         </div>
-        <p className="text-sm text-muted-foreground">API key del proveedor a nivel plataforma. La conexión por profesional se habilita con el plan Pro.</p>
+        <p className="text-sm text-muted-foreground">Credenciales del proveedor de WhatsApp. El Account ID vincula los mensajes entrantes al profesional correcto.</p>
         <div className="space-y-1.5">
           <Label htmlFor="zkey">API Key</Label>
           <Input id="zkey" value={zernioKey} onChange={(e) => setZernioKey(e.target.value)} placeholder="zrn_..." />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="zacc">Account ID (cuenta principal)</Label>
+          <Input id="zacc" value={zernioAccountId} onChange={(e) => setZernioAccountId(e.target.value)} placeholder="acc_..." />
+          <p className="text-xs text-muted-foreground">Cada profesional puede configurar el suyo en su perfil. Este es el valor por defecto de la plataforma.</p>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="zsecret">Webhook Secret</Label>
+          <Input id="zsecret" value={webhookSecret} onChange={(e) => setWebhookSecret(e.target.value)} placeholder="secreto compartido (opcional)" />
+          <p className="text-xs text-muted-foreground">Opcional pero recomendado. Configurá el mismo valor en el dashboard de Zernio al crear el webhook.</p>
+        </div>
+        <div className="space-y-1.5 rounded-lg bg-accent/50 p-3">
+          <Label>URL del webhook</Label>
+          <p className="text-xs text-muted-foreground break-all font-mono">{typeof window !== "undefined" ? window.location.origin : ""}/api/functions/zernioWebhook</p>
+          <p className="text-xs text-muted-foreground mt-1">Configurá esta URL en Zernio → Webhooks con el evento <strong>message.received</strong>. La app debe estar publicada para que Zernio pueda alcanzarla.</p>
         </div>
       </Card>
 

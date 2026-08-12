@@ -154,7 +154,7 @@ export default function Agenda() {
       ) : view === "day" ? (
         <DayView date={currentDate} appts={apptsForDay(currentDate)} onNew={openNew} onEdit={openEdit} />
       ) : (
-        <WeekView days={weekDays} apptsFn={apptsForDay} onNew={openNew} onEdit={openEdit} />
+        <WeekView days={weekDays} apptFn={apptsForDay} onNew={openNew} onEdit={openEdit} />
       )}
 
       <AppointmentForm

@@ -6,8 +6,10 @@ export default async function(req) {
     const body = await req.json();
     const action = body?.action;
     const id = body?.id;
+    const token = body?.token;
 
     if (!id) return Response.json({ error: 'Falta el id de la solicitud' }, { status: 400 });
+    if (!token) return Response.json({ error: 'Token de acceso requerido' }, { status: 401 });
 
     if (action === 'get') {
       let rev;
@@ -17,6 +19,9 @@ export default async function(req) {
         return Response.json({ error: 'Solicitud no encontrada' }, { status: 404 });
       }
       if (!rev) return Response.json({ error: 'Solicitud no encontrada' }, { status: 404 });
+      if (!rev.token || rev.token !== token) {
+        return Response.json({ error: 'Token de acceso inválido' }, { status: 401 });
+      }
       if (rev.disabled) return Response.json({ error: 'Solicitud no disponible' }, { status: 404 });
 
       let practice_name = '';
@@ -51,6 +56,9 @@ export default async function(req) {
         return Response.json({ error: 'Solicitud no encontrada' }, { status: 404 });
       }
       if (!rev) return Response.json({ error: 'Solicitud no encontrada' }, { status: 404 });
+      if (!rev.token || rev.token !== token) {
+        return Response.json({ error: 'Token de acceso inválido' }, { status: 401 });
+      }
       if (rev.disabled) return Response.json({ error: 'Solicitud no disponible' }, { status: 404 });
       if (rev.status === 'received') return Response.json({ error: 'Ya respondida' }, { status: 400 });
 

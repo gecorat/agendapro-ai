@@ -56,6 +56,11 @@
       "title": "Mensaje de solicitud (editable)",
       "description": "Mensaje que se env\u00eda al paciente pidi\u00e9ndole una rese\u00f1a"
     },
+    "token": {
+      "type": "string",
+      "title": "Token de acceso",
+      "description": "Token secreto incluido en el enlace p\u00fablico para verificar acceso"
+    },
     "disabled": {
       "type": "boolean",
       "title": "Env\u00edo desactivado para este paciente",

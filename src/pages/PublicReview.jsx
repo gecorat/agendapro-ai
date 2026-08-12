@@ -17,10 +17,17 @@ export default function PublicReview() {
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
 
+  const token = new URLSearchParams(window.location.search).get("t") || "";
+
   useEffect(() => {
+    if (!token) {
+      setError("Enlace inválido: falta el token de acceso.");
+      setLoading(false);
+      return;
+    }
     (async () => {
       try {
-        const res = await base44.functions.invoke("publicReview", { action: "get", id });
+        const res = await base44.functions.invoke("publicReview", { action: "get", id, token });
         const d = res.data;
         if (d?.error) { setError(d.error); }
         else {
@@ -33,13 +40,13 @@ export default function PublicReview() {
         setLoading(false);
       }
     })();
-  }, [id]);
+  }, [id, token]);
 
   async function submit() {
     if (rating < 1) return;
     setSubmitting(true);
     try {
-      const res = await base44.functions.invoke("publicReview", { action: "submit", id, rating, review_text: text });
+      const res = await base44.functions.invoke("publicReview", { action: "submit", id, token, rating, review_text: text });
       if (res.data?.error) { setError(res.data.error); }
       else { setDone(true); }
     } catch {

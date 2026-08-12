@@ -65,6 +65,7 @@ export default function ReviewsManager() {
         appointment_date: appt.start_datetime,
         status: "pending",
         request_message: defaultMessage(firstName),
+        token: crypto.randomUUID(),
         disabled: false,
       });
       toast({ title: "Solicitud creada" });
@@ -141,7 +142,7 @@ function ReviewCard({ review, onReload }) {
   }, [review.id, review.request_message]);
 
   const phoneDigits = (review.patient_phone || "").replace(/\D/g, "");
-  const reviewLink = `${typeof window !== "undefined" ? window.location.origin : ""}/r/${review.id}`;
+  const reviewLink = `${typeof window !== "undefined" ? window.location.origin : ""}/r/${review.id}${review.token ? `?t=${review.token}` : ""}`;
   const fullText = `${message}\n${reviewLink}`;
   const waUrl = phoneDigits ? `https://wa.me/${phoneDigits}?text=${encodeURIComponent(fullText)}` : "";
 

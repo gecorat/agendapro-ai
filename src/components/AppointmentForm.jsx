@@ -137,6 +137,7 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
             appointment_date: payload.start_datetime,
             status: "pending",
             request_message: `¡Hola ${firstName}! Gracias por tu visita. ¿Nos dejarías una reseña? Tu opinión nos ayuda mucho.`,
+            token: crypto.randomUUID(),
             disabled: false,
           });
         } catch {}

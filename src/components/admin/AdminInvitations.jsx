@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2, Copy, Check, Plus, Mail } from "lucide-react";
+import { Loader2, Copy, Check, Plus, Mail, Trash2 } from "lucide-react";
 
 function randomCode() {
   return Math.random().toString(36).slice(2, 8).toUpperCase() + Date.now().toString(36).slice(-4).toUpperCase();
@@ -50,6 +50,17 @@ export default function AdminInvitations() {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleDelete = async (inv) => {
+    if (!window.confirm(`¿Eliminar la invitación ${inv.code}?${inv.status === "used" ? " Ya fue usada." : ""}`)) return;
+    try {
+      await base44.entities.Invitation.delete(inv.id);
+      toast({ title: "Invitación eliminada" });
+      load();
+    } catch (err) {
+      toast({ title: "Error al eliminar", description: err.message, variant: "destructive" });
     }
   };
 
@@ -107,6 +118,9 @@ export default function AdminInvitations() {
                   </span>
                   <Button size="sm" variant="outline" onClick={() => copyLink(inv.code)}>
                     {copied === inv.code ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={() => handleDelete(inv)} title="Eliminar invitación">
+                    <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
               </div>

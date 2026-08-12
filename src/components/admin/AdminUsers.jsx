@@ -13,7 +13,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2, Clock, Calendar, UserPlus } from "lucide-react";
+import { Loader2, Clock, Calendar, UserPlus, Trash2 } from "lucide-react";
 import { PLAN_LABELS } from "@/lib/plan-utils";
 
 function statusFor(settings) {
@@ -75,6 +75,20 @@ export default function AdminUsers() {
   };
 
   useEffect(() => { load(); }, []);
+
+  const deleteUser = async (u, settings) => {
+    if (!window.confirm(`¿Eliminar a ${u.full_name || u.email}? Se borrarán sus datos de configuración. Esta acción no se puede deshacer.`)) return;
+    try {
+      if (settings?.id) {
+        try { await base44.entities.PracticeSettings.delete(settings.id); } catch {}
+      }
+      await base44.entities.User.delete(u.id);
+      toast({ title: "Profesional eliminado" });
+      load();
+    } catch (err) {
+      toast({ title: "Error al eliminar", description: err.message, variant: "destructive" });
+    }
+  };
 
   const setPlan = async (settings, plan) => {
     try {
@@ -180,9 +194,10 @@ export default function AdminUsers() {
                       {s.suspended ? "Activar" : "Suspender"}
                     </Button>
                   </>
-                ) : (
-                  <span className="text-xs text-muted-foreground">Pendiente</span>
-                )}
+                ) : null}
+                <Button size="sm" variant="destructive" onClick={() => deleteUser(u, s)} title="Eliminar profesional">
+                  <Trash2 className="w-4 h-4" />
+                </Button>
               </div>
             </div>
           );

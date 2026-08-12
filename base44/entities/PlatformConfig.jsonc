@@ -1,0 +1,46 @@
+{
+  "name": "PlatformConfig",
+  "type": "object",
+  "properties": {
+    "mercadopago_access_token": {
+      "type": "string",
+      "title": "Mercado Pago \u2014 Access Token"
+    },
+    "mercadopago_public_key": {
+      "type": "string",
+      "title": "Mercado Pago \u2014 Public Key"
+    },
+    "zernio_api_key": {
+      "type": "string",
+      "title": "Zernio \u2014 API Key (proveedor de WhatsApp)"
+    },
+    "bot_preview_limit": {
+      "type": "number",
+      "title": "Tope de mensajes de la demo del bot",
+      "default": 20
+    }
+  },
+  "required": [],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

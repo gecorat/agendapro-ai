@@ -75,8 +75,8 @@
       "title": "Plan",
       "enum": [
         "trial",
-        "base",
-        "pro"
+        "pro",
+        "premium"
       ],
       "default": "trial"
     },
@@ -84,6 +84,29 @@
       "type": "string",
       "format": "date-time",
       "title": "Fin del per\u00edodo de prueba"
+    },
+    "trial_origin": {
+      "type": "string",
+      "title": "Origen del trial",
+      "enum": [
+        "landing",
+        "invitation"
+      ],
+      "default": "landing"
+    },
+    "invitation_code": {
+      "type": "string",
+      "title": "C\u00f3digo de invitaci\u00f3n usado"
+    },
+    "bot_preview_count": {
+      "type": "number",
+      "title": "Mensajes usados en la demo del bot",
+      "default": 0
+    },
+    "suspended": {
+      "type": "boolean",
+      "title": "Cuenta suspendida",
+      "default": false
     }
   },
   "required": [

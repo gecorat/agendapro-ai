@@ -1,0 +1,63 @@
+{
+  "name": "Invitation",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "string",
+      "title": "C\u00f3digo de invitaci\u00f3n"
+    },
+    "email": {
+      "type": "string",
+      "title": "Email destinatario (opcional)",
+      "format": "email"
+    },
+    "label": {
+      "type": "string",
+      "title": "Etiqueta / origen"
+    },
+    "status": {
+      "type": "string",
+      "title": "Estado",
+      "enum": [
+        "pending",
+        "used"
+      ],
+      "default": "pending"
+    },
+    "used_by_id": {
+      "type": "string",
+      "title": "Usuario que la us\u00f3"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Expiraci\u00f3n (opcional)"
+    }
+  },
+  "required": [
+    "code",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

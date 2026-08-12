@@ -35,6 +35,7 @@ export default function Onboarding({ onConfigured }) {
 
       const me = await base44.auth.me();
       const existing = await base44.entities.PracticeSettings.filter({ created_by_id: me.id });
+      const mine = existing?.find((r) => r.created_by_id === me.id);
       let record;
       const baseData = {
         ...form,
@@ -44,8 +45,8 @@ export default function Onboarding({ onConfigured }) {
         trial_origin: trialOrigin,
         invitation_code: inviteCode || undefined,
       };
-      if (existing?.[0]) {
-        record = await base44.entities.PracticeSettings.update(existing[0].id, baseData);
+      if (mine) {
+        record = await base44.entities.PracticeSettings.update(mine.id, baseData);
       } else {
         record = await base44.entities.PracticeSettings.create(baseData);
       }

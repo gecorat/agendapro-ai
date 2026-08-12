@@ -1,0 +1,70 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
+
+export default async function(req) {
+  try {
+    const base44 = createClientFromRequest(req);
+    const body = await req.json();
+    const action = body?.action;
+    const id = body?.id;
+
+    if (!id) return Response.json({ error: 'Falta el id de la solicitud' }, { status: 400 });
+
+    if (action === 'get') {
+      let rev;
+      try {
+        rev = await base44.asServiceRole.entities.ReviewRequest.get(id);
+      } catch {
+        return Response.json({ error: 'Solicitud no encontrada' }, { status: 404 });
+      }
+      if (!rev) return Response.json({ error: 'Solicitud no encontrada' }, { status: 404 });
+      if (rev.disabled) return Response.json({ error: 'Solicitud no disponible' }, { status: 404 });
+
+      let practice_name = '';
+      let page_color = '#0f172a';
+      try {
+        const settings = await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: rev.created_by_id });
+        const s = settings?.[0];
+        practice_name = s?.practice_name || '';
+        page_color = s?.page_color || '#0f172a';
+      } catch {}
+
+      return Response.json({
+        practice_name,
+        page_color,
+        patient_name: rev.patient_name,
+        service_name: rev.service_name,
+        appointment_date: rev.appointment_date,
+        status: rev.status
+      });
+    }
+
+    if (action === 'submit') {
+      const rating = Number(body?.rating);
+      const review_text = (body?.review_text || '').toString().slice(0, 2000);
+      if (!rating || rating < 1 || rating > 5) {
+        return Response.json({ error: 'Calificación inválida' }, { status: 400 });
+      }
+      let rev;
+      try {
+        rev = await base44.asServiceRole.entities.ReviewRequest.get(id);
+      } catch {
+        return Response.json({ error: 'Solicitud no encontrada' }, { status: 404 });
+      }
+      if (!rev) return Response.json({ error: 'Solicitud no encontrada' }, { status: 404 });
+      if (rev.disabled) return Response.json({ error: 'Solicitud no disponible' }, { status: 404 });
+      if (rev.status === 'received') return Response.json({ error: 'Ya respondida' }, { status: 400 });
+
+      await base44.asServiceRole.entities.ReviewRequest.update(id, {
+        rating,
+        review_text,
+        status: 'received',
+        received_at: new Date().toISOString()
+      });
+      return Response.json({ ok: true });
+    }
+
+    return Response.json({ error: 'Acción inválida' }, { status: 400 });
+  } catch (error) {
+    return Response.json({ error: error.message }, { status: 500 });
+  }
+}

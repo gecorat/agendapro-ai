@@ -116,10 +116,30 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
         origin: "manual",
       };
 
+      let apptId = appointment?.id;
       if (appointment) {
         await base44.entities.Appointment.update(appointment.id, payload);
       } else {
-        await base44.entities.Appointment.create(payload);
+        const created = await base44.entities.Appointment.create(payload);
+        apptId = created.id;
+      }
+
+      if (form.status === "completed" && (!appointment || appointment.status !== "completed")) {
+        try {
+          const firstName = patient.first_name || "";
+          await base44.entities.ReviewRequest.create({
+            patient_id: patient.id,
+            patient_name: `${patient.first_name} ${patient.last_name || ""}`.trim(),
+            patient_phone: patient.phone || "",
+            patient_email: patient.email || "",
+            appointment_id: apptId,
+            service_name: service.name,
+            appointment_date: payload.start_datetime,
+            status: "pending",
+            request_message: `¡Hola ${firstName}! Gracias por tu visita. ¿Nos dejarías una reseña? Tu opinión nos ayuda mucho.`,
+            disabled: false,
+          });
+        } catch {}
       }
       onSaved();
       onClose();

@@ -14,6 +14,11 @@
       "type": "string",
       "title": "Tel\u00e9fono del paciente"
     },
+    "patient_email": {
+      "type": "string",
+      "title": "Email del paciente (desnormalizado)",
+      "format": "email"
+    },
     "appointment_id": {
       "type": "string",
       "title": "Cita asociada"
@@ -45,6 +50,16 @@
     "review_text": {
       "type": "string",
       "title": "Texto de la rese\u00f1a recibida"
+    },
+    "request_message": {
+      "type": "string",
+      "title": "Mensaje de solicitud (editable)",
+      "description": "Mensaje que se env\u00eda al paciente pidi\u00e9ndole una rese\u00f1a"
+    },
+    "disabled": {
+      "type": "boolean",
+      "title": "Env\u00edo desactivado para este paciente",
+      "default": false
     },
     "sent_at": {
       "type": "string",

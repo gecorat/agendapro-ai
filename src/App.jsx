@@ -8,7 +8,8 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 // Add page imports here
 import AppLayout from "@/components/AppLayout";
-import Dashboard from "@/pages/Dashboard";
+import Home from "@/pages/Home";
+import PublicReview from "@/pages/PublicReview";
 import Agenda from "@/pages/Agenda";
 import Patients from "@/pages/Patients";
 import Settings from "@/pages/Settings";
@@ -35,7 +36,7 @@ const AuthenticatedApp = () => {
   const location = useLocation();
 
   const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/reset-password"];
-  if (location.pathname.startsWith("/u/") || PUBLIC_PATHS.includes(location.pathname)) return null;
+  if (location.pathname.startsWith("/u/") || location.pathname.startsWith("/r/") || location.pathname === "/landing-preview" || PUBLIC_PATHS.includes(location.pathname)) return null;
 
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
@@ -61,7 +62,7 @@ const AuthenticatedApp = () => {
     <Routes>
       {/* Add your page Route elements here */}
       <Route element={<AppLayout />}>
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/" element={<Home />} />
         <Route path="/agenda" element={<Agenda />} />
         <Route path="/pacientes" element={<Patients />} />
         <Route path="/configuracion" element={<Settings />} />
@@ -92,6 +93,8 @@ function App() {
           <ScrollToTop />
           <Routes>
             <Route path="/u/:handle" element={<PublicBooking />} />
+            <Route path="/r/:id" element={<PublicReview />} />
+            <Route path="/landing-preview" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />

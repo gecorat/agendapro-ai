@@ -50,8 +50,6 @@ export default function AppLayout() {
       title: "Gestión",
       items: [
         { label: preset.patientLabel, path: "/patient-list", icon: Users },
-        { label: "Servicios", path: "/service-manager", icon: ClipboardList },
-        { label: "Horarios", path: "/availability-settings", icon: CalendarClock },
         { label: "Reportes", path: "/analytics", icon: BarChart3 },
         { label: "Reseñas", path: "/reviews-manager", icon: Star },
         { label: "Ajustes", path: "/configuracion", icon: Settings },

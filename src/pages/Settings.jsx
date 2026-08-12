@@ -14,6 +14,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import PracticeProfileSection from "@/components/PracticeProfileSection";
+import AvailabilityEditor from "@/components/AvailabilityEditor";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import PlanGate from "@/components/PlanGate";
 import { getPlanStatus, PLAN_PRICES, PLAN_LABELS } from "@/lib/plan-utils";
@@ -113,6 +114,7 @@ export default function Settings() {
                         {s.duration_minutes} min{s.margin_minutes ? ` · margen ${s.margin_minutes} min` : ""}
                         {s.follow_up_days ? ` · seguimiento ${s.follow_up_days} días` : ""}
                       </p>
+                      {s.price ? <p className="text-xs font-medium text-emerald-600">${Number(s.price).toLocaleString("es-AR")}</p> : null}
                     </div>
                   </div>
                   <div className="flex gap-1">
@@ -131,23 +133,7 @@ export default function Settings() {
 
         {/* Horarios */}
         <TabsContent value="hours" className="space-y-4 mt-4">
-          <div>
-            <h2 className="font-heading font-semibold flex items-center gap-2">
-              <Clock className="w-5 h-5" />
-              Horarios laborales
-            </h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Próximamente: configuración de horarios, descansos y feriados.
-            </p>
-          </div>
-          <Card className="p-6 space-y-3">
-            {days.map((d) => (
-              <div key={d} className="flex items-center justify-between">
-                <span className="text-sm font-medium w-28">{d}</span>
-                <span className="text-sm text-muted-foreground">09:00 - 18:00 (por defecto)</span>
-              </div>
-            ))}
-          </Card>
+          <AvailabilityEditor />
         </TabsContent>
 
         {/* Integraciones */}
@@ -349,6 +335,7 @@ function ServiceForm({ open, onClose, onSaved, service }) {
     duration_minutes: 30,
     margin_minutes: 0,
     color: "#3b82f6",
+    price: "",
     follow_up_days: 0,
     active: true,
   });
@@ -362,11 +349,12 @@ function ServiceForm({ open, onClose, onSaved, service }) {
           duration_minutes: service.duration_minutes || 30,
           margin_minutes: service.margin_minutes || 0,
           color: service.color || "#3b82f6",
+          price: service.price || "",
           follow_up_days: service.follow_up_days || 0,
           active: service.active !== false,
         });
       } else {
-        setForm({ name: "", description: "", duration_minutes: 30, margin_minutes: 0, color: "#3b82f6", follow_up_days: 0, active: true });
+        setForm({ name: "", description: "", duration_minutes: 30, margin_minutes: 0, color: "#3b82f6", price: "", follow_up_days: 0, active: true });
       }
     }
   }, [open, service]);
@@ -401,6 +389,10 @@ function ServiceForm({ open, onClose, onSaved, service }) {
           <div className="space-y-2">
             <Label htmlFor="description">Descripción</Label>
             <Input id="description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="price">Precio (ARS, opcional)</Label>
+            <Input id="price" type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value === "" ? "" : Number(e.target.value) })} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">

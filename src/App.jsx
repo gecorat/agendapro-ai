@@ -20,6 +20,15 @@ import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
+import ServiceManager from "@/pages/ServiceManager";
+import Analytics from "@/pages/Analytics";
+import WelcomeGuide from "@/pages/WelcomeGuide";
+import PatientList from "@/pages/PatientList";
+import ProfileEditor from "@/pages/ProfileEditor";
+import UpgradePlan from "@/pages/UpgradePlan";
+import AvailabilitySettings from "@/pages/AvailabilitySettings";
+import AppointmentHistory from "@/pages/AppointmentHistory";
+import ReviewsManager from "@/pages/ReviewsManager";
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated } = useAuth();
@@ -57,6 +66,15 @@ const AuthenticatedApp = () => {
         <Route path="/pacientes" element={<Patients />} />
         <Route path="/configuracion" element={<Settings />} />
         <Route path="/bot" element={<BotPreview />} />
+        <Route path="/service-manager" element={<ServiceManager />} />
+        <Route path="/analytics" element={<Analytics />} />
+        <Route path="/welcome-guide" element={<WelcomeGuide />} />
+        <Route path="/patient-list" element={<PatientList />} />
+        <Route path="/profile-editor" element={<ProfileEditor />} />
+        <Route path="/upgrade-plan" element={<UpgradePlan />} />
+        <Route path="/availability-settings" element={<AvailabilitySettings />} />
+        <Route path="/appointment-history" element={<AppointmentHistory />} />
+        <Route path="/reviews-manager" element={<ReviewsManager />} />
         <Route path="/admin" element={<Admin />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />

@@ -1,0 +1,121 @@
+{
+  "name": "ReviewRequest",
+  "type": "object",
+  "properties": {
+    "patient_id": {
+      "type": "string",
+      "title": "Paciente"
+    },
+    "patient_name": {
+      "type": "string",
+      "title": "Nombre del paciente (desnormalizado)"
+    },
+    "patient_phone": {
+      "type": "string",
+      "title": "Tel\u00e9fono del paciente"
+    },
+    "appointment_id": {
+      "type": "string",
+      "title": "Cita asociada"
+    },
+    "service_name": {
+      "type": "string",
+      "title": "Servicio"
+    },
+    "appointment_date": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Fecha de la cita"
+    },
+    "status": {
+      "type": "string",
+      "title": "Estado",
+      "enum": [
+        "pending",
+        "sent",
+        "received",
+        "declined"
+      ],
+      "default": "pending"
+    },
+    "rating": {
+      "type": "number",
+      "title": "Calificaci\u00f3n recibida (1-5)"
+    },
+    "review_text": {
+      "type": "string",
+      "title": "Texto de la rese\u00f1a recibida"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Enviada el"
+    },
+    "received_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Respondida el"
+    },
+    "google_review_url": {
+      "type": "string",
+      "title": "Enlace de rese\u00f1a de Google",
+      "format": "url"
+    },
+    "professional_id": {
+      "type": "string",
+      "title": "Profesional titular"
+    }
+  },
+  "required": [
+    "patient_id",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.professional_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {},
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.professional_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.professional_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

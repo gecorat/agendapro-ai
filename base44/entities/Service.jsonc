@@ -10,6 +10,11 @@
       "type": "string",
       "title": "Descripci\u00f3n"
     },
+    "prep_notes": {
+      "type": "string",
+      "title": "Notas de preparaci\u00f3n para el paciente",
+      "description": "Indicaciones que el paciente debe seguir antes de la consulta (ayuno, radiograf\u00edas, etc.)"
+    },
     "duration_minutes": {
       "type": "number",
       "title": "Duraci\u00f3n (minutos)",

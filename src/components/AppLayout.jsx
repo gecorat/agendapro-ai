@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Calendar, Users, LayoutDashboard, Settings, LogOut, CalendarClock, Menu, X, Shield, MessageCircle } from "lucide-react";
+import { Calendar, Users, LayoutDashboard, Settings, LogOut, CalendarClock, Menu, X, Shield, MessageCircle, History, ClipboardList, BarChart3, Star, BookOpen, UserCircle, CreditCard } from "lucide-react";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import Onboarding from "@/pages/Onboarding";
 import TrialBanner from "@/components/TrialBanner";
@@ -37,15 +37,38 @@ export default function AppLayout() {
 
   const isActive = (path) => (path === "/" ? location.pathname === "/" : location.pathname.startsWith(path));
 
-  const navItems = [
-    { label: "Panel", path: "/", icon: LayoutDashboard },
-    { label: "Agenda", path: "/agenda", icon: Calendar },
-    { label: preset.patientLabel, path: "/pacientes", icon: Users },
-    { label: "Probar el bot", path: "/bot", icon: MessageCircle },
-    { label: "Configuración", path: "/configuracion", icon: Settings },
+  const navGroups = [
+    {
+      title: "Principal",
+      items: [
+        { label: "Panel", path: "/", icon: LayoutDashboard },
+        { label: "Agenda", path: "/agenda", icon: Calendar },
+        { label: "Citas pasadas", path: "/appointment-history", icon: History },
+      ],
+    },
+    {
+      title: "Gestión",
+      items: [
+        { label: preset.patientLabel, path: "/patient-list", icon: Users },
+        { label: "Servicios", path: "/service-manager", icon: ClipboardList },
+        { label: "Horarios", path: "/availability-settings", icon: CalendarClock },
+        { label: "Reportes", path: "/analytics", icon: BarChart3 },
+        { label: "Reseñas", path: "/reviews-manager", icon: Star },
+        { label: "Ajustes", path: "/configuracion", icon: Settings },
+      ],
+    },
+    {
+      title: "Crecimiento",
+      items: [
+        { label: "Probar el bot", path: "/bot", icon: MessageCircle },
+        { label: "Guía", path: "/welcome-guide", icon: BookOpen },
+        { label: "Mi perfil", path: "/profile-editor", icon: UserCircle },
+        { label: "Planes", path: "/upgrade-plan", icon: CreditCard },
+      ],
+    },
   ];
   if (user?.role === "admin") {
-    navItems.push({ label: "Administración", path: "/admin", icon: Shield });
+    navGroups.push({ title: "Sistema", items: [{ label: "Administración", path: "/admin", icon: Shield }] });
   }
 
   const SidebarContent = (
@@ -62,26 +85,31 @@ export default function AppLayout() {
         </div>
       </div>
 
-      <nav className="flex-1 px-3 py-4 space-y-1">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const active = isActive(item.path);
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              onClick={() => setMobileOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                active
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              {item.label}
-            </Link>
-          );
-        })}
+      <nav className="flex-1 px-3 py-4 space-y-4 overflow-y-auto">
+        {navGroups.map((group) => (
+          <div key={group.title}>
+            <p className="px-3 mb-1 text-xs font-medium text-muted-foreground/70 uppercase tracking-wide">{group.title}</p>
+            <div className="space-y-1">
+              {group.items.map((item) => {
+                const Icon = item.icon;
+                const active = isActive(item.path);
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => setMobileOpen(false)}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       <div className="border-t border-border p-3">

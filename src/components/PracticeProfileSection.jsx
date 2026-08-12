@@ -29,6 +29,24 @@ export default function PracticeProfileSection() {
   });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  const publicLink = (() => {
+    const h = (form.handle || "").trim().replace(/^@/, "").replace(/\s+/g, "");
+    if (!h) return "";
+    return (typeof window !== "undefined" ? window.location.origin : "") + `/u/${h}`;
+  })();
+
+  async function copyLink() {
+    if (!publicLink) return;
+    try {
+      await navigator.clipboard.writeText(publicLink);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      /* ignore */
+    }
+  }
 
   useEffect(() => {
     if (settings) {
@@ -121,6 +139,14 @@ export default function PracticeProfileSection() {
           />
         </div>
         <p className="text-xs text-muted-foreground">Sin espacios ni @. Tu enlace será /u/{form.handle ? form.handle.replace(/^@/, "").replace(/\s+/g, "") : "tuusuario"}</p>
+        {publicLink && (
+          <div className="mt-3 flex items-center gap-2 p-2.5 rounded-lg border border-border bg-accent/40">
+            <span className="text-xs font-mono text-muted-foreground truncate flex-1">{publicLink}</span>
+            <Button type="button" variant="outline" size="sm" onClick={copyLink} className="shrink-0 h-7">
+              {linkCopied ? <><Check className="w-3.5 h-3.5 mr-1" /> Copiado</> : "Copiar"}
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="space-y-2">

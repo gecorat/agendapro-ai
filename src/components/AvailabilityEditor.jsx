@@ -19,7 +19,22 @@ export default function AvailabilityEditor() {
     setLoading(true);
     try {
       const list = await base44.entities.Availability.filter({});
-      setItems(list || []);
+      if ((list || []).length === 0) {
+        // Horario estándar por defecto: Lunes a Viernes de 9:00 a 18:00.
+        await base44.entities.Availability.bulkCreate(
+          [1, 2, 3, 4, 5].map((d) => ({
+            day_of_week: d,
+            start_time: "09:00",
+            end_time: "18:00",
+            type: "work",
+            label: "",
+          }))
+        );
+        const seeded = await base44.entities.Availability.filter({});
+        setItems(seeded || []);
+      } else {
+        setItems(list);
+      }
     } finally {
       setLoading(false);
     }
@@ -29,7 +44,7 @@ export default function AvailabilityEditor() {
   const holidays = items.filter((a) => a.type === "holiday" || a.type === "block");
 
   async function addRange(day, type) {
-    const def = type === "break" ? { start_time: "13:00", end_time: "14:00", label: "Pausa" } : { start_time: "09:00", end_time: "13:00", label: "" };
+    const def = type === "break" ? { start_time: "13:00", end_time: "14:00", label: "Pausa" } : { start_time: "09:00", end_time: "18:00", label: "" };
     await base44.entities.Availability.create({ day_of_week: day, ...def, type });
     load();
   }

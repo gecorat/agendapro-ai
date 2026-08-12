@@ -2,9 +2,18 @@ import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2, Clock, Calendar } from "lucide-react";
+import { Loader2, Clock, Calendar, UserPlus } from "lucide-react";
 import { PLAN_LABELS } from "@/lib/plan-utils";
 
 function statusFor(settings) {
@@ -26,6 +35,26 @@ export default function AdminUsers() {
   const [users, setUsers] = useState([]);
   const [settingsByUser, setSettingsByUser] = useState({});
   const [loading, setLoading] = useState(true);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviting, setInviting] = useState(false);
+
+  const inviteUser = async () => {
+    const email = inviteEmail.trim();
+    if (!email) return;
+    setInviting(true);
+    try {
+      await base44.users.inviteUser(email, "user");
+      toast({ title: "Invitación enviada", description: `${email} recibirá un correo para registrarse.` });
+      setInviteEmail("");
+      setInviteOpen(false);
+      load();
+    } catch (err) {
+      toast({ title: "Error al invitar", description: err.message, variant: "destructive" });
+    } finally {
+      setInviting(false);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -89,7 +118,32 @@ export default function AdminUsers() {
 
   return (
     <Card className="p-4">
-      <h2 className="font-heading font-semibold mb-3">Profesionales ({users.filter(u => u.role !== "admin").length})</h2>
+      <div className="flex items-center justify-between mb-3 gap-2">
+        <h2 className="font-heading font-semibold">Profesionales ({users.filter(u => u.role !== "admin").length})</h2>
+        <Button size="sm" onClick={() => setInviteOpen(true)}>
+          <UserPlus className="w-4 h-4 mr-1" /> Invitar
+        </Button>
+      </div>
+      <Dialog open={inviteOpen} onOpenChange={(o) => setInviteOpen(o)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Invitar profesional</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">El invitado recibirá un correo para registrarse. Una vez que complete el onboarding, podrá asignarle un plan (incluido Premium) desde esta misma lista.</p>
+            <div className="space-y-2">
+              <Label htmlFor="invite-email">Email</Label>
+              <Input id="invite-email" type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="profesional@email.com" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setInviteOpen(false)}>Cancelar</Button>
+            <Button onClick={inviteUser} disabled={inviting || !inviteEmail.trim()}>
+              {inviting && <Loader2 className="w-4 h-4 mr-1 animate-spin" />} Enviar invitación
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <div className="space-y-2">
         {users.filter(u => u.role !== "admin").map((u) => {
           const s = settingsByUser[u.id];

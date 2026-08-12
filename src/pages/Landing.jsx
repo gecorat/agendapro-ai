@@ -2,7 +2,10 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { CalendarClock, MessageCircle, Bell, Calendar, Users, Check, Sparkles, ArrowRight, Star, ShieldCheck, Zap, Clock } from "lucide-react";
+import {
+  CalendarClock, MessageCircle, Bell, Calendar, Users, Check, Sparkles,
+  ArrowRight, Star, ShieldCheck, Zap, Clock, Phone, Stethoscope,
+} from "lucide-react";
 import { PLAN_PRICES } from "@/lib/plan-utils";
 
 const BENEFITS = [
@@ -45,71 +48,122 @@ const PREMIUM_FEATURES = ["Todo lo de Pro", "Citas ilimitadas", "Bandeja de chat
 
 export default function Landing() {
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <CalendarClock className="w-4 h-4 text-primary-foreground" />
+    <div className="min-h-screen bg-stone-50 text-slate-900 font-body antialiased">
+      <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-stone-50/80 backdrop-blur-md">
+        <div className="max-w-6xl mx-auto px-5 py-3.5 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center">
+              <CalendarClock className="w-4 h-4 text-white" />
             </div>
-            <span className="font-heading font-semibold">AgendaPro</span>
+            <span className="font-heading font-semibold tracking-tight">AgendaPro</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" asChild><Link to="/login">Ingresar</Link></Button>
-            <Button size="sm" asChild><Link to="/register">Probar gratis</Link></Button>
+          <div className="flex items-center gap-1.5">
+            <Button variant="ghost" size="sm" asChild className="text-slate-600 hover:text-slate-900"><Link to="/login">Ingresar</Link></Button>
+            <Button size="sm" asChild className="bg-slate-900 hover:bg-slate-800">
+              <Link to="/register">Probar gratis</Link>
+            </Button>
           </div>
         </div>
       </header>
 
       {/* Hero */}
-      <section className="px-4 py-12 md:py-20">
-        <div className="max-w-3xl mx-auto text-center">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary mb-4">
-            <Sparkles className="w-3.5 h-3.5" /> Recepcionista virtual con IA
+      <section className="px-5 pt-14 pb-10 md:pt-20 md:pb-16">
+        <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
+          <div>
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700 mb-5 ring-1 ring-inset ring-indigo-100">
+              <Sparkles className="w-3.5 h-3.5" /> Recepcionista virtual con IA
+            </div>
+            <h1 className="text-4xl md:text-5xl lg:text-[3.25rem] font-heading font-bold tracking-tight leading-[1.08]">
+              Tu agenda llena,<br className="hidden sm:block" /> sin atender el teléfono
+            </h1>
+            <p className="mt-5 text-base md:text-lg text-slate-600 max-w-xl leading-relaxed">
+              AgendaPro responde, agenda y recuerda las citas de tus pacientes por WhatsApp, las 24 horas.
+              Vos te dedicás a atender, el bot se encarga del resto.
+            </p>
+            <div className="mt-7 flex flex-col sm:flex-row gap-3">
+              <Button size="lg" asChild className="bg-slate-900 hover:bg-slate-800 h-11 px-6 text-sm">
+                <Link to="/register">Probar gratis 14 días <ArrowRight className="w-4 h-4 ml-1.5" /></Link>
+              </Button>
+              <Button size="lg" variant="outline" asChild className="h-11 px-6 border-slate-300 text-slate-700 hover:bg-white">
+                <Link to="/login">Ya tengo cuenta</Link>
+              </Button>
+            </div>
+            <p className="mt-4 text-xs text-slate-500 flex items-center gap-1.5">
+              <Check className="w-3.5 h-3.5 text-emerald-600" /> Sin tarjeta de crédito · Configurás todo y probás antes de pagar
+            </p>
           </div>
-          <h1 className="text-3xl md:text-5xl font-heading font-bold tracking-tight">
-            Tu agenda llena,<br className="hidden sm:block" /> sin atender el teléfono
-          </h1>
-          <p className="mt-4 text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
-            AgendaPro responde, agenda y recuerda las citas de tus pacientes por WhatsApp, las 24 horas.
-            Vos te dedicás a atender, el bot se encarga del resto.
-          </p>
-          <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
-            <Button size="lg" asChild>
-              <Link to="/register">Probar gratis 14 días <ArrowRight className="w-4 h-4 ml-1" /></Link>
-            </Button>
-            <Button size="lg" variant="outline" asChild><Link to="/login">Ya tengo cuenta</Link></Button>
+
+          {/* Visual mock */}
+          <div className="relative lg:pl-6">
+            <div className="absolute -inset-4 bg-gradient-to-br from-indigo-100/60 to-emerald-100/40 rounded-3xl blur-2xl" />
+            <Card className="relative p-5 shadow-xl shadow-slate-200/60 border-slate-200 bg-white">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-xs text-slate-400">Próximas citas</p>
+                  <p className="font-heading font-semibold text-sm">Hoy, Jueves 14</p>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Bot activo
+                </div>
+              </div>
+              <div className="space-y-2.5">
+                {[
+                  { t: "09:30", n: "María González", s: "Limpieza dental", c: "bg-blue-500" },
+                  { t: "11:00", n: "Carlos Pérez", s: "Consulta general", c: "bg-amber-500" },
+                  { t: "15:30", n: "Ana Romero", s: "Control mensual", c: "bg-emerald-500" },
+                ].map((a) => (
+                  <div key={a.t} className="flex items-center gap-3 p-2.5 rounded-lg border border-slate-100 bg-slate-50/60">
+                    <div className="text-xs font-medium text-slate-500 w-10">{a.t}</div>
+                    <div className={`w-1 h-8 rounded-full ${a.c}`} />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{a.n}</p>
+                      <p className="text-xs text-slate-500 truncate">{a.s}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 rounded-lg bg-slate-900 p-3 text-white">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="text-xs font-medium">WhatsApp · 08:47</span>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  "Hola, necesito un turno para limpieza dental" →
+                  <span className="text-white"> "Listo María, te agendé mañana a las 09:30. Te recuerdo media hora antes. 🦷"</span>
+                </p>
+              </div>
+            </Card>
           </div>
-          <p className="mt-3 text-xs text-muted-foreground flex items-center justify-center gap-1">
-            <Check className="w-3.5 h-3.5 text-emerald-500" /> Sin tarjeta de crédito · Configurás todo y probás antes de pagar
-          </p>
         </div>
 
         {/* Triggers */}
-        <div className="max-w-3xl mx-auto mt-10 grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="max-w-5xl mx-auto mt-14 grid grid-cols-2 md:grid-cols-4 gap-6 border-t border-slate-200 pt-10">
           {TRIGGERS.map((t) => (
             <div key={t.label} className="text-center">
-              <p className="text-2xl md:text-3xl font-heading font-bold text-primary">{t.value}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{t.label}</p>
+              <p className="text-2xl md:text-3xl font-heading font-bold text-slate-900">{t.value}</p>
+              <p className="text-xs text-slate-500 mt-1 leading-tight">{t.label}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* Benefits */}
-      <section className="px-4 py-8 border-t border-border bg-accent/20">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-heading font-bold text-center mb-8">Todo lo que necesitás para no perder un solo turno</h2>
+      <section className="px-5 py-16 border-y border-slate-200 bg-white">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center max-w-2xl mx-auto mb-10">
+            <h2 className="text-2xl md:text-3xl font-heading font-bold tracking-tight">Todo lo que necesitás para no perder un solo turno</h2>
+            <p className="text-slate-500 mt-2 text-sm">Una plataforma pensada para profesionales de la salud, sin curva de aprendizaje.</p>
+          </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {BENEFITS.map((f) => {
               const Icon = f.icon;
               return (
-                <Card key={f.title} className="p-5">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
-                    <Icon className="w-5 h-5 text-primary" />
+                <Card key={f.title} className="p-6 border-slate-200 hover:border-slate-300 hover:shadow-md transition-all bg-white">
+                  <div className="w-11 h-11 rounded-xl bg-slate-900 flex items-center justify-center mb-4">
+                    <Icon className="w-5 h-5 text-white" />
                   </div>
-                  <h3 className="font-heading font-semibold">{f.title}</h3>
-                  <p className="text-sm text-muted-foreground mt-1">{f.desc}</p>
+                  <h3 className="font-heading font-semibold text-[15px]">{f.title}</h3>
+                  <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">{f.desc}</p>
                 </Card>
               );
             })}
@@ -118,24 +172,24 @@ export default function Landing() {
       </section>
 
       {/* Testimonials */}
-      <section className="px-4 py-12">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-8">
+      <section className="px-5 py-16">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-10">
             <div className="inline-flex items-center gap-1 text-amber-500 mb-2">
               {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
             </div>
-            <h2 className="text-2xl md:text-3xl font-heading font-bold">Profesionales que ya delegaron su agenda</h2>
+            <h2 className="text-2xl md:text-3xl font-heading font-bold tracking-tight">Profesionales que ya delegaron su agenda</h2>
           </div>
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-3 gap-5">
             {TESTIMONIALS.map((t) => (
-              <Card key={t.name} className="p-5">
-                <div className="flex gap-0.5 text-amber-500 mb-2">
+              <Card key={t.name} className="p-6 border-slate-200 bg-white">
+                <div className="flex gap-0.5 text-amber-500 mb-3">
                   {[...Array(t.rating)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
                 </div>
-                <p className="text-sm">"{t.text}"</p>
-                <div className="mt-3">
+                <p className="text-[15px] text-slate-700 leading-relaxed">"{t.text}"</p>
+                <div className="mt-4 pt-4 border-t border-slate-100">
                   <p className="font-medium text-sm">{t.name}</p>
-                  <p className="text-xs text-muted-foreground">{t.role}</p>
+                  <p className="text-xs text-slate-500">{t.role}</p>
                 </div>
               </Card>
             ))}
@@ -144,16 +198,19 @@ export default function Landing() {
       </section>
 
       {/* How it works */}
-      <section className="px-4 py-12 border-t border-border bg-accent/20">
+      <section className="px-5 py-16 border-y border-slate-200 bg-slate-900 text-white">
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-heading font-bold text-center">Empezá en 3 pasos</h2>
-          <div className="mt-8 space-y-6">
-            {STEPS.map((s) => (
+          <h2 className="text-2xl md:text-3xl font-heading font-bold tracking-tight text-center">Empezá en 3 pasos</h2>
+          <div className="mt-10 space-y-7">
+            {STEPS.map((s, i) => (
               <div key={s.n} className="flex gap-4">
-                <div className="shrink-0 w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm">{s.n}</div>
-                <div>
+                <div className="relative shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-white text-slate-900 flex items-center justify-center font-semibold text-sm">{s.n}</div>
+                  {i < STEPS.length - 1 && <div className="absolute left-1/2 top-10 -translate-x-1/2 w-px h-7 bg-white/20" />}
+                </div>
+                <div className="pb-2">
                   <h3 className="font-heading font-semibold">{s.t}</h3>
-                  <p className="text-sm text-muted-foreground mt-0.5">{s.d}</p>
+                  <p className="text-sm text-slate-400 mt-1 leading-relaxed">{s.d}</p>
                 </div>
               </div>
             ))}
@@ -162,68 +219,83 @@ export default function Landing() {
       </section>
 
       {/* Pricing */}
-      <section id="precios" className="px-4 py-12 border-t border-border">
+      <section id="precios" className="px-5 py-16">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-heading font-bold text-center">Planes simples</h2>
-          <p className="text-center text-muted-foreground mt-2">Probás gratis 14 días. Después elegís.</p>
-          <div className="mt-8 grid md:grid-cols-2 gap-4">
-            <Card className="p-6 flex flex-col">
-              <div className="flex items-center gap-2">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl md:text-3xl font-heading font-bold tracking-tight">Planes simples</h2>
+            <p className="text-slate-500 mt-2 text-sm">Probás gratis 14 días. Después elegís.</p>
+          </div>
+          <div className="grid md:grid-cols-2 gap-5">
+            <Card className="p-7 flex flex-col border-slate-200 bg-white">
+              <div className="flex items-center gap-2 mb-1">
                 <span className="font-heading font-semibold text-lg">Pro</span>
-                <span className="text-xs rounded-full bg-primary/10 text-primary px-2 py-0.5 font-medium">Más popular</span>
+                <span className="text-xs rounded-full bg-indigo-50 text-indigo-700 px-2 py-0.5 font-medium ring-1 ring-inset ring-indigo-100">Más popular</span>
               </div>
-              <p className="text-3xl font-heading font-bold mt-2">{PLAN_PRICES.pro.toLocaleString("es-AR")}<span className="text-sm font-normal text-muted-foreground"> ARS / mes</span></p>
-              <ul className="mt-4 space-y-2.5 flex-1">
-                {PRO_FEATURES.map((f) => <li key={f} className="flex items-start gap-2 text-sm"><Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" /> {f}</li>)}
+              <p className="text-3xl font-heading font-bold mt-3">{PLAN_PRICES.pro.toLocaleString("es-AR")}<span className="text-sm font-normal text-slate-500"> ARS / mes</span></p>
+              <ul className="mt-5 space-y-3 flex-1">
+                {PRO_FEATURES.map((f) => <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700"><Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" /> {f}</li>)}
               </ul>
-              <Button className="mt-6" asChild><Link to="/register">Empezar prueba</Link></Button>
+              <Button className="mt-7 bg-slate-900 hover:bg-slate-800 h-11" asChild><Link to="/register">Empezar prueba</Link></Button>
             </Card>
-            <Card className="p-6 flex flex-col border-2 border-primary">
-              <div className="flex items-center gap-2">
+            <Card className="p-7 flex flex-col border-2 border-slate-900 bg-white relative">
+              <div className="flex items-center gap-2 mb-1">
                 <span className="font-heading font-semibold text-lg">Premium</span>
                 <Sparkles className="w-4 h-4 text-amber-500" />
               </div>
-              <p className="text-3xl font-heading font-bold mt-2">{PLAN_PRICES.premium.toLocaleString("es-AR")}<span className="text-sm font-normal text-muted-foreground"> ARS / mes</span></p>
-              <ul className="mt-4 space-y-2.5 flex-1">
-                {PREMIUM_FEATURES.map((f) => <li key={f} className="flex items-start gap-2 text-sm"><Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" /> {f}</li>)}
+              <p className="text-3xl font-heading font-bold mt-3">{PLAN_PRICES.premium.toLocaleString("es-AR")}<span className="text-sm font-normal text-slate-500"> ARS / mes</span></p>
+              <ul className="mt-5 space-y-3 flex-1">
+                {PREMIUM_FEATURES.map((f) => <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700"><Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" /> {f}</li>)}
               </ul>
-              <Button className="mt-6" asChild><Link to="/register">Empezar prueba</Link></Button>
+              <Button className="mt-7 bg-slate-900 hover:bg-slate-800 h-11" asChild><Link to="/register">Empezar prueba</Link></Button>
             </Card>
           </div>
         </div>
       </section>
 
       {/* FAQ */}
-      <section className="px-4 py-12 border-t border-border bg-accent/20">
+      <section className="px-5 py-16 border-t border-slate-200 bg-white">
         <div className="max-w-2xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-heading font-bold text-center mb-8">Preguntas frecuentes</h2>
+          <h2 className="text-2xl md:text-3xl font-heading font-bold tracking-tight text-center mb-8">Preguntas frecuentes</h2>
           <div className="space-y-3">
             {FAQ.map((f) => (
-              <Card key={f.q} className="p-4">
-                <p className="font-medium text-sm">{f.q}</p>
-                <p className="text-sm text-muted-foreground mt-1">{f.a}</p>
-              </Card>
+              <div key={f.q} className="rounded-xl border border-slate-200 p-5">
+                <p className="font-medium text-[15px]">{f.q}</p>
+                <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">{f.a}</p>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
       {/* Final CTA */}
-      <section className="px-4 py-16">
+      <section className="px-5 py-20 bg-slate-900 text-white">
         <div className="max-w-2xl mx-auto text-center">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary mb-4">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white mb-5">
             <Clock className="w-3.5 h-3.5" /> Últimos cupos del mes
           </div>
-          <h2 className="text-2xl md:text-3xl font-heading font-bold">Empezá hoy, sin compromiso</h2>
-          <p className="text-muted-foreground mt-2">Configurá tu consultorio y probá el bot. Sin tarjeta, sin letras chicas.</p>
-          <Button size="lg" className="mt-6" asChild>
-            <Link to="/register">Crear cuenta gratis <ArrowRight className="w-4 h-4 ml-1" /></Link>
+          <h2 className="text-3xl md:text-4xl font-heading font-bold tracking-tight">Empezá hoy, sin compromiso</h2>
+          <p className="text-slate-400 mt-3 leading-relaxed">Configurá tu consultorio y probá el bot. Sin tarjeta, sin letras chicas.</p>
+          <Button size="lg" className="mt-7 bg-white text-slate-900 hover:bg-slate-100 h-12 px-8" asChild>
+            <Link to="/register">Crear cuenta gratis <ArrowRight className="w-4 h-4 ml-1.5" /></Link>
           </Button>
         </div>
       </section>
 
-      <footer className="border-t border-border px-4 py-6 text-center text-xs text-muted-foreground">
-        AgendaPro · Recepcionista virtual para profesionales de la salud
+      <footer className="border-t border-slate-800 bg-slate-900 text-slate-400 px-5 py-8">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md bg-white/10 flex items-center justify-center">
+              <CalendarClock className="w-3.5 h-3.5 text-white" />
+            </div>
+            <span className="font-medium text-slate-300">AgendaPro</span>
+            <span className="text-slate-600">·</span>
+            <span>Recepcionista virtual para profesionales de la salud</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="flex items-center gap-1"><Stethoscope className="w-3.5 h-3.5" /> Para profesionales</span>
+            <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" /> Soporte</span>
+          </div>
+        </div>
       </footer>
     </div>
   );

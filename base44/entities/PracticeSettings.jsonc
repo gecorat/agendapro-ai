@@ -11,6 +11,15 @@
         "doctor",
         "physiotherapist",
         "nutritionist",
+        "dermatologist",
+        "pediatrician",
+        "gynecologist",
+        "cardiologist",
+        "ophthalmologist",
+        "speech_therapist",
+        "occupational_therapist",
+        "podiatrist",
+        "veterinarian",
         "other"
       ],
       "default": "dentist"

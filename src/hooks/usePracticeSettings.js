@@ -8,10 +8,16 @@ export function usePracticeSettings() {
 
   const load = useCallback(async () => {
     try {
+      console.log("[usePracticeSettings] load: iniciando...");
       const me = await base44.auth.me();
+      console.log("[usePracticeSettings] load: user", me?.id);
       const list = await base44.entities.PracticeSettings.list();
-      setSettings(list?.find((r) => r.created_by_id === me.id) || null);
-    } catch {
+      console.log("[usePracticeSettings] load: list", list?.length, "records");
+      const found = list?.find((r) => r.created_by_id === me.id) || null;
+      console.log("[usePracticeSettings] load: found settings?", !!found, found);
+      setSettings(found);
+    } catch (e) {
+      console.error("[usePracticeSettings] load: ERROR", e);
       setSettings(null);
     } finally {
       setLoading(false);

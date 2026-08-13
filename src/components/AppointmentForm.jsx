@@ -346,10 +346,9 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
       open={patientFormOpen}
       onClose={() => setPatientFormOpen(false)}
       onSaved={async () => {
-        setPatientFormOpen(false);
-        const pats = await base44.entities.Patient.filter({});
-        setPatients(pats || []);
-      }}
+          const pats = await base44.entities.Patient.filter({});
+          setPatients(pats || []);
+        }}
     />
     </>
   );

@@ -19,8 +19,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function PatientForm({ open, onClose, onSaved, patient }) {
+  const { toast } = useToast();
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     first_name: "",
@@ -75,6 +77,12 @@ export default function PatientForm({ open, onClose, onSaved, patient }) {
       }
       if (onSaved) await onSaved();
       onClose();
+    } catch (err) {
+      toast({
+        title: patient ? "No se pudo guardar" : "No se pudo crear el paciente",
+        description: err?.message || "Intentá nuevamente.",
+        variant: "destructive",
+      });
     } finally {
       setSaving(false);
     }

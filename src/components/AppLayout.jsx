@@ -97,7 +97,11 @@ export default function AppLayout() {
                     to={item.path}
                     onClick={() => setMobileOpen(false)}
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                      active
+                        ? "bg-primary text-primary-foreground"
+                        : item.path === "/bot"
+                        ? "bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20"
+                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                     }`}
                   >
                     <Icon className="w-4 h-4" />
@@ -144,11 +148,13 @@ export default function AppLayout() {
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile top bar */}
         <header className="md:hidden flex items-center justify-between px-4 py-3 border-b border-border bg-card">
-          <button onClick={() => setMobileOpen(true)}>
+          <button onClick={() => setMobileOpen(true)} className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-accent transition-colors">
             <Menu className="w-6 h-6" />
           </button>
           <span className="font-heading font-semibold text-sm">AgendaPro</span>
-          <div className="w-6" />
+          <Link to="/profile-editor" className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-accent transition-colors">
+            <UserCircle className="w-6 h-6" />
+          </Link>
         </header>
 
         <main className="flex-1 overflow-y-auto">

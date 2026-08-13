@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 
-const PLAN_PRICES = { pro: 119000, premium: 169000 };
-const PLAN_LABELS = { pro: 'Pro', premium: 'Premium' };
+const PLAN_PRICES = { basic: 39000, pro: 119000, premium: 169000 };
+const PLAN_LABELS = { basic: 'Básico', pro: 'Pro', premium: 'Premium' };
 
 export default async function(req) {
   try {

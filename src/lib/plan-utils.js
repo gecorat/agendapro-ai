@@ -1,11 +1,13 @@
 export const TRIAL_DAYS = 14;
 export const PLAN_PRICES = {
+  basic: "$39.000",
   pro: "$119.000",
   premium: "$169.000",
 };
 
 export const PLAN_LABELS = {
   trial: "Prueba",
+  basic: "Básico",
   pro: "Pro",
   premium: "Premium",
 };
@@ -16,7 +18,7 @@ export function getPlanStatus(settings) {
   }
   const plan = settings.plan || "trial";
   const isTrial = plan === "trial";
-  const hasPaidPlan = plan === "pro" || plan === "premium";
+  const hasPaidPlan = plan === "basic" || plan === "pro" || plan === "premium";
   let trialExpired = false;
   let daysLeft = 0;
   if (isTrial && settings.trial_ends_at) {

@@ -8,6 +8,7 @@ import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import { getPlanStatus, PLAN_PRICES, PLAN_LABELS } from "@/lib/plan-utils";
 import { Check, Loader2, Sparkles, CreditCard, Lock } from "lucide-react";
 
+const BASIC_FEATURES = ["Página pública de reservas", "Agenda manual + calendario", "Gestión de pacientes", "Recordatorios por email"];
 const PRO_FEATURES = ["Bot de WhatsApp con IA", "Agenda y reservas online", "Recordatorios automáticos", "Página pública de reservas", "Hasta 200 citas mensuales"];
 const PREMIUM_FEATURES = ["Todo lo de Pro", "Citas ilimitadas", "Bandeja de chats con toma de control", "Reportes y métricas avanzadas", "Solicitud automática de reseñas", "Soporte prioritario"];
 
@@ -73,7 +74,19 @@ export default function UpgradePlan() {
         </div>
       </Card>
 
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid md:grid-cols-3 gap-4">
+        <Card className={`p-6 flex flex-col ${status.plan === "basic" ? "border-2 border-primary" : ""}`}>
+          <span className="font-heading font-semibold text-lg">Básico</span>
+          <p className="text-3xl font-heading font-bold mt-2">{PLAN_PRICES.basic.toLocaleString("es-AR")}<span className="text-sm font-normal text-muted-foreground"> ARS/mes</span></p>
+          <ul className="mt-4 space-y-2.5 flex-1">
+            {BASIC_FEATURES.map((f) => <li key={f} className="flex items-start gap-2 text-sm"><Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" /> {f}</li>)}
+          </ul>
+          <Button className="mt-6" variant="outline" onClick={() => handlePay("basic")} disabled={paying === "basic"}>
+            {paying === "basic" ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <CreditCard className="w-4 h-4 mr-1" />}
+            {status.plan === "basic" ? "Plan actual" : "Pagar con Mercado Pago"}
+          </Button>
+        </Card>
+
         <Card className={`p-6 flex flex-col ${status.plan === "pro" ? "border-2 border-primary" : ""}`}>
           <div className="flex items-center gap-2">
             <span className="font-heading font-semibold text-lg">Pro</span>

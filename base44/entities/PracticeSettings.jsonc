@@ -94,6 +94,7 @@
       "title": "Plan",
       "enum": [
         "trial",
+        "basic",
         "pro",
         "premium"
       ],

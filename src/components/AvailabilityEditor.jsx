@@ -5,13 +5,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Plus, Trash2, ChevronDown, ChevronRight, CalendarOff, Coffee, RotateCcw, Loader2 } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 const DAYS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
 export default function AvailabilityEditor() {
+  const { toast } = useToast();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [resetting, setResetting] = useState(false);
+  const [deleting, setDeleting] = useState(null);
   const [openDay, setOpenDay] = useState(1);
 
   useEffect(() => { load(); }, []);
@@ -21,15 +24,13 @@ export default function AvailabilityEditor() {
     try {
       const list = await base44.entities.Availability.filter({});
       if ((list || []).length === 0) {
-        // Horario estándar por defecto: Lunes a Viernes de 9:00 a 18:00.
+        // Horario estándar por defecto: Lunes a Viernes, mañana + almuerzo + tarde.
         await base44.entities.Availability.bulkCreate(
-          [1, 2, 3, 4, 5].map((d) => ({
-            day_of_week: d,
-            start_time: "09:00",
-            end_time: "18:00",
-            type: "work",
-            label: "",
-          }))
+          [1, 2, 3, 4, 5].flatMap((d) => [
+            { day_of_week: d, start_time: "09:00", end_time: "13:00", type: "work", label: "" },
+            { day_of_week: d, start_time: "13:00", end_time: "14:00", type: "break", label: "Almuerzo" },
+            { day_of_week: d, start_time: "14:00", end_time: "18:00", type: "work", label: "" },
+          ])
         );
         const seeded = await base44.entities.Availability.filter({});
         setItems(seeded || []);
@@ -59,8 +60,15 @@ export default function AvailabilityEditor() {
   }
 
   async function deleteItem(id) {
-    setItems((prev) => prev.filter((it) => it.id !== id));
-    await base44.entities.Availability.delete(id);
+    setDeleting(id);
+    try {
+      await base44.entities.Availability.delete(id);
+      setItems((prev) => prev.filter((it) => it.id !== id));
+    } catch (err) {
+      toast({ title: "No se pudo eliminar", description: err?.message, variant: "destructive" });
+    } finally {
+      setDeleting(null);
+    }
   }
 
   async function resetSchedule() {
@@ -141,9 +149,9 @@ export default function AvailabilityEditor() {
                       <div className="flex items-center gap-2">
                         {it.type === "break" ? <Coffee className="w-3.5 h-3.5 text-amber-600" /> : null}
                         <span className="text-xs font-medium">{it.type === "break" ? "Pausa" : "Atención"}</span>
-                        <button onClick={() => deleteItem(it.id)} className="ml-auto p-1 rounded hover:bg-black/5 text-muted-foreground hover:text-destructive">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        <button onClick={() => deleteItem(it.id)} disabled={deleting === it.id} className="ml-auto p-1.5 rounded hover:bg-black/5 text-muted-foreground hover:text-destructive disabled:opacity-50">
+                           {deleting === it.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                         </button>
                       </div>
                       <div className="flex items-center gap-2">
                         <Input type="time" value={it.start_time} onChange={(e) => updateItem(it.id, { start_time: e.target.value })} className="h-8 text-sm" />
@@ -179,8 +187,8 @@ export default function AvailabilityEditor() {
               <CalendarOff className="w-4 h-4 text-muted-foreground shrink-0" />
               <Input type="date" value={h.date || ""} onChange={(e) => updateItem(h.id, { date: e.target.value })} className="h-8 text-sm max-w-[180px]" />
               <Input value={h.label || ""} placeholder="Etiqueta" onChange={(e) => updateItem(h.id, { label: e.target.value })} className="h-8 text-sm" />
-              <button onClick={() => deleteItem(h.id)} className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive shrink-0">
-                <Trash2 className="w-4 h-4" />
+              <button onClick={() => deleteItem(h.id)} disabled={deleting === h.id} className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive shrink-0 disabled:opacity-50">
+                {deleting === h.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
               </button>
             </Card>
           ))}

@@ -101,14 +101,19 @@ export default function PublicBooking() {
         if (!s || s.published === false) { setNotFound(true); return; }
         setSettings(s);
         const pid = s.created_by_id;
-        const [servs, appts, avail] = await Promise.all([
+        const [servs, avail] = await Promise.all([
           base44.entities.Service.filter({ created_by_id: pid, active: true }),
-          base44.entities.Appointment.filter({ created_by_id: pid }),
           base44.entities.Availability.filter({ created_by_id: pid }),
         ]);
         setServices(servs || []);
-        setAppointments(appts || []);
         setAvailability(avail || []);
+        // Appointments may be restricted by RLS for public users; fetch separately so it never blocks the page
+        try {
+          const appts = await base44.entities.Appointment.filter({ created_by_id: pid });
+          setAppointments(appts || []);
+        } catch {
+          setAppointments([]);
+        }
       } catch {
         setNotFound(true);
       } finally {

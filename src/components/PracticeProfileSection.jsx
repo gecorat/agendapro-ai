@@ -6,10 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Check, Upload } from "lucide-react";
+import { Loader2, Check, Upload, ExternalLink } from "lucide-react";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import { PROFESSIONAL_TYPES, getTypeLabel } from "@/lib/professional-presets";
 import { useToast } from "@/components/ui/use-toast";
+import { Link } from "react-router-dom";
 
 export default function PracticeProfileSection() {
   const { settings, save, reload } = usePracticeSettings();
@@ -144,6 +145,11 @@ export default function PracticeProfileSection() {
             <span className="text-xs font-mono text-muted-foreground truncate flex-1">{publicLink}</span>
             <Button type="button" variant="outline" size="sm" onClick={copyLink} className="shrink-0 h-7">
               {linkCopied ? <><Check className="w-3.5 h-3.5 mr-1" /> Copiado</> : "Copiar"}
+            </Button>
+            <Button type="button" variant="outline" size="sm" asChild className="shrink-0 h-7">
+              <Link to={`/u/${(form.handle || "").replace(/^@/, "").replace(/\s+/g, "")}`} target="_blank">
+                <ExternalLink className="w-3.5 h-3.5 mr-1" /> Ver
+              </Link>
             </Button>
           </div>
         )}

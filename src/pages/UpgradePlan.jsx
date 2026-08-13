@@ -9,8 +9,8 @@ import { getPlanStatus, PLAN_PRICES, PLAN_LABELS } from "@/lib/plan-utils";
 import { Check, Loader2, Sparkles, CreditCard, Lock } from "lucide-react";
 
 const BASIC_FEATURES = ["Página pública de reservas", "Agenda manual + calendario", "Gestión de pacientes", "Recordatorios por email"];
-const PRO_FEATURES = ["Bot de WhatsApp con IA", "Agenda y reservas online", "Recordatorios automáticos", "Página pública de reservas", "Hasta 200 citas mensuales"];
-const PREMIUM_FEATURES = ["Todo lo de Pro", "Citas ilimitadas", "Bandeja de chats con toma de control", "Reportes y métricas avanzadas", "Solicitud automática de reseñas", "Soporte prioritario"];
+const PRO_FEATURES = ["Bot de WhatsApp con IA", "Hasta 200 citas mensuales"];
+const PREMIUM_FEATURES = ["Hasta 500 citas mensuales", "Bandeja de chats con toma de control", "Reportes y métricas avanzadas", "Solicitud automática de reseñas"];
 
 export default function UpgradePlan() {
   const { toast } = useToast();

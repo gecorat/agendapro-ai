@@ -141,16 +141,21 @@ export default function PracticeProfileSection() {
         </div>
         <p className="text-xs text-muted-foreground">Sin espacios ni @. Tu enlace será /u/{form.handle ? form.handle.replace(/^@/, "").replace(/\s+/g, "") : "tuusuario"}</p>
         {publicLink && (
-          <div className="mt-3 flex items-center gap-2 p-2.5 rounded-lg border border-border bg-accent/40">
-            <span className="text-xs font-mono text-muted-foreground truncate flex-1">{publicLink}</span>
-            <Button type="button" variant="outline" size="sm" onClick={copyLink} className="shrink-0 h-7">
-              {linkCopied ? <><Check className="w-3.5 h-3.5 mr-1" /> Copiado</> : "Copiar"}
-            </Button>
-            <Button type="button" variant="outline" size="sm" asChild className="shrink-0 h-7">
-              <Link to={`/u/${(form.handle || "").replace(/^@/, "").replace(/\s+/g, "")}`} target="_blank">
-                <ExternalLink className="w-3.5 h-3.5 mr-1" /> Ver
-              </Link>
-            </Button>
+          <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-2 p-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <ExternalLink className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span className="text-xs font-mono text-emerald-700 truncate flex-1">{publicLink}</span>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button type="button" variant="outline" size="sm" onClick={copyLink} className="h-8 border-emerald-500/30 text-emerald-700 hover:bg-emerald-500/10">
+                {linkCopied ? <><Check className="w-3.5 h-3.5 mr-1" /> Copiado</> : "Copiar link"}
+              </Button>
+              <Button type="button" size="sm" asChild className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white">
+                <Link to={`/u/${(form.handle || "").replace(/^@/, "").replace(/\s+/g, "")}`} target="_blank">
+                  <ExternalLink className="w-3.5 h-3.5 mr-1" /> Ver página
+                </Link>
+              </Button>
+            </div>
           </div>
         )}
       </div>

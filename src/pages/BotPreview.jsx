@@ -173,7 +173,7 @@ export default function BotPreview() {
           <h1 className="text-xl font-heading font-semibold flex items-center gap-2">
             <MessageCircle className="w-5 h-5" /> Probar el bot
           </h1>
-          <p className="text-xs text-muted-foreground truncate">Simulá cómo respondería el bot a tus pacientes. No se guardan ni agendan citas reales.</p>
+          <p className="text-xs text-muted-foreground truncate">Durante tu prueba podés usar la página de citas, agenda, pacientes y reportes sin restricciones.</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <span className="text-xs text-muted-foreground whitespace-nowrap">

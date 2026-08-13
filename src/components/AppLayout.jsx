@@ -49,7 +49,7 @@ export default function AppLayout() {
     {
       title: "Gestión",
       items: [
-        { label: preset.patientLabel, path: "/patient-list", icon: Users },
+        { label: preset.patientLabel, path: "/pacientes", icon: Users },
         { label: "Reportes", path: "/analytics", icon: BarChart3 },
         { label: "Reseñas", path: "/reviews-manager", icon: Star },
         { label: "Ajustes", path: "/configuracion", icon: Settings },

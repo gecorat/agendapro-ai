@@ -30,6 +30,8 @@ export default function PatientForm({ open, onClose, onSaved, patient }) {
     notes: "",
     contact_preference: "whatsapp",
     consent_reminders: true,
+    no_show_count: 0,
+    cancellation_count: 0,
   });
 
   useEffect(() => {
@@ -43,6 +45,8 @@ export default function PatientForm({ open, onClose, onSaved, patient }) {
           notes: patient.notes || "",
           contact_preference: patient.contact_preference || "whatsapp",
           consent_reminders: patient.consent_reminders !== false,
+          no_show_count: patient.no_show_count || 0,
+          cancellation_count: patient.cancellation_count || 0,
         });
       } else {
         setForm({
@@ -53,6 +57,8 @@ export default function PatientForm({ open, onClose, onSaved, patient }) {
           notes: "",
           contact_preference: "whatsapp",
           consent_reminders: true,
+          no_show_count: 0,
+          cancellation_count: 0,
         });
       }
     }
@@ -146,6 +152,28 @@ export default function PatientForm({ open, onClose, onSaved, patient }) {
             <Label htmlFor="consent" className="text-sm font-normal cursor-pointer">
               Consiente recibir recordatorios
             </Label>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="no_show_count">Ausencias</Label>
+              <Input
+                id="no_show_count"
+                type="number"
+                min="0"
+                value={form.no_show_count}
+                onChange={(e) => setForm({ ...form, no_show_count: parseInt(e.target.value) || 0 })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cancellation_count">Cancelaciones</Label>
+              <Input
+                id="cancellation_count"
+                type="number"
+                min="0"
+                value={form.cancellation_count}
+                onChange={(e) => setForm({ ...form, cancellation_count: parseInt(e.target.value) || 0 })}
+              />
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="notes">Notas internas</Label>

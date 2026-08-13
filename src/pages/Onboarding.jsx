@@ -41,27 +41,21 @@ export default function Onboarding({ onConfigured }) {
         trial_origin: trialOrigin,
         invitation_code: inviteCode || undefined,
       };
-      await base44.entities.PracticeSettings.create(baseData);
+      const services = applyServices ? preset.services : [];
+
+      await base44.functions.invoke("completeOnboarding", {
+        practiceData: baseData,
+        services,
+      });
 
       if (inviteCode && typeof localStorage !== "undefined") {
         localStorage.removeItem("agendapro_invite_code");
       }
 
-      if (applyServices) {
-        const current = await base44.entities.Service.filter({});
-        const newOnes = preset.services.filter(
-          (s) => !current.some((c) => c.name === s.name)
-        );
-        if (newOnes.length) {
-          await base44.entities.Service.bulkCreate(
-            newOnes.map((s) => ({ ...s, active: true }))
-          );
-        }
-      }
-
       onConfigured?.();
     } catch (err) {
-      toast({ title: "Error al guardar", description: err.message, variant: "destructive" });
+      const msg = err?.response?.data?.error || err?.message || "No se pudo guardar";
+      toast({ title: "Error al guardar", description: msg, variant: "destructive" });
     } finally {
       setSaving(false);
     }

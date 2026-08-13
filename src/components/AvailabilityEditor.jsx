@@ -4,13 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { Plus, Trash2, ChevronDown, ChevronRight, CalendarOff, Coffee } from "lucide-react";
+import { Plus, Trash2, ChevronDown, ChevronRight, CalendarOff, Coffee, RotateCcw, Loader2 } from "lucide-react";
 
 const DAYS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
 export default function AvailabilityEditor() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [resetting, setResetting] = useState(false);
   const [openDay, setOpenDay] = useState(1);
 
   useEffect(() => { load(); }, []);
@@ -45,6 +46,9 @@ export default function AvailabilityEditor() {
 
   async function addRange(day, type) {
     const def = type === "break" ? { start_time: "13:00", end_time: "14:00", label: "Pausa" } : { start_time: "09:00", end_time: "18:00", label: "" };
+    // Avoid exact duplicates
+    const dup = items.some((it) => it.day_of_week === day && it.type === type && it.start_time === def.start_time && it.end_time === def.end_time);
+    if (dup) return;
     await base44.entities.Availability.create({ day_of_week: day, ...def, type });
     load();
   }
@@ -57,6 +61,23 @@ export default function AvailabilityEditor() {
   async function deleteItem(id) {
     setItems((prev) => prev.filter((it) => it.id !== id));
     await base44.entities.Availability.delete(id);
+  }
+
+  async function resetSchedule() {
+    setResetting(true);
+    try {
+      await base44.entities.Availability.deleteMany({});
+      await base44.entities.Availability.bulkCreate([
+        ...[1, 2, 3, 4, 5].flatMap((d) => [
+          { day_of_week: d, start_time: "09:00", end_time: "13:00", type: "work", label: "" },
+          { day_of_week: d, start_time: "13:00", end_time: "14:00", type: "break", label: "Almuerzo" },
+          { day_of_week: d, start_time: "14:00", end_time: "18:00", type: "work", label: "" },
+        ]),
+      ]);
+      await load();
+    } finally {
+      setResetting(false);
+    }
   }
 
   async function addHoliday() {
@@ -75,13 +96,19 @@ export default function AvailabilityEditor() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h2 className="font-heading font-semibold flex items-center gap-2">
-          <CalendarOff className="w-5 h-5" /> Horarios laborales
-        </h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          Definí tus franjas de atención. Podés cargar varios rangos por día (horarios cortados) y pausas.
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="font-heading font-semibold flex items-center gap-2">
+            <CalendarOff className="w-5 h-5" /> Horarios laborales
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Definí tus franjas de atención. Podés cargar varios rangos por día (horarios cortados) y pausas.
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={resetSchedule} disabled={resetting} className="shrink-0">
+          {resetting ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <RotateCcw className="w-3.5 h-3.5 mr-1" />}
+          Restablecer
+        </Button>
       </div>
 
       <div className="space-y-2">

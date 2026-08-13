@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { PROFESSIONAL_TYPES, getPreset, getTypeLabel } from "@/lib/professional-presets";
 
 export default function Onboarding({ onConfigured }) {
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [type, setType] = useState("dentist");
   const [form, setForm] = useState({
@@ -52,7 +54,8 @@ export default function Onboarding({ onConfigured }) {
         localStorage.removeItem("agendapro_invite_code");
       }
 
-      onConfigured?.();
+      await onConfigured?.();
+      navigate("/", { replace: true });
     } catch (err) {
       const msg = err?.response?.data?.error || err?.message || "No se pudo guardar";
       toast({ title: "Error al guardar", description: msg, variant: "destructive" });

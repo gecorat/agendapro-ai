@@ -211,10 +211,15 @@ export default function Onboarding({ onConfigured }) {
                 <Button type="button" variant="outline" onClick={() => setStep(1)}>
                   Atrás
                 </Button>
-                <Button className="flex-1" disabled={saving} onClick={handleFinish}>
+                <button
+                  type="button"
+                  id="finish-onboarding-btn"
+                  onClick={handleFinish}
+                  className="flex-1 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2"
+                >
                   {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                   Finalizar configuración
-                </Button>
+                </button>
               </div>
             </div>
           )}

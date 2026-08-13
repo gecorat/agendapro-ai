@@ -18,7 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
+import PatientForm from "@/components/PatientForm";
 
 const statusOptions = [
   { value: "pending", label: "Pendiente" },
@@ -39,6 +40,7 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [patientFormOpen, setPatientFormOpen] = useState(false);
 
   const [form, setForm] = useState({
     patient_id: "",
@@ -163,7 +165,16 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label>Paciente</Label>
+              <div className="flex items-center justify-between">
+                <Label>Paciente</Label>
+                <button
+                  type="button"
+                  onClick={() => setPatientFormOpen(true)}
+                  className="text-xs text-primary flex items-center gap-1 hover:underline"
+                >
+                  <Plus className="w-3 h-3" /> Nuevo paciente
+                </button>
+              </div>
               <Select value={form.patient_id} onValueChange={(v) => setForm({ ...form, patient_id: v })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar paciente" />
@@ -248,6 +259,16 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
           </form>
         )}
       </DialogContent>
+
+      <PatientForm
+        open={patientFormOpen}
+        onClose={() => setPatientFormOpen(false)}
+        onSaved={async () => {
+          setPatientFormOpen(false);
+          const pats = await base44.entities.Patient.filter({});
+          setPatients(pats || []);
+        }}
+      />
     </Dialog>
   );
 }

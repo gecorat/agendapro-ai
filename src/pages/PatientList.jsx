@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
-import { Search, Loader2, Phone, Mail, Pencil, ChevronRight, Clock } from "lucide-react";
+import { Search, Loader2, Phone, Mail, Pencil, ChevronRight, Clock, Plus } from "lucide-react";
+import PatientForm from "@/components/PatientForm";
 
 const STATUS_STYLES = {
   confirmed: "bg-blue-100 text-blue-700",
@@ -30,6 +31,7 @@ export default function PatientList() {
   const [selected, setSelected] = useState(null);
   const [notes, setNotes] = useState("");
   const [savingNotes, setSavingNotes] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -74,9 +76,15 @@ export default function PatientList() {
 
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-4">
-      <div>
-        <h1 className="text-xl font-heading font-semibold">{preset.patientLabel}</h1>
-        <p className="text-sm text-muted-foreground">Listado, historial de citas y notas privadas</p>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-heading font-semibold">{preset.patientLabel}</h1>
+          <p className="text-sm text-muted-foreground">Listado, historial de citas y notas privadas</p>
+        </div>
+        <Button onClick={() => setFormOpen(true)} size="sm">
+          <Plus className="w-4 h-4 mr-1" />
+          Nuevo
+        </Button>
       </div>
 
       <div className="relative">
@@ -160,6 +168,12 @@ export default function PatientList() {
           )}
         </DialogContent>
       </Dialog>
+
+      <PatientForm
+        open={formOpen}
+        onClose={() => setFormOpen(false)}
+        onSaved={() => { setFormOpen(false); load(); }}
+      />
     </div>
   );
 }

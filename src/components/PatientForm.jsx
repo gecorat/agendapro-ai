@@ -73,7 +73,7 @@ export default function PatientForm({ open, onClose, onSaved, patient }) {
       } else {
         await base44.entities.Patient.create(form);
       }
-      onSaved();
+      if (onSaved) await onSaved();
       onClose();
     } finally {
       setSaving(false);

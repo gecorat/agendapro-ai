@@ -188,6 +188,7 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
@@ -339,16 +340,17 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
           </form>
         )}
       </DialogContent>
-
-      <PatientForm
-        open={patientFormOpen}
-        onClose={() => setPatientFormOpen(false)}
-        onSaved={async () => {
-          setPatientFormOpen(false);
-          const pats = await base44.entities.Patient.filter({});
-          setPatients(pats || []);
-        }}
-      />
     </Dialog>
+
+    <PatientForm
+      open={patientFormOpen}
+      onClose={() => setPatientFormOpen(false)}
+      onSaved={async () => {
+        setPatientFormOpen(false);
+        const pats = await base44.entities.Patient.filter({});
+        setPatients(pats || []);
+      }}
+    />
+    </>
   );
 }

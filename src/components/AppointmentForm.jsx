@@ -217,7 +217,7 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
                   <SelectValue placeholder="Seleccionar paciente" />
                 </SelectTrigger>
                 <SelectContent>
-                  {patients.map((p) => (
+                  {(patients || []).map((p) => (
                     <SelectItem key={p.id} value={p.id}>
                       {p.first_name} {p.last_name || ""}
                     </SelectItem>
@@ -345,9 +345,19 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
     <PatientForm
       open={patientFormOpen}
       onClose={() => setPatientFormOpen(false)}
-      onSaved={async () => {
-          const pats = await base44.entities.Patient.filter({});
-          setPatients(pats || []);
+      onSaved={async (savedPatient) => {
+          if (savedPatient && savedPatient.id) {
+            setPatients((prev) => {
+              const idx = prev.findIndex((p) => p.id === savedPatient.id);
+              if (idx >= 0) {
+                const copy = [...prev];
+                copy[idx] = savedPatient;
+                return copy;
+              }
+              return [...prev, savedPatient];
+            });
+            setForm((prev) => ({ ...prev, patient_id: savedPatient.id }));
+          }
         }}
     />
     </>

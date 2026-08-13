@@ -74,7 +74,10 @@ export default function AvailabilityEditor() {
   async function resetSchedule() {
     setResetting(true);
     try {
-      await base44.entities.Availability.deleteMany({});
+      const existingIds = items.map((it) => it.id);
+      if (existingIds.length > 0) {
+        await base44.entities.Availability.deleteMany({ id: { $in: existingIds } });
+      }
       await base44.entities.Availability.bulkCreate([
         ...[1, 2, 3, 4, 5].flatMap((d) => [
           { day_of_week: d, start_time: "09:00", end_time: "13:00", type: "work", label: "" },
@@ -83,6 +86,9 @@ export default function AvailabilityEditor() {
         ]),
       ]);
       await load();
+      toast({ title: "Horarios restablecidos", description: "Se cargó el horario estándar de lunes a viernes." });
+    } catch (err) {
+      toast({ title: "No se pudo restablecer", description: err?.message, variant: "destructive" });
     } finally {
       setResetting(false);
     }

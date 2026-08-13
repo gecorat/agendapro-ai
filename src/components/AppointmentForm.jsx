@@ -18,8 +18,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, Repeat } from "lucide-react";
 import PatientForm from "@/components/PatientForm";
+
+const FREQUENCIES = [
+  { value: "weekly", label: "Semanal" },
+  { value: "biweekly", label: "Quincenal" },
+  { value: "monthly", label: "Mensual" },
+];
 
 const statusOptions = [
   { value: "pending", label: "Pendiente" },
@@ -42,6 +48,9 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
   const [saving, setSaving] = useState(false);
   const [patientFormOpen, setPatientFormOpen] = useState(false);
 
+  const [recurring, setRecurring] = useState(false);
+  const [frequency, setFrequency] = useState("weekly");
+  const [editScope, setEditScope] = useState("this"); // "this" | "future"
   const [form, setForm] = useState({
     patient_id: "",
     service_id: "",
@@ -53,6 +62,9 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
   useEffect(() => {
     if (open) {
       loadData();
+      setRecurring(false);
+      setFrequency("weekly");
+      setEditScope("this");
       if (appointment) {
         setForm({
           patient_id: appointment.patient_id || "",
@@ -124,6 +136,30 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
       } else {
         const created = await base44.entities.Appointment.create(payload);
         apptId = created.id;
+
+        if (recurring) {
+          const startDate = new Date(form.start_datetime);
+          const rule = await base44.entities.RecurringRule.create({
+            patient_id: form.patient_id,
+            service_id: form.service_id,
+            frequency,
+            day_of_week: startDate.getDay(),
+            start_date: startDate.toISOString().slice(0, 10),
+            time: `${String(startDate.getHours()).padStart(2, "0")}:${String(startDate.getMinutes()).padStart(2, "0")}`,
+            active: true,
+          });
+          await base44.entities.Appointment.update(apptId, { recurring_rule_id: rule.id });
+        }
+      }
+
+      // If editing a recurring appointment with "future" scope, update all future instances
+      if (appointment && appointment.recurring_rule_id && editScope === "future") {
+        const futureAppts = await base44.entities.Appointment.filter({ recurring_rule_id: appointment.recurring_rule_id });
+        await Promise.all(
+          (futureAppts || [])
+            .filter((a) => new Date(a.start_datetime) >= new Date(appointment.start_datetime))
+            .map((a) => base44.entities.Appointment.update(a.id, { status: form.status, notes: form.notes }))
+        );
       }
 
       if (form.status === "completed" && (!appointment || appointment.status !== "completed")) {
@@ -236,6 +272,50 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
                 </SelectContent>
               </Select>
             </div>
+
+            {!appointment && (
+              <div className="space-y-2 rounded-lg border border-border p-3">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={recurring}
+                    onChange={(e) => setRecurring(e.target.checked)}
+                    className="rounded"
+                  />
+                  <Repeat className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span className="text-sm font-medium">Cita recurrente</span>
+                </label>
+                {recurring && (
+                  <Select value={frequency} onValueChange={setFrequency}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FREQUENCIES.map((f) => (
+                        <SelectItem key={f.value} value={f.value}>
+                          {f.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            )}
+
+            {appointment && appointment.recurring_rule_id && (
+              <div className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                <p className="text-xs font-medium text-amber-800">Esta cita es parte de una serie recurrente</p>
+                <Select value={editScope} onValueChange={setEditScope}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="this">Solo esta cita</SelectItem>
+                    <SelectItem value="future">Esta y todas las futuras</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="notes">Notas</Label>

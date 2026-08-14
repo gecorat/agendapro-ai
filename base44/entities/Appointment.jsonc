@@ -64,6 +64,11 @@
       "title": "Recordatorios enviados",
       "default": 0
     },
+    "confirmation_email_sent": {
+      "type": "boolean",
+      "title": "Email de confirmaci\u00f3n enviado al paciente",
+      "default": false
+    },
     "google_event_id": {
       "type": "string",
       "title": "ID evento en Google Calendar"

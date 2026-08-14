@@ -1,0 +1,40 @@
+{
+  "name": "Email de confirmaci\u00f3n al paciente",
+  "description": "Cuando una cita pasa a estado confirmada, env\u00eda autom\u00e1ticamente un email al paciente con los datos de su cita.",
+  "trigger": {
+    "config": {
+      "trigger_type": "entity",
+      "entity_name": "Appointment",
+      "events": [
+        "update"
+      ]
+    },
+    "condition": "${ .trigger.data.status == \"confirmed\" and .trigger.data.confirmation_email_sent != true }"
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "appointment_confirmation_email",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "send_confirmation": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sendAppointmentConfirmation",
+            "args": {
+              "appointment_id": "${ .trigger.entity_id }"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Enviar email de confirmaci\u00f3n",
+            "description": "Avisa al paciente que su cita fue confirmada"
+          }
+        }
+      }
+    ]
+  }
+}

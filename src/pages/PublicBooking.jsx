@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { CalendarClock, Clock, ArrowRight, Check, Loader2, Calendar, MapPin, FileText, Phone, Mail, CalendarX, MessageCircle } from "lucide-react";
+import { CalendarClock, Clock, ArrowRight, Check, Loader2, Calendar, MapPin, FileText, Phone, Mail, CalendarX, MessageCircle, Instagram, Facebook } from "lucide-react";
+import { Image } from "@/components/ui/image";
 
 function parseTimeToDate(date, time) {
   const [h, m] = time.split(":").map(Number);
@@ -71,6 +72,10 @@ function formatSlot(d) {
 
 function formatLongDate(d) {
   return d.toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long" });
+}
+
+function buildWaMessage(service, date, slot, form) {
+  return `Hola, quiero agendar una cita de ${service?.name} para el ${date ? formatLongDate(date) : ""} a las ${slot ? formatSlot(slot) : ""}. Mi nombre es ${form.first_name} ${form.last_name}. Te escribo por acá para confirmar el turno lo antes posible, ¡gracias!`;
 }
 
 const STEPS = [
@@ -167,7 +172,7 @@ export default function PublicBooking() {
       // Abrir WhatsApp con mensaje predeterminado
       const waNumber = (settings?.zernio_phone || settings?.phone || "").replace(/\D/g, "");
       if (waNumber) {
-        const waMsg = `Hola, quiero agendar una cita de ${service?.name} para el ${date ? formatLongDate(date) : ""} a las ${slot ? formatSlot(slot) : ""}. Mi nombre es ${form.first_name} ${form.last_name}.`;
+        const waMsg = buildWaMessage(service, date, slot, form);
         window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(waMsg)}`, "_blank");
       }
     } finally {
@@ -199,33 +204,57 @@ export default function PublicBooking() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Header moderno con degradado */}
+      {/* Header hero oscuro */}
       <div
         className="w-full relative overflow-hidden"
         style={{ background: `linear-gradient(135deg, ${brand} 0%, #020617 100%)` }}
       >
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle at 20% 50%, white 0%, transparent 50%)" }} />
-        <div className="relative max-w-lg mx-auto px-4 py-10 text-center text-white">
-          {settings?.photo_url && (
-            <img
-              src={settings.photo_url}
-              alt={settings.practice_name}
-              className="w-24 h-24 rounded-full object-cover mx-auto mb-4 ring-4 ring-white/40 shadow-lg"
-            />
-          )}
-          <h1 className="text-2xl font-heading font-bold tracking-tight">{settings?.practice_name || "Reservá tu turno"}</h1>
-          {settings?.specialty && <p className="text-sm text-white/80 mt-1">{settings.specialty}</p>}
-          <div className="flex flex-wrap items-center justify-center gap-2 mt-4">
-            {settings?.address && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-sm text-xs font-medium">
-                <MapPin className="w-3.5 h-3.5" /> {settings.address}
-              </span>
+        <div className="relative max-w-lg mx-auto px-4 py-8 sm:py-10 text-white">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 sm:gap-6">
+            {settings?.photo_url && (
+              <Image
+                src={settings.photo_url}
+                alt={settings.practice_name}
+                fittingType="fill"
+                className="w-28 h-28 sm:w-36 sm:h-36 rounded-2xl overflow-hidden shadow-lg ring-1 ring-white/20 shrink-0"
+              />
             )}
-            {settings?.description && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-sm text-xs font-medium max-w-xs">
-                <FileText className="w-3.5 h-3.5 shrink-0" /> <span className="truncate">{settings.description}</span>
-              </span>
-            )}
+            <div className="flex-1 text-center sm:text-left min-w-0">
+              <h1 className="text-2xl sm:text-3xl font-heading font-extrabold tracking-tight">{settings?.practice_name || "Reservá tu turno"}</h1>
+              {settings?.specialty && <p className="text-sm text-white/70 mt-1">{settings.specialty}</p>}
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-4">
+                {settings?.phone && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm text-xs font-medium">
+                    <Phone className="w-3.5 h-3.5" /> {settings.phone}
+                  </span>
+                )}
+                {settings?.address && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm text-xs font-medium">
+                    <MapPin className="w-3.5 h-3.5" /> {settings.address}
+                  </span>
+                )}
+                {settings?.description && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm text-xs font-medium max-w-xs">
+                    <FileText className="w-3.5 h-3.5 shrink-0" /> <span className="truncate">{settings.description}</span>
+                  </span>
+                )}
+              </div>
+              {(settings?.instagram_url || settings?.facebook_url) && (
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-2">
+                  {settings?.instagram_url && (
+                    <a href={settings.instagram_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm text-xs font-medium hover:bg-white/20 transition-colors">
+                      <Instagram className="w-3.5 h-3.5" /> Instagram
+                    </a>
+                  )}
+                  {settings?.facebook_url && (
+                    <a href={settings.facebook_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm text-xs font-medium hover:bg-white/20 transition-colors">
+                      <Facebook className="w-3.5 h-3.5" /> Facebook
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -398,7 +427,7 @@ export default function PublicBooking() {
 
         {step === 5 && created && (() => {
           const waNumber = (settings?.zernio_phone || settings?.phone || "").replace(/\D/g, "");
-          const waMsg = `Hola, quiero agendar una cita de ${service?.name} para el ${date ? formatLongDate(date) : ""} a las ${slot ? formatSlot(slot) : ""}. Mi nombre es ${form.first_name} ${form.last_name}.`;
+          const waMsg = buildWaMessage(service, date, slot, form);
           const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(waMsg)}`;
           return (
             <Card className="p-6 text-center space-y-3">
@@ -409,7 +438,7 @@ export default function PublicBooking() {
               <p className="text-sm text-muted-foreground">{settings?.practice_name || "Consultorio"}{settings?.address ? ` · ${settings.address}` : ""}</p>
               {waNumber ? (
                 <>
-                  <p className="text-sm text-muted-foreground pt-1">Si no se abrió WhatsApp, confirmá tu turno desde acá:</p>
+                  <p className="text-sm text-muted-foreground pt-1">Escribile al profesional por WhatsApp para confirmar tu turno cuanto antes — mientras antes avises, más rápido te lo confirma. Si no se abrió solo, usá este botón:</p>
                   <a href={waUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 w-full rounded-md bg-[#25D366] hover:bg-[#1ebe5d] text-white font-semibold text-sm h-11 px-4 py-2 transition-colors shadow-sm">
                     <MessageCircle className="w-5 h-5" /> Confirmar por WhatsApp
                   </a>

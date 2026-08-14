@@ -22,11 +22,19 @@ export default async function(req) {
     // users to create.
     const settings = await base44.entities.PracticeSettings.create(practiceData);
 
-    // Create suggested services as the user
+    // Create suggested services as the user (fallback to a default "Consulta General")
+    let servicesToCreate = services && services.length > 0 ? services : [{
+      name: "Consulta General",
+      description: "Consulta de evaluación general. Ideal para una primera visita o control de rutina.",
+      duration_minutes: 30,
+      price: 5000,
+      color: "#3b82f6",
+      active: true,
+    }];
     let servicesCreated = 0;
-    if (services.length > 0) {
+    if (servicesToCreate.length > 0) {
       const created = await base44.entities.Service.bulkCreate(
-        services.map(s => ({
+        servicesToCreate.map(s => ({
           name: s.name,
           description: s.description || "",
           duration_minutes: s.duration_minutes || 30,
@@ -37,7 +45,7 @@ export default async function(req) {
           active: true,
         }))
       );
-      servicesCreated = Array.isArray(created) ? created.length : services.length;
+      servicesCreated = Array.isArray(created) ? created.length : servicesToCreate.length;
     }
 
     return Response.json({

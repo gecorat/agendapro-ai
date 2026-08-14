@@ -45,6 +45,18 @@
       "title": "Email de contacto",
       "format": "email"
     },
+    "instagram_url": {
+      "type": "string",
+      "title": "Instagram",
+      "format": "url",
+      "description": "Enlace a tu perfil de Instagram (se muestra en tu p\u00e1gina de reservas)"
+    },
+    "facebook_url": {
+      "type": "string",
+      "title": "Facebook",
+      "format": "url",
+      "description": "Enlace a tu p\u00e1gina de Facebook (se muestra en tu p\u00e1gina de reservas)"
+    },
     "handle": {
       "type": "string",
       "title": "Usuario p\u00fablico (@)",

@@ -22,6 +22,8 @@ export default function PracticeProfileSection() {
     address: "",
     phone: "",
     professional_email: "",
+    instagram_url: "",
+    facebook_url: "",
     handle: "",
     photo_url: "",
     page_color: "#0f172a",
@@ -58,6 +60,8 @@ export default function PracticeProfileSection() {
         address: settings.address || "",
         phone: settings.phone || "",
         professional_email: settings.professional_email || "",
+        instagram_url: settings.instagram_url || "",
+        facebook_url: settings.facebook_url || "",
         handle: settings.handle || "",
         photo_url: settings.photo_url || "",
         page_color: settings.page_color || "#0f172a",
@@ -223,6 +227,17 @@ export default function PracticeProfileSection() {
         <div className="space-y-2">
           <Label htmlFor="email">Email de contacto</Label>
           <Input id="email" type="email" value={form.professional_email} onChange={(e) => setForm({ ...form, professional_email: e.target.value })} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label htmlFor="instagram_url">Instagram</Label>
+          <Input id="instagram_url" value={form.instagram_url} onChange={(e) => setForm({ ...form, instagram_url: e.target.value })} placeholder="https://instagram.com/..." />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="facebook_url">Facebook</Label>
+          <Input id="facebook_url" value={form.facebook_url} onChange={(e) => setForm({ ...form, facebook_url: e.target.value })} placeholder="https://facebook.com/..." />
         </div>
       </div>
 

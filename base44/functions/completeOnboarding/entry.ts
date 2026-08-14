@@ -17,25 +17,15 @@ export default async function(req) {
       return Response.json({ settings: existing[0], alreadyExists: true });
     }
 
-    // Create PracticeSettings with the user's ID as created_by_id
-    const settings = await base44.asServiceRole.entities.PracticeSettings.create({
-      ...practiceData,
-      created_by_id: user.id
-    });
+    // Create PracticeSettings as the user (not service role) so created_by_id
+    // is set to the user's ID automatically. RLS allows all authenticated
+    // users to create.
+    const settings = await base44.entities.PracticeSettings.create(practiceData);
 
-    // Force-update created_by_id in case the service role overrode it
-    let finalSettings = settings;
-    if (settings.created_by_id !== user.id) {
-      finalSettings = await base44.asServiceRole.entities.PracticeSettings.update(
-        settings.id,
-        { created_by_id: user.id }
-      );
-    }
-
-    // Create suggested services with the user's ID
+    // Create suggested services as the user
     let servicesCreated = 0;
     if (services.length > 0) {
-      const created = await base44.asServiceRole.entities.Service.bulkCreate(
+      const created = await base44.entities.Service.bulkCreate(
         services.map(s => ({
           name: s.name,
           description: s.description || "",
@@ -45,29 +35,13 @@ export default async function(req) {
           price: s.price,
           follow_up_days: s.follow_up_days || 0,
           active: true,
-          created_by_id: user.id
         }))
       );
       servicesCreated = Array.isArray(created) ? created.length : services.length;
-
-      // Fix created_by_id on services if the service role overrode it
-      const allServices = await base44.asServiceRole.entities.Service.list();
-      const userServices = allServices.filter(s => s.created_by_id === user.id);
-      if (userServices.length === 0 && servicesCreated > 0) {
-        // The service role overrode created_by_id — fix the recently created ones
-        const recentNames = services.map(s => s.name);
-        const toFix = allServices.filter(s => recentNames.includes(s.name));
-        for (const s of toFix) {
-          await base44.asServiceRole.entities.Service.update(
-            s.id,
-            { created_by_id: user.id }
-          );
-        }
-      }
     }
 
     return Response.json({
-      settings: finalSettings,
+      settings,
       servicesCreated,
       alreadyExists: false
     });

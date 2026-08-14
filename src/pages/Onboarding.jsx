@@ -27,7 +27,6 @@ export default function Onboarding({ onConfigured }) {
   const preset = getPreset(type);
 
   async function handleFinish() {
-    console.log("0. Botón clickeado - handleFinish iniciado");
     setSaving(true);
     try {
       const trialEnd = new Date();
@@ -37,7 +36,11 @@ export default function Onboarding({ onConfigured }) {
       const trialOrigin = inviteCode ? "invitation" : "landing";
 
       const baseData = {
-        ...form,
+        practice_name: form.practice_name || undefined,
+        specialty: form.specialty || undefined,
+        address: form.address || undefined,
+        phone: form.phone || undefined,
+        professional_email: form.professional_email || undefined,
         professional_type: type,
         plan: "trial",
         trial_ends_at: trialEnd.toISOString(),
@@ -46,27 +49,20 @@ export default function Onboarding({ onConfigured }) {
       };
       const services = applyServices ? preset.services : [];
 
-      console.log("1. Iniciando guardado...", { baseData, services });
-      const res = await base44.functions.invoke("completeOnboarding", {
+      await base44.functions.invoke("completeOnboarding", {
         practiceData: baseData,
         services,
       });
-      console.log("2. Respuesta exitosa:", res);
 
       if (inviteCode && typeof localStorage !== "undefined") {
         localStorage.removeItem("agendapro_invite_code");
       }
 
-      console.log("3. Recargando settings...");
       await onConfigured?.();
-      console.log("4. Settings recargados, redirigiendo...");
       window.location.href = "/";
     } catch (err) {
-      console.error("ERROR EN ONBOARDING:", err);
       const msg = err?.response?.data?.error || err?.message || "No se pudo guardar";
       toast({ title: "Error al guardar", description: msg, variant: "destructive" });
-      window.location.href = "/";
-    } finally {
       setSaving(false);
     }
   }
@@ -216,7 +212,6 @@ export default function Onboarding({ onConfigured }) {
                   id="finish-onboarding-btn"
                   onClick={(e) => {
                     e.preventDefault();
-                    console.log("BOTON PRESIONADO");
                     handleFinish();
                   }}
                   className="flex-1 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2"

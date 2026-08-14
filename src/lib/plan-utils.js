@@ -28,7 +28,7 @@ export function getPlanStatus(settings) {
     daysLeft = Math.max(0, Math.ceil((end - now) / (1000 * 60 * 60 * 24)));
   }
   const suspended = settings.suspended === true;
-  const canUseWhatsApp = hasPaidPlan && !suspended;
+  const canUseWhatsApp = (plan === "pro" || plan === "premium") && !suspended;
   const active = (!isTrial || !trialExpired) && !suspended;
   return { plan, isTrial, trialExpired, hasPaidPlan, daysLeft, canUseWhatsApp, active, suspended, loaded: true };
 }

@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { buildEmailHtml, getAppUrl } from "../../shared/email-template.ts";
+import { sendEmail } from "../../shared/email-sender.ts";
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -71,7 +72,7 @@ export default async function(req: Request): Promise<Response> {
     const rescheduleUrl = handle ? `${appUrl}/reschedule/${cancelToken}` : null;
     const cancelUrl = `${appUrl}/x/${cancelToken}`;
 
-    await base44.asServiceRole.integrations.Core.SendEmail({
+    await sendEmail(base44, {
       to: email,
       subject: `Tu cita fue confirmada — ${serviceName}`,
       body: buildEmailHtml({

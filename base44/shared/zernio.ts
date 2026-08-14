@@ -181,7 +181,7 @@ Instrucciones: Respondé al paciente. Si el paciente quiere agendar y tenés tod
       }
       const start = new Date(reply.appointment.datetime);
       const end = new Date(start.getTime() + (service.duration_minutes || 30) * 60000);
-      await base44.asServiceRole.entities.Appointment.create({
+      const newAppt = await base44.asServiceRole.entities.Appointment.create({
         patient_id: patientId,
         patient_name: patientName,
         service_id: service.id,
@@ -191,7 +191,13 @@ Instrucciones: Respondé al paciente. Si el paciente quiere agendar y tenés tod
         status: "confirmed",
         origin: "whatsapp",
         professional_id: professionalId,
+        confirm_token: crypto.randomUUID(),
+        cancel_token: crypto.randomUUID(),
       });
+      // Flujo unificado: disparar email de confirmación al paciente con links de gestión
+      try {
+        await base44.asServiceRole.functions.invoke("sendAppointmentConfirmation", { appointment_id: newAppt.id });
+      } catch { /* no romper el flujo del bot */ }
     }
   }
 

@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { getPlatformConfig, sendWhatsApp } from "../../shared/zernio.ts";
 import { buildEmailHtml, getAppUrl } from "../../shared/email-template.ts";
+import { sendEmail } from "../../shared/email-sender.ts";
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -58,7 +59,7 @@ export default async function(req: Request): Promise<Response> {
 
     let emailSent = false;
     if (practice.professional_email) {
-      await base44.asServiceRole.integrations.Core.SendEmail({
+      await sendEmail(base44, {
         to: practice.professional_email,
         subject: `Nueva cita pendiente — ${patientName}`,
         body: buildEmailHtml({

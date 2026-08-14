@@ -76,7 +76,8 @@ function formatLongDate(d) {
 const STEPS = [
   { num: 1, label: "Servicio" },
   { num: 2, label: "Fecha y hora" },
-  { num: 3, label: "Confirmar datos" },
+  { num: 3, label: "Tus datos" },
+  { num: 4, label: "Confirmar" },
 ];
 
 export default function PublicBooking() {
@@ -162,11 +163,17 @@ export default function PublicBooking() {
         status: "pending", origin: "public_link", professional_id: professionalId,
       });
       setCreated({ appointment: appt, patient });
-      setStep(4);
+      setStep(5);
+      // Abrir WhatsApp con mensaje predeterminado
+      const waNumber = (settings?.zernio_phone || settings?.phone || "").replace(/\D/g, "");
+      if (waNumber) {
+        const waMsg = `Hola, quiero agendar una cita de ${service?.name} para el ${date ? formatLongDate(date) : ""} a las ${slot ? formatSlot(slot) : ""}. Mi nombre es ${form.first_name} ${form.last_name}.`;
+        window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(waMsg)}`, "_blank");
+      }
     } finally {
       setSaving(false);
     }
-  }, [service, slot, form, professionalId]);
+  }, [service, slot, form, professionalId, settings, date]);
 
   if (loading) {
     return (
@@ -360,14 +367,36 @@ export default function PublicBooking() {
             </div>
             <div className="space-y-2"><Label htmlFor="phone">Teléfono (WhatsApp) *</Label><Input id="phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+54 9 11 1234 5678" required /></div>
             <div className="space-y-2"><Label htmlFor="email">Email *</Label><Input id="email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></div>
-            <Button className="w-full" style={{ backgroundColor: brand }} disabled={saving || !form.first_name || !form.last_name || !form.phone || !form.email} onClick={handleConfirm}>
-              {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Solicitar turno
+            <Button className="w-full" style={{ backgroundColor: brand }} disabled={!form.first_name || !form.last_name || !form.phone || !form.email} onClick={() => setStep(4)}>
+              Continuar
             </Button>
-            <p className="text-xs text-muted-foreground text-center">Tu solicitud será confirmada por el profesional.</p>
           </Card>
         )}
 
-        {step === 4 && created && (() => {
+        {step === 4 && (
+          <Card className="p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="font-heading font-semibold">Revisá tu reserva</h2>
+              <button className="text-sm text-muted-foreground hover:underline" onClick={() => setStep(3)}>Atrás</button>
+            </div>
+            <div className="rounded-lg bg-slate-50 border border-slate-200 p-4 space-y-2 text-sm">
+              <div className="flex justify-between gap-2"><span className="text-muted-foreground">Servicio</span><span className="font-medium text-right">{service?.name}</span></div>
+              <div className="flex justify-between gap-2"><span className="text-muted-foreground">Fecha</span><span className="font-medium capitalize">{date && formatLongDate(date)}</span></div>
+              <div className="flex justify-between gap-2"><span className="text-muted-foreground">Hora</span><span className="font-medium">{slot && formatSlot(slot)}</span></div>
+              <div className="flex justify-between gap-2"><span className="text-muted-foreground">A nombre de</span><span className="font-medium text-right">{form.first_name} {form.last_name}</span></div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Button variant="outline" className="w-full" onClick={() => setStep(2)}>
+                ← Cambiar fecha u hora
+              </Button>
+              <Button className="w-full" style={{ backgroundColor: brand }} disabled={saving} onClick={handleConfirm}>
+                {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Confirmar por WhatsApp
+              </Button>
+            </div>
+          </Card>
+        )}
+
+        {step === 5 && created && (() => {
           const waNumber = (settings?.zernio_phone || settings?.phone || "").replace(/\D/g, "");
           const waMsg = `Hola, quiero agendar una cita de ${service?.name} para el ${date ? formatLongDate(date) : ""} a las ${slot ? formatSlot(slot) : ""}. Mi nombre es ${form.first_name} ${form.last_name}.`;
           const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(waMsg)}`;
@@ -380,7 +409,7 @@ export default function PublicBooking() {
               <p className="text-sm text-muted-foreground">{settings?.practice_name || "Consultorio"}{settings?.address ? ` · ${settings.address}` : ""}</p>
               {waNumber ? (
                 <>
-                  <p className="text-sm text-muted-foreground pt-1">Confirmá tu turno avisando por WhatsApp al profesional:</p>
+                  <p className="text-sm text-muted-foreground pt-1">Si no se abrió WhatsApp, confirmá tu turno desde acá:</p>
                   <a href={waUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 w-full rounded-md bg-[#25D366] hover:bg-[#1ebe5d] text-white font-semibold text-sm h-11 px-4 py-2 transition-colors shadow-sm">
                     <MessageCircle className="w-5 h-5" /> Confirmar por WhatsApp
                   </a>

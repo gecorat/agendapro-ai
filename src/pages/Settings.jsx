@@ -177,27 +177,85 @@ export default function Settings() {
 }
 
 function WhatsAppCard() {
-  const { settings } = usePracticeSettings();
+  const { settings, save } = usePracticeSettings();
   const status = getPlanStatus(settings);
-  if (status.hasPaidPlan) {
-    return <IntegrationCard icon={MessageCircle} name="WhatsApp" description="Asistente de reservas y recordatorios" connected={false} />;
+  const [form, setForm] = useState({ zernio_account_id: "", zernio_phone: "" });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (settings) {
+      setForm({
+        zernio_account_id: settings.zernio_account_id || "",
+        zernio_phone: settings.zernio_phone || "",
+      });
+    }
+  }, [settings]);
+
+  if (!status.hasPaidPlan) {
+    return (
+      <Card className="p-4">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
+            <MessageCircle className="w-5 h-5 text-muted-foreground" />
+          </div>
+          <div>
+            <p className="font-medium">WhatsApp</p>
+            <p className="text-sm text-muted-foreground">Asistente de reservas y recordatorios</p>
+          </div>
+        </div>
+        <PlanGate
+          feature="Bot de WhatsApp"
+          requiredPlan="pro"
+          description="El bot responde, agenda y recuerda citas a tus pacientes por WhatsApp. Disponible desde el plan Pro."
+        />
+      </Card>
+    );
   }
+
+  const connected = settings?.whatsapp_connected && !!settings?.zernio_account_id && !!settings?.zernio_phone;
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await save({
+        zernio_account_id: form.zernio_account_id,
+        zernio_phone: form.zernio_phone,
+        whatsapp_connected: true,
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
-    <Card className="p-4">
-      <div className="flex items-center gap-3 mb-3">
+    <Card className="p-4 space-y-3">
+      <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
           <MessageCircle className="w-5 h-5 text-muted-foreground" />
         </div>
-        <div>
+        <div className="flex-1">
           <p className="font-medium">WhatsApp</p>
           <p className="text-sm text-muted-foreground">Asistente de reservas y recordatorios</p>
         </div>
+        {connected ? (
+          <span className="flex items-center gap-1.5 text-sm text-emerald-600 font-medium">
+            <CheckCircle2 className="w-4 h-4" /> Conectado
+          </span>
+        ) : (
+          <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <XCircle className="w-4 h-4" /> Sin configurar
+          </span>
+        )}
       </div>
-      <PlanGate
-        feature="Bot de WhatsApp"
-        requiredPlan="pro"
-        description="El bot responde, agenda y recuerda citas a tus pacientes por WhatsApp. Disponible desde el plan Pro."
-      />
+      <div className="space-y-2">
+        <Label htmlFor="zernio_account_id">Zernio — Account ID</Label>
+        <Input id="zernio_account_id" value={form.zernio_account_id} onChange={(e) => setForm({ ...form, zernio_account_id: e.target.value })} placeholder="Account ID de tu cuenta de Zernio" />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="zernio_phone">Número de WhatsApp</Label>
+        <Input id="zernio_phone" value={form.zernio_phone} onChange={(e) => setForm({ ...form, zernio_phone: e.target.value })} placeholder="+54 9 11 1234 5678" />
+      </div>
+      <Button size="sm" disabled={saving} onClick={handleSave}>{saving ? "Guardando..." : "Guardar configuración"}</Button>
     </Card>
   );
 }

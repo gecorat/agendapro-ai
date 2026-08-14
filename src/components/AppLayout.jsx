@@ -5,6 +5,7 @@ import { Calendar, Users, LayoutDashboard, Settings, LogOut, CalendarClock, Menu
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import Onboarding from "@/pages/Onboarding";
 import TrialBanner from "@/components/TrialBanner";
+import NotificationsBell from "@/components/NotificationsBell";
 
 export default function AppLayout() {
   const location = useLocation();
@@ -152,9 +153,16 @@ export default function AppLayout() {
             <Menu className="w-6 h-6" />
           </button>
           <span className="font-heading font-semibold text-sm">AgendaPro</span>
-          <Link to="/profile-editor" className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-accent transition-colors">
-            <UserCircle className="w-6 h-6" />
-          </Link>
+          <div className="flex items-center">
+            <NotificationsBell user={user} />
+            <Link to="/profile-editor" className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-accent transition-colors">
+              <UserCircle className="w-6 h-6" />
+            </Link>
+          </div>
+        </header>
+
+        <header className="hidden md:flex items-center justify-end h-14 px-6 border-b border-border bg-card">
+          <NotificationsBell user={user} />
         </header>
 
         <main className="flex-1 overflow-y-auto">

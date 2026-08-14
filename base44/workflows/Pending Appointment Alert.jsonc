@@ -1,0 +1,40 @@
+{
+  "name": "Alerta de cita pendiente",
+  "description": "Cuando llega una cita pendiente por WhatsApp o link p\u00fablico, env\u00eda un email (y WhatsApp si est\u00e1 conectado) al profesional para que la confirme.",
+  "trigger": {
+    "config": {
+      "trigger_type": "entity",
+      "entity_name": "Appointment",
+      "events": [
+        "create"
+      ]
+    },
+    "condition": "${ .trigger.data.status == \"pending\" and (.trigger.data.origin | IN(\"whatsapp\",\"public_link\")) }"
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "pending_appointment_alert",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "send_alert": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sendPendingAppointmentAlert",
+            "args": {
+              "appointment_id": "${ .trigger.entity_id }"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Enviar alerta al profesional",
+            "description": "Email + WhatsApp de respaldo"
+          }
+        }
+      }
+    ]
+  }
+}

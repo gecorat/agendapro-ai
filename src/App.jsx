@@ -30,6 +30,9 @@ import UpgradePlan from "@/pages/UpgradePlan";
 import AvailabilitySettings from "@/pages/AvailabilitySettings";
 import AppointmentHistory from "@/pages/AppointmentHistory";
 import ReviewsManager from "@/pages/ReviewsManager";
+import ConfirmAppointment from "@/pages/ConfirmAppointment";
+import CancelAppointment from "@/pages/CancelAppointment";
+import RescheduleAppointment from "@/pages/RescheduleAppointment";
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated } = useAuth();
@@ -94,6 +97,9 @@ function App() {
           <Routes>
             <Route path="/u/:handle" element={<PublicBooking />} />
             <Route path="/r/:id" element={<PublicReview />} />
+            <Route path="/c/:token" element={<ConfirmAppointment />} />
+            <Route path="/x/:token" element={<CancelAppointment />} />
+            <Route path="/reschedule/:token" element={<RescheduleAppointment />} />
             <Route path="/landing-preview" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />

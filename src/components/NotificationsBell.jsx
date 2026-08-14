@@ -22,6 +22,24 @@ function originLabel(origin) {
   return "Manual";
 }
 
+function StatusBadge({ status }) {
+  if (status === "confirmed") {
+    return (
+      <span className="inline-block mt-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+        Confirmada
+      </span>
+    );
+  }
+  if (status === "cancelled") {
+    return (
+      <span className="inline-block mt-1 text-[10px] font-semibold uppercase tracking-wide text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
+        Cancelada
+      </span>
+    );
+  }
+  return null;
+}
+
 function PendingList({ pending, onConfirm, onConfirmWhatsApp, onCancel, onAgenda, busyId }) {
   if (pending.length === 0) {
     return (
@@ -36,6 +54,7 @@ function PendingList({ pending, onConfirm, onConfirmWhatsApp, onCancel, onAgenda
       {pending.map((a) => {
         const Icon = originIcon(a.origin);
         const start = a.start_datetime ? new Date(a.start_datetime) : null;
+        const isPending = a.status === "pending";
         return (
           <div key={a.id} className="rounded-lg border border-border p-3 bg-background">
             <div className="flex items-start gap-2">
@@ -50,44 +69,50 @@ function PendingList({ pending, onConfirm, onConfirmWhatsApp, onCancel, onAgenda
                     {start.toLocaleString("es-AR", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                   </p>
                 )}
-                <span className="inline-block mt-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground/70">
-                  {originLabel(a.origin)}
-                </span>
+                {isPending ? (
+                  <span className="inline-block mt-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground/70">
+                    {originLabel(a.origin)}
+                  </span>
+                ) : (
+                  <StatusBadge status={a.status} />
+                )}
               </div>
             </div>
-            <div className="flex items-center gap-1.5 mt-2">
-              {a.origin === "whatsapp" ? (
+            {isPending && (
+              <div className="flex items-center gap-1.5 mt-2">
+                {a.origin === "whatsapp" ? (
+                  <Button
+                    size="sm"
+                    className="h-7 px-2 text-xs bg-emerald-600 hover:bg-emerald-700"
+                    disabled={busyId === a.id}
+                    onClick={() => onConfirmWhatsApp(a)}
+                  >
+                    <MessageCircle className="w-3 h-3" /> Confirmar por WhatsApp
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    className="h-7 px-2 text-xs bg-emerald-600 hover:bg-emerald-700"
+                    disabled={busyId === a.id}
+                    onClick={() => onConfirm(a.id)}
+                  >
+                    <Check className="w-3 h-3" /> Confirmar
+                  </Button>
+                )}
                 <Button
                   size="sm"
-                  className="h-7 px-2 text-xs bg-emerald-600 hover:bg-emerald-700"
+                  variant="outline"
+                  className="h-7 px-2 text-xs"
                   disabled={busyId === a.id}
-                  onClick={() => onConfirmWhatsApp(a)}
+                  onClick={() => onCancel(a.id)}
                 >
-                  <MessageCircle className="w-3 h-3" /> Confirmar por WhatsApp
+                  <XIcon className="w-3 h-3" /> Cancelar
                 </Button>
-              ) : (
-                <Button
-                  size="sm"
-                  className="h-7 px-2 text-xs bg-emerald-600 hover:bg-emerald-700"
-                  disabled={busyId === a.id}
-                  onClick={() => onConfirm(a.id)}
-                >
-                  <Check className="w-3 h-3" /> Confirmar
+                <Button size="sm" variant="ghost" className="h-7 px-2 text-xs ml-auto" onClick={onAgenda}>
+                  Ver en agenda
                 </Button>
-              )}
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-7 px-2 text-xs"
-                disabled={busyId === a.id}
-                onClick={() => onCancel(a.id)}
-              >
-                <XIcon className="w-3 h-3" /> Cancelar
-              </Button>
-              <Button size="sm" variant="ghost" className="h-7 px-2 text-xs ml-auto" onClick={onAgenda}>
-                Ver en agenda
-              </Button>
-            </div>
+              </div>
+            )}
           </div>
         );
       })}
@@ -99,14 +124,37 @@ export default function NotificationsBell({ user }) {
   const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useIsMobile();
-  const [pending, setPending] = useState([]);
+  const [items, setItems] = useState([]);
   const [open, setOpen] = useState(false);
   const [busyId, setBusyId] = useState(null);
 
   const loadPending = useCallback(async () => {
     try {
-      const list = await base44.entities.Appointment.filter({ status: "pending" }, "start_datetime");
-      setPending(list || []);
+      const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const pending = await base44.entities.Appointment.filter({ status: "pending" }, "start_datetime");
+      const confirmed = await base44.entities.Appointment.filter({ status: "confirmed" }, "-updated_date", 50);
+      const cancelled = await base44.entities.Appointment.filter({ status: "cancelled" }, "-updated_date", 50);
+
+      const recentResolved = [...(confirmed || []), ...(cancelled || [])].filter(
+        (a) => a.updated_date && new Date(a.updated_date) >= new Date(since)
+      );
+
+      const merged = [...(pending || []), ...recentResolved];
+      // dedupe by id
+      const seen = new Set();
+      const deduped = merged.filter((a) => {
+        if (seen.has(a.id)) return false;
+        seen.add(a.id);
+        return true;
+      });
+      // sort: pending first, then by start_datetime
+      deduped.sort((a, b) => {
+        if (a.status === "pending" && b.status !== "pending") return -1;
+        if (a.status !== "pending" && b.status === "pending") return 1;
+        return new Date(a.start_datetime) - new Date(b.start_datetime);
+      });
+
+      setItems(deduped);
     } catch {
       /* ignore */
     }
@@ -159,7 +207,7 @@ export default function NotificationsBell({ user }) {
     try {
       await base44.entities.Appointment.update(id, { status: "confirmed" });
       toast({ title: "Cita confirmada" });
-      setPending((p) => p.filter((a) => a.id !== id));
+      loadPending();
     } catch {
       toast({ title: "Error al confirmar", variant: "destructive" });
     } finally {
@@ -172,7 +220,7 @@ export default function NotificationsBell({ user }) {
     try {
       await base44.entities.Appointment.update(id, { status: "cancelled" });
       toast({ title: "Cita cancelada" });
-      setPending((p) => p.filter((a) => a.id !== id));
+      loadPending();
     } catch {
       toast({ title: "Error al cancelar", variant: "destructive" });
     } finally {
@@ -202,7 +250,7 @@ export default function NotificationsBell({ user }) {
         : "";
       const msg = `Hola ${a.patient_name || ""}, te confirmo tu cita de ${a.service_name || "consulta"} para el ${fecha}. ¡Te esperamos!`;
       window.open(`https://wa.me/${digits}?text=${encodeURIComponent(msg)}`, "_blank");
-      setPending((p) => p.filter((x) => x.id !== a.id));
+      loadPending();
       toast({ title: "Cita confirmada" });
     } catch {
       toast({ title: "Error al confirmar", variant: "destructive" });
@@ -216,7 +264,7 @@ export default function NotificationsBell({ user }) {
     navigate("/agenda");
   };
 
-  const count = pending.length;
+  const pendingCount = items.filter((a) => a.status === "pending").length;
 
   const BellButton = (
     <button
@@ -225,15 +273,15 @@ export default function NotificationsBell({ user }) {
       aria-label="Citas pendientes"
     >
       <Bell className="w-5 h-5" />
-      {count > 0 && (
+      {pendingCount > 0 && (
         <span className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-          {count > 9 ? "9+" : count}
+          {pendingCount > 9 ? "9+" : pendingCount}
         </span>
       )}
     </button>
   );
 
-  const listProps = { pending, onConfirm: handleConfirm, onConfirmWhatsApp: handleConfirmWhatsApp, onCancel: handleCancel, onAgenda: handleAgenda, busyId };
+  const listProps = { pending: items, onConfirm: handleConfirm, onConfirmWhatsApp: handleConfirmWhatsApp, onCancel: handleCancel, onAgenda: handleAgenda, busyId };
 
   if (isMobile) {
     return (
@@ -243,7 +291,7 @@ export default function NotificationsBell({ user }) {
           <SheetHeader className="text-left">
             <SheetTitle className="flex items-center gap-2">
               <Bell className="w-4 h-4" />
-              Citas pendientes {count > 0 && <span className="text-sm font-normal text-muted-foreground">({count})</span>}
+              Citas {pendingCount > 0 && <span className="text-sm font-normal text-muted-foreground">({pendingCount} pendientes)</span>}
             </SheetTitle>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto mt-2">
@@ -260,8 +308,8 @@ export default function NotificationsBell({ user }) {
       <PopoverContent align="end" className="w-80 p-3">
         <div className="flex items-center gap-2 px-1 pb-2 mb-1 border-b border-border">
           <Bell className="w-4 h-4" />
-          <span className="text-sm font-semibold">Citas pendientes</span>
-          {count > 0 && <span className="ml-auto text-xs text-muted-foreground">{count}</span>}
+          <span className="text-sm font-semibold">Citas</span>
+          {pendingCount > 0 && <span className="ml-auto text-xs text-muted-foreground">{pendingCount} pendientes</span>}
         </div>
         <div className="max-h-[60vh] overflow-y-auto">
           <PendingList {...listProps} />

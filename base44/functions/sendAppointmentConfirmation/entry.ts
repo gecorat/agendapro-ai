@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
+import { buildEmailHtml, getAppUrl } from "../../shared/email-template.ts";
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -43,24 +44,48 @@ export default async function(req: Request): Promise<Response> {
       return Response.json({ skipped: true, reason: 'no patient email' });
     }
 
-    // Configuración del profesional (nombre del consultorio)
+    // Configuración del profesional (nombre del consultorio + handle)
     const professionalId = appt.professional_id || appt.created_by_id;
     let practiceName = "";
+    let handle = "";
     try {
       const practices = await base44.asServiceRole.entities.PracticeSettings.filter({});
       const practice = practices?.find((p) => p.created_by_id === professionalId);
       if (practice?.practice_name) practiceName = practice.practice_name;
+      if (practice?.handle) handle = practice.handle;
     } catch {}
 
+    // Asegurar cancel_token para el botón de cancelar/reagendar
+    let cancelToken = appt.cancel_token;
+    if (!cancelToken) {
+      cancelToken = crypto.randomUUID();
+      await base44.asServiceRole.entities.Appointment.update(appt.id, { cancel_token: cancelToken });
+    }
+
+    const appUrl = getAppUrl(req);
     const startDate = new Date(appt.start_datetime);
     const dateStr = startDate.toLocaleString("es-AR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
     const serviceName = appt.service_name || "Consulta";
     const signature = practiceName ? practiceName : "AgendaPro";
 
+    const rescheduleUrl = handle ? `${appUrl}/reschedule/${cancelToken}` : null;
+    const cancelUrl = `${appUrl}/x/${cancelToken}`;
+
     await base44.asServiceRole.integrations.Core.SendEmail({
       to: email,
       subject: `Tu cita fue confirmada — ${serviceName}`,
-      body: `Hola ${patientName},\n\nTu cita de ${serviceName} fue confirmada para el ${dateStr}.\n\nSi necesitás reprogramar o cancelar, contactanos respondiendo a este email.\n\n¡Te esperamos!\n\n${signature}`,
+      body: buildEmailHtml({
+        title: "Cita confirmada",
+        greeting: `Hola ${patientName}`,
+        lines: [
+          `Tu cita de ${serviceName} fue confirmada para el ${dateStr}.`,
+          "¡Te esperamos!",
+          "Si necesitás reagendar o cancelar, usá los botones de abajo.",
+        ],
+        primaryButton: rescheduleUrl ? { label: "Reagendar", url: rescheduleUrl } : null,
+        secondaryButton: { label: "Cancelar cita", url: cancelUrl },
+        footer: signature,
+      }),
     });
 
     await base44.asServiceRole.entities.Appointment.update(appt.id, { confirmation_email_sent: true });

@@ -76,6 +76,14 @@
     "professional_id": {
       "type": "string",
       "title": "Profesional titular"
+    },
+    "confirm_token": {
+      "type": "string",
+      "title": "Token de confirmaci\u00f3n (profesional)"
+    },
+    "cancel_token": {
+      "type": "string",
+      "title": "Token de cancelaci\u00f3n (paciente)"
     }
   },
   "required": [

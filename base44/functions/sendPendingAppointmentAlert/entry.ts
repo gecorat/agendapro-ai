@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { getPlatformConfig, sendWhatsApp } from "../../shared/zernio.ts";
+import { buildEmailHtml, getAppUrl } from "../../shared/email-template.ts";
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -30,18 +31,49 @@ export default async function(req: Request): Promise<Response> {
       return Response.json({ skipped: true, reason: 'no practice settings' });
     }
 
+    // Generar tokens si no existen
+    let confirmToken = appt.confirm_token;
+    let cancelToken = appt.cancel_token;
+    const tokenUpdate = {};
+    if (!confirmToken) {
+      confirmToken = crypto.randomUUID();
+      tokenUpdate.confirm_token = confirmToken;
+    }
+    if (!cancelToken) {
+      cancelToken = crypto.randomUUID();
+      tokenUpdate.cancel_token = cancelToken;
+    }
+    if (Object.keys(tokenUpdate).length > 0) {
+      await base44.asServiceRole.entities.Appointment.update(appt.id, tokenUpdate);
+    }
+
+    const appUrl = getAppUrl(req);
     const startDate = new Date(appt.start_datetime);
     const dateStr = startDate.toLocaleString("es-AR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
     const patientName = appt.patient_name || "Paciente";
     const serviceName = appt.service_name || "Consulta";
     const originLabel = appt.origin === "whatsapp" ? "WhatsApp" : "Link público";
 
+    const confirmUrl = `${appUrl}/c/${confirmToken}`;
+
     let emailSent = false;
     if (practice.professional_email) {
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: practice.professional_email,
         subject: `Nueva cita pendiente — ${patientName}`,
-        body: `Hola${practice.practice_name ? " " + practice.practice_name : ""},\n\nTenés una nueva cita pendiente de confirmar:\n\nPaciente: ${patientName}\nServicio: ${serviceName}\nFecha: ${dateStr}\nOrigen: ${originLabel}\n\nIngresá a AgendaPro para confirmar o cancelar la cita.\n\nAgendaPro`,
+        body: buildEmailHtml({
+          title: "Nueva cita pendiente",
+          greeting: `Hola${practice.practice_name ? " " + practice.practice_name : ""}`,
+          lines: [
+            "Tenés una nueva cita pendiente de confirmar:",
+            `Paciente: ${patientName}`,
+            `Servicio: ${serviceName}`,
+            `Fecha: ${dateStr}`,
+            `Origen: ${originLabel}`,
+          ],
+          primaryButton: { label: "Confirmar cita", url: confirmUrl },
+          footer: "AgendaPro",
+        }),
       });
       emailSent = true;
     }
@@ -54,7 +86,7 @@ export default async function(req: Request): Promise<Response> {
           apiKey: plat?.zernio_api_key,
           accountId: practice.zernio_account_id,
           phone: practice.zernio_phone,
-          message: `🔔 Nueva cita pendiente\n\nPaciente: ${patientName}\nServicio: ${serviceName}\nFecha: ${dateStr}\nOrigen: ${originLabel}\n\nIngresá a AgendaPro para confirmar.`,
+          message: `🔔 Nueva cita pendiente\n\nPaciente: ${patientName}\nServicio: ${serviceName}\nFecha: ${dateStr}\nOrigen: ${originLabel}\n\nConfirmá desde el email o ingresá a AgendaPro.`,
         });
         waSent = true;
       } catch (e) {

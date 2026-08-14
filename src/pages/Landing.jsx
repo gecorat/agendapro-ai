@@ -44,8 +44,9 @@ const FAQ = [
 ];
 
 const BASIC_FEATURES = ["Página pública de reservas", "Agenda manual + calendario", "Gestión de pacientes", "Recordatorios por email"];
-const PRO_FEATURES = ["Todo lo de Básico", "Bot de WhatsApp con IA", "Agenda y reservas online", "Recordatorios automáticos", "Hasta 200 citas mensuales"];
-const PREMIUM_FEATURES = ["Todo lo de Pro", "Citas ilimitadas", "Bandeja de chats con toma de control", "Reportes y métricas avanzadas", "Soporte prioritario"];
+const PRO_EXTRAS = ["Bot de WhatsApp con IA", "Agenda y reservas online 24/7", "Recordatorios automáticos por WhatsApp", "Hasta 200 citas mensuales"];
+const PREMIUM_EXTRAS = ["Hasta 500 citas mensuales", "Bandeja de chats con toma de control", "Reportes y métricas avanzadas", "Solicitud automática de reseñas", "Soporte prioritario"];
+const WHATSAPP_URL = "https://wa.me/5491100000000?text=" + encodeURIComponent("Hola! Quiero probar AgendaPro, ¿me cuentan cómo funciona?");
 
 export default function Landing() {
   return (
@@ -85,6 +86,9 @@ export default function Landing() {
               <Button size="lg" asChild className="bg-slate-900 hover:bg-slate-800 h-11 px-6 text-sm">
                 <Link to="/register">Probar gratis 14 días <ArrowRight className="w-4 h-4 ml-1.5" /></Link>
               </Button>
+              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 h-11 px-6 text-sm font-medium rounded-md bg-emerald-600 hover:bg-emerald-700 text-white transition-colors">
+                <MessageCircle className="w-4 h-4" /> ¿Preferís que te ayudemos?
+              </a>
               <Button size="lg" variant="outline" asChild className="h-11 px-6 border-slate-300 text-slate-700 hover:bg-white">
                 <Link to="/login">Ya tengo cuenta</Link>
               </Button>
@@ -244,7 +248,8 @@ export default function Landing() {
               </div>
               <p className="text-3xl font-heading font-bold mt-3">{PLAN_PRICES.pro.toLocaleString("es-AR")}<span className="text-sm font-normal text-slate-500"> ARS / mes</span></p>
               <ul className="mt-5 space-y-3 flex-1">
-                {PRO_FEATURES.map((f) => <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700"><Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" /> {f}</li>)}
+                <li className="text-xs font-medium text-slate-400 uppercase tracking-wide pb-1">Todo lo del Básico +</li>
+                {PRO_EXTRAS.map((f) => <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700"><Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" /> {f}</li>)}
               </ul>
               <Button className="mt-7 bg-slate-900 hover:bg-slate-800 h-11" asChild><Link to="/register">Empezar prueba</Link></Button>
             </Card>
@@ -255,7 +260,8 @@ export default function Landing() {
               </div>
               <p className="text-3xl font-heading font-bold mt-3">{PLAN_PRICES.premium.toLocaleString("es-AR")}<span className="text-sm font-normal text-slate-500"> ARS / mes</span></p>
               <ul className="mt-5 space-y-3 flex-1">
-                {PREMIUM_FEATURES.map((f) => <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700"><Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" /> {f}</li>)}
+                <li className="text-xs font-medium text-slate-400 uppercase tracking-wide pb-1">Todo lo del Pro +</li>
+                {PREMIUM_EXTRAS.map((f) => <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700"><Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" /> {f}</li>)}
               </ul>
               <Button className="mt-7 bg-slate-900 hover:bg-slate-800 h-11" asChild><Link to="/register">Empezar prueba</Link></Button>
             </Card>

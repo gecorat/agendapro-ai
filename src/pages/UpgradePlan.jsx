@@ -9,8 +9,8 @@ import { getPlanStatus, PLAN_PRICES, PLAN_LABELS } from "@/lib/plan-utils";
 import { Check, Loader2, Sparkles, CreditCard, Lock } from "lucide-react";
 
 const BASIC_FEATURES = ["Página pública de reservas", "Agenda manual + calendario", "Gestión de pacientes", "Recordatorios por email"];
-const PRO_FEATURES = ["Bot de WhatsApp con IA", "Hasta 200 citas mensuales"];
-const PREMIUM_FEATURES = ["Hasta 500 citas mensuales", "Bandeja de chats con toma de control", "Reportes y métricas avanzadas", "Solicitud automática de reseñas"];
+const PRO_FEATURES = ["Bot de WhatsApp con IA", "Agenda y reservas online 24/7", "Recordatorios automáticos", "Hasta 200 citas mensuales"];
+const PREMIUM_FEATURES = ["Hasta 500 citas mensuales", "Bandeja de chats con toma de control", "Reportes y métricas avanzadas", "Solicitud automática de reseñas", "Soporte prioritario"];
 
 export default function UpgradePlan() {
   const { toast } = useToast();
@@ -94,6 +94,7 @@ export default function UpgradePlan() {
           </div>
           <p className="text-3xl font-heading font-bold mt-2">{PLAN_PRICES.pro.toLocaleString("es-AR")}<span className="text-sm font-normal text-muted-foreground"> ARS/mes</span></p>
           <ul className="mt-4 space-y-2.5 flex-1">
+            <li className="text-xs font-medium text-muted-foreground uppercase tracking-wide pb-1">Todo lo del Básico +</li>
             {PRO_FEATURES.map((f) => <li key={f} className="flex items-start gap-2 text-sm"><Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" /> {f}</li>)}
           </ul>
           <Button className="mt-6" onClick={() => handlePay("pro")} disabled={paying === "pro"}>
@@ -109,6 +110,7 @@ export default function UpgradePlan() {
           </div>
           <p className="text-3xl font-heading font-bold mt-2">{PLAN_PRICES.premium.toLocaleString("es-AR")}<span className="text-sm font-normal text-muted-foreground"> ARS/mes</span></p>
           <ul className="mt-4 space-y-2.5 flex-1">
+            <li className="text-xs font-medium text-muted-foreground uppercase tracking-wide pb-1">Todo lo del Pro +</li>
             {PREMIUM_FEATURES.map((f) => <li key={f} className="flex items-start gap-2 text-sm"><Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" /> {f}</li>)}
           </ul>
           <Button className="mt-6" onClick={() => handlePay("premium")} disabled={paying === "premium"}>

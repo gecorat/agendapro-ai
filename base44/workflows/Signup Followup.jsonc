@@ -1,0 +1,71 @@
+{
+  "name": "Seguimiento de registro",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "app_user_auth",
+      "events": [
+        "signup"
+      ]
+    }
+  },
+  "description": "Email de bienvenida al registrarse + recordatorio a los 2 d\u00edas si no configur\u00f3 el consultorio",
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "signup_followup",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "welcome_email": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "onUserSignup",
+            "args": {
+              "user_id": "${ .trigger.user_id }",
+              "email": "${ .trigger.email }",
+              "full_name": "${ .trigger.full_name }",
+              "mode": "welcome"
+            }
+          },
+          "then": "wait_2_days",
+          "x-base44": {
+            "title": "Email de bienvenida",
+            "description": "Se env\u00eda al registrarse"
+          }
+        }
+      },
+      {
+        "wait_2_days": {
+          "wait": "P2D",
+          "then": "reminder_check",
+          "x-base44": {
+            "title": "Esperar 2 d\u00edas",
+            "description": "Pausa de 48 horas"
+          }
+        }
+      },
+      {
+        "reminder_check": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "onUserSignup",
+            "args": {
+              "user_id": "${ .trigger.user_id }",
+              "email": "${ .trigger.email }",
+              "full_name": "${ .trigger.full_name }",
+              "mode": "reminder"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Recordatorio de configuraci\u00f3n",
+            "description": "Solo si no configur\u00f3 el consultorio"
+          }
+        }
+      }
+    ]
+  }
+}

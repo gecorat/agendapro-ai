@@ -169,12 +169,6 @@ export default function PublicBooking() {
       });
       setCreated({ appointment: appt, patient });
       setStep(5);
-      // Abrir WhatsApp con mensaje predeterminado
-      const waNumber = (settings?.zernio_phone || settings?.phone || "").replace(/\D/g, "");
-      if (waNumber) {
-        const waMsg = buildWaMessage(service, date, slot, form);
-        window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(waMsg)}`, "_blank");
-      }
     } finally {
       setSaving(false);
     }
@@ -420,7 +414,7 @@ export default function PublicBooking() {
                 ← Cambiar fecha u hora
               </Button>
               <Button className="w-full" style={{ backgroundColor: brand }} disabled={saving} onClick={handleConfirm}>
-                {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Confirmar por WhatsApp
+                {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Confirmar
               </Button>
             </div>
           </Card>
@@ -438,12 +432,9 @@ export default function PublicBooking() {
               <p className="font-medium capitalize">{date && formatLongDate(date)} · {slot && formatSlot(slot)}</p>
               <p className="text-sm text-muted-foreground">{settings?.practice_name || "Consultorio"}{settings?.address ? ` · ${settings.address}` : ""}</p>
               {waNumber ? (
-                <>
-                  <p className="text-sm text-muted-foreground pt-1">Escribile al profesional por WhatsApp para confirmar tu turno cuanto antes — mientras antes avises, más rápido te lo confirma. Si no se abrió solo, usá este botón:</p>
-                  <a href={waUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 w-full rounded-md bg-[#25D366] hover:bg-[#1ebe5d] text-white font-semibold text-sm h-11 px-4 py-2 transition-colors shadow-sm">
-                    <MessageCircle className="w-5 h-5" /> Confirmar por WhatsApp
-                  </a>
-                </>
+                <a href={waUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 w-full rounded-md bg-[#25D366] hover:bg-[#1ebe5d] text-white font-semibold text-sm h-11 px-4 py-2 transition-colors shadow-sm">
+                  <MessageCircle className="w-5 h-5" /> Confirmar por WhatsApp
+                </a>
               ) : (
                 <p className="text-sm text-muted-foreground pt-1">El profesional confirmará tu turno. Guardá esta referencia: <span className="font-mono">{created.appointment.id.slice(-8)}</span></p>
               )}

@@ -51,7 +51,7 @@ export default function Home() {
   const status = getPlanStatus(settings);
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
+    <div className="px-3 py-3 md:p-6 space-y-4">
       {settings?.handle && <PublicLinkBar handle={settings.handle} />}
       {status.hasPaidPlan ? <Dashboard /> : <WelcomeGuide />}
     </div>

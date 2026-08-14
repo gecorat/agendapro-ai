@@ -22,7 +22,7 @@ function originLabel(origin) {
   return "Manual";
 }
 
-function PendingList({ pending, onConfirm, onCancel, onAgenda, busyId }) {
+function PendingList({ pending, onConfirm, onConfirmWhatsApp, onCancel, onAgenda, busyId }) {
   if (pending.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">
@@ -56,14 +56,25 @@ function PendingList({ pending, onConfirm, onCancel, onAgenda, busyId }) {
               </div>
             </div>
             <div className="flex items-center gap-1.5 mt-2">
-              <Button
-                size="sm"
-                className="h-7 px-2 text-xs bg-emerald-600 hover:bg-emerald-700"
-                disabled={busyId === a.id}
-                onClick={() => onConfirm(a.id)}
-              >
-                <Check className="w-3 h-3" /> Confirmar
-              </Button>
+              {a.origin === "whatsapp" ? (
+                <Button
+                  size="sm"
+                  className="h-7 px-2 text-xs bg-emerald-600 hover:bg-emerald-700"
+                  disabled={busyId === a.id}
+                  onClick={() => onConfirmWhatsApp(a)}
+                >
+                  <MessageCircle className="w-3 h-3" /> Confirmar por WhatsApp
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  className="h-7 px-2 text-xs bg-emerald-600 hover:bg-emerald-700"
+                  disabled={busyId === a.id}
+                  onClick={() => onConfirm(a.id)}
+                >
+                  <Check className="w-3 h-3" /> Confirmar
+                </Button>
+              )}
               <Button
                 size="sm"
                 variant="outline"
@@ -169,6 +180,37 @@ export default function NotificationsBell({ user }) {
     }
   };
 
+  const handleConfirmWhatsApp = async (a) => {
+    setBusyId(a.id);
+    try {
+      let phone = "";
+      if (a.patient_id) {
+        try {
+          const p = await base44.entities.Patient.get(a.patient_id);
+          phone = p?.phone || "";
+        } catch { /* ignore */ }
+      }
+      const digits = (phone || "").replace(/\D/g, "");
+      if (!digits) {
+        toast({ title: "Sin teléfono", description: "El paciente no tiene teléfono cargado.", variant: "destructive" });
+        return;
+      }
+      await base44.entities.Appointment.update(a.id, { status: "confirmed" });
+      const start = a.start_datetime ? new Date(a.start_datetime) : null;
+      const fecha = start
+        ? start.toLocaleString("es-AR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })
+        : "";
+      const msg = `Hola ${a.patient_name || ""}, te confirmo tu cita de ${a.service_name || "consulta"} para el ${fecha}. ¡Te esperamos!`;
+      window.open(`https://wa.me/${digits}?text=${encodeURIComponent(msg)}`, "_blank");
+      setPending((p) => p.filter((x) => x.id !== a.id));
+      toast({ title: "Cita confirmada" });
+    } catch {
+      toast({ title: "Error al confirmar", variant: "destructive" });
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   const handleAgenda = () => {
     setOpen(false);
     navigate("/agenda");
@@ -191,7 +233,7 @@ export default function NotificationsBell({ user }) {
     </button>
   );
 
-  const listProps = { pending, onConfirm: handleConfirm, onCancel: handleCancel, onAgenda: handleAgenda, busyId };
+  const listProps = { pending, onConfirm: handleConfirm, onConfirmWhatsApp: handleConfirmWhatsApp, onCancel: handleCancel, onAgenda: handleAgenda, busyId };
 
   if (isMobile) {
     return (

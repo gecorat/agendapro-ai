@@ -64,7 +64,7 @@ export default function Patients() {
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-6xl mx-auto space-y-4">
+    <div className="px-3 py-3 md:p-6 max-w-6xl mx-auto space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-heading font-semibold">{preset.patientLabel}</h1>

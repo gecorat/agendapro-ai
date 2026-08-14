@@ -8,7 +8,7 @@ import AdminConnections from "@/components/admin/AdminConnections";
 
 export default function Admin() {
   return (
-    <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-6">
+    <div className="px-3 py-3 md:p-6 max-w-4xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-heading font-semibold flex items-center gap-2">

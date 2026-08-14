@@ -166,6 +166,7 @@ export default function AdminUsers() {
             <div key={u.id} className="p-3 rounded-lg border border-border flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
               <div className="min-w-0 flex-1">
                 <p className="font-medium truncate">{u.full_name || u.email}</p>
+                {u.full_name && <p className="text-xs text-muted-foreground truncate">{u.email}</p>}
                 <p className="text-xs text-muted-foreground truncate">
                   {s ? `Origen: ${s.trial_origin || "landing"}` : "Sin onboarding"}{" · "}
                   <span className={st.color}>{st.label}</span>
@@ -186,8 +187,8 @@ export default function AdminUsers() {
                       </SelectContent>
                     </Select>
                     {s.plan === "trial" && (
-                      <Button size="sm" variant="outline" onClick={() => extendTrial(s)} title="Extender trial 14 días">
-                        <Clock className="w-4 h-4" />
+                      <Button size="sm" variant="outline" onClick={() => extendTrial(s)} title="Extender trial 14 días" className="gap-1">
+                        <Clock className="w-4 h-4" /> Extender
                       </Button>
                     )}
                     <Button size="sm" variant={s.suspended ? "outline" : "destructive"} onClick={() => toggleSuspend(s, !s.suspended)}>

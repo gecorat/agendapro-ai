@@ -148,7 +148,7 @@ export default function AppLayout() {
 
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile top bar */}
-        <header className="md:hidden sticky top-0 z-40 flex items-center justify-between px-4 py-3 border-b border-border bg-card">
+        <header className="md:hidden sticky top-0 z-40 flex items-center justify-between px-3 py-2.5 border-b border-border bg-card">
           <button onClick={() => setMobileOpen(true)} className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-accent transition-colors">
             <Menu className="w-6 h-6" />
           </button>

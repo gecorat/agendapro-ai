@@ -133,9 +133,9 @@
     "professional_type"
   ],
   "rls": {
-    "create": null,
-    "read": null,
-    "update": null,
+    "create": {},
+    "read": {},
+    "update": {},
     "delete": {
       "$or": [
         {

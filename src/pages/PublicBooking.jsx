@@ -204,52 +204,53 @@ export default function PublicBooking() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Header hero oscuro */}
+      {/* Header full-bleed oscuro premium */}
       <div
         className="w-full relative overflow-hidden"
-        style={{ background: `linear-gradient(135deg, ${brand} 0%, #020617 100%)` }}
+        style={{ background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)" }}
       >
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle at 20% 50%, white 0%, transparent 50%)" }} />
-        <div className="relative max-w-lg mx-auto px-4 py-8 sm:py-10 text-white">
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 sm:gap-6">
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle at 18% 50%, white 0%, transparent 55%)" }} />
+        <div className="relative px-4 py-5 sm:px-6 sm:py-6 text-white">
+          <div className="flex items-start gap-4 sm:gap-6">
             {settings?.photo_url && (
               <Image
                 src={settings.photo_url}
                 alt={settings.practice_name}
                 fittingType="fill"
-                className="w-28 h-28 sm:w-36 sm:h-36 rounded-2xl overflow-hidden shadow-lg ring-1 ring-white/20 shrink-0"
+                className="w-[130px] h-[130px] sm:w-[170px] sm:h-[170px] rounded-2xl overflow-hidden object-cover shadow-xl ring-1 ring-white/15 shrink-0"
               />
             )}
-            <div className="flex-1 text-center sm:text-left min-w-0">
-              <h1 className="text-2xl sm:text-3xl font-heading font-extrabold tracking-tight">{settings?.practice_name || "Reservá tu turno"}</h1>
-              {settings?.specialty && <p className="text-sm text-white/70 mt-1">{settings.specialty}</p>}
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-4">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-3xl font-heading font-extrabold tracking-tight leading-tight">{settings?.practice_name || "Reservá tu turno"}</h1>
+              {settings?.specialty && <p className="text-sm text-white/70 mt-0.5">{settings.specialty}</p>}
+              <div className="h-px w-full bg-white/20 my-3" />
+              <div className="flex flex-wrap items-start gap-2">
                 {settings?.phone && (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm text-xs font-medium">
-                    <Phone className="w-3.5 h-3.5" /> {settings.phone}
+                    <Phone className="w-3.5 h-3.5 shrink-0" /> {settings.phone}
                   </span>
                 )}
                 {settings?.address && (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm text-xs font-medium">
-                    <MapPin className="w-3.5 h-3.5" /> {settings.address}
+                    <MapPin className="w-3.5 h-3.5 shrink-0" /> {settings.address}
                   </span>
                 )}
                 {settings?.description && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm text-xs font-medium max-w-xs">
-                    <FileText className="w-3.5 h-3.5 shrink-0" /> <span className="truncate">{settings.description}</span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm text-xs font-medium">
+                    <FileText className="w-3.5 h-3.5 shrink-0" /> <span className="line-clamp-1">{settings.description}</span>
                   </span>
                 )}
               </div>
               {(settings?.instagram_url || settings?.facebook_url) && (
-                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-2">
+                <div className="flex flex-wrap items-start gap-2 mt-2">
                   {settings?.instagram_url && (
                     <a href={settings.instagram_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm text-xs font-medium hover:bg-white/20 transition-colors">
-                      <Instagram className="w-3.5 h-3.5" /> Instagram
+                      <Instagram className="w-3.5 h-3.5 shrink-0" /> Instagram
                     </a>
                   )}
                   {settings?.facebook_url && (
                     <a href={settings.facebook_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm text-xs font-medium hover:bg-white/20 transition-colors">
-                      <Facebook className="w-3.5 h-3.5" /> Facebook
+                      <Facebook className="w-3.5 h-3.5 shrink-0" /> Facebook
                     </a>
                   )}
                 </div>

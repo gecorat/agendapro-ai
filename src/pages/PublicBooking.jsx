@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { CalendarClock, Clock, ArrowRight, Check, Loader2, Calendar, MapPin, FileText, Phone, Mail, CalendarX } from "lucide-react";
+import { CalendarClock, Clock, ArrowRight, Check, Loader2, Calendar, MapPin, FileText, Phone, Mail, CalendarX, MessageCircle } from "lucide-react";
 
 function parseTimeToDate(date, time) {
   const [h, m] = time.split(":").map(Number);
@@ -143,7 +143,7 @@ export default function PublicBooking() {
   }, [date, service, availability, appointments]);
 
   const handleConfirm = useCallback(async () => {
-    if (!service || !slot || !form.first_name || !form.phone || !professionalId) return;
+    if (!service || !slot || !form.first_name || !form.last_name || !form.phone || !form.email || !professionalId) return;
     setSaving(true);
     try {
       const end = new Date(slot.getTime() + (service.duration_minutes || 30) * 60000);
@@ -356,28 +356,42 @@ export default function PublicBooking() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2"><Label htmlFor="first_name">Nombre *</Label><Input id="first_name" value={form.first_name} onChange={(e) => setForm({ ...form, first_name: e.target.value })} required /></div>
-              <div className="space-y-2"><Label htmlFor="last_name">Apellido</Label><Input id="last_name" value={form.last_name} onChange={(e) => setForm({ ...form, last_name: e.target.value })} /></div>
+              <div className="space-y-2"><Label htmlFor="last_name">Apellido *</Label><Input id="last_name" value={form.last_name} onChange={(e) => setForm({ ...form, last_name: e.target.value })} required /></div>
             </div>
             <div className="space-y-2"><Label htmlFor="phone">Teléfono (WhatsApp) *</Label><Input id="phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+54 9 11 1234 5678" required /></div>
-            <div className="space-y-2"><Label htmlFor="email">Email</Label><Input id="email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
-            <Button className="w-full" style={{ backgroundColor: brand }} disabled={saving || !form.first_name || !form.phone} onClick={handleConfirm}>
+            <div className="space-y-2"><Label htmlFor="email">Email *</Label><Input id="email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></div>
+            <Button className="w-full" style={{ backgroundColor: brand }} disabled={saving || !form.first_name || !form.last_name || !form.phone || !form.email} onClick={handleConfirm}>
               {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Solicitar turno
             </Button>
             <p className="text-xs text-muted-foreground text-center">Tu solicitud será confirmada por el profesional.</p>
           </Card>
         )}
 
-        {step === 4 && created && (
-          <Card className="p-6 text-center space-y-3">
-            <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center mx-auto"><Check className="w-7 h-7 text-emerald-600" /></div>
-            <h2 className="font-heading font-semibold text-lg">¡Solicitud enviada!</h2>
-            <p className="text-sm text-muted-foreground">{service?.name}</p>
-            <p className="font-medium capitalize">{date && formatLongDate(date)} · {slot && formatSlot(slot)}</p>
-            <p className="text-sm text-muted-foreground">{settings?.practice_name || "Consultorio"}{settings?.address ? ` · ${settings.address}` : ""}</p>
-            <p className="text-sm text-muted-foreground pt-2">El profesional confirmará tu turno. Guardá esta referencia: <span className="font-mono">{created.appointment.id.slice(-8)}</span></p>
-            <Button variant="outline" className="mt-2" onClick={() => { setStep(1); setService(null); setDate(null); setSlot(null); setForm({ first_name: "", last_name: "", phone: "", email: "" }); setCreated(null); }}>Reservar otro turno</Button>
-          </Card>
-        )}
+        {step === 4 && created && (() => {
+          const waNumber = (settings?.zernio_phone || settings?.phone || "").replace(/\D/g, "");
+          const waMsg = `Hola, quiero agendar una cita de ${service?.name} para el ${date ? formatLongDate(date) : ""} a las ${slot ? formatSlot(slot) : ""}. Mi nombre es ${form.first_name} ${form.last_name}.`;
+          const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(waMsg)}`;
+          return (
+            <Card className="p-6 text-center space-y-3">
+              <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center mx-auto"><Check className="w-7 h-7 text-emerald-600" /></div>
+              <h2 className="font-heading font-semibold text-lg">¡Solicitud registrada!</h2>
+              <p className="text-sm text-muted-foreground">{service?.name}</p>
+              <p className="font-medium capitalize">{date && formatLongDate(date)} · {slot && formatSlot(slot)}</p>
+              <p className="text-sm text-muted-foreground">{settings?.practice_name || "Consultorio"}{settings?.address ? ` · ${settings.address}` : ""}</p>
+              {waNumber ? (
+                <>
+                  <p className="text-sm text-muted-foreground pt-1">Confirmá tu turno avisando por WhatsApp al profesional:</p>
+                  <a href={waUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 w-full rounded-md bg-[#25D366] hover:bg-[#1ebe5d] text-white font-semibold text-sm h-11 px-4 py-2 transition-colors shadow-sm">
+                    <MessageCircle className="w-5 h-5" /> Confirmar por WhatsApp
+                  </a>
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground pt-1">El profesional confirmará tu turno. Guardá esta referencia: <span className="font-mono">{created.appointment.id.slice(-8)}</span></p>
+              )}
+              <Button variant="outline" className="mt-2" onClick={() => { setStep(1); setService(null); setDate(null); setSlot(null); setForm({ first_name: "", last_name: "", phone: "", email: "" }); setCreated(null); }}>Reservar otro turno</Button>
+            </Card>
+          );
+        })()}
       </div>
     </div>
   );

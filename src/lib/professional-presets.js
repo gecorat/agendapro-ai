@@ -156,7 +156,13 @@ export const PRESETS = {
 };
 
 export function getPreset(type) {
-  return PRESETS[type] || PRESETS.other;
+  const preset = PRESETS[type] || PRESETS.other;
+  return {
+    patientLabel: preset.patientLabel,
+    services: [
+      { name: "Primera Consulta", description: "Evaluación inicial", duration_minutes: 30, margin_minutes: 5, color: "#3b82f6", follow_up_days: 0 },
+    ],
+  };
 }
 
 export function getTypeLabel(type) {

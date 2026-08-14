@@ -155,7 +155,7 @@ export default function Settings() {
           <IntegrationCard
             icon={Mail}
             name="Email"
-            description="Recordatorios y confirmaciones por correo"
+            description="Recordatorios automáticos 24hs y 3hs antes de cada cita"
             connected={true}
           />
         </TabsContent>

@@ -31,7 +31,7 @@ export default function TrialBanner() {
   }
 
   return (
-    <div className="bg-amber-50 border-b border-amber-200 px-3 sm:px-4 py-1.5 text-xs sm:text-sm text-amber-800">
+    <div className="bg-amber-50 border-b border-amber-200 px-3 sm:px-4 py-2 text-sm sm:text-base text-amber-800">
       <div className="flex items-center gap-2">
         <Clock className="w-4 h-4 shrink-0" />
         <span className="truncate">
@@ -43,7 +43,7 @@ export default function TrialBanner() {
         </span>
         <Link to="/upgrade-plan" className="ml-auto underline font-medium whitespace-nowrap shrink-0">Ver planes</Link>
       </div>
-      <div className="flex items-center gap-1.5 mt-1 overflow-x-auto no-scrollbar">
+      <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
         {TRIAL_ACCESS.map((item, i) => {
           const Icon = item.icon;
           return (

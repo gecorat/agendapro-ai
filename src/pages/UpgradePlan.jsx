@@ -81,7 +81,7 @@ export default function UpgradePlan() {
           <ul className="mt-4 space-y-2.5 flex-1">
             {BASIC_FEATURES.map((f) => <li key={f} className="flex items-start gap-2 text-sm"><Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" /> {f}</li>)}
           </ul>
-          <Button className="mt-6" variant="outline" onClick={() => handlePay("basic")} disabled={paying === "basic"}>
+          <Button className="mt-6" onClick={() => handlePay("basic")} disabled={paying === "basic"}>
             {paying === "basic" ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <CreditCard className="w-4 h-4 mr-1" />}
             {status.plan === "basic" ? "Plan actual" : "Pagar con Mercado Pago"}
           </Button>

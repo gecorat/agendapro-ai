@@ -48,6 +48,19 @@ export default async function(req) {
       servicesCreated = Array.isArray(created) ? created.length : servicesToCreate.length;
     }
 
+    // Disponibilidad por defecto: Lunes a Viernes, bloque corrido 9-18.
+    // Se crea como el usuario para que created_by_id quede asignado.
+    const defaultAvailability = [1, 2, 3, 4, 5].map((d) => ({
+      day_of_week: d,
+      start_time: "09:00",
+      end_time: "18:00",
+      type: "work",
+      label: "",
+    }));
+    try {
+      await base44.entities.Availability.bulkCreate(defaultAvailability);
+    } catch { /* la disponibilidad no bloquea el onboarding */ }
+
     return Response.json({
       settings,
       servicesCreated,

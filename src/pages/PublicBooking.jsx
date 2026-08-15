@@ -120,8 +120,14 @@ export default function PublicBooking() {
         setServices(servs || []);
         setAvailability(avail || []);
         try {
-          const appts = await base44.entities.Appointment.filter({ created_by_id: pid });
-          setAppointments(appts || []);
+          const now = new Date(); now.setHours(0, 0, 0, 0);
+          const toDate = new Date(now.getTime() + 21 * 86400000);
+          const res = await base44.functions.invoke("getBookedSlots", {
+            professional_id: pid,
+            date_from: now.toISOString(),
+            date_to: toDate.toISOString(),
+          });
+          setAppointments(res?.data?.slots || []);
         } catch {
           setAppointments([]);
         }

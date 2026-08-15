@@ -26,11 +26,13 @@ export default function AvailabilityEditor() {
       if ((list || []).length === 0) {
         // Horario estándar por defecto: Lunes a Viernes, mañana + almuerzo + tarde.
         await base44.entities.Availability.bulkCreate(
-          [1, 2, 3, 4, 5].flatMap((d) => [
-            { day_of_week: d, start_time: "09:00", end_time: "13:00", type: "work", label: "" },
-            { day_of_week: d, start_time: "13:00", end_time: "14:00", type: "break", label: "Almuerzo" },
-            { day_of_week: d, start_time: "14:00", end_time: "18:00", type: "work", label: "" },
-          ])
+          [1, 2, 3, 4, 5].map((d) => ({
+            day_of_week: d,
+            start_time: "09:00",
+            end_time: "18:00",
+            type: "work",
+            label: "",
+          }))
         );
         const seeded = await base44.entities.Availability.filter({});
         setItems(seeded || []);
@@ -78,13 +80,15 @@ export default function AvailabilityEditor() {
       if (existingIds.length > 0) {
         await base44.entities.Availability.deleteMany({ id: { $in: existingIds } });
       }
-      await base44.entities.Availability.bulkCreate([
-        ...[1, 2, 3, 4, 5].flatMap((d) => [
-          { day_of_week: d, start_time: "09:00", end_time: "13:00", type: "work", label: "" },
-          { day_of_week: d, start_time: "13:00", end_time: "14:00", type: "break", label: "Almuerzo" },
-          { day_of_week: d, start_time: "14:00", end_time: "18:00", type: "work", label: "" },
-        ]),
-      ]);
+      await base44.entities.Availability.bulkCreate(
+        [1, 2, 3, 4, 5].map((d) => ({
+          day_of_week: d,
+          start_time: "09:00",
+          end_time: "18:00",
+          type: "work",
+          label: "",
+        }))
+      );
       await load();
       toast({ title: "Horarios restablecidos", description: "Se cargó el horario estándar de lunes a viernes." });
     } catch (err) {

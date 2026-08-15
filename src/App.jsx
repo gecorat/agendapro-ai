@@ -27,7 +27,6 @@ import WelcomeGuide from "@/pages/WelcomeGuide";
 import PatientList from "@/pages/PatientList";
 import ProfileEditor from "@/pages/ProfileEditor";
 import UpgradePlan from "@/pages/UpgradePlan";
-import AvailabilitySettings from "@/pages/AvailabilitySettings";
 import AppointmentHistory from "@/pages/AppointmentHistory";
 import ReviewsManager from "@/pages/ReviewsManager";
 import ConfirmAppointment from "@/pages/ConfirmAppointment";
@@ -39,7 +38,7 @@ const AuthenticatedApp = () => {
   const location = useLocation();
 
   const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/reset-password"];
-  if (location.pathname.startsWith("/u/") || location.pathname.startsWith("/r/") || location.pathname === "/landing-preview" || PUBLIC_PATHS.includes(location.pathname)) return null;
+  if (location.pathname.startsWith("/u/") || location.pathname.startsWith("/r/") || location.pathname.startsWith("/c/") || location.pathname.startsWith("/x/") || location.pathname.startsWith("/reschedule/") || location.pathname === "/landing-preview" || PUBLIC_PATHS.includes(location.pathname)) return null;
 
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
@@ -76,7 +75,6 @@ const AuthenticatedApp = () => {
         <Route path="/patient-list" element={<PatientList />} />
         <Route path="/profile-editor" element={<ProfileEditor />} />
         <Route path="/upgrade-plan" element={<UpgradePlan />} />
-        <Route path="/availability-settings" element={<AvailabilitySettings />} />
         <Route path="/appointment-history" element={<AppointmentHistory />} />
         <Route path="/reviews-manager" element={<ReviewsManager />} />
         <Route path="/admin" element={<Admin />} />

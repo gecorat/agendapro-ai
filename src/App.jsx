@@ -17,6 +17,7 @@ import PublicBooking from "@/pages/PublicBooking";
 import Admin from "@/pages/Admin";
 import Landing from "@/pages/Landing";
 import BotPreview from "@/pages/BotPreview";
+import Assistant from "@/pages/Assistant";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import ForgotPassword from "@/pages/ForgotPassword";
@@ -69,6 +70,7 @@ const AuthenticatedApp = () => {
         <Route path="/pacientes" element={<Patients />} />
         <Route path="/configuracion" element={<Settings />} />
         <Route path="/bot" element={<BotPreview />} />
+        <Route path="/asistente" element={<Assistant />} />
         <Route path="/service-manager" element={<ServiceManager />} />
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/welcome-guide" element={<WelcomeGuide />} />

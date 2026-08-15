@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Calendar, Users, LayoutDashboard, Settings, LogOut, CalendarClock, Menu, X, Shield, MessageCircle, History, ClipboardList, BarChart3, Star, BookOpen, UserCircle, CreditCard } from "lucide-react";
+import { Calendar, Users, LayoutDashboard, Settings, LogOut, CalendarClock, Menu, X, Shield, MessageCircle, History, ClipboardList, BarChart3, Star, BookOpen, UserCircle, CreditCard, Sparkles } from "lucide-react";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import Onboarding from "@/pages/Onboarding";
 import TrialBanner from "@/components/TrialBanner";
@@ -60,6 +60,7 @@ export default function AppLayout() {
       title: "Crecimiento",
       items: [
         { label: "Probar el bot", path: "/bot", icon: MessageCircle },
+        { label: "Asistente IA", path: "/asistente", icon: Sparkles },
         { label: "Guía", path: "/welcome-guide", icon: BookOpen },
         { label: "Mi perfil", path: "/profile-editor", icon: UserCircle },
         { label: "Planes", path: "/upgrade-plan", icon: CreditCard },
@@ -102,6 +103,8 @@ export default function AppLayout() {
                         ? "bg-primary text-primary-foreground"
                         : item.path === "/bot"
                         ? "bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20"
+                        : item.path === "/asistente"
+                        ? "bg-violet-500/10 text-violet-700 hover:bg-violet-500/20"
                         : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                     }`}
                   >

@@ -194,11 +194,11 @@ export default function PatientForm({ open, onClose, onSaved, patient }) {
               rows={3}
             />
           </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+          <DialogFooter className="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
+            <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={onClose}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={saving}>
+            <Button type="submit" className="w-full sm:w-auto" disabled={saving}>
               {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {patient ? "Guardar" : "Crear paciente"}
             </Button>

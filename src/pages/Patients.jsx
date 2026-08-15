@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
-import { Plus, Search, Users, Phone, Mail, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, Users, Phone, Mail, Pencil, Trash2, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import PatientForm from "@/components/PatientForm";
+import PatientDetail from "@/components/PatientDetail";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 
 export default function Patients() {
@@ -14,6 +15,8 @@ export default function Patients() {
   const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailPatient, setDetailPatient] = useState(null);
   const { preset } = usePracticeSettings();
   const patientLabelLower = preset.patientLabel.toLowerCase();
 
@@ -45,6 +48,15 @@ export default function Patients() {
 
   function apptCount(patientId) {
     return appointments.filter((a) => a.patient_id === patientId).length;
+  }
+
+  function openDetail(p) {
+    setDetailPatient(p);
+    setDetailOpen(true);
+  }
+
+  function handleAppointmentUpdate(updated) {
+    setAppointments((prev) => prev.map((a) => (a.id === updated.id ? { ...a, ...updated } : a)));
   }
 
   async function handleDelete(p) {
@@ -112,6 +124,13 @@ export default function Patients() {
                 </div>
                 <div className="flex gap-1">
                   <button
+                    onClick={() => openDetail(p)}
+                    title="Ver historial"
+                    className="p-1.5 rounded-md hover:bg-accent text-muted-foreground"
+                  >
+                    <FileText className="w-4 h-4" />
+                  </button>
+                  <button
                     onClick={() => openEdit(p)}
                     className="p-1.5 rounded-md hover:bg-accent text-muted-foreground"
                   >
@@ -149,6 +168,14 @@ export default function Patients() {
         onClose={() => setFormOpen(false)}
         onSaved={load}
         patient={editing}
+      />
+
+      <PatientDetail
+        open={detailOpen}
+        onClose={() => setDetailOpen(false)}
+        patient={detailPatient}
+        appointments={appointments}
+        onUpdateAppointment={handleAppointmentUpdate}
       />
     </div>
   );

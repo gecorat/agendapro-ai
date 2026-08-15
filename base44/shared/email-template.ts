@@ -1,4 +1,12 @@
-export function getAppUrl(req: Request): string {
+export async function getAppUrl(base44: any, req: Request): Promise<string> {
+  // 1. Dominio público configurado por el admin en PlatformConfig
+  try {
+    const list = await base44.asServiceRole.entities.PlatformConfig.filter({});
+    const cfg = list?.[0];
+    const configured = (cfg?.app_base_url || "").trim();
+    if (configured) return configured.replace(/\/+$/, "");
+  } catch {}
+  // 2. Fallback al origin del request
   try {
     const u = new URL(req.url);
     return u.origin;

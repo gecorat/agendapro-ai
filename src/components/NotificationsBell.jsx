@@ -40,7 +40,7 @@ function StatusBadge({ status }) {
   return null;
 }
 
-function PendingList({ pending, onConfirm, onConfirmWhatsApp, onCancel, onAgenda, busyId }) {
+function PendingList({ pending, onConfirm, onConfirmWhatsApp, onCancel, onOpenAppt, busyId }) {
   if (pending.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">
@@ -55,8 +55,16 @@ function PendingList({ pending, onConfirm, onConfirmWhatsApp, onCancel, onAgenda
         const Icon = originIcon(a.origin);
         const start = a.start_datetime ? new Date(a.start_datetime) : null;
         const isPending = a.status === "pending";
+        const dateStr = start ? `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}-${String(start.getDate()).padStart(2, "0")}` : null;
         return (
-          <div key={a.id} className="rounded-lg border border-border p-3 bg-background">
+          <div
+            key={a.id}
+            role="button"
+            tabIndex={0}
+            onClick={() => onOpenAppt(dateStr)}
+            onKeyDown={(e) => { if ((e.key === "Enter" || e.key === " ") && dateStr) onOpenAppt(dateStr); }}
+            className="rounded-lg border border-border p-3 bg-background hover:bg-accent/50 transition-colors cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          >
             <div className="flex items-start gap-2">
               <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent">
                 <Icon className="w-3.5 h-3.5 text-muted-foreground" />
@@ -79,7 +87,7 @@ function PendingList({ pending, onConfirm, onConfirmWhatsApp, onCancel, onAgenda
               </div>
             </div>
             {isPending && (
-              <div className="flex items-center gap-1.5 mt-2">
+              <div className="flex items-center gap-1.5 mt-2" onClick={(e) => e.stopPropagation()}>
                 {a.origin === "whatsapp" ? (
                   <Button
                     size="sm"
@@ -107,9 +115,6 @@ function PendingList({ pending, onConfirm, onConfirmWhatsApp, onCancel, onAgenda
                   onClick={() => onCancel(a.id)}
                 >
                   <XIcon className="w-3 h-3" /> Cancelar
-                </Button>
-                <Button size="sm" variant="ghost" className="h-7 px-2 text-xs ml-auto" onClick={onAgenda}>
-                  Ver en agenda
                 </Button>
               </div>
             )}
@@ -259,9 +264,9 @@ export default function NotificationsBell({ user }) {
     }
   };
 
-  const handleAgenda = () => {
+  const handleOpenAppt = (dateStr) => {
     setOpen(false);
-    navigate("/agenda");
+    navigate(dateStr ? `/agenda?date=${dateStr}` : "/agenda");
   };
 
   const pendingCount = items.filter((a) => a.status === "pending").length;
@@ -281,7 +286,7 @@ export default function NotificationsBell({ user }) {
     </button>
   );
 
-  const listProps = { pending: items, onConfirm: handleConfirm, onConfirmWhatsApp: handleConfirmWhatsApp, onCancel: handleCancel, onAgenda: handleAgenda, busyId };
+  const listProps = { pending: items, onConfirm: handleConfirm, onConfirmWhatsApp: handleConfirmWhatsApp, onCancel: handleCancel, onOpenAppt: handleOpenAppt, busyId };
 
   if (isMobile) {
     return (

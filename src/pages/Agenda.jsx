@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AppointmentForm from "@/components/AppointmentForm";
 import DayView from "@/components/agenda/DayView";
@@ -14,8 +15,19 @@ const VIEWS = [
 ];
 
 export default function Agenda() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialDate = (() => {
+    const d = searchParams.get("date");
+    if (!d) return new Date();
+    if (d === "today") return new Date();
+    const parsed = new Date(d + "T00:00:00");
+    return isNaN(parsed.getTime()) ? new Date() : parsed;
+  })();
+  const initialStatus = ["confirmed", "pending", "cancelled", "completed", "no_show"].includes(searchParams.get("status")) ? searchParams.get("status") : null;
+
   const [view, setView] = useState("day");
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(initialDate);
+  const [statusFilter, setStatusFilter] = useState(initialStatus);
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
@@ -25,6 +37,13 @@ export default function Agenda() {
   useEffect(() => {
     loadAppointments();
   }, [currentDate, view]);
+
+  function clearFilter() {
+    setStatusFilter(null);
+    const next = new URLSearchParams(searchParams);
+    next.delete("status");
+    setSearchParams(next, { replace: true });
+  }
 
   async function loadAppointments() {
     setLoading(true);
@@ -74,6 +93,11 @@ export default function Agenda() {
   function today() {
     setCurrentDate(new Date());
   }
+
+  const visibleAppointments = useMemo(() => {
+    if (!statusFilter) return appointments;
+    return appointments.filter((a) => a.status === statusFilter);
+  }, [appointments, statusFilter]);
 
   const dateLabel = useMemo(() => {
     if (view === "day") {
@@ -145,16 +169,24 @@ export default function Agenda() {
         </div>
       </div>
 
+      {statusFilter && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-amber-200 bg-amber-50 text-amber-800 text-sm">
+          <Filter className="w-4 h-4" />
+          <span className="font-medium capitalize">Filtrando: {statusFilter === "no_show" ? "Ausencias" : statusFilter === "pending" ? "Pendientes" : statusFilter === "confirmed" ? "Confirmadas" : statusFilter === "cancelled" ? "Canceladas" : "Completadas"}</span>
+          <button onClick={clearFilter} className="ml-auto text-xs font-medium underline hover:no-underline">Quitar filtro</button>
+        </div>
+      )}
+
       {loading ? (
         <div className="flex items-center justify-center h-64">
           <div className="w-8 h-8 border-4 border-border border-t-primary rounded-full animate-spin" />
         </div>
       ) : view === "day" ? (
-        <DayView date={currentDate} appts={appointments} onNew={openNew} onEdit={openEdit} />
+        <DayView date={currentDate} appts={visibleAppointments} onNew={openNew} onEdit={openEdit} />
       ) : view === "week" ? (
-        <WeekView days={weekDays} appts={appointments} onNew={openNew} onEdit={openEdit} />
+        <WeekView days={weekDays} appts={visibleAppointments} onNew={openNew} onEdit={openEdit} />
       ) : (
-        <MonthView currentDate={currentDate} appts={appointments} onNew={openNew} onEdit={openEdit} />
+        <MonthView currentDate={currentDate} appts={visibleAppointments} onNew={openNew} onEdit={openEdit} />
       )}
 
       <AppointmentForm

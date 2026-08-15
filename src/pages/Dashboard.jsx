@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Calendar, Users, Clock, CheckCircle2, XCircle, AlertCircle, CalendarClock } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const statusConfig = {
   pending: { label: "Pendiente", color: "bg-amber-100 text-amber-700", dot: "bg-amber-500" },
@@ -19,9 +19,13 @@ function formatTime(iso) {
   }
 }
 
-function StatCard({ icon: Icon, label, value, accent }) {
+function StatCard({ icon: Icon, label, value, accent, onClick }) {
   return (
-    <div className="bg-card rounded-xl border border-border p-5">
+    <button
+      type="button"
+      onClick={onClick}
+      className="bg-card rounded-xl border border-border p-5 text-left hover:shadow-md hover:-translate-y-0.5 transition-all focus:outline-none focus-visible:ring-1 focus-visible:ring-ring w-full"
+    >
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-muted-foreground">{label}</p>
@@ -31,11 +35,12 @@ function StatCard({ icon: Icon, label, value, accent }) {
           <Icon className="w-5 h-5" />
         </div>
       </div>
-    </div>
+    </button>
   );
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -90,10 +95,10 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={Calendar} label="Citas de hoy" value={appointments.length} accent="bg-blue-100 text-blue-600" />
-        <StatCard icon={CheckCircle2} label="Confirmadas" value={confirmed} accent="bg-emerald-100 text-emerald-600" />
-        <StatCard icon={AlertCircle} label="Pendientes" value={pending} accent="bg-amber-100 text-amber-600" />
-        <StatCard icon={Users} label="Pacientes" value={patients.length} accent="bg-purple-100 text-purple-600" />
+        <StatCard icon={Calendar} label="Citas de hoy" value={appointments.length} accent="bg-blue-100 text-blue-600" onClick={() => navigate("/agenda?date=today")} />
+        <StatCard icon={CheckCircle2} label="Confirmadas" value={confirmed} accent="bg-emerald-100 text-emerald-600" onClick={() => navigate("/agenda?date=today&status=confirmed")} />
+        <StatCard icon={AlertCircle} label="Pendientes" value={pending} accent="bg-amber-100 text-amber-600" onClick={() => navigate("/agenda?date=today&status=pending")} />
+        <StatCard icon={Users} label="Pacientes" value={patients.length} accent="bg-purple-100 text-purple-600" onClick={() => navigate("/pacientes")} />
       </div>
 
       <div className="bg-card rounded-xl border border-border">

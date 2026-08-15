@@ -2,6 +2,12 @@
   "name": "PlatformConfig",
   "type": "object",
   "properties": {
+    "app_base_url": {
+      "type": "string",
+      "title": "URL p\u00fablica de la app",
+      "description": "Dominio p\u00fablico donde est\u00e1 publicada la app (ej. https://agendate.base44.app). Se usa para construir los enlaces de confirmaci\u00f3n/cancelaci\u00f3n/reagendar en los emails.",
+      "format": "url"
+    },
     "mercadopago_access_token": {
       "type": "string",
       "title": "Mercado Pago \u2014 Access Token"

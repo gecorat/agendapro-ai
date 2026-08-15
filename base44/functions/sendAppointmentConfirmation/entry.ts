@@ -63,7 +63,7 @@ export default async function(req: Request): Promise<Response> {
       await base44.asServiceRole.entities.Appointment.update(appt.id, { cancel_token: cancelToken });
     }
 
-    const appUrl = getAppUrl(req);
+    const appUrl = await getAppUrl(base44, req);
     const startDate = new Date(appt.start_datetime);
     const dateStr = startDate.toLocaleString("es-AR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
     const serviceName = appt.service_name || "Consulta";

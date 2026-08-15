@@ -7,6 +7,7 @@ import AppointmentForm from "@/components/AppointmentForm";
 import DayView from "@/components/agenda/DayView";
 import WeekView from "@/components/agenda/WeekView";
 import MonthView from "@/components/agenda/MonthView";
+import DayDetailSheet from "@/components/agenda/DayDetailSheet";
 
 const VIEWS = [
   { value: "day", label: "Día" },
@@ -33,6 +34,7 @@ export default function Agenda() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [formDefaultDate, setFormDefaultDate] = useState(null);
+  const [daySheetDate, setDaySheetDate] = useState(null);
 
   useEffect(() => {
     loadAppointments();
@@ -142,31 +144,33 @@ export default function Agenda() {
     <div className="px-3 py-3 md:p-6 max-w-7xl mx-auto space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-heading font-semibold">Agenda</h1>
+          <h1 className="text-2xl font-heading font-semibold tracking-tight">Agenda</h1>
           <p className="text-muted-foreground text-sm capitalize">{dateLabel}</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex bg-card rounded-lg border border-border p-1">
+          <div className="flex bg-muted/60 rounded-lg p-1 border border-border/60">
             {VIEWS.map((v) => (
               <button
                 key={v.value}
                 onClick={() => setView(v.value)}
-                className={`px-3 py-1.5 text-sm rounded-md font-medium transition-colors ${view === v.value ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                className={`px-3 py-1.5 text-sm rounded-md font-medium transition-all ${view === v.value ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
               >
                 {v.label}
               </button>
             ))}
           </div>
-          <Button variant="outline" size="icon" onClick={() => shift(-1)}>
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <Button variant="outline" size="sm" onClick={today}>
-            Hoy
-          </Button>
-          <Button variant="outline" size="icon" onClick={() => shift(1)}>
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-          <Button onClick={() => openNew(currentDate)}>
+          <div className="flex items-center gap-1 bg-card rounded-lg border border-border p-1">
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md" onClick={() => shift(-1)}>
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <Button variant="ghost" size="sm" className="h-8 px-2.5 text-xs font-medium" onClick={today}>
+              Hoy
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md" onClick={() => shift(1)}>
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+          <Button onClick={() => openNew(currentDate)} className="shadow-sm">
             <Plus className="w-4 h-4 mr-1" />
             Cita
           </Button>
@@ -190,7 +194,7 @@ export default function Agenda() {
       ) : view === "week" ? (
         <WeekView days={weekDays} appts={visibleAppointments} onNew={openNew} onEdit={openEdit} />
       ) : (
-        <MonthView currentDate={currentDate} appts={visibleAppointments} onNew={openNew} onEdit={openEdit} />
+        <MonthView currentDate={currentDate} appts={visibleAppointments} onNew={openNew} onEdit={openEdit} onDayClick={setDaySheetDate} />
       )}
 
       <AppointmentForm
@@ -199,6 +203,14 @@ export default function Agenda() {
         onSaved={handleSaved}
         appointment={editing}
         defaultDate={formDefaultDate || currentDate}
+      />
+
+      <DayDetailSheet
+        date={daySheetDate}
+        appts={visibleAppointments}
+        onClose={() => setDaySheetDate(null)}
+        onNew={(d) => { openNew(d); }}
+        onEdit={(a) => { openEdit(a); }}
       />
     </div>
   );

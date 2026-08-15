@@ -19,10 +19,26 @@ function rangesOverlap(aStart, aEnd, bStart, bEnd) {
   return aStart < bEnd && bStart < aEnd;
 }
 
+function toDateStr(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function isBlockedDate(availability, date) {
+  const dateStr = toDateStr(date);
+  return availability.some((a) => (a.type === "holiday" || a.type === "block") && a.date === dateStr);
+}
+
 function getWorkRanges(availability, dayOfWeek) {
   const work = availability.filter((a) => a.type === "work" && a.day_of_week === dayOfWeek);
   if (work.length) return work.map((w) => ({ start: w.start_time, end: w.end_time })).sort((a, b) => a.start.localeCompare(b.start));
-  if (dayOfWeek >= 1 && dayOfWeek <= 5) return [{ start: "09:00", end: "18:00" }];
+  // Solo aplicamos un horario por defecto si el profesional todavía no configuró NINGÚN
+  // horario de trabajo (cuenta nueva). Si ya tiene horarios cargados pero este día en
+  // particular está vacío, es porque lo dejó libre a propósito: no debe ofrecerse.
+  const hasAnyWorkConfigured = availability.some((a) => a.type === "work");
+  if (!hasAnyWorkConfigured && dayOfWeek >= 1 && dayOfWeek <= 5) return [{ start: "09:00", end: "18:00" }];
   return [];
 }
 
@@ -32,6 +48,7 @@ function getBreakRanges(availability, dayOfWeek) {
 
 function generateSlots(date, service, availability, appointments) {
   if (!service) return [];
+  if (isBlockedDate(availability, date)) return [];
   const dayOfWeek = date.getDay();
   const workRanges = getWorkRanges(availability, dayOfWeek);
   const breakRanges = getBreakRanges(availability, dayOfWeek);

@@ -119,6 +119,7 @@ export default function PublicBooking() {
   const [form, setForm] = useState({ first_name: "", last_name: "", phone: "", email: "" });
   const [saving, setSaving] = useState(false);
   const [created, setCreated] = useState(null);
+  const [bookingError, setBookingError] = useState(null);
 
   const professionalId = settings?.created_by_id || null;
 

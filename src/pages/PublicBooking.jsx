@@ -384,6 +384,11 @@ export default function PublicBooking() {
               <h2 className="font-heading font-semibold">Elegí fecha y hora</h2>
               <button className="text-sm text-muted-foreground hover:underline" onClick={() => setStep(1)}>Cambiar servicio</button>
             </div>
+            {bookingError && (
+              <div className="rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm p-3">
+                {bookingError}
+              </div>
+            )}
             <div>
               <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {service?.name}</p>
               <div className="grid grid-cols-4 gap-2">

@@ -1,7 +1,10 @@
 // Capa de envío de email vía Resend.
 // Permite enviar a destinatarios externos (pacientes) sin restricciones de usuario registrado.
-
-const RESEND_FROM = "noreply@agendate.base44.app";
+//
+// El remitente se toma del secret RESEND_FROM_EMAIL (configurar en Dashboard → Secrets una vez
+// que el dominio esté verificado en Resend, ej: "AgendaPro <no-reply@tudominio.com>"). Si no
+// está configurado, se usa un remitente genérico como fallback para no romper el envío.
+const RESEND_FROM = process.env.RESEND_FROM_EMAIL || "noreply@agendate.base44.app";
 
 export async function sendEmail(base44, { to, subject, body }) {
   if (!to) throw new Error("sendEmail: destinatario requerido");

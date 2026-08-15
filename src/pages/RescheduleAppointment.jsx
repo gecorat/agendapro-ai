@@ -47,13 +47,21 @@ export default function RescheduleAppointment() {
             <p className="text-slate-600 font-medium">Te estamos llevando a la agenda…</p>
           </>
         )}
-        {state === "nohandle" && (
+        {state === "blocked" && (
           <>
-            <div className="w-16 h-16 mx-auto rounded-full bg-emerald-100 flex items-center justify-center mb-5">
-              <CalendarClock className="w-9 h-9 text-emerald-600" />
+            <div className="w-16 h-16 mx-auto rounded-full bg-amber-100 flex items-center justify-center mb-5">
+              <CalendarClock className="w-9 h-9 text-amber-600" />
             </div>
-            <h1 className="text-2xl font-bold text-slate-900 mb-2">Cita cancelada</h1>
-            <p className="text-slate-600">Tu cita anterior fue cancelada. Contactá al consultorio para reservar un nuevo horario.</p>
+            <h1 className="text-2xl font-bold text-slate-900 mb-2">
+              {status === "confirmed" ? "Tu cita ya está confirmada" : status === "cancelled" ? "Esta cita ya está cancelada" : status === "completed" ? "Esta cita ya se realizó" : "No pudimos reagendar automáticamente"}
+            </h1>
+            <p className="text-slate-600">
+              {status === "confirmed"
+                ? "El consultorio ya confirmó este turno, así que no se puede reagendar solo desde este link. Contactate directamente con el consultorio para cambiar el horario."
+                : status === "cancelled"
+                ? "Esta cita ya había sido cancelada antes, no hay nada para reagendar."
+                : "Contactate directamente con el consultorio para coordinar un nuevo horario."}
+            </p>
           </>
         )}
         {state === "error" && (

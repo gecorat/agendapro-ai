@@ -70,6 +70,10 @@ export default function Agenda() {
       const day = start.getDay();
       start.setDate(start.getDate() - day);
       start.setHours(0, 0, 0, 0);
+      // Clonamos desde `start` (ya ajustado) en vez de reusar `end`, que todavía tiene el
+      // mes original de currentDate: si la semana cruza de mes, sumar días sobre ese mes
+      // viejo daba una fecha de fin incorrecta.
+      end.setTime(start.getTime());
       end.setDate(start.getDate() + 6);
       end.setHours(23, 59, 59, 999);
     } else {

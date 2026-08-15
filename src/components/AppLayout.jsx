@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Calendar, Users, LayoutDashboard, Settings, LogOut, CalendarClock, Menu, X, Shield, MessageCircle, History, ClipboardList, BarChart3, Star, BookOpen, UserCircle, CreditCard, Sparkles } from "lucide-react";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
+import { getPlanStatus } from "@/lib/plan-utils";
 import Onboarding from "@/pages/Onboarding";
 import TrialBanner from "@/components/TrialBanner";
 import NotificationsBell from "@/components/NotificationsBell";
@@ -38,11 +39,15 @@ export default function AppLayout() {
 
   const isActive = (path) => (path === "/" ? location.pathname === "/" : location.pathname.startsWith(path));
 
+  const planStatus = getPlanStatus(settings);
+  const hasFullAssistant = planStatus.canUseWhatsApp;
+
   const navGroups = [
     {
       title: "Principal",
       items: [
         { label: "Panel", path: "/", icon: LayoutDashboard },
+        { label: "Chats", path: "/asistente", icon: MessageCircle },
         { label: "Agenda", path: "/agenda", icon: Calendar },
         { label: "Citas pasadas", path: "/appointment-history", icon: History },
       ],
@@ -59,8 +64,7 @@ export default function AppLayout() {
     {
       title: "Crecimiento",
       items: [
-        { label: "Probar el bot", path: "/bot", icon: MessageCircle },
-        { label: "Asistente IA", path: "/asistente", icon: Sparkles },
+        ...(!hasFullAssistant ? [{ label: "Probar el bot", path: "/bot", icon: Sparkles }] : []),
         { label: "Guía", path: "/welcome-guide", icon: BookOpen },
         { label: "Mi perfil", path: "/profile-editor", icon: UserCircle },
         { label: "Planes", path: "/upgrade-plan", icon: CreditCard },
@@ -101,9 +105,9 @@ export default function AppLayout() {
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                       active
                         ? "bg-primary text-primary-foreground"
-                        : item.path === "/bot"
-                        ? "bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20"
                         : item.path === "/asistente"
+                        ? "bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20"
+                        : item.path === "/bot"
                         ? "bg-violet-500/10 text-violet-700 hover:bg-violet-500/20"
                         : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                     }`}

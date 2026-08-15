@@ -1,14 +1,51 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { MessageSquare, Plus, Send, Loader2, MessageCircle, ChevronLeft } from "lucide-react";
+import { MessageSquare, Plus, Send, Loader2, MessageCircle, ChevronLeft, Lock, Sparkles, Crown } from "lucide-react";
 import MessageBubble from "@/components/assistant/MessageBubble";
+import DemoChat from "@/components/assistant/DemoChat";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { usePracticeSettings } from "@/hooks/usePracticeSettings";
+import { getPlanStatus, PLAN_PRICES, PLAN_LABELS } from "@/lib/plan-utils";
 
 const AGENT_NAME = "appointment_assistant";
 
-export default function Assistant() {
+function UpgradeBlock({ plan }) {
+  return (
+    <Card className="border-amber-200 bg-gradient-to-br from-amber-50 to-white p-4 mb-4">
+      <div className="flex items-start gap-3">
+        <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+          <Lock className="w-5 h-5 text-amber-600" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-heading font-semibold text-sm">Conectá WhatsApp con un plan superior</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Tu plan {PLAN_LABELS[plan] || "actual"} permite probar el bot en la app. Para que la asistente atienda a tus pacientes por WhatsApp de forma automática, pasate a Pro o Premium.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-2 mt-3">
+            <Button size="sm" asChild className="gap-1.5">
+              <Link to="/upgrade-plan">
+                <Crown className="w-3.5 h-3.5" />
+                Pasar a Pro ({PLAN_PRICES.pro})
+              </Link>
+            </Button>
+            <Button size="sm" variant="outline" asChild className="gap-1.5">
+              <Link to="/upgrade-plan">
+                <Sparkles className="w-3.5 h-3.5" />
+                Ver Premium ({PLAN_PRICES.premium})
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function FullAssistant() {
   const [conversations, setConversations] = useState([]);
   const [loadingConvos, setLoadingConvos] = useState(true);
   const [activeConvo, setActiveConvo] = useState(null);
@@ -39,7 +76,6 @@ export default function Assistant() {
     }
   }, [loadConversations]);
 
-  // Subscribe to active conversation updates
   useEffect(() => {
     if (!activeConvo?.id) return;
     const unsubscribe = base44.agents.subscribeToConversation(activeConvo.id, (data) => {
@@ -100,13 +136,10 @@ export default function Assistant() {
     const content = input.trim();
     setInput("");
     setSending(true);
-
-    // Optimistic: add user message locally
     setMessages((prev) => [...prev, { role: "user", content }]);
 
     try {
       await base44.agents.addMessage(convo, { role: "user", content });
-      // subscription will update messages with assistant response
     } catch (e) {
       console.error("Error sending message", e);
       setMessages((prev) => prev.filter((m) => m.content !== content));
@@ -126,11 +159,7 @@ export default function Assistant() {
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)] md:h-[calc(100vh-3.5rem)] border-t border-border">
-      {/* Conversations list */}
-      <div className={cn(
-        "w-full md:w-80 border-r border-border bg-card flex flex-col",
-        mobileShowChat && "hidden md:flex"
-      )}>
+      <div className={cn("w-full md:w-80 border-r border-border bg-card flex flex-col", mobileShowChat && "hidden md:flex")}>
         <div className="p-4 border-b border-border space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="font-heading font-semibold text-sm">Conversaciones</h2>
@@ -158,7 +187,7 @@ export default function Assistant() {
             <div className="px-4 py-8 text-center">
               <MessageSquare className="w-8 h-8 mx-auto text-muted-foreground/40 mb-2" />
               <p className="text-sm text-muted-foreground">No hay conversaciones todavía.</p>
-              <p className="text-xs text-muted-foreground/70 mt-1">Creá una para empezar.</p>
+              <p className="text-xs text-muted-foreground/70 mt-1">Conectá WhatsApp para empezar a recibir mensajes.</p>
             </div>
           ) : (
             <div className="space-y-1 p-2">
@@ -189,11 +218,7 @@ export default function Assistant() {
         </div>
       </div>
 
-      {/* Chat view */}
-      <div className={cn(
-        "flex-1 flex flex-col bg-background",
-        !mobileShowChat && "hidden md:flex"
-      )}>
+      <div className={cn("flex-1 flex flex-col bg-background", !mobileShowChat && "hidden md:flex")}>
         {activeConvo ? (
           <>
             <div className="md:hidden flex items-center gap-2 p-3 border-b border-border bg-card">
@@ -269,4 +294,37 @@ export default function Assistant() {
       </div>
     </div>
   );
+}
+
+export default function Assistant() {
+  const { settings, loading } = usePracticeSettings();
+  const planStatus = getPlanStatus(settings);
+
+  if (loading || !settings) {
+    return (
+      <div className="flex h-full items-center justify-center p-8">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!planStatus.canUseWhatsApp) {
+    return (
+      <div className="p-4 md:p-6 max-w-2xl mx-auto h-full flex flex-col">
+        <div className="flex items-center gap-2 mb-1">
+          <MessageCircle className="w-5 h-5 text-emerald-600" />
+          <h1 className="text-xl font-heading font-semibold">Chats</h1>
+        </div>
+        <p className="text-sm text-muted-foreground mb-4">
+          Tu asistente de IA atiende a tus pacientes por WhatsApp. Conectá tu número cuando pases a un plan superior.
+        </p>
+        <UpgradeBlock plan={planStatus.plan} />
+        <div className="flex-1 min-h-0">
+          <DemoChat settings={settings} />
+        </div>
+      </div>
+    );
+  }
+
+  return <FullAssistant />;
 }

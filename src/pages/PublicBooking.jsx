@@ -395,7 +395,7 @@ export default function PublicBooking() {
                 {upcomingDays.map((d) => {
                   const selected = date && d.toDateString() === date.toDateString();
                   return (
-                    <button key={d.toISOString()} onClick={() => { setDate(d); setSlot(null); }} className={`p-2 rounded-lg border text-center transition-colors ${selected ? "border-transparent text-white" : "border-slate-200 hover:border-slate-400"}`} style={selected ? { backgroundColor: brand } : {}}>
+                    <button key={d.toISOString()} onClick={() => { setDate(d); setSlot(null); setBookingError(null); }} className={`p-2 rounded-lg border text-center transition-colors ${selected ? "border-transparent text-white" : "border-slate-200 hover:border-slate-400"}`} style={selected ? { backgroundColor: brand } : {}}>
                       <p className="text-xs text-muted-foreground capitalize">{d.toLocaleDateString("es-AR", { weekday: "short" })}</p>
                       <p className="font-medium text-sm">{d.getDate()}</p>
                     </button>
@@ -411,7 +411,7 @@ export default function PublicBooking() {
                 ) : (
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                     {slots.map((s) => (
-                      <button key={s.toISOString()} onClick={() => setSlot(s)} className={`p-2 rounded-lg border text-sm transition-colors ${slot && slot.toISOString() === s.toISOString() ? "border-transparent text-white" : "border-slate-200 hover:border-slate-400"}`} style={slot && slot.toISOString() === s.toISOString() ? { backgroundColor: brand } : {}}>{formatSlot(s)}</button>
+                      <button key={s.toISOString()} onClick={() => { setSlot(s); setBookingError(null); }} className={`p-2 rounded-lg border text-sm transition-colors ${slot && slot.toISOString() === s.toISOString() ? "border-transparent text-white" : "border-slate-200 hover:border-slate-400"}`} style={slot && slot.toISOString() === s.toISOString() ? { backgroundColor: brand } : {}}>{formatSlot(s)}</button>
                     ))}
                   </div>
                 )}

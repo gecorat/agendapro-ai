@@ -140,9 +140,9 @@ export default function AdminConnections() {
           <Input id="zkey" value={zernioKey} onChange={(e) => setZernioKey(e.target.value)} placeholder="zrn_..." />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="zacc">Account ID (cuenta principal)</Label>
+          <Label htmlFor="zacc">Account ID (referencia interna / testing)</Label>
           <Input id="zacc" value={zernioAccountId} onChange={(e) => setZernioAccountId(e.target.value)} placeholder="acc_..." />
-          <p className="text-xs text-muted-foreground">Cada profesional puede configurar el suyo en su perfil. Este es el valor por defecto de la plataforma.</p>
+          <p className="text-xs text-muted-foreground">Solo referencia para el admin. Cada profesional genera el suyo automáticamente al conectar su WhatsApp; este campo no lo toca el profesional.</p>
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="zsecret">Webhook Secret</Label>

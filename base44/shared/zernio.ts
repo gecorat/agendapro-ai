@@ -203,3 +203,60 @@ Instrucciones: Respondé al paciente. Si el paciente quiere agendar y tenés tod
 
   return reply;
 }
+
+const ZERNIO_BASE = "https://zernio.com/api/v1";
+
+async function zernioFetch(path, init, apiKey) {
+  const res = await fetch(`${ZERNIO_BASE}${path}`, {
+    ...init,
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      ...(init?.headers || {}),
+    },
+  });
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Zernio API ${res.status} ${path}: ${errText}`);
+  }
+  const ct = res.headers.get("content-type") || "";
+  return ct.includes("application/json") ? res.json() : res.text();
+}
+
+export async function createZernioProfile(apiKey, name, description) {
+  const data = await zernioFetch("/profiles", { method: "POST", body: JSON.stringify({ name, description }) }, apiKey);
+  return data?.profile?._id || data?.profileId || data?._id || null;
+}
+
+export async function getWhatsAppConnectUrl(apiKey, profileId, redirectUrl) {
+  const params = new URLSearchParams({ profileId });
+  if (redirectUrl) params.set("redirect_url", redirectUrl);
+  const data = await zernioFetch(`/connect/whatsapp?${params}`, { method: "GET" }, apiKey);
+  return data?.authUrl || data?.url || null;
+}
+
+export async function listZernioAccounts(apiKey) {
+  const data = await zernioFetch("/accounts", { method: "GET" }, apiKey);
+  return data?.accounts || [];
+}
+
+export function findWhatsAppAccount(accounts, profileId) {
+  const wa = accounts.filter((a) => (a.platform || "").toLowerCase() === "whatsapp");
+  const byProfile = wa.find(
+    (a) => a.profileId === profileId || a.profile === profileId || a.profile?._id === profileId
+  );
+  return byProfile || wa[wa.length - 1] || null;
+}
+
+export function extractWhatsAppPhone(account) {
+  if (!account) return "";
+  return (
+    account.phone ||
+    account.identifier ||
+    account.phoneNumber ||
+    account.username ||
+    account.whatsappNumber ||
+    account.displayPhone ||
+    ""
+  );
+}

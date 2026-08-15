@@ -32,6 +32,15 @@ export default async function(req: Request): Promise<Response> {
       message,
     });
 
+    await base44.asServiceRole.entities.Conversation.create({
+      phone,
+      professional_id: user.id,
+      role: "assistant",
+      text: message,
+      conversation_id: conversationId || "",
+      account_id: accountId,
+    });
+
     return Response.json({ ok: true, result });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

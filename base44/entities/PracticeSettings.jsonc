@@ -91,10 +91,15 @@
       "title": "WhatsApp conectado",
       "default": false
     },
+    "zernio_profile_id": {
+      "type": "string",
+      "title": "Zernio \u2014 Profile ID",
+      "description": "Perfil de Zernio creado autom\u00e1ticamente para este profesional al iniciar la conexi\u00f3n de WhatsApp."
+    },
     "zernio_account_id": {
       "type": "string",
       "title": "Zernio \u2014 Account ID",
-      "description": "ID de la cuenta de WhatsApp conectada en Zernio para este profesional"
+      "description": "ID de la cuenta de WhatsApp conectada en Zernio para este profesional (se obtiene autom\u00e1ticamente al conectar)"
     },
     "zernio_phone": {
       "type": "string",

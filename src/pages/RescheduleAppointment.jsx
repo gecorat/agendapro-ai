@@ -7,6 +7,7 @@ export default function RescheduleAppointment() {
   const { token } = useParams();
   const navigate = useNavigate();
   const [state, setState] = useState("loading");
+  const [status, setStatus] = useState(null);
 
   useEffect(() => {
     if (!token) {

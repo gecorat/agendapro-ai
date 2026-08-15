@@ -161,7 +161,7 @@ export default function PublicBooking() {
     const base = new Date(); base.setHours(0, 0, 0, 0);
     for (let i = 0; i < 21; i++) {
       const d = new Date(base.getTime() + i * 86400000);
-      if (getWorkRanges(availability, d.getDay()).length) days.push(d);
+      if (getWorkRanges(availability, d.getDay()).length && !isBlockedDate(availability, d)) days.push(d);
     }
     return days;
   }, [availability]);

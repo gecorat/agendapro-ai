@@ -17,14 +17,17 @@ export default function RescheduleAppointment() {
       try {
         const res = await base44.functions.invoke("cancelAppointmentByToken", { token });
         const data = res.data;
-        const handle = data?.handle;
-        if (handle) {
-          navigate(`/u/${handle}`, { replace: true });
+        // Solo mandamos a reservar de nuevo si la cita vieja realmente se canceló.
+        // Antes se navegaba apenas venía "handle" en la respuesta, sin chequear `resolved`,
+        // así que si la cita ya estaba confirmada (bloqueada por diseño) el paciente igual
+        // terminaba creando un turno nuevo mientras el viejo quedaba activo (duplicado).
+        if (data?.resolved && data?.handle) {
+          navigate(`/u/${data.handle}`, { replace: true });
           return;
         }
-        // Si no hay handle, mostrar estado según resultado
-        if (data?.already_resolved || data?.resolved) {
-          setState("nohandle");
+        if (data?.already_resolved) {
+          setStatus(data.status || null);
+          setState("blocked");
         } else {
           setState("error");
         }

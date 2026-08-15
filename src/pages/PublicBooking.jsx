@@ -174,28 +174,45 @@ export default function PublicBooking() {
   const handleConfirm = useCallback(async () => {
     if (!service || !slot || !form.first_name || !form.last_name || !form.phone || !form.email || !professionalId) return;
     setSaving(true);
+    setBookingError(null);
     try {
-      const end = new Date(slot.getTime() + (service.duration_minutes || 30) * 60000);
-      const existing = await base44.entities.Patient.filter({ phone: form.phone, professional_id: professionalId });
-      let patient = existing?.[0];
-      if (!patient) {
-        patient = await base44.entities.Patient.create({
-          first_name: form.first_name, last_name: form.last_name, phone: form.phone, email: form.email,
-          contact_preference: "whatsapp", consent_reminders: true, professional_id: professionalId,
-        });
-      }
-      const appt = await base44.entities.Appointment.create({
-        patient_id: patient.id, patient_name: `${patient.first_name} ${patient.last_name || ""}`.trim(),
-        service_id: service.id, service_name: service.name,
-        start_datetime: slot.toISOString(), end_datetime: end.toISOString(),
-        status: "pending", origin: "public_link", professional_id: professionalId,
+      // La creación del paciente/turno se hace en una función de backend
+      // (createPublicAppointment) que re-valida el horario justo antes de guardar, para
+      // evitar que dos visitantes reserven el mismo turno si confirman casi al mismo tiempo.
+      const res = await base44.functions.invoke("createPublicAppointment", {
+        professional_id: professionalId,
+        service_id: service.id,
+        start_datetime: slot.toISOString(),
+        first_name: form.first_name,
+        last_name: form.last_name,
+        phone: form.phone,
+        email: form.email,
       });
-      setCreated({ appointment: appt, patient });
+      setCreated({ appointment: res.data.appointment, patient: res.data.patient });
       setStep(5);
+    } catch (err) {
+      const message = err?.response?.data?.message || err?.response?.data?.error || "No se pudo confirmar el turno. Probá de nuevo.";
+      setBookingError(message);
+      // Si el horario ya fue tomado por otra persona, volvemos a la selección de horario y
+      // refrescamos la disponibilidad para que no vuelva a aparecer como libre.
+      setSlot(null);
+      setStep(2);
+      try {
+        const now = new Date(); now.setHours(0, 0, 0, 0);
+        const toDate = new Date(now.getTime() + 21 * 86400000);
+        const refreshed = await base44.functions.invoke("getBookedSlots", {
+          professional_id: professionalId,
+          date_from: now.toISOString(),
+          date_to: toDate.toISOString(),
+        });
+        setAppointments(refreshed?.data?.slots || []);
+      } catch {
+        // si falla el refresco, igual dejamos ver el mensaje de error al usuario
+      }
     } finally {
       setSaving(false);
     }
-  }, [service, slot, form, professionalId, settings, date]);
+  }, [service, slot, form, professionalId]);
 
   if (loading) {
     return (

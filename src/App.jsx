@@ -25,7 +25,6 @@ import ResetPassword from "@/pages/ResetPassword";
 import ServiceManager from "@/pages/ServiceManager";
 import Analytics from "@/pages/Analytics";
 import WelcomeGuide from "@/pages/WelcomeGuide";
-import PatientList from "@/pages/PatientList";
 import ProfileEditor from "@/pages/ProfileEditor";
 import UpgradePlan from "@/pages/UpgradePlan";
 import AppointmentHistory from "@/pages/AppointmentHistory";

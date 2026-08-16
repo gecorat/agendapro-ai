@@ -1,144 +1,47 @@
-import React, { useEffect, useState } from "react";
-import { base44 } from "@/api/base44Client";
+import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
-import { Plus, Pencil, Trash2, Clock, Calendar, MessageCircle, Mail, CheckCircle2, XCircle, Check } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { Calendar, Mail, CheckCircle2, Check, Clock3 } from "lucide-react";
 import PracticeProfileSection from "@/components/PracticeProfileSection";
 import AvailabilityEditor from "@/components/AvailabilityEditor";
 import WhatsAppConnectCard from "@/components/WhatsAppConnectCard";
+import ServiceManagerPanel from "@/components/ServiceManagerPanel";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
-import PlanGate from "@/components/PlanGate";
 import { getPlanStatus, PLAN_PRICES, PLAN_LABELS } from "@/lib/plan-utils";
-import { Link } from "react-router-dom";
-
-const days = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
 export default function Settings() {
-  const [services, setServices] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState(null);
-
-  useEffect(() => {
-    load();
-  }, []);
-
-  async function load() {
-    setLoading(true);
-    try {
-      const servs = await base44.entities.Service.filter({});
-      setServices(servs || []);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleDelete(s) {
-    if (!confirm(`¿Eliminar el servicio "${s.name}"?`)) return;
-    await base44.entities.Service.delete(s.id);
-    load();
-  }
-
-  function openNew() {
-    setEditing(null);
-    setFormOpen(true);
-  }
-
-  function openEdit(s) {
-    setEditing(s);
-    setFormOpen(true);
-  }
-
   return (
     <div className="px-3 py-3 md:p-6 max-w-4xl mx-auto space-y-4">
       <div>
-        <h1 className="text-2xl font-heading font-semibold">Configuración</h1>
+        <h1 className="text-2xl font-heading font-semibold tracking-tight">Configuración</h1>
         <p className="text-muted-foreground text-sm">Gestioná tu consultorio</p>
       </div>
 
       <Tabs defaultValue="services">
-        <TabsList className="grid grid-cols-5 w-full">
-          <TabsTrigger value="profile">Perfil</TabsTrigger>
-          <TabsTrigger value="services">Servicios</TabsTrigger>
-          <TabsTrigger value="hours">Horarios</TabsTrigger>
-          <TabsTrigger value="integrations">Integraciones</TabsTrigger>
-          <TabsTrigger value="plan">Plan</TabsTrigger>
+        <TabsList className="grid grid-cols-5 w-full bg-muted/60 rounded-xl p-1 h-auto">
+          <TabsTrigger value="profile" className="rounded-lg text-xs sm:text-sm py-1.5">Perfil</TabsTrigger>
+          <TabsTrigger value="services" className="rounded-lg text-xs sm:text-sm py-1.5">Servicios</TabsTrigger>
+          <TabsTrigger value="hours" className="rounded-lg text-xs sm:text-sm py-1.5">Horarios</TabsTrigger>
+          <TabsTrigger value="integrations" className="rounded-lg text-xs sm:text-sm py-1.5">Integraciones</TabsTrigger>
+          <TabsTrigger value="plan" className="rounded-lg text-xs sm:text-sm py-1.5">Plan</TabsTrigger>
         </TabsList>
 
-        {/* Perfil */}
         <TabsContent value="profile" className="mt-4">
-          <Card className="p-6">
+          <div className="bg-card rounded-2xl border border-border p-6">
             <PracticeProfileSection />
-          </Card>
-        </TabsContent>
-
-        {/* Servicios */}
-        <TabsContent value="services" className="space-y-4 mt-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="font-heading font-semibold">Servicios</h2>
-              <p className="text-sm text-muted-foreground">Tipos de consulta que ofrecés</p>
-            </div>
-            <Button onClick={openNew}>
-              <Plus className="w-4 h-4 mr-1" />
-              Nuevo servicio
-            </Button>
           </div>
-
-          {loading ? (
-            <div className="flex justify-center py-12">
-              <div className="w-8 h-8 border-4 border-border border-t-primary rounded-full animate-spin" />
-            </div>
-          ) : services.length === 0 ? (
-            <Card className="p-8 text-center">
-              <p className="text-muted-foreground">No hay servicios. Creá el primero.</p>
-            </Card>
-          ) : (
-            <div className="space-y-2">
-              {services.map((s) => (
-                <Card key={s.id} className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-4 h-4 rounded-full" style={{ background: s.color || "#3b82f6" }} />
-                    <div>
-                      <p className="font-medium">{s.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {s.duration_minutes} min{s.margin_minutes ? ` · margen ${s.margin_minutes} min` : ""}
-                        {s.follow_up_days ? ` · seguimiento ${s.follow_up_days} días` : ""}
-                      </p>
-                      {s.price ? <p className="text-xs font-medium text-emerald-600">${Number(s.price).toLocaleString("es-AR")}</p> : null}
-                    </div>
-                  </div>
-                  <div className="flex gap-1">
-                    <button onClick={() => openEdit(s)} className="p-1.5 rounded-md hover:bg-accent text-muted-foreground">
-                      <Pencil className="w-4 h-4" />
-                    </button>
-                    <button onClick={() => handleDelete(s)} className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
         </TabsContent>
 
-        {/* Horarios */}
-        <TabsContent value="hours" className="space-y-4 mt-4">
+        <TabsContent value="services" className="mt-4">
+          <ServiceManagerPanel />
+        </TabsContent>
+
+        <TabsContent value="hours" className="mt-4">
           <AvailabilityEditor />
         </TabsContent>
 
-        {/* Integraciones */}
-        <TabsContent value="integrations" className="space-y-4 mt-4">
+        <TabsContent value="integrations" className="space-y-3 mt-4">
           <div>
             <h2 className="font-heading font-semibold">Integraciones</h2>
             <p className="text-sm text-muted-foreground">Conectá tus cuentas para automatizar</p>
@@ -146,33 +49,15 @@ export default function Settings() {
 
           <PublicLinkCard />
 
-          <IntegrationCard
-            icon={Calendar}
-            name="Google Calendar"
-            description="Sincronización bidireccional de citas"
-            connected={false}
-          />
+          <IntegrationCard icon={Calendar} name="Google Calendar" description="Sincronización bidireccional de citas" state="soon" />
           <WhatsAppConnectCard />
-          <IntegrationCard
-            icon={Mail}
-            name="Email"
-            description="Recordatorios automáticos 24hs y 3hs antes de cada cita"
-            connected={true}
-          />
+          <IntegrationCard icon={Mail} name="Email" description="Recordatorios y confirmaciones automáticas a tus pacientes" state="connected" />
         </TabsContent>
 
-        {/* Plan */}
         <TabsContent value="plan" className="mt-4">
           <PlanSection />
         </TabsContent>
       </Tabs>
-
-      <ServiceForm
-        open={formOpen}
-        onClose={() => setFormOpen(false)}
-        onSaved={load}
-        service={editing}
-      />
     </div>
   );
 }
@@ -186,7 +71,7 @@ function PlanSection() {
         <h2 className="font-heading font-semibold">Tu plan</h2>
         <p className="text-sm text-muted-foreground">Gestión de suscripción</p>
       </div>
-      <Card className="p-4">
+      <div className="bg-card rounded-2xl border border-border p-4">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground">Plan actual</p>
@@ -204,32 +89,32 @@ function PlanSection() {
         {status.trialExpired && (
           <p className="text-xs text-destructive mt-2">Tu prueba terminó. Contactanos para activar tu plan.</p>
         )}
-      </Card>
+      </div>
       <div className="grid sm:grid-cols-2 gap-4">
-        <Card className={`p-5 ${status.plan === "pro" ? "border-2 border-primary" : ""}`}>
+        <div className={`bg-card rounded-2xl p-5 border ${status.plan === "pro" ? "border-2 border-primary" : "border-border"}`}>
           <p className="font-heading font-semibold">Pro</p>
-          <p className="text-2xl font-heading font-bold mt-1">{PLAN_PRICES.pro}<span className="text-sm font-normal text-muted-foreground"> ARS/mes</span></p>
+          <p className="text-2xl font-heading font-bold mt-1">{PLAN_PRICES.pro}<span className="text-sm font-normal text-muted-foreground">/mes</span></p>
           <ul className="text-sm text-muted-foreground mt-2 space-y-1">
             <li>· Bot de WhatsApp con IA</li>
             <li>· Agenda y reservas online</li>
             <li>· Recordatorios automáticos</li>
             <li>· Hasta 200 citas mensuales</li>
           </ul>
-        </Card>
-        <Card className={`p-5 ${status.plan === "premium" ? "border-2 border-primary" : ""}`}>
+        </div>
+        <div className={`bg-card rounded-2xl p-5 border ${status.plan === "premium" ? "border-2 border-primary" : "border-border"}`}>
           <p className="font-heading font-semibold">Premium</p>
-          <p className="text-2xl font-heading font-bold mt-1">{PLAN_PRICES.premium}<span className="text-sm font-normal text-muted-foreground"> ARS/mes</span></p>
+          <p className="text-2xl font-heading font-bold mt-1">{PLAN_PRICES.premium}<span className="text-sm font-normal text-muted-foreground">/mes</span></p>
           <ul className="text-sm text-muted-foreground mt-2 space-y-1">
             <li>· Todo lo de Pro</li>
             <li>· Citas ilimitadas</li>
             <li>· Bandeja de chats con toma de control</li>
             <li>· Soporte prioritario</li>
           </ul>
-        </Card>
+        </div>
       </div>
-      <Card className="p-4 bg-accent/40">
-        <p className="text-sm">Para activar o cambiar tu plan, contactanos. La recurrencia automática con Mercado Pago se habilita próximamente.</p>
-      </Card>
+      <div className="bg-muted/50 rounded-2xl p-4">
+        <p className="text-sm text-muted-foreground">Para activar o cambiar tu plan, contactanos. La recurrencia automática con Mercado Pago se habilita próximamente.</p>
+      </div>
     </div>
   );
 }
@@ -252,171 +137,50 @@ function PublicLinkCard() {
   };
 
   return (
-    <Card className="p-4">
+    <div className="bg-card rounded-2xl border border-border p-4">
       <p className="font-medium mb-1">Enlace público de reservas</p>
       <p className="text-sm text-muted-foreground mb-3">
-        Compartí este link con tus {("pacientes")}. Reservan solos, sin escribirte.
+        Compartí este link con tus pacientes. Reservan solos, sin escribirte.
       </p>
       {handle ? (
         <div className="flex gap-2">
-          <Input value={url} readOnly className="font-mono text-xs" />
-          <Button variant="outline" size="sm" onClick={copy} className="shrink-0">
+          <Input value={url} readOnly className="font-mono text-xs rounded-xl" />
+          <Button variant="outline" size="sm" onClick={copy} className="shrink-0 rounded-xl">
             {copied ? <Check className="w-4 h-4" /> : "Copiar"}
           </Button>
         </div>
       ) : (
         <p className="text-sm text-muted-foreground">Elegí tu @usuario en la pestaña <strong>Perfil</strong> para activar tu enlace.</p>
       )}
-    </Card>
+    </div>
   );
 }
 
-function IntegrationCard({ icon: Icon, name, description, connected }) {
+// state: "connected" | "soon" (todavía no integrado — mostramos esto en vez de un botón
+// "Conectar" que no hacía nada al hacer clic)
+function IntegrationCard({ icon: Icon, name, description, state }) {
   return (
-    <Card className="p-4 flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
+    <div className="bg-card rounded-2xl border border-border p-4 flex items-center justify-between gap-3">
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center shrink-0">
           <Icon className="w-5 h-5 text-muted-foreground" />
         </div>
-        <div>
+        <div className="min-w-0">
           <p className="font-medium">{name}</p>
-          <p className="text-sm text-muted-foreground">{description}</p>
+          <p className="text-sm text-muted-foreground truncate">{description}</p>
         </div>
       </div>
-      <div className="flex items-center gap-2">
-        {connected ? (
-          <span className="flex items-center gap-1.5 text-sm text-emerald-600 font-medium">
-            <CheckCircle2 className="w-4 h-4" />
-            Conectado
-          </span>
-        ) : (
-          <>
-            <XCircle className="w-4 h-4 text-muted-foreground" />
-            <Button variant="outline" size="sm">
-              Conectar
-            </Button>
-          </>
-        )}
-      </div>
-    </Card>
-  );
-}
-
-function ServiceForm({ open, onClose, onSaved, service }) {
-  const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({
-    name: "",
-    description: "",
-    duration_minutes: 30,
-    margin_minutes: 0,
-    color: "#3b82f6",
-    price: "",
-    follow_up_days: 0,
-    active: true,
-  });
-
-  useEffect(() => {
-    if (open) {
-      if (service) {
-        setForm({
-          name: service.name || "",
-          description: service.description || "",
-          duration_minutes: service.duration_minutes || 30,
-          margin_minutes: service.margin_minutes || 0,
-          color: service.color || "#3b82f6",
-          price: service.price || "",
-          follow_up_days: service.follow_up_days || 0,
-          active: service.active !== false,
-        });
-      } else {
-        setForm({ name: "", description: "", duration_minutes: 30, margin_minutes: 0, color: "#3b82f6", price: "", follow_up_days: 0, active: true });
-      }
-    }
-  }, [open, service]);
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setSaving(true);
-    try {
-      if (service) {
-        await base44.entities.Service.update(service.id, form);
-      } else {
-        await base44.entities.Service.create(form);
-      }
-      onSaved();
-      onClose();
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{service ? "Editar servicio" : "Nuevo servicio"}</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Nombre *</Label>
-            <Input id="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="description">Descripción</Label>
-            <Input id="description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="price">Precio (ARS, opcional)</Label>
-            <Input id="price" type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value === "" ? "" : Number(e.target.value) })} />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="duration">Duración (min)</Label>
-              <Input
-                id="duration"
-                type="number"
-                value={form.duration_minutes}
-                onChange={(e) => setForm({ ...form, duration_minutes: Number(e.target.value) })}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="margin">Margen (min)</Label>
-              <Input
-                id="margin"
-                type="number"
-                value={form.margin_minutes}
-                onChange={(e) => setForm({ ...form, margin_minutes: Number(e.target.value) })}
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="followup">Seguimiento (días)</Label>
-              <Input
-                id="followup"
-                type="number"
-                value={form.follow_up_days}
-                onChange={(e) => setForm({ ...form, follow_up_days: Number(e.target.value) })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="color">Color</Label>
-              <Input
-                id="color"
-                type="color"
-                value={form.color}
-                onChange={(e) => setForm({ ...form, color: e.target.value })}
-                className="h-10 p-1"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
-            <Button type="submit" disabled={saving}>{service ? "Guardar" : "Crear"}</Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+      {state === "connected" ? (
+        <span className="flex items-center gap-1.5 text-sm text-emerald-600 font-medium shrink-0">
+          <CheckCircle2 className="w-4 h-4" />
+          Conectado
+        </span>
+      ) : (
+        <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground bg-muted px-2.5 py-1 rounded-full shrink-0">
+          <Clock3 className="w-3.5 h-3.5" />
+          Próximamente
+        </span>
+      )}
+    </div>
   );
 }

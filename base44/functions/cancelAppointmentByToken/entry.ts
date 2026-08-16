@@ -23,7 +23,12 @@ export default async function(req: Request): Promise<Response> {
     const practice = practices?.find((p) => p.created_by_id === professionalId);
     const handle = practice?.handle || "";
 
-    if (appt.status !== 'pending') {
+    // El paciente recibe el link de cancelar recién cuando el turno pasa a "confirmed"
+    // (sendAppointmentConfirmation es lo que genera el cancel_token), así que restringir
+    // esto solo a "pending" dejaba el botón prácticamente inutilizable en la práctica.
+    // Solo bloqueamos si la cita ya llegó a un estado terminal.
+    const terminalStatuses = ["cancelled", "completed", "no_show"];
+    if (terminalStatuses.includes(appt.status)) {
       return Response.json({ ok: true, already_resolved: true, status: appt.status, handle });
     }
 

@@ -1,38 +1,24 @@
 import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { Calendar, Users, Clock, CheckCircle2, XCircle, AlertCircle, CalendarClock } from "lucide-react";
+import { Calendar, Users, AlertCircle, CheckCircle2, CalendarClock, ArrowRight } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-
-const statusConfig = {
-  pending: { label: "Pendiente", color: "bg-amber-100 text-amber-700", dot: "bg-amber-500" },
-  confirmed: { label: "Confirmada", color: "bg-emerald-100 text-emerald-700", dot: "bg-emerald-500" },
-  cancelled: { label: "Cancelada", color: "bg-red-100 text-red-700", dot: "bg-red-500" },
-  completed: { label: "Completada", color: "bg-blue-100 text-blue-700", dot: "bg-blue-500" },
-  no_show: { label: "Ausencia", color: "bg-gray-100 text-gray-700", dot: "bg-gray-500" },
-};
-
-function formatTime(iso) {
-  try {
-    return new Date(iso).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" });
-  } catch {
-    return iso;
-  }
-}
+import { usePracticeSettings } from "@/hooks/usePracticeSettings";
+import { statusConfig, formatTime } from "@/lib/agenda-utils";
 
 function StatCard({ icon: Icon, label, value, accent, onClick }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="bg-card rounded-xl border border-border p-5 text-left hover:shadow-md hover:-translate-y-0.5 transition-all focus:outline-none focus-visible:ring-1 focus-visible:ring-ring w-full"
+      className="bg-card rounded-2xl border border-border p-4 sm:p-5 text-left hover:shadow-md hover:-translate-y-0.5 transition-all focus:outline-none focus-visible:ring-1 focus-visible:ring-ring w-full"
     >
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-muted-foreground">{label}</p>
-          <p className="text-2xl font-heading font-semibold mt-1">{value}</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">{label}</p>
+          <p className="text-xl sm:text-2xl font-heading font-semibold mt-1">{value}</p>
         </div>
-        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${accent}`}>
-          <Icon className="w-5 h-5" />
+        <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 ${accent}`}>
+          <Icon className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
         </div>
       </div>
     </button>
@@ -41,6 +27,7 @@ function StatCard({ icon: Icon, label, value, accent, onClick }) {
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { settings } = usePracticeSettings();
   const [appointments, setAppointments] = useState([]);
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -75,7 +62,6 @@ export default function Dashboard() {
 
   const confirmed = appointments.filter((a) => a.status === "confirmed").length;
   const pending = appointments.filter((a) => a.status === "pending").length;
-  const completed = appointments.filter((a) => a.status === "completed").length;
 
   if (loading) {
     return (
@@ -85,55 +71,98 @@ export default function Dashboard() {
     );
   }
 
+  const firstName = (settings?.practice_name || "").split(" ")[0];
+
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-heading font-semibold">Panel</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          {new Date().toLocaleDateString("es", { weekday: "long", day: "numeric", month: "long" })}
-        </p>
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-5 sm:space-y-6">
+      {/* Hero oscuro con el resumen del día */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0B1130] via-[#141E4D] to-[#22307A] px-5 py-6 sm:px-8 sm:py-8 text-white shadow-lg shadow-[#141E4D]/20">
+        <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full bg-white/[0.06] blur-2xl pointer-events-none" />
+        <div className="absolute -bottom-20 -left-10 w-56 h-56 rounded-full bg-blue-400/10 blur-3xl pointer-events-none" />
+
+        <div className="relative flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
+          <div>
+            <p className="text-xs sm:text-sm font-medium text-blue-200/70 capitalize">
+              {new Date().toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long" })}
+            </p>
+            <h1 className="text-2xl sm:text-3xl font-heading font-semibold mt-1.5 tracking-tight">
+              Hola{firstName ? `, ${firstName}` : ""} 👋
+            </h1>
+            <p className="text-blue-100/60 text-sm mt-1">Así viene tu día hoy</p>
+
+            <div className="flex items-end gap-2 mt-5">
+              <span className="text-5xl font-heading font-bold leading-none tabular-nums">{appointments.length}</span>
+              <span className="text-blue-200/70 text-sm pb-1.5">{appointments.length === 1 ? "cita hoy" : "citas hoy"}</span>
+            </div>
+
+            {appointments.length > 0 && (
+              <div className="flex items-center gap-2 mt-4 flex-wrap">
+                {confirmed > 0 && (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-medium bg-white/10 backdrop-blur-sm px-2.5 py-1 rounded-full">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> {confirmed} confirmada{confirmed > 1 ? "s" : ""}
+                  </span>
+                )}
+                {pending > 0 && (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-medium bg-white/10 backdrop-blur-sm px-2.5 py-1 rounded-full">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" /> {pending} pendiente{pending > 1 ? "s" : ""}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
+          <Link
+            to="/agenda?date=today"
+            className="inline-flex items-center gap-1.5 self-start sm:self-auto text-sm font-medium bg-white text-[#141E4D] px-4 py-2.5 rounded-xl hover:bg-blue-50 transition-colors shadow-sm shrink-0"
+          >
+            Ver agenda <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard icon={Calendar} label="Citas de hoy" value={appointments.length} accent="bg-blue-100 text-blue-600" onClick={() => navigate("/agenda?date=today")} />
         <StatCard icon={CheckCircle2} label="Confirmadas" value={confirmed} accent="bg-emerald-100 text-emerald-600" onClick={() => navigate("/agenda?date=today&status=confirmed")} />
         <StatCard icon={AlertCircle} label="Pendientes" value={pending} accent="bg-amber-100 text-amber-600" onClick={() => navigate("/agenda?date=today&status=pending")} />
-        <StatCard icon={Users} label="Pacientes" value={patients.length} accent="bg-purple-100 text-purple-600" onClick={() => navigate("/pacientes")} />
+        <StatCard icon={Users} label="Pacientes" value={patients.length} accent="bg-violet-100 text-violet-600" onClick={() => navigate("/pacientes")} />
       </div>
 
-      <div className="bg-card rounded-xl border border-border">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <h2 className="font-heading font-semibold flex items-center gap-2">
-            <CalendarClock className="w-5 h-5 text-primary" />
+      <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
+        <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-border">
+          <h2 className="font-heading font-semibold flex items-center gap-2 text-[15px]">
+            <CalendarClock className="w-4.5 h-4.5 text-primary" />
             Citas de hoy
           </h2>
-          <Link to="/agenda" className="text-sm text-primary hover:underline">
+          <Link to="/agenda" className="text-sm text-primary hover:underline font-medium">
             Ver agenda
           </Link>
         </div>
 
         {appointments.length === 0 ? (
-          <div className="px-6 py-12 text-center">
-            <Calendar className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-            <p className="text-muted-foreground">No hay citas para hoy</p>
-            <Link to="/agenda" className="text-sm text-primary hover:underline mt-2 inline-block">
+          <div className="px-6 py-14 text-center">
+            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
+              <Calendar className="w-5 h-5 text-muted-foreground" />
+            </div>
+            <p className="text-muted-foreground text-sm">No hay citas para hoy</p>
+            <Link to="/agenda" className="text-sm text-primary hover:underline mt-2 inline-block font-medium">
               Crear una cita
             </Link>
           </div>
         ) : (
-          <div className="divide-y divide-border">
+          <div className="p-3 space-y-1.5">
             {appointments.map((a) => {
               const cfg = statusConfig[a.status] || statusConfig.pending;
               return (
-                <div key={a.id} className="flex items-center gap-4 px-6 py-3 hover:bg-accent/50 transition-colors">
-                  <div className="text-center w-16 shrink-0">
-                    <p className="font-heading font-semibold">{formatTime(a.start_datetime)}</p>
-                  </div>
+                <div
+                  key={a.id}
+                  className={`flex items-center gap-3 rounded-xl border-l-[3px] ${cfg.border} bg-card hover:shadow-sm transition-all px-3 py-2.5`}
+                >
+                  <span className="text-sm font-semibold tabular-nums text-muted-foreground w-14 shrink-0">{formatTime(new Date(a.start_datetime))}</span>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{a.patient_name || "Paciente"}</p>
-                    <p className="text-sm text-muted-foreground truncate">{a.service_name || "Servicio"}</p>
+                    <p className={`text-sm font-medium truncate ${cfg.strike ? "line-through text-muted-foreground" : "text-foreground"}`}>{a.patient_name || "Paciente"}</p>
+                    <p className="text-xs text-muted-foreground truncate">{a.service_name || "Servicio"}</p>
                   </div>
-                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${cfg.color}`}>{cfg.label}</span>
+                  <span className={`text-[11px] font-medium px-2 py-1 rounded-full shrink-0 ${cfg.bgSoft} ${cfg.text}`}>{cfg.label}</span>
                 </div>
               );
             })}

@@ -147,33 +147,38 @@ export default function Agenda() {
           <h1 className="text-2xl font-heading font-semibold tracking-tight">Agenda</h1>
           <p className="text-muted-foreground text-sm capitalize">{dateLabel}</p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center justify-between gap-2 sm:justify-start sm:flex-wrap">
           <div className="flex bg-muted/60 rounded-lg p-1 border border-border/60">
             {VIEWS.map((v) => (
               <button
                 key={v.value}
                 onClick={() => setView(v.value)}
-                className={`px-3 py-1.5 text-sm rounded-md font-medium transition-all ${view === v.value ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                className={`px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm rounded-md font-medium transition-all ${view === v.value ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
               >
                 {v.label}
               </button>
             ))}
           </div>
-          <div className="flex items-center gap-1 bg-card rounded-lg border border-border p-1">
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md" onClick={() => shift(-1)}>
-              <ChevronLeft className="w-4 h-4" />
+          <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5 bg-card rounded-lg border border-border p-1">
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md" onClick={() => shift(-1)}>
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <Button variant="ghost" size="sm" className="h-8 px-2 sm:px-2.5 text-xs font-medium" onClick={today}>
+                Hoy
+              </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md" onClick={() => shift(1)}>
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+            <Button size="icon" className="sm:hidden shadow-sm h-9 w-9 shrink-0" onClick={() => openNew(currentDate)}>
+              <Plus className="w-4 h-4" />
             </Button>
-            <Button variant="ghost" size="sm" className="h-8 px-2.5 text-xs font-medium" onClick={today}>
-              Hoy
-            </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md" onClick={() => shift(1)}>
-              <ChevronRight className="w-4 h-4" />
+            <Button onClick={() => openNew(currentDate)} className="hidden sm:inline-flex shadow-sm">
+              <Plus className="w-4 h-4 mr-1" />
+              Cita
             </Button>
           </div>
-          <Button onClick={() => openNew(currentDate)} className="shadow-sm">
-            <Plus className="w-4 h-4 mr-1" />
-            Cita
-          </Button>
         </div>
       </div>
 

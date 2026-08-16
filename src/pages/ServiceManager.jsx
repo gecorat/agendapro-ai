@@ -71,34 +71,34 @@ export default function ServiceManager() {
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   return (
-    <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="px-3 py-3 md:p-6 max-w-4xl mx-auto space-y-4">
+      <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-heading font-semibold">Servicios</h1>
+          <h1 className="text-2xl font-heading font-semibold tracking-tight">Servicios</h1>
           <p className="text-sm text-muted-foreground">Tipos de consulta, precios, duración y notas de preparación</p>
         </div>
-        <Button onClick={openNew}><Plus className="w-4 h-4 mr-1" /> Nuevo</Button>
+        <Button onClick={openNew} className="shadow-sm"><Plus className="w-4 h-4 mr-1" /> Nuevo</Button>
       </div>
 
       {loading ? (
         <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
       ) : services.length === 0 ? (
-        <Card className="p-8 text-center text-sm text-muted-foreground">
-          Aún no cargaste servicios. Creá tu primer tipo de consulta.
-        </Card>
+        <div className="text-center py-16">
+          <p className="text-muted-foreground text-sm">Aún no cargaste servicios. Creá tu primer tipo de consulta.</p>
+        </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           {services.map((s) => (
-            <Card key={s.id} className="p-4">
+            <div key={s.id} className="bg-card rounded-2xl border border-border p-4 hover:shadow-sm transition-shadow">
               <div className="flex items-start gap-3">
-                <div className="w-1.5 self-stretch rounded-full" style={{ background: s.color || "#3b82f6" }} />
+                <div className="w-1.5 self-stretch rounded-full shrink-0" style={{ background: s.color || "#3b82f6" }} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-medium">{s.name}</p>
+                    <p className="font-heading font-medium">{s.name}</p>
                     {!s.active && <Badge variant="secondary">Inactivo</Badge>}
                   </div>
                   {s.description && <p className="text-sm text-muted-foreground mt-0.5">{s.description}</p>}
-                  {s.prep_notes && <p className="text-xs text-muted-foreground mt-1 bg-accent/50 rounded px-2 py-1">📋 {s.prep_notes}</p>}
+                  {s.prep_notes && <p className="text-xs text-muted-foreground mt-1.5 bg-muted/60 rounded-lg px-2.5 py-1.5">📋 {s.prep_notes}</p>}
                   <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground flex-wrap">
                     <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {s.duration_minutes} min</span>
                     {s.margin_minutes > 0 && <span>+{s.margin_minutes} min margen</span>}
@@ -106,12 +106,12 @@ export default function ServiceManager() {
                     {s.follow_up_days > 0 && <span>Control en {s.follow_up_days}d</span>}
                   </div>
                 </div>
-                <div className="flex gap-1 shrink-0">
-                  <Button size="icon" variant="ghost" onClick={() => openEdit(s)}><Pencil className="w-4 h-4" /></Button>
-                  <Button size="icon" variant="ghost" onClick={() => remove(s)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                <div className="flex gap-0.5 shrink-0">
+                  <Button size="icon" variant="ghost" className="rounded-lg" onClick={() => openEdit(s)}><Pencil className="w-4 h-4" /></Button>
+                  <Button size="icon" variant="ghost" className="rounded-lg" onClick={() => remove(s)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                 </div>
               </div>
-            </Card>
+            </div>
           ))}
         </div>
       )}

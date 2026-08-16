@@ -53,12 +53,10 @@ export default function RescheduleAppointment() {
               <CalendarClock className="w-9 h-9 text-amber-600" />
             </div>
             <h1 className="text-2xl font-bold text-slate-900 mb-2">
-              {status === "confirmed" ? "Tu cita ya está confirmada" : status === "cancelled" ? "Esta cita ya está cancelada" : status === "completed" ? "Esta cita ya se realizó" : "No pudimos reagendar automáticamente"}
+              {status === "cancelled" ? "Esta cita ya está cancelada" : status === "completed" ? "Esta cita ya se realizó" : "No pudimos reagendar automáticamente"}
             </h1>
             <p className="text-slate-600">
-              {status === "confirmed"
-                ? "El consultorio ya confirmó este turno, así que no se puede reagendar solo desde este link. Contactate directamente con el consultorio para cambiar el horario."
-                : status === "cancelled"
+              {status === "cancelled"
                 ? "Esta cita ya había sido cancelada antes, no hay nada para reagendar."
                 : "Contactate directamente con el consultorio para coordinar un nuevo horario."}
             </p>

@@ -1,11 +1,24 @@
 import React from "react";
 import { Plus, CalendarX2 } from "lucide-react";
-import { statusConfig, HOURS, apptsForDay, formatTime, nowOffsetRatio } from "@/lib/agenda-utils";
+import { statusConfig, apptsForDay, formatTime } from "@/lib/agenda-utils";
 
+// Lista de agenda (solo los horarios que tienen turnos, no una grilla de 14 horas vacías)
+// con un marcador de "ahora" en su posición cronológica si es el día de hoy.
 export default function DayView({ date, appts, onNew, onEdit }) {
   const dayAppts = apptsForDay(appts, date);
   const isToday = date.toDateString() === new Date().toDateString();
-  const nowRatio = isToday ? nowOffsetRatio() : null;
+  const now = new Date();
+
+  const items = [];
+  let nowInserted = !isToday;
+  dayAppts.forEach((a) => {
+    if (!nowInserted && new Date(a.start_datetime) > now) {
+      items.push({ type: "now" });
+      nowInserted = true;
+    }
+    items.push({ type: "appt", data: a });
+  });
+  if (!nowInserted) items.push({ type: "now" });
 
   return (
     <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
@@ -31,43 +44,31 @@ export default function DayView({ date, appts, onNew, onEdit }) {
           <p className="text-sm text-muted-foreground">No hay turnos agendados este día.</p>
         </div>
       ) : (
-        <div className="relative divide-y divide-border/70">
-          {isToday && nowRatio !== null && (
-            <div
-              className="absolute left-0 right-0 z-10 flex items-center pointer-events-none"
-              style={{ top: `${nowRatio * 100}%` }}
-            >
-              <div className="w-16 shrink-0 flex justify-end pr-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-              </div>
-              <div className="flex-1 h-px bg-rose-500" />
-            </div>
-          )}
-          {HOURS.map((h) => {
-            const slotAppts = dayAppts.filter((a) => new Date(a.start_datetime).getHours() === h);
-            return (
-              <div key={h} className="flex min-h-[64px]">
-                <div className="w-16 shrink-0 px-3 py-2.5 text-[11px] text-muted-foreground border-r border-border text-right tabular-nums">{h}:00</div>
-                <div className="flex-1 p-1.5 space-y-1.5">
-                  {slotAppts.map((a) => {
-                    const cfg = statusConfig[a.status] || statusConfig.pending;
-                    return (
-                      <button
-                        key={a.id}
-                        onClick={() => onEdit(a)}
-                        className={`w-full text-left rounded-lg border-l-[3px] ${cfg.border} bg-card shadow-sm hover:shadow-md hover:-translate-y-px transition-all px-3 py-2`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold tabular-nums text-muted-foreground">{formatTime(new Date(a.start_datetime))}</span>
-                          <span className={`text-sm font-semibold ${cfg.strike ? "line-through text-muted-foreground" : "text-foreground"}`}>{a.patient_name}</span>
-                          <span className={`ml-auto text-[10.5px] font-medium px-1.5 py-0.5 rounded-full ${cfg.bgSoft} ${cfg.text}`}>{cfg.label}</span>
-                        </div>
-                        <span className="text-xs text-muted-foreground">{a.service_name}</span>
-                      </button>
-                    );
-                  })}
+        <div className="p-3 space-y-1.5">
+          {items.map((item) => {
+            if (item.type === "now") {
+              return (
+                <div key="now" className="flex items-center gap-2 py-1">
+                  <span className="text-[10px] font-semibold text-rose-500 tabular-nums w-12 shrink-0 text-right pr-1">{formatTime(now)}</span>
+                  <div className="flex-1 h-px bg-rose-500/40" />
                 </div>
-              </div>
+              );
+            }
+            const a = item.data;
+            const cfg = statusConfig[a.status] || statusConfig.pending;
+            return (
+              <button
+                key={a.id}
+                onClick={() => onEdit(a)}
+                className={`w-full text-left rounded-xl border-l-[3px] ${cfg.border} bg-card shadow-sm hover:shadow-md hover:-translate-y-px transition-all px-3 py-2.5`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold tabular-nums text-muted-foreground w-12 shrink-0">{formatTime(new Date(a.start_datetime))}</span>
+                  <span className={`text-sm font-semibold truncate ${cfg.strike ? "line-through text-muted-foreground" : "text-foreground"}`}>{a.patient_name}</span>
+                  <span className={`ml-auto text-[10.5px] font-medium px-1.5 py-0.5 rounded-full shrink-0 ${cfg.bgSoft} ${cfg.text}`}>{cfg.label}</span>
+                </div>
+                <p className="text-xs text-muted-foreground pl-14 truncate">{a.service_name}</p>
+              </button>
             );
           })}
         </div>

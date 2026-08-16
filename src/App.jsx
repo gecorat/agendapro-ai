@@ -74,7 +74,6 @@ const AuthenticatedApp = () => {
         <Route path="/service-manager" element={<ServiceManager />} />
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/welcome-guide" element={<WelcomeGuide />} />
-        <Route path="/patient-list" element={<PatientList />} />
         <Route path="/profile-editor" element={<ProfileEditor />} />
         <Route path="/upgrade-plan" element={<UpgradePlan />} />
         <Route path="/appointment-history" element={<AppointmentHistory />} />

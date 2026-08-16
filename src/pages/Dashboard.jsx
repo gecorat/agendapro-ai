@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { Calendar, Users, AlertCircle, CheckCircle2, CalendarClock, ArrowRight } from "lucide-react";
+import { Users, CalendarRange, CalendarClock, ArrowRight, Calendar } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import { statusConfig, formatTime } from "@/lib/agenda-utils";
@@ -29,6 +29,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { settings } = usePracticeSettings();
   const [appointments, setAppointments] = useState([]);
+  const [weekCount, setWeekCount] = useState(0);
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -41,6 +42,13 @@ export default function Dashboard() {
         const end = new Date(today);
         end.setHours(23, 59, 59, 999);
 
+        const weekStart = new Date(today);
+        weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+        weekStart.setHours(0, 0, 0, 0);
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        weekEnd.setHours(23, 59, 59, 999);
+
         const [appts, pats] = await Promise.all([
           base44.entities.Appointment.filter({}),
           base44.entities.Patient.filter({}),
@@ -51,7 +59,14 @@ export default function Dashboard() {
           return d >= start && d <= end;
         });
         todayAppts.sort((a, b) => new Date(a.start_datetime) - new Date(b.start_datetime));
+
+        const weekAppts = (appts || []).filter((a) => {
+          const d = new Date(a.start_datetime);
+          return d >= weekStart && d <= weekEnd && a.status !== "cancelled";
+        });
+
         setAppointments(todayAppts);
+        setWeekCount(weekAppts.length);
         setPatients(pats || []);
       } finally {
         setLoading(false);
@@ -120,10 +135,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <StatCard icon={Calendar} label="Citas de hoy" value={appointments.length} accent="bg-blue-100 text-blue-600" onClick={() => navigate("/agenda?date=today")} />
-        <StatCard icon={CheckCircle2} label="Confirmadas" value={confirmed} accent="bg-emerald-100 text-emerald-600" onClick={() => navigate("/agenda?date=today&status=confirmed")} />
-        <StatCard icon={AlertCircle} label="Pendientes" value={pending} accent="bg-amber-100 text-amber-600" onClick={() => navigate("/agenda?date=today&status=pending")} />
+      <div className="grid grid-cols-2 gap-3 sm:gap-4">
+        <StatCard icon={CalendarRange} label="Esta semana" value={weekCount} accent="bg-blue-100 text-blue-600" onClick={() => navigate("/agenda")} />
         <StatCard icon={Users} label="Pacientes" value={patients.length} accent="bg-violet-100 text-violet-600" onClick={() => navigate("/pacientes")} />
       </div>
 

@@ -192,9 +192,9 @@ export default function Agenda() {
       ) : view === "day" ? (
         <DayView date={currentDate} appts={visibleAppointments} onNew={openNew} onEdit={openEdit} />
       ) : view === "week" ? (
-        <WeekView days={weekDays} appts={visibleAppointments} onNew={openNew} onEdit={openEdit} />
+        <WeekView days={weekDays} appts={visibleAppointments} onDayClick={setDaySheetDate} onEdit={openEdit} />
       ) : (
-        <MonthView currentDate={currentDate} appts={visibleAppointments} onNew={openNew} onEdit={openEdit} onDayClick={setDaySheetDate} />
+        <MonthView currentDate={currentDate} appts={visibleAppointments} onDayClick={setDaySheetDate} />
       )}
 
       <AppointmentForm

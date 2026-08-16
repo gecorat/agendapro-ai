@@ -3,10 +3,20 @@ import { base44 } from "@/api/base44Client";
 import { Plus, Search, Users, Phone, Mail, Pencil, Trash2, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
 import PatientForm from "@/components/PatientForm";
 import PatientDetail from "@/components/PatientDetail";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
+
+const AVATAR_HUES = ["bg-blue-100 text-blue-700", "bg-violet-100 text-violet-700", "bg-emerald-100 text-emerald-700", "bg-amber-100 text-amber-700", "bg-rose-100 text-rose-700", "bg-sky-100 text-sky-700"];
+
+function avatarStyle(name) {
+  const sum = [...name].reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  return AVATAR_HUES[sum % AVATAR_HUES.length];
+}
+
+function initials(first, last) {
+  return `${(first || "?")[0]}${(last || "")[0] || ""}`.toUpperCase();
+}
 
 export default function Patients() {
   const [patients, setPatients] = useState([]);
@@ -79,10 +89,10 @@ export default function Patients() {
     <div className="px-3 py-3 md:p-6 max-w-6xl mx-auto space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-heading font-semibold">{preset.patientLabel}</h1>
+          <h1 className="text-2xl font-heading font-semibold tracking-tight">{preset.patientLabel}</h1>
           <p className="text-muted-foreground text-sm">{patients.length} {patientLabelLower}</p>
         </div>
-        <Button onClick={openNew}>
+        <Button onClick={openNew} className="shadow-sm">
           <Plus className="w-4 h-4 mr-1" />
           Nuevo {patientLabelLower.slice(0, -1)}
         </Button>
@@ -94,7 +104,7 @@ export default function Patients() {
           placeholder="Buscar por nombre, teléfono o email..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="pl-10"
+          className="pl-10 rounded-xl"
         />
       </div>
 
@@ -104,62 +114,60 @@ export default function Patients() {
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16">
-          <Users className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-          <p className="text-muted-foreground">
+          <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
+            <Users className="w-5 h-5 text-muted-foreground" />
+          </div>
+          <p className="text-muted-foreground text-sm">
             {search ? "Sin resultados" : `Todavía no hay ${patientLabelLower}`}
           </p>
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((p) => (
-            <Card key={p.id} className="p-4 hover:shadow-sm transition-shadow">
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <p className="font-heading font-semibold truncate">
-                    {p.first_name} {p.last_name || ""}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {apptCount(p.id)} cita(s)
-                  </p>
+          {filtered.map((p) => {
+            const fullName = `${p.first_name} ${p.last_name || ""}`.trim();
+            return (
+              <div key={p.id} className="bg-card rounded-2xl border border-border p-4 hover:shadow-md hover:-translate-y-0.5 transition-all">
+                <div className="flex items-start gap-3">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 ${avatarStyle(fullName || "?")}`}>
+                    {initials(p.first_name, p.last_name)}
+                  </div>
+                  <div className="flex-1 min-w-0 pt-0.5">
+                    <p className="font-heading font-semibold truncate">{fullName}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {apptCount(p.id)} cita{apptCount(p.id) !== 1 ? "s" : ""}
+                    </p>
+                  </div>
+                  <div className="flex gap-0.5 shrink-0 -mr-1.5 -mt-1">
+                    <button onClick={() => openDetail(p)} title="Ver historial" className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground transition-colors">
+                      <FileText className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => openEdit(p)} title="Editar" className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground transition-colors">
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => handleDelete(p)} title="Eliminar" className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex gap-1">
-                  <button
-                    onClick={() => openDetail(p)}
-                    title="Ver historial"
-                    className="p-1.5 rounded-md hover:bg-accent text-muted-foreground"
-                  >
-                    <FileText className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => openEdit(p)}
-                    className="p-1.5 rounded-md hover:bg-accent text-muted-foreground"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(p)}
-                    className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-              <div className="mt-3 space-y-1 text-sm">
-                {p.phone && (
-                  <p className="flex items-center gap-2 text-muted-foreground">
-                    <Phone className="w-3.5 h-3.5" />
-                    {p.phone}
-                  </p>
-                )}
-                {p.email && (
-                  <p className="flex items-center gap-2 text-muted-foreground truncate">
-                    <Mail className="w-3.5 h-3.5 shrink-0" />
-                    {p.email}
-                  </p>
+                {(p.phone || p.email) && (
+                  <div className="mt-3 pl-[52px] space-y-1 text-sm">
+                    {p.phone && (
+                      <p className="flex items-center gap-2 text-muted-foreground">
+                        <Phone className="w-3.5 h-3.5 shrink-0" />
+                        {p.phone}
+                      </p>
+                    )}
+                    {p.email && (
+                      <p className="flex items-center gap-2 text-muted-foreground truncate">
+                        <Mail className="w-3.5 h-3.5 shrink-0" />
+                        {p.email}
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
-            </Card>
-          ))}
+            );
+          })}
         </div>
       )}
 

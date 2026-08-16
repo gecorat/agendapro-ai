@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
-import { Loader2, CalendarCheck, UserPlus, TrendingUp } from "lucide-react";
+import { CalendarCheck, UserPlus, TrendingUp } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from "recharts";
 
 function startOfMonth(d) { return new Date(d.getFullYear(), d.getMonth(), 1); }

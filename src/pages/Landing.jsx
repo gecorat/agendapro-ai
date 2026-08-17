@@ -46,7 +46,7 @@ const FAQ = [
 const BASIC_FEATURES = ["Página pública de reservas", "Agenda manual + calendario", "Gestión de pacientes", "Recordatorios por email"];
 const PRO_EXTRAS = ["Bot de WhatsApp con IA", "Agenda y reservas online 24/7", "Recordatorios automáticos por WhatsApp", "Hasta 200 citas mensuales"];
 const PREMIUM_EXTRAS = ["Hasta 500 citas mensuales", "Bandeja de chats con toma de control", "Reportes y métricas avanzadas", "Solicitud automática de reseñas", "Soporte prioritario"];
-const WHATSAPP_URL = "https://wa.me/5491100000000?text=" + encodeURIComponent("Hola! Quiero probar AgendaPro, ¿me cuentan cómo funciona?");
+const WHATSAPP_URL = "https://wa.me/5491100000000?text=" + encodeURIComponent("Hola! Quiero probar Kame Agenda, ¿me cuentan cómo funciona?");
 
 export default function Landing() {
   return (
@@ -57,7 +57,7 @@ export default function Landing() {
             <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center">
               <CalendarClock className="w-4 h-4 text-white" />
             </div>
-            <span className="font-heading font-semibold tracking-tight">AgendaPro</span>
+            <span className="font-heading font-semibold tracking-tight">Kame Agenda</span>
           </div>
           <div className="flex items-center gap-1.5">
             <Button variant="ghost" size="sm" asChild className="text-slate-600 hover:text-slate-900"><Link to="/login">Ingresar</Link></Button>
@@ -79,7 +79,7 @@ export default function Landing() {
               Tu agenda llena,<br className="hidden sm:block" /> sin atender el teléfono
             </h1>
             <p className="mt-5 text-base md:text-lg text-slate-600 max-w-xl leading-relaxed">
-              AgendaPro responde, agenda y recuerda las citas de tus pacientes por WhatsApp, las 24 horas.
+              Kame Agenda responde, agenda y recuerda las citas de tus pacientes por WhatsApp, las 24 horas.
               Vos te dedicás a atender, el bot se encarga del resto.
             </p>
             <div className="mt-7 flex flex-col sm:flex-row gap-3">
@@ -304,7 +304,7 @@ export default function Landing() {
             <div className="w-6 h-6 rounded-md bg-white/10 flex items-center justify-center">
               <CalendarClock className="w-3.5 h-3.5 text-white" />
             </div>
-            <span className="font-medium text-slate-300">AgendaPro</span>
+            <span className="font-medium text-slate-300">Kame Agenda</span>
             <span className="text-slate-600">·</span>
             <span>Recepcionista virtual para profesionales de la salud</span>
           </div>

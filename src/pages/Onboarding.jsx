@@ -75,7 +75,7 @@ export default function Onboarding({ onConfigured }) {
             <CalendarClock className="w-5 h-5 text-primary-foreground" />
           </div>
           <div className="text-left">
-            <p className="font-heading font-semibold">AgendaPro</p>
+            <p className="font-heading font-semibold">Kame Agenda</p>
             <p className="text-xs text-muted-foreground">Configuración inicial</p>
           </div>
         </div>

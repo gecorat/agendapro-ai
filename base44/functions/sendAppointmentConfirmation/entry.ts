@@ -67,7 +67,7 @@ export default async function(req: Request): Promise<Response> {
     const startDate = new Date(appt.start_datetime);
     const dateStr = startDate.toLocaleString("es-AR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "America/Argentina/Buenos_Aires" });
     const serviceName = appt.service_name || "Consulta";
-    const signature = practiceName ? practiceName : "AgendaPro";
+    const signature = practiceName ? practiceName : "Kame Agenda";
 
     const rescheduleUrl = handle ? `${appUrl}/reschedule/${cancelToken}` : null;
     const cancelUrl = `${appUrl}/x/${cancelToken}`;

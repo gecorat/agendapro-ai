@@ -143,13 +143,13 @@ export default function AppLayout() {
   return (
     <div className="flex h-screen bg-background">
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-64 shrink-0 border-r border-border bg-card">{SidebarContent}</aside>
+      <aside className="hidden md:flex w-64 shrink-0">{SidebarContent}</aside>
 
       {/* Mobile sidebar */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
           <div className="absolute inset-0 bg-black/40" onClick={() => setMobileOpen(false)} />
-          <aside className="absolute left-0 top-0 h-full w-64 bg-card">{SidebarContent}</aside>
+          <aside className="absolute left-0 top-0 h-full w-64 shadow-xl">{SidebarContent}</aside>
         </div>
       )}
 

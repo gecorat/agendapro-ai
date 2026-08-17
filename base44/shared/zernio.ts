@@ -88,7 +88,7 @@ export async function orchestrateConversation(base44, ctx) {
     .map((s) => `- ${s.name} (${s.duration_minutes} min${s.price ? ", $" + s.price : ""})`)
     .join("\n");
   const upcomingText = myUpcoming
-    .map((a) => `- ${new Date(a.start_datetime).toLocaleString("es")} ${a.service_name} (${a.status})`)
+    .map((a) => `- ${new Date(a.start_datetime).toLocaleString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })} ${a.service_name} (${a.status})`)
     .join("\n");
   const patientText = existingPatient
     ? `Paciente existente: ${existingPatient.first_name} ${existingPatient.last_name || ""}`.trim()

@@ -24,7 +24,7 @@ export default function TrialBanner() {
         <div className="flex items-center gap-2 max-w-7xl mx-auto">
           <AlertTriangle className="w-4 h-4 shrink-0" />
           <span className="font-medium truncate">Tu prueba gratuita terminó.</span>
-          <span className="text-red-700/80 hidden sm:inline truncate">Activá un plan para seguir usando AgendaPro.</span>
+          <span className="text-red-700/80 hidden sm:inline truncate">Activá un plan para seguir usando Kame Agenda.</span>
           <Link to="/upgrade-plan" className="ml-auto inline-flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white text-xs font-medium px-3 py-1.5 rounded-md whitespace-nowrap shrink-0">
             Ver planes <ChevronRight className="w-3 h-3" />
           </Link>

@@ -58,7 +58,15 @@ export default async function(req) {
         const dateStr = startDate.toLocaleString("es-AR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "America/Argentina/Buenos_Aires" });
         const is3h = (appt.reminders_sent || 0) >= 1;
         const subject = is3h ? "Recordatorio: tu cita es en 3 horas" : "Recordatorio de tu cita";
-        const body = `Hola ${patientName},\n\nTe recordamos tu cita de ${appt.service_name || "consulta"} para el ${dateStr}.\n\nSi necesitás reprogramar, respondé a este email.\n\n¡Te esperamos!\n\nAgendaPro`;
+        const body = `Hola ${patientName},
+
+Te recordamos tu cita de ${appt.service_name || "consulta"} para el ${dateStr}.
+
+Si necesitás reprogramar, respondé a este email.
+
+¡Te esperamos!
+
+Kame Agenda`;
 
         // Decidir canal
         const practice = await getPracticeFor(appt);

@@ -71,7 +71,7 @@ export default async function(req: Request): Promise<Response> {
                 `Servicio: ${serviceName}`,
                 `Fecha: ${dateStr}`,
               ],
-              footer: "AgendaPro",
+              footer: "Kame Agenda",
             }),
           });
         } catch { /* notificación no interrumpe la cancelación */ }

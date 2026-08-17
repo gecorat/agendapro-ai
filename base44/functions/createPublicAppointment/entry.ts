@@ -71,6 +71,18 @@ export default async function (req: Request): Promise<Response> {
         consent_reminders: true,
         professional_id,
       });
+    } else {
+      // El teléfono ya existía, pero la persona puede haber escrito un nombre/email
+      // distinto (dato corregido, o el número es compartido). Sin esto, la reserva se
+      // guardaba igual con el nombre/email VIEJOS de la ficha encontrada, y la confirmación
+      // terminaba yendo al email de otra persona en vez del que se acababa de escribir.
+      const updates = {};
+      if (first_name && first_name !== patient.first_name) updates.first_name = first_name;
+      if ((last_name || '') !== (patient.last_name || '')) updates.last_name = last_name || '';
+      if (email && email !== patient.email) updates.email = email;
+      if (Object.keys(updates).length) {
+        patient = await base44.asServiceRole.entities.Patient.update(patient.id, updates);
+      }
     }
 
     const appointment = await base44.asServiceRole.entities.Appointment.create({

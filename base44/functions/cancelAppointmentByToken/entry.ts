@@ -6,7 +6,7 @@ export default async function(req: Request): Promise<Response> {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
-    const { token } = body;
+    const { token, confirm } = body;
 
     if (!token) {
       return Response.json({ error: 'token required' }, { status: 400 });
@@ -23,11 +23,28 @@ export default async function(req: Request): Promise<Response> {
     const practice = practices?.find((p) => p.created_by_id === professionalId);
     const handle = practice?.handle || "";
 
+    const terminalStatuses = ["cancelled", "completed", "no_show"];
+
+    // Vista previa: el paciente puede haber tocado el botón por error, así que primero
+    // mostramos los datos de la cita y le pedimos confirmación explícita antes de cancelar
+    // nada. Solo cancelamos de verdad cuando confirm === true.
+    if (!confirm) {
+      return Response.json({
+        ok: true,
+        preview: true,
+        status: appt.status,
+        handle,
+        service_name: appt.service_name,
+        start_datetime: appt.start_datetime,
+        patient_name: appt.patient_name,
+        can_cancel: !terminalStatuses.includes(appt.status),
+      });
+    }
+
     // El paciente recibe el link de cancelar recién cuando el turno pasa a "confirmed"
     // (sendAppointmentConfirmation es lo que genera el cancel_token), así que restringir
     // esto solo a "pending" dejaba el botón prácticamente inutilizable en la práctica.
     // Solo bloqueamos si la cita ya llegó a un estado terminal.
-    const terminalStatuses = ["cancelled", "completed", "no_show"];
     if (terminalStatuses.includes(appt.status)) {
       return Response.json({ ok: true, already_resolved: true, status: appt.status, handle });
     }

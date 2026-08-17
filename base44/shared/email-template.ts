@@ -58,7 +58,7 @@ export function buildEmailHtml({
       ? `<div style="margin:24px 0 8px;">${primaryHtml}${secondaryHtml}</div>`
       : "";
 
-  const footerText = footer || "AgendaPro";
+  const footerText = footer || "Kame Agenda";
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -73,7 +73,7 @@ export function buildEmailHtml({
 <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(15,23,42,0.06);">
 <tr>
 <td style="background:#0f172a;padding:24px 32px;text-align:center;">
-<span style="font-family:Inter,Arial,sans-serif;font-size:18px;font-weight:700;color:#ffffff;letter-spacing:-0.02em;">AgendaPro</span>
+<span style="font-family:Inter,Arial,sans-serif;font-size:18px;font-weight:700;color:#ffffff;letter-spacing:-0.02em;">Kame Agenda</span>
 </td>
 </tr>
 <tr>

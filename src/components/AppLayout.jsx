@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Calendar, Users, LayoutDashboard, Settings, LogOut, CalendarClock, Menu, X, Shield, MessageCircle, History, ClipboardList, BarChart3, Star, BookOpen, UserCircle, CreditCard, Sparkles } from "lucide-react";
+import { Calendar, Users, LayoutDashboard, Settings, LogOut, CalendarClock, Menu, Shield, MessageCircle, History, BarChart3, Star, BookOpen, UserCircle, CreditCard, Sparkles } from "lucide-react";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import { getPlanStatus } from "@/lib/plan-utils";
 import Onboarding from "@/pages/Onboarding";

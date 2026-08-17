@@ -16,7 +16,7 @@ export default function RescheduleAppointment() {
     }
     (async () => {
       try {
-        const res = await base44.functions.invoke("cancelAppointmentByToken", { token });
+        const res = await base44.functions.invoke("cancelAppointmentByToken", { token, confirm: true });
         const data = res.data;
         // Solo mandamos a reservar de nuevo si la cita vieja realmente se canceló.
         // Antes se navegaba apenas venía "handle" en la respuesta, sin chequear `resolved`,

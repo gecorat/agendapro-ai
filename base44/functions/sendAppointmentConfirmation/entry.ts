@@ -65,7 +65,7 @@ export default async function(req: Request): Promise<Response> {
 
     const appUrl = await getAppUrl(base44, req);
     const startDate = new Date(appt.start_datetime);
-    const dateStr = startDate.toLocaleString("es-AR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+    const dateStr = startDate.toLocaleString("es-AR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "America/Argentina/Buenos_Aires" });
     const serviceName = appt.service_name || "Consulta";
     const signature = practiceName ? practiceName : "AgendaPro";
 

@@ -37,7 +37,7 @@ export default async function(req: Request): Promise<Response> {
     // Notificar al profesional por email y WhatsApp
     if (practice) {
       const startDate = new Date(appt.start_datetime);
-      const dateStr = startDate.toLocaleString("es-AR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+      const dateStr = startDate.toLocaleString("es-AR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "America/Argentina/Buenos_Aires" });
       const patientName = appt.patient_name || "Paciente";
       const serviceName = appt.service_name || "Consulta";
 

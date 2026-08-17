@@ -1,5 +1,5 @@
 {
-  "name": "AgendaPro AI",
+  "name": "Kame Agenda",
   "site": {
     "installCommand": "npm install",
     "buildCommand": "npm run build",

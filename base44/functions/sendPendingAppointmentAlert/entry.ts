@@ -87,7 +87,14 @@ export default async function(req: Request): Promise<Response> {
           apiKey: plat?.zernio_api_key,
           accountId: practice.zernio_account_id,
           phone: practice.zernio_phone,
-          message: `🔔 Nueva cita pendiente\n\nPaciente: ${patientName}\nServicio: ${serviceName}\nFecha: ${dateStr}\nOrigen: ${originLabel}\n\nConfirmá desde el email o ingresá a AgendaPro.`,
+          message: `🔔 Nueva cita pendiente
+
+Paciente: ${patientName}
+Servicio: ${serviceName}
+Fecha: ${dateStr}
+Origen: ${originLabel}
+
+Confirmá desde el email o ingresá a Kame Agenda.`,
         });
         waSent = true;
       } catch (e) {

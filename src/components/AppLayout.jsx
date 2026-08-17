@@ -82,7 +82,7 @@ export default function AppLayout() {
           <CalendarClock className="w-5 h-5 text-white" />
         </div>
         <div className="min-w-0">
-          <p className="font-heading font-semibold text-sm leading-tight text-white">AgendaPro</p>
+          <p className="font-heading font-semibold text-sm leading-tight text-white">Kame Agenda</p>
           <p className="text-xs text-blue-200/60 truncate">
             {settings?.practice_name || "Recepcionista virtual"}
           </p>
@@ -159,7 +159,7 @@ export default function AppLayout() {
           <button onClick={() => setMobileOpen(true)} className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-accent transition-colors">
             <Menu className="w-6 h-6" />
           </button>
-          <span className="font-heading font-semibold text-sm">AgendaPro</span>
+          <span className="font-heading font-semibold text-sm">Kame Agenda</span>
           <div className="flex items-center">
             <NotificationsBell user={user} />
             <Link to="/profile-editor" className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-accent transition-colors">

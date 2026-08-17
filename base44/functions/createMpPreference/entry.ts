@@ -24,7 +24,7 @@ export default async function(req) {
 
     const preference = {
       items: [{
-        title: `Plan ${PLAN_LABELS[plan]} AgendaPro — Suscripción mensual`,
+        title: `Plan ${PLAN_LABELS[plan]} Kame Agenda — Suscripción mensual`,
         quantity: 1,
         unit_price: PLAN_PRICES[plan],
         currency_id: 'ARS'

@@ -76,14 +76,14 @@ export default function AppLayout() {
   }
 
   const SidebarContent = (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center gap-2 px-6 py-5 border-b border-border">
-        <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
-          <CalendarClock className="w-5 h-5 text-primary-foreground" />
+    <div className="flex h-full flex-col bg-gradient-to-b from-[#0B1130] via-[#141E4D] to-[#1B2A66] text-white">
+      <div className="flex items-center gap-2 px-6 py-5 border-b border-white/10">
+        <div className="w-9 h-9 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center">
+          <CalendarClock className="w-5 h-5 text-white" />
         </div>
-        <div>
-          <p className="font-heading font-semibold text-sm leading-tight">AgendaPro</p>
-          <p className="text-xs text-muted-foreground">
+        <div className="min-w-0">
+          <p className="font-heading font-semibold text-sm leading-tight text-white">AgendaPro</p>
+          <p className="text-xs text-blue-200/60 truncate">
             {settings?.practice_name || "Recepcionista virtual"}
           </p>
         </div>
@@ -92,7 +92,7 @@ export default function AppLayout() {
       <nav className="flex-1 px-3 py-4 space-y-4 overflow-y-auto">
         {navGroups.map((group) => (
           <div key={group.title}>
-            <p className="px-3 mb-1 text-xs font-medium text-muted-foreground/70 uppercase tracking-wide">{group.title}</p>
+            <p className="px-3 mb-1 text-xs font-medium text-blue-200/40 uppercase tracking-wide">{group.title}</p>
             <div className="space-y-1">
               {group.items.map((item) => {
                 const Icon = item.icon;
@@ -104,12 +104,12 @@ export default function AppLayout() {
                     onClick={() => setMobileOpen(false)}
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                       active
-                        ? "bg-primary text-primary-foreground"
+                        ? "bg-white text-[#141E4D] shadow-sm"
                         : item.path === "/asistente"
-                        ? "bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20"
+                        ? "bg-emerald-400/10 text-emerald-300 hover:bg-emerald-400/20"
                         : item.path === "/bot"
-                        ? "bg-violet-500/10 text-violet-700 hover:bg-violet-500/20"
-                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                        ? "bg-violet-400/10 text-violet-300 hover:bg-violet-400/20"
+                        : "text-blue-100/70 hover:bg-white/[0.06] hover:text-white"
                     }`}
                   >
                     <Icon className="w-4 h-4" />
@@ -122,16 +122,16 @@ export default function AppLayout() {
         ))}
       </nav>
 
-      <div className="border-t border-border p-3">
+      <div className="border-t border-white/10 p-3">
         {user && (
           <div className="px-3 py-2 mb-2">
-            <p className="text-sm font-medium truncate">{user.full_name || user.email}</p>
-            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+            <p className="text-sm font-medium truncate text-white">{user.full_name || user.email}</p>
+            <p className="text-xs text-blue-200/50 truncate">{user.email}</p>
           </div>
         )}
         <button
           onClick={handleLogout}
-          className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+          className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-blue-100/70 hover:bg-white/[0.06] hover:text-white transition-colors"
         >
           <LogOut className="w-4 h-4" />
           Cerrar sesión

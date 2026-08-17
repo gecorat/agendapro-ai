@@ -18,7 +18,7 @@ export default async function(req: Request): Promise<Response> {
     let profileId = practice.zernio_profile_id;
     if (!profileId) {
       const name = practice.practice_name || `Profesional ${(user.id || "").slice(-6)}`;
-      const description = `AgendaPro - ${practice.handle || user.email || user.id}`;
+      const description = `Kame Agenda - ${practice.handle || user.email || user.id}`;
       profileId = await createZernioProfile(apiKey, name, description);
       if (!profileId) return Response.json({ error: 'No se pudo crear el perfil en Zernio' }, { status: 502 });
       await base44.asServiceRole.entities.PracticeSettings.update(practice.id, { zernio_profile_id: profileId });

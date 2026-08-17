@@ -73,7 +73,7 @@ export default async function(req: Request): Promise<Response> {
             `Origen: ${originLabel}`,
           ],
           primaryButton: { label: "Confirmar cita", url: confirmUrl },
-          footer: "AgendaPro",
+          footer: "Kame Agenda",
         }),
       });
       emailSent = true;

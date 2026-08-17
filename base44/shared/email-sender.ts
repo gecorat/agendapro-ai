@@ -2,7 +2,7 @@
 // Permite enviar a destinatarios externos (pacientes) sin restricciones de usuario registrado.
 //
 // El remitente se toma del secret RESEND_FROM_EMAIL (configurar en Dashboard → Secrets una vez
-// que el dominio esté verificado en Resend, ej: "AgendaPro <no-reply@tudominio.com>"). Si no
+// que el dominio esté verificado en Resend, ej: "Kame Agenda <no-reply@tudominio.com>"). Si no
 // está configurado, se usa un remitente genérico como fallback para no romper el envío.
 const RESEND_FROM = process.env.RESEND_FROM_EMAIL || "noreply@agendate.base44.app";
 

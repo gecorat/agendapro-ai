@@ -20,8 +20,33 @@ export default async function(req: Request): Promise<Response> {
     if (!resourceId) return Response.json({ ok: true, skipped: 'no_id' });
 
     if (type !== 'subscription_preapproval' && type !== 'preapproval') {
-      // Otros tópicos (pagos individuales, merchant_order, etc.) no accionan nada por
-      // ahora — el estado de la suscripción ya lo cubre el bloque de abajo.
+      if (type === 'payment') {
+        // Pago único (packs adicionales de conversaciones), no la suscripción mensual.
+        const payRes = await fetch(`https://api.mercadopago.com/v1/payments/${resourceId}`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (!payRes.ok) return Response.json({ ok: true, skipped: 'payment_fetch_failed' });
+        const payment = await payRes.json();
+
+        if (payment.status === 'approved' && payment.metadata?.addon_pack) {
+          const practiceId = payment.metadata.practice_id;
+          const conversations = Number(payment.metadata.conversations) || 0;
+          const practices = await base44.asServiceRole.entities.PracticeSettings.filter({ id: practiceId });
+          const practice = practices?.[0];
+          if (practice && conversations > 0) {
+            // Sumamos cupo y reabrimos las alertas de 90/95/100%: si estaba bloqueado por
+            // falta de cupo, este pago le da más lugar antes del próximo aviso.
+            await base44.asServiceRole.entities.PracticeSettings.update(practice.id, {
+              whatsapp_addon_conversations: (practice.whatsapp_addon_conversations || 0) + conversations,
+              whatsapp_usage_alert_90_sent: false,
+              whatsapp_usage_alert_95_sent: false,
+              whatsapp_usage_alert_100_sent: false,
+            });
+          }
+        }
+        return Response.json({ ok: true });
+      }
+      // Otros tópicos (merchant_order, etc.) no accionan nada por ahora.
       return Response.json({ ok: true, skipped: `unhandled_type:${type}` });
     }
 

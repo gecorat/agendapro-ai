@@ -226,6 +226,7 @@ Instrucciones: Respondé al paciente. Si el paciente quiere agendar y tenés tod
         status: "confirmed",
         origin: "whatsapp",
         professional_id: professionalId,
+        professional_ref_id: assignedProfessionalRefId,
         confirm_token: crypto.randomUUID(),
         cancel_token: crypto.randomUUID(),
       });

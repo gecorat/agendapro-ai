@@ -84,6 +84,10 @@
     "cancel_token": {
       "type": "string",
       "title": "Token de cancelaci\u00f3n (paciente)"
+    },
+    "professional_ref_id": {
+      "type": "string",
+      "title": "Profesional asignado (plan Clinic)"
     }
   },
   "required": [

@@ -62,11 +62,14 @@ export async function orchestrateConversation(base44, ctx) {
     "Sos la asistente virtual del consultorio. Ayudá a agendar, confirmar y reprogramar citas. Sé amable, breve y profesional.";
   const model = bot.model && bot.model !== "automatic" ? bot.model : undefined;
 
-  const [services, patients, appts, allHistory] = await Promise.all([
+  const isClinic = practice?.plan === "clinic";
+
+  const [services, patients, appts, allHistory, professionals] = await Promise.all([
     base44.asServiceRole.entities.Service.filter({ active: true }),
     base44.asServiceRole.entities.Patient.filter({}),
     base44.asServiceRole.entities.Appointment.filter({}),
     base44.asServiceRole.entities.Conversation.filter({ professional_id: professionalId, phone: fromPhone }),
+    isClinic ? base44.asServiceRole.entities.Professional.filter({ practice_owner_id: professionalId, active: true }) : Promise.resolve([]),
   ]);
 
   const myServices = (services || []).filter((s) => s.created_by_id === professionalId);
@@ -97,13 +100,23 @@ export async function orchestrateConversation(base44, ctx) {
     .map((h) => `${h.role === "user" ? "Paciente" : "Asistente"}: ${h.text}`)
     .join("\n");
 
+  // Consultorios con plan Clinic tienen varios profesionales bajo el mismo WhatsApp: el
+  // bot le pregunta al paciente con quién/qué especialidad quiere agendar antes de
+  // confirmar, salvo que ya lo haya dicho en el historial.
+  const professionalsText = (professionals || [])
+    .map((p) => `- ${p.first_name} ${p.last_name || ""}${p.specialty ? ` (${p.specialty})` : ""}`.trim())
+    .join("\n");
+  const professionalsBlock = isClinic
+    ? `\n=== PROFESIONALES DISPONIBLES ===\n${professionalsText || "(sin profesionales cargados aún)"}\nEste consultorio tiene varios profesionales. Si el paciente todavía no dijo con quién o qué especialidad prefiere, PREGUNTASELO antes de agendar. Si dice que no tiene preferencia, se lo asigna automáticamente. Cuando agendes, completá appointment.professional_name con el nombre elegido (o dejalo vacío si no tiene preferencia).\n`
+    : "";
+
   const contextPrompt = `${systemPrompt}
 
 === CONTEXTO DEL CONSULTORIO ===
 Consultorio: ${practice?.practice_name || ""}
 Especialidad: ${practice?.specialty || ""}
 ${patientText}
-
+${professionalsBlock}
 Servicios disponibles:
 ${servicesText || "(sin servicios cargados)"}
 
@@ -116,7 +129,7 @@ ${historyText || "(sin historial)"}
 === NUEVO MENSAJE DEL PACIENTE ===
 ${text}
 
-Instrucciones: Respondé al paciente. Si el paciente quiere agendar y tenés toda la información (servicio y fecha/hora), configurá action como "book" y completá appointment con service_name (exacto) y datetime (ISO 8601). Si falta información, pedila.`;
+Instrucciones: Respondé al paciente. Si el paciente quiere agendar y tenés toda la información (servicio y fecha/hora${isClinic ? ", y ya se resolvió con qué profesional o que no tiene preferencia" : ""}), configurá action como "book" y completá appointment con service_name (exacto) y datetime (ISO 8601)${isClinic ? ", y professional_name si el paciente eligió a alguien" : ""}. Si falta información, pedila.`;
 
   const llmRes = await base44.asServiceRole.integrations.Core.InvokeLLM({
     prompt: contextPrompt,
@@ -131,6 +144,7 @@ Instrucciones: Respondé al paciente. Si el paciente quiere agendar y tenés tod
           properties: {
             service_name: { type: "string" },
             datetime: { type: "string", description: "ISO 8601" },
+            professional_name: { type: "string", description: "Nombre del profesional elegido por el paciente, si el consultorio tiene varios. Vacío si no tiene preferencia." },
           },
         },
       },

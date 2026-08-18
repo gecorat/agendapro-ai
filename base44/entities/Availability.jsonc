@@ -33,6 +33,11 @@
     "label": {
       "type": "string",
       "title": "Etiqueta (ej. Feriado, Almuerzo)"
+    },
+    "professional_ref_id": {
+      "type": "string",
+      "title": "Profesional (plan Clinic)",
+      "description": "ID de Professional al que pertenece este horario. Vac\u00edo = horario del due\u00f1o de la cuenta."
     }
   },
   "required": [

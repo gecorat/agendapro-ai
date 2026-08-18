@@ -195,6 +195,27 @@ Instrucciones: Respondé al paciente. Si el paciente quiere agendar y tenés tod
       }
       const start = new Date(reply.appointment.datetime);
       const end = new Date(start.getTime() + (service.duration_minutes || 30) * 60000);
+
+      // Plan Clinic: resolver a qué profesional del equipo se le asigna el turno. Si el
+      // paciente eligió uno por nombre, usamos ese; si no, el primero activo que no tenga
+      // otro turno superpuesto a esa hora ("primer profesional con disponibilidad libre").
+      let assignedProfessionalRefId;
+      if (isClinic && professionals?.length) {
+        const chosenName = (reply.appointment.professional_name || "").toLowerCase().trim();
+        let candidate = chosenName
+          ? professionals.find((p) => `${p.first_name} ${p.last_name || ""}`.toLowerCase().includes(chosenName))
+          : null;
+        if (!candidate) {
+          const overlapping = (appts || []).filter(
+            (a) => a.status !== "cancelled" && new Date(a.start_datetime) < end && new Date(a.end_datetime) > start
+          );
+          candidate = professionals.find(
+            (p) => !overlapping.some((a) => a.professional_ref_id === p.id)
+          );
+        }
+        assignedProfessionalRefId = candidate?.id;
+      }
+
       const newAppt = await base44.asServiceRole.entities.Appointment.create({
         patient_id: patientId,
         patient_name: patientName,

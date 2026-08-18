@@ -6,6 +6,7 @@ import { Calendar, Mail, CheckCircle2, Check, Clock3 } from "lucide-react";
 import PracticeProfileSection from "@/components/PracticeProfileSection";
 import AvailabilityEditor from "@/components/AvailabilityEditor";
 import WhatsAppConnectCard from "@/components/WhatsAppConnectCard";
+import WhatsAppUsageCard from "@/components/WhatsAppUsageCard";
 import ServiceManagerPanel from "@/components/ServiceManagerPanel";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import { getPlanStatus, PLAN_PRICES, PLAN_LABELS } from "@/lib/plan-utils";
@@ -51,6 +52,7 @@ export default function Settings() {
 
           <IntegrationCard icon={Calendar} name="Google Calendar" description="Sincronización bidireccional de citas" state="soon" />
           <WhatsAppConnectCard />
+          <WhatsAppUsageCard />
           <IntegrationCard icon={Mail} name="Email" description="Recordatorios y confirmaciones automáticas a tus pacientes" state="connected" />
         </TabsContent>
 
@@ -87,7 +89,7 @@ function PlanSection() {
           <p className="text-xs text-muted-foreground mt-2">Estás en período de prueba. Elegí tu plan antes de que termine.</p>
         )}
         {status.trialExpired && (
-          <p className="text-xs text-destructive mt-2">Tu prueba terminó. Contactanos para activar tu plan.</p>
+          <p className="text-xs text-destructive mt-2">Tu prueba terminó. Suscribite desde el botón de arriba para reactivar tu cuenta.</p>
         )}
       </div>
       <div className="grid sm:grid-cols-2 gap-4">
@@ -98,17 +100,17 @@ function PlanSection() {
             <li>· Bot de WhatsApp con IA</li>
             <li>· Agenda y reservas online</li>
             <li>· Recordatorios automáticos</li>
-            <li>· Hasta 200 citas mensuales</li>
+            <li>· Hasta 300 conversaciones mensuales</li>
           </ul>
         </div>
-        <div className={`bg-card rounded-2xl p-5 border ${status.plan === "premium" ? "border-2 border-primary" : "border-border"}`}>
-          <p className="font-heading font-semibold">Premium</p>
-          <p className="text-2xl font-heading font-bold mt-1">{PLAN_PRICES.premium}<span className="text-sm font-normal text-muted-foreground">/mes</span></p>
+        <div className={`bg-card rounded-2xl p-5 border ${status.plan === "clinic" ? "border-2 border-primary" : "border-border"}`}>
+          <p className="font-heading font-semibold">Clinic</p>
+          <p className="text-2xl font-heading font-bold mt-1">{PLAN_PRICES.clinic}<span className="text-sm font-normal text-muted-foreground">/mes</span></p>
           <ul className="text-sm text-muted-foreground mt-2 space-y-1">
             <li>· Todo lo de Pro</li>
-            <li>· Citas ilimitadas</li>
-            <li>· Bandeja de chats con toma de control</li>
-            <li>· Soporte prioritario</li>
+            <li>· Hasta 3 profesionales con agendas propias</li>
+            <li>· WhatsApp centralizado que reparte turnos</li>
+            <li>· Hasta 1.000 conversaciones mensuales</li>
           </ul>
         </div>
       </div>

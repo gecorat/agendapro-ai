@@ -72,6 +72,21 @@ export default function Settings() {
   );
 }
 
+function PlanRequiredTeamTab() {
+  const { settings } = usePracticeSettings();
+  const status = getPlanStatus(settings);
+  if (!status.canUseMultiProfessional) {
+    return (
+      <PlanGate
+        feature="Equipo multi-profesional"
+        requiredPlan="clinic"
+        description="Sumá hasta 3 profesionales con agendas independientes bajo un mismo WhatsApp. Disponible desde el plan Clinic."
+      />
+    );
+  }
+  return <ProfessionalsPanel />;
+}
+
 function PlanSection() {
   const { settings } = usePracticeSettings();
   const status = getPlanStatus(settings);

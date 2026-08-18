@@ -9,6 +9,8 @@ import AvailabilityEditor from "@/components/AvailabilityEditor";
 import WhatsAppConnectCard from "@/components/WhatsAppConnectCard";
 import WhatsAppUsageCard from "@/components/WhatsAppUsageCard";
 import ServiceManagerPanel from "@/components/ServiceManagerPanel";
+import ProfessionalsPanel from "@/components/ProfessionalsPanel";
+import PlanGate from "@/components/PlanGate";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import { getPlanStatus, PLAN_PRICES, PLAN_LABELS } from "@/lib/plan-utils";
 
@@ -21,9 +23,10 @@ export default function Settings() {
       </div>
 
       <Tabs defaultValue="services">
-        <TabsList className="grid grid-cols-5 w-full bg-muted/60 rounded-xl p-1 h-auto">
+        <TabsList className="grid grid-cols-6 w-full bg-muted/60 rounded-xl p-1 h-auto">
           <TabsTrigger value="profile" className="rounded-lg text-xs sm:text-sm py-1.5">Perfil</TabsTrigger>
           <TabsTrigger value="services" className="rounded-lg text-xs sm:text-sm py-1.5">Servicios</TabsTrigger>
+          <TabsTrigger value="team" className="rounded-lg text-xs sm:text-sm py-1.5">Equipo</TabsTrigger>
           <TabsTrigger value="hours" className="rounded-lg text-xs sm:text-sm py-1.5">Horarios</TabsTrigger>
           <TabsTrigger value="integrations" className="rounded-lg text-xs sm:text-sm py-1.5">Integraciones</TabsTrigger>
           <TabsTrigger value="plan" className="rounded-lg text-xs sm:text-sm py-1.5">Plan</TabsTrigger>
@@ -37,6 +40,10 @@ export default function Settings() {
 
         <TabsContent value="services" className="mt-4">
           <ServiceManagerPanel />
+        </TabsContent>
+
+        <TabsContent value="team" className="mt-4">
+          <PlanRequiredTeamTab />
         </TabsContent>
 
         <TabsContent value="hours" className="mt-4">

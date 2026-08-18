@@ -1,0 +1,90 @@
+{
+  "name": "Professional",
+  "type": "object",
+  "description": "Un profesional dentro de un consultorio con plan Clinic (hasta 3, con opci\u00f3n de sumar m\u00e1s). El due\u00f1o de la cuenta (PracticeSettings.created_by_id) es siempre el primer profesional impl\u00edcito; los dem\u00e1s se agregan ac\u00e1.",
+  "properties": {
+    "practice_owner_id": {
+      "type": "string",
+      "title": "Consultorio (owner)",
+      "description": "created_by_id del PracticeSettings al que pertenece este profesional."
+    },
+    "first_name": {
+      "type": "string",
+      "title": "Nombre"
+    },
+    "last_name": {
+      "type": "string",
+      "title": "Apellido"
+    },
+    "specialty": {
+      "type": "string",
+      "title": "Especialidad / rol",
+      "description": "Lo que el paciente ve al elegir con qui\u00e9n quiere agendar por WhatsApp o en la p\u00e1gina p\u00fablica."
+    },
+    "photo_url": {
+      "type": "string",
+      "title": "Foto",
+      "format": "url"
+    },
+    "color": {
+      "type": "string",
+      "title": "Color en la agenda",
+      "default": "#3b82f6"
+    },
+    "active": {
+      "type": "boolean",
+      "title": "Activo",
+      "description": "Si est\u00e1 inactivo, no se ofrece como opci\u00f3n para agendar (ej. de licencia).",
+      "default": true
+    },
+    "is_owner": {
+      "type": "boolean",
+      "title": "Es el due\u00f1o de la cuenta",
+      "description": "true para el registro que representa al propio profesional due\u00f1o del PracticeSettings (se crea autom\u00e1ticamente al pasar a plan Clinic).",
+      "default": false
+    }
+  },
+  "required": [
+    "practice_owner_id",
+    "first_name"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "$or": [
+        {
+          "practice_owner_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "practice_owner_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "practice_owner_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

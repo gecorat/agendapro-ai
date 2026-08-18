@@ -8,7 +8,7 @@ import { getPlanStatus } from "@/lib/plan-utils";
 import PlanGate from "@/components/PlanGate";
 
 export default function WhatsAppConnectCard() {
-  const { settings, save } = usePracticeSettings();
+  const { settings, reload } = usePracticeSettings();
   const [connecting, setConnecting] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
   const [error, setError] = useState("");
@@ -76,7 +76,8 @@ export default function WhatsAppConnectCard() {
     setDisconnecting(true);
     setError("");
     try {
-      await save({ whatsapp_connected: false, zernio_account_id: "", zernio_phone: "" });
+      await base44.functions.invoke("disconnectWhatsApp", {});
+      await reload();
     } catch (e) {
       setError("No se pudo desconectar. Intentá de nuevo.");
     } finally {

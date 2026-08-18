@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Calendar, Mail, CheckCircle2, Check, Clock3 } from "lucide-react";
+import { Link } from "react-router-dom";
 import PracticeProfileSection from "@/components/PracticeProfileSection";
 import AvailabilityEditor from "@/components/AvailabilityEditor";
 import WhatsAppConnectCard from "@/components/WhatsAppConnectCard";
@@ -89,8 +90,11 @@ function PlanSection() {
           <p className="text-xs text-muted-foreground mt-2">Estás en período de prueba. Elegí tu plan antes de que termine.</p>
         )}
         {status.trialExpired && (
-          <p className="text-xs text-destructive mt-2">Tu prueba terminó. Suscribite desde el botón de arriba para reactivar tu cuenta.</p>
+          <p className="text-xs text-destructive mt-2">Tu prueba terminó. Suscribite abajo para reactivar tu cuenta.</p>
         )}
+        <Button asChild size="sm" className="mt-3">
+          <Link to="/upgrade-plan">Ver planes y suscribirme</Link>
+        </Button>
       </div>
       <div className="grid sm:grid-cols-2 gap-4">
         <div className={`bg-card rounded-2xl p-5 border ${status.plan === "pro" ? "border-2 border-primary" : "border-border"}`}>

@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { waitUntil } from "base44:runtime";
-import { getPlatformConfig, findPracticeByAccount, hmacSha256 } from "../../shared/zernio.ts";
+import { getPlatformConfig, findPracticeByAccount, hmacSha256, sendWhatsApp } from "../../shared/zernio.ts";
+import { checkWhatsAppUsage } from "../../shared/whatsapp-usage.ts";
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -51,6 +52,35 @@ export default async function(req: Request): Promise<Response> {
       conversation_id: conversationId,
       account_id: accountId,
     });
+
+    // Chequeo de plan + cupo mensual ANTES de gastar una llamada al LLM. Si no hay cupo
+    // o el plan no habilita WhatsApp, le contestamos algo amable al paciente en vez de
+    // dejarlo mudo, y avisamos al profesional (con el conteo de 90/95/100% ya resuelto
+    // adentro de checkWhatsAppUsage).
+    const usage = await checkWhatsAppUsage(base44, practice);
+    if (!usage.allowed) {
+      waitUntil(
+        sendWhatsApp(base44, {
+          apiKey: plat?.zernio_api_key,
+          accountId,
+          conversationId,
+          phone: fromPhone,
+          message: usage.autoReplyToPatient,
+        })
+          .then(() =>
+            base44.asServiceRole.entities.Conversation.create({
+              phone: fromPhone,
+              professional_id: professionalId,
+              role: "assistant",
+              text: usage.autoReplyToPatient,
+              conversation_id: conversationId,
+              account_id: accountId,
+            })
+          )
+          .catch((e) => console.error("auto-reply send error:", e?.message || e))
+      );
+      return Response.json({ ok: true, skipped: "usage_or_plan_blocked" });
+    }
 
     waitUntil(
       base44.asServiceRole.functions.invoke("zernioConversation", {

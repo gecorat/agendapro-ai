@@ -1,5 +1,6 @@
 export async function getPlatformConfig(base44) {
-  const list = await base44.asServiceRole.entities.PlatformConfig.filter({});  return list?.[0] || null;
+  const list = await base44.asServiceRole.entities.PlatformConfig.filter({});
+  return list?.[0] || null;
 }
 
 export async function findPracticeByAccount(base44, accountId) {

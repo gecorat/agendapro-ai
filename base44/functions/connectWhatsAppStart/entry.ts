@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { getPlatformConfig, createZernioProfile, getWhatsAppConnectUrl } from "../../shared/zernio.ts";
+import { canUseWhatsApp } from "../../shared/plan.ts";
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -10,6 +11,13 @@ export default async function(req: Request): Promise<Response> {
     const practices = await base44.asServiceRole.entities.PracticeSettings.filter({});
     const practice = practices.find((p) => p.created_by_id === user.id);
     if (!practice) return Response.json({ error: 'No hay configuración de consultorio' }, { status: 400 });
+
+    // El frontend ya oculta este botón si el plan no incluye WhatsApp, pero eso no evita
+    // que alguien llame a esta función directamente. Sin este chequeo, cualquier cuenta
+    // (incluso trial/basic) podía conectar WhatsApp gratis.
+    if (!canUseWhatsApp(practice)) {
+      return Response.json({ error: 'plan_required', message: 'Tu plan actual no incluye el bot de WhatsApp. Necesitás el plan Pro o Clinic.' }, { status: 403 });
+    }
 
     const plat = await getPlatformConfig(base44);
     const apiKey = plat?.zernio_api_key;

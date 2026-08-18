@@ -30,14 +30,12 @@ export function usePracticeSettings() {
   const typeLabel = settings ? getTypeLabel(settings.professional_type) : "";
 
   async function save(data) {
-    if (settings) {
-      const updated = await base44.entities.PracticeSettings.update(settings.id, data);
-      setSettings(updated);
-      return updated;
-    }
-    const created = await base44.entities.PracticeSettings.create(data);
-    setSettings(created);
-    return created;
+    // PracticeSettings.update/create ya no se puede llamar directo desde el cliente (RLS
+    // restringida a admins) — esta función de backend filtra qué campos se pueden tocar.
+    const res = await base44.functions.invoke("savePracticeSettings", { data });
+    const updated = res?.data?.settings;
+    setSettings(updated);
+    return updated;
   }
 
   return { settings, loading, preset, typeLabel, reload: load, save };

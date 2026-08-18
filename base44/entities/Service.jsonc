@@ -43,6 +43,11 @@
       "type": "boolean",
       "title": "Activo",
       "default": true
+    },
+    "professional_ref_id": {
+      "type": "string",
+      "title": "Profesional (plan Clinic)",
+      "description": "ID de Professional al que pertenece este servicio. Vac\u00edo = lo ofrece el due\u00f1o de la cuenta (comportamiento normal en planes Base/Pro)."
     }
   },
   "required": [

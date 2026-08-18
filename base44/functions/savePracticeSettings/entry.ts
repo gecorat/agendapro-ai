@@ -1,0 +1,54 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
+
+// Único camino legítimo para que un profesional edite su propio perfil de consultorio.
+// PracticeSettings.update/create quedaron bloqueados por RLS para todos salvo admins
+// (ver base44/entities/PracticeSettings.jsonc), así que esta función con rol de servicio
+// es la que realmente escribe — y solo deja pasar una lista explícita de campos. Nada
+// relacionado con plan, suspensión, uso o credenciales de Zernio puede colarse acá, sin
+// importar qué mande el cliente en el body.
+const EDITABLE_FIELDS = [
+  'professional_type', 'practice_name', 'specialty', 'address', 'phone',
+  'professional_email', 'instagram_url', 'facebook_url', 'handle', 'photo_url',
+  'page_color', 'description', 'published',
+];
+
+export default async function (req: Request): Promise<Response> {
+  try {
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const body = await req.json().catch(() => ({}));
+    const input = body?.data || {};
+
+    const safeData: Record<string, unknown> = {};
+    for (const key of EDITABLE_FIELDS) {
+      if (Object.prototype.hasOwnProperty.call(input, key)) {
+        safeData[key] = input[key];
+      }
+    }
+
+    const existing = await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: user.id });
+    const current = existing?.[0];
+
+    if (current) {
+      const updated = await base44.asServiceRole.entities.PracticeSettings.update(current.id, safeData);
+      return Response.json({ settings: updated });
+    }
+
+    // Alta nueva: acá SÍ fijamos plan/trial con valores del servidor, ignorando cualquier
+    // valor que el cliente haya intentado mandar para esos campos protegidos.
+    const trialEnds = new Date();
+    trialEnds.setDate(trialEnds.getDate() + 14);
+    const created = await base44.asServiceRole.entities.PracticeSettings.create({
+      ...safeData,
+      plan: 'trial',
+      trial_ends_at: trialEnds.toISOString(),
+      trial_origin: 'landing',
+      suspended: false,
+    });
+    return Response.json({ settings: created });
+  } catch (error) {
+    return Response.json({ error: error.message }, { status: 500 });
+  }
+}

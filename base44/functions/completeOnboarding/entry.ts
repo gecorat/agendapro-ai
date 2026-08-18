@@ -17,12 +17,23 @@ export default async function(req) {
       return Response.json({ settings: existing[0], alreadyExists: true });
     }
 
-    // Create PracticeSettings as the user (not service role) so created_by_id
-    // is set to the user's ID automatically. RLS allows all authenticated
-    // users to create.
-    const settings = await base44.entities.PracticeSettings.create(practiceData);
+    // Create PracticeSettings con rol de servicio: PracticeSettings.create ahora está
+    // bloqueado por RLS para todos salvo admins (ver PracticeSettings.jsonc), así que ya no
+    // podemos crearlo como el usuario. Fijamos plan/trial explícitamente acá, ignorando
+    // cualquier valor que venga en practiceData para esos campos protegidos.
+    const trialEnds = new Date();
+    trialEnds.setDate(trialEnds.getDate() + 14);
+    const settings = await base44.asServiceRole.entities.PracticeSettings.create({
+      ...practiceData,
+      created_by_id: user.id,
+      plan: 'trial',
+      trial_ends_at: trialEnds.toISOString(),
+      trial_origin: practiceData?.trial_origin === 'invitation' ? 'invitation' : 'landing',
+      suspended: false,
+    });
 
-    // Create suggested services as the user (fallback to a default "Consulta General")
+    // Servicios y disponibilidad se crean con rol de servicio por el mismo motivo, pero
+    // fijándoles created_by_id = user.id para que sigan quedando asociados al profesional.
     let servicesToCreate = services && services.length > 0 ? services : [{
       name: "Consulta General",
       description: "Consulta de evaluación general. Ideal para una primera visita o control de rutina.",
@@ -33,7 +44,7 @@ export default async function(req) {
     }];
     let servicesCreated = 0;
     if (servicesToCreate.length > 0) {
-      const created = await base44.entities.Service.bulkCreate(
+      const created = await base44.asServiceRole.entities.Service.bulkCreate(
         servicesToCreate.map(s => ({
           name: s.name,
           description: s.description || "",
@@ -43,22 +54,23 @@ export default async function(req) {
           price: s.price,
           follow_up_days: s.follow_up_days || 0,
           active: true,
+          created_by_id: user.id,
         }))
       );
       servicesCreated = Array.isArray(created) ? created.length : servicesToCreate.length;
     }
 
     // Disponibilidad por defecto: Lunes a Viernes, bloque corrido 9-18.
-    // Se crea como el usuario para que created_by_id quede asignado.
     const defaultAvailability = [1, 2, 3, 4, 5].map((d) => ({
       day_of_week: d,
       start_time: "09:00",
       end_time: "18:00",
       type: "work",
       label: "",
+      created_by_id: user.id,
     }));
     try {
-      await base44.entities.Availability.bulkCreate(defaultAvailability);
+      await base44.asServiceRole.entities.Availability.bulkCreate(defaultAvailability);
     } catch { /* la disponibilidad no bloquea el onboarding */ }
 
     return Response.json({

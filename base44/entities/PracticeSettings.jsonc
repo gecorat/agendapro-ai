@@ -113,7 +113,7 @@
         "trial",
         "basic",
         "pro",
-        "premium"
+        "clinic"
       ],
       "default": "trial"
     },
@@ -144,6 +144,44 @@
       "type": "boolean",
       "title": "Cuenta suspendida",
       "default": false
+    },
+    "whatsapp_usage_count": {
+      "type": "number",
+      "title": "Conversaciones procesadas este per\u00edodo",
+      "description": "Contador de conversaciones/turnos procesados por el bot de WhatsApp en el per\u00edodo de facturaci\u00f3n actual. Solo lo escribe el backend.",
+      "default": 0
+    },
+    "whatsapp_usage_period_start": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Inicio del per\u00edodo de uso actual",
+      "description": "Cuando se reinicia (mensualmente), whatsapp_usage_count vuelve a 0."
+    },
+    "whatsapp_addon_conversations": {
+      "type": "number",
+      "title": "Conversaciones extra de packs adicionales",
+      "description": "Cupo comprado aparte del l\u00edmite del plan (packs +100/+250). Se descuenta antes de bloquear/avisar.",
+      "default": 0
+    },
+    "whatsapp_usage_alert_90_sent": {
+      "type": "boolean",
+      "title": "Alerta de 90% ya enviada este per\u00edodo",
+      "default": false
+    },
+    "whatsapp_usage_alert_95_sent": {
+      "type": "boolean",
+      "title": "Alerta de 95% ya enviada este per\u00edodo",
+      "default": false
+    },
+    "whatsapp_usage_alert_100_sent": {
+      "type": "boolean",
+      "title": "Alerta de 100% ya enviada este per\u00edodo",
+      "default": false
+    },
+    "mercadopago_subscription_id": {
+      "type": "string",
+      "title": "Mercado Pago \u2014 ID de suscripci\u00f3n",
+      "description": "preapproval_id devuelto por Mercado Pago al crear la suscripci\u00f3n recurrente. Lo usa el webhook para identificar a qu\u00e9 consultorio corresponde cada notificaci\u00f3n de pago."
     }
   },
   "required": [

@@ -34,6 +34,11 @@
       "type": "number",
       "title": "Tope de mensajes de la demo del bot",
       "default": 20
+    },
+    "google_maps_api_key": {
+      "type": "string",
+      "title": "Google Maps / Places \u2014 API Key",
+      "description": "Habilita el autocompletado de direcciones en el perfil y el mapa embebido en la p\u00e1gina p\u00fablica. Sin esto, ambos siguen funcionando en modo b\u00e1sico (texto libre / mapa sin key)."
     }
   },
   "required": [],

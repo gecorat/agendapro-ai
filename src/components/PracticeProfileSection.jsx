@@ -32,14 +32,14 @@ function HeaderPreview({ form }) {
   return (
     <div className="rounded-2xl overflow-hidden border border-border">
       <div
-        className="h-20 relative flex items-end justify-center pb-0"
+        className="h-24 relative overflow-hidden"
         style={{
           background: form.cover_image_url ? `url(${form.cover_image_url}) center/cover` : `linear-gradient(135deg, ${theme.accent}, ${theme.accent}99)`,
         }}
       >
         {form.cover_image_url && <div className="absolute inset-0 bg-black/20" />}
       </div>
-      <div className="px-4 pb-4 text-center -mt-8" style={{ background: theme.bg }}>
+      <div className="relative z-10 px-4 pb-4 text-center -mt-9" style={{ background: theme.bg }}>
         {form.photo_url ? (
           <img src={form.photo_url} alt="" className="w-16 h-16 rounded-full object-cover mx-auto block" style={{ boxShadow: `0 0 0 3px ${theme.bg}` }} />
         ) : (

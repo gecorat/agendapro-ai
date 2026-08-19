@@ -81,7 +81,18 @@ export function whatsappUrl(phone, message) {
   return `https://wa.me/${digits}${message ? `?text=${encodeURIComponent(message)}` : ""}`;
 }
 
-export function googleMapsUrl(address) {
-  if (!address) return "";
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+export function googleMapsUrl(address, city, province) {
+  const full = [address, city, province].filter(Boolean).join(", ");
+  if (!full) return "";
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(full)}`;
+}
+
+// Para el iframe embebido sin API Key. Combinar localidad/provincia mejora muchísimo la
+// precisión cuando no hay lat/lng exactas (una calle sola puede existir en varias
+// ciudades y Google termina adivinando cualquier lugar).
+export function googleMapsEmbedSrc({ address, city, province, lat, lng }) {
+  if (lat && lng) return `https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed`;
+  const full = [address, city, province].filter(Boolean).join(", ");
+  if (!full) return "";
+  return `https://maps.google.com/maps?q=${encodeURIComponent(full)}&z=15&output=embed`;
 }

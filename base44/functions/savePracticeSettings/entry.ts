@@ -7,7 +7,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 // relacionado con plan, suspensión, uso o credenciales de Zernio puede colarse acá, sin
 // importar qué mande el cliente en el body.
 const EDITABLE_FIELDS = [
-  'professional_type', 'practice_name', 'specialty', 'address', 'address_lat', 'address_lng', 'phone',
+  'professional_type', 'practice_name', 'specialty', 'address', 'address_city', 'address_province', 'address_lat', 'address_lng', 'phone',
   'professional_email', 'instagram_url', 'facebook_url', 'website_url', 'handle', 'photo_url', 'cover_image_url',
   'page_color', 'theme_preset', 'description', 'published',
 ];

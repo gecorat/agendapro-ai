@@ -3,14 +3,26 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Check, Upload, ExternalLink } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2, Upload } from "lucide-react";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import { PROFESSIONAL_TYPES, getTypeLabel } from "@/lib/professional-presets";
 import { useToast } from "@/components/ui/use-toast";
-import { Link } from "react-router-dom";
+import PublicLinkCard from "@/components/PublicLinkCard";
+
+function Section({ title, description, children }) {
+  return (
+    <div className="space-y-3 pb-5 border-b border-border last:border-b-0 last:pb-0">
+      <div>
+        <p className="text-sm font-heading font-semibold">{title}</p>
+        {description && <p className="text-xs text-muted-foreground mt-0.5">{description}</p>}
+      </div>
+      {children}
+    </div>
+  );
+}
 
 export default function PracticeProfileSection() {
   const { settings, save, reload } = usePracticeSettings();
@@ -24,6 +36,7 @@ export default function PracticeProfileSection() {
     professional_email: "",
     instagram_url: "",
     facebook_url: "",
+    website_url: "",
     handle: "",
     photo_url: "",
     page_color: "#0f172a",
@@ -32,24 +45,9 @@ export default function PracticeProfileSection() {
   });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
 
-  const publicLink = (() => {
-    const h = (form.handle || "").trim().replace(/^@/, "").replace(/\s+/g, "");
-    if (!h) return "";
-    return (typeof window !== "undefined" ? window.location.origin : "") + `/u/${h}`;
-  })();
-
-  async function copyLink() {
-    if (!publicLink) return;
-    try {
-      await navigator.clipboard.writeText(publicLink);
-      setLinkCopied(true);
-      setTimeout(() => setLinkCopied(false), 2000);
-    } catch {
-      /* ignore */
-    }
-  }
+  const cleanHandle = (form.handle || "").trim().replace(/^@/, "").replace(/\s+/g, "");
+  const publicLink = cleanHandle ? (typeof window !== "undefined" ? window.location.origin : "") + `/u/${cleanHandle}` : "";
 
   useEffect(() => {
     if (settings) {
@@ -62,6 +60,7 @@ export default function PracticeProfileSection() {
         professional_email: settings.professional_email || "",
         instagram_url: settings.instagram_url || "",
         facebook_url: settings.facebook_url || "",
+        website_url: settings.website_url || "",
         handle: settings.handle || "",
         photo_url: settings.photo_url || "",
         page_color: settings.page_color || "#0f172a",
@@ -87,7 +86,6 @@ export default function PracticeProfileSection() {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    const cleanHandle = form.handle.trim().replace(/^@/, "").replace(/\s+/g, "");
     setSaving(true);
     try {
       await save({ ...form, handle: cleanHandle });
@@ -98,74 +96,36 @@ export default function PracticeProfileSection() {
     }
   }
 
+  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div>
         <h2 className="font-heading font-semibold">Perfil del profesional</h2>
-        <p className="text-sm text-muted-foreground">Tu especialidad define los términos y servicios sugeridos.</p>
+        <p className="text-sm text-muted-foreground">Así te van a ver tus pacientes en tu página de reservas.</p>
       </div>
 
-      <div className="space-y-2">
-        <Label>Especialidad</Label>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          {PROFESSIONAL_TYPES.map((t) => (
-            <button
-              key={t.value}
-              type="button"
-              onClick={() => setForm({ ...form, professional_type: t.value })}
-              className={`text-left p-3 rounded-lg border-2 transition-colors ${
-                form.professional_type === t.value ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">{t.label}</span>
-                {form.professional_type === t.value && <Check className="w-3.5 h-3.5 text-primary" />}
-              </div>
-            </button>
-          ))}
+      <Section title="Rubro" description="Define los términos y servicios sugeridos en toda la app.">
+        <Select value={form.professional_type} onValueChange={(v) => set("professional_type", v)}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {PROFESSIONAL_TYPES.map((t) => (
+              <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <div className="space-y-1.5">
+          <Label htmlFor="specialty" className="text-xs text-muted-foreground">Especialidad específica (opcional)</Label>
+          <Input id="specialty" value={form.specialty} onChange={(e) => set("specialty", e.target.value)} placeholder="Ej. Ortodoncia, Nutrición deportiva, Barbería clásica..." />
         </div>
-      </div>
+      </Section>
 
-      <div className="space-y-2">
-        <Label htmlFor="practice_name">Nombre del consultorio / profesional</Label>
-        <Input id="practice_name" value={form.practice_name} onChange={(e) => setForm({ ...form, practice_name: e.target.value })} />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="handle">Usuario público (@) para tu enlace de reservas</Label>
-        <div className="flex items-center gap-2">
-          <span className="text-muted-foreground text-sm">@</span>
-          <Input
-            id="handle"
-            value={form.handle}
-            onChange={(e) => setForm({ ...form, handle: e.target.value })}
-            placeholder="drmartinez"
-            className="flex-1"
-          />
+      <Section title="Identidad">
+        <div className="space-y-1.5">
+          <Label htmlFor="practice_name">Nombre del consultorio / profesional</Label>
+          <Input id="practice_name" value={form.practice_name} onChange={(e) => set("practice_name", e.target.value)} />
         </div>
-        <p className="text-xs text-muted-foreground">Sin espacios ni @. Tu enlace será /u/{form.handle ? form.handle.replace(/^@/, "").replace(/\s+/g, "") : "tuusuario"}</p>
-        {publicLink && (
-          <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-2 p-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10">
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <ExternalLink className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span className="text-xs font-mono text-emerald-700 truncate flex-1">{publicLink}</span>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <Button type="button" variant="outline" size="sm" onClick={copyLink} className="h-8 border-emerald-500/30 text-emerald-700 hover:bg-emerald-500/10">
-                {linkCopied ? <><Check className="w-3.5 h-3.5 mr-1" /> Copiado</> : "Copiar link"}
-              </Button>
-              <Button type="button" size="sm" asChild className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white">
-                <Link to={`/u/${(form.handle || "").replace(/^@/, "").replace(/\s+/g, "")}`} target="_blank">
-                  <ExternalLink className="w-3.5 h-3.5 mr-1" /> Ver página
-                </Link>
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
 
-      <div className="space-y-2">
-        <Label>Foto de perfil</Label>
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-border bg-accent flex items-center justify-center shrink-0">
             {form.photo_url ? (
@@ -182,79 +142,95 @@ export default function PracticeProfileSection() {
             <input type="file" accept="image/*" className="hidden" onChange={handlePhoto} disabled={uploading} />
           </label>
         </div>
-      </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="description">Descripción / presentación</Label>
-        <Textarea
-          id="description"
-          rows={3}
-          value={form.description}
-          onChange={(e) => setForm({ ...form, description: e.target.value })}
-          placeholder="Contá brevemente quién sos y qué ofrecés. Esto verán tus pacientes en la página de reservas."
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-2">
-          <Label htmlFor="specialty">Especialidad</Label>
-          <Input id="specialty" value={form.specialty} onChange={(e) => setForm({ ...form, specialty: e.target.value })} />
+        <div className="space-y-1.5">
+          <Label htmlFor="description">Descripción / presentación</Label>
+          <Textarea
+            id="description"
+            rows={3}
+            value={form.description}
+            onChange={(e) => set("description", e.target.value)}
+            placeholder="Contá brevemente quién sos y qué ofrecés. Esto lo ven tus pacientes en la página de reservas."
+          />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="page_color">Color de la página</Label>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="page_color">Color de tu página</Label>
           <div className="flex items-center gap-2">
             <input
               type="color"
               id="page_color"
               value={form.page_color}
-              onChange={(e) => setForm({ ...form, page_color: e.target.value })}
+              onChange={(e) => set("page_color", e.target.value)}
               className="w-10 h-9 rounded border border-input p-1 cursor-pointer"
             />
-            <Input value={form.page_color} onChange={(e) => setForm({ ...form, page_color: e.target.value })} className="flex-1 font-mono text-xs" />
+            <Input value={form.page_color} onChange={(e) => set("page_color", e.target.value)} className="flex-1 font-mono text-xs" />
           </div>
         </div>
-      </div>
+      </Section>
 
-      <div className="space-y-2">
-        <Label htmlFor="address">Dirección</Label>
-        <Input id="address" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-2">
-          <Label htmlFor="phone">Teléfono</Label>
-          <Input id="phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+      <Section title="Enlace de reservas">
+        <div className="space-y-1.5">
+          <Label htmlFor="handle">Usuario público (@)</Label>
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground text-sm">@</span>
+            <Input id="handle" value={form.handle} onChange={(e) => set("handle", e.target.value)} placeholder="drmartinez" className="flex-1" />
+          </div>
+          <p className="text-xs text-muted-foreground">Sin espacios ni @. Tu enlace será /u/{cleanHandle || "tuusuario"}</p>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="email">Email de contacto</Label>
-          <Input id="email" type="email" value={form.professional_email} onChange={(e) => setForm({ ...form, professional_email: e.target.value })} />
-        </div>
-      </div>
+        {publicLink && <PublicLinkCard url={publicLink} practiceName={form.practice_name} brand={form.page_color} />}
+      </Section>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-2">
-          <Label htmlFor="instagram_url">Instagram</Label>
-          <Input id="instagram_url" value={form.instagram_url} onChange={(e) => setForm({ ...form, instagram_url: e.target.value })} placeholder="https://instagram.com/..." />
+      <Section title="Contacto">
+        <div className="space-y-1.5">
+          <Label htmlFor="address">Dirección</Label>
+          <Input id="address" value={form.address} onChange={(e) => set("address", e.target.value)} />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="facebook_url">Facebook</Label>
-          <Input id="facebook_url" value={form.facebook_url} onChange={(e) => setForm({ ...form, facebook_url: e.target.value })} placeholder="https://facebook.com/..." />
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="phone">Teléfono</Label>
+            <Input id="phone" value={form.phone} onChange={(e) => set("phone", e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="email">Email de contacto</Label>
+            <Input id="email" type="email" value={form.professional_email} onChange={(e) => set("professional_email", e.target.value)} />
+          </div>
         </div>
-      </div>
+      </Section>
 
-      <div className="flex items-center justify-between p-3 rounded-lg border border-border">
-        <div>
-          <p className="text-sm font-medium">Página pública publicada</p>
-          <p className="text-xs text-muted-foreground">Si la desactivás, nadie podrá reservar por tu enlace.</p>
+      <Section title="Redes y sitio web">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="instagram_url">Instagram</Label>
+            <Input id="instagram_url" value={form.instagram_url} onChange={(e) => set("instagram_url", e.target.value)} placeholder="https://instagram.com/..." />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="facebook_url">Facebook</Label>
+            <Input id="facebook_url" value={form.facebook_url} onChange={(e) => set("facebook_url", e.target.value)} placeholder="https://facebook.com/..." />
+          </div>
         </div>
-        <Switch checked={form.published} onCheckedChange={(v) => setForm({ ...form, published: v })} />
-      </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="website_url">Sitio web</Label>
+          <Input id="website_url" value={form.website_url} onChange={(e) => set("website_url", e.target.value)} placeholder="https://tusitio.com" />
+        </div>
+      </Section>
+
+      <Section title="Publicación">
+        <div className="flex items-center justify-between p-3 rounded-lg border border-border">
+          <div>
+            <p className="text-sm font-medium">Página pública publicada</p>
+            <p className="text-xs text-muted-foreground">Si la desactivás, nadie podrá reservar por tu enlace.</p>
+          </div>
+          <Switch checked={form.published} onCheckedChange={(v) => set("published", v)} />
+        </div>
+      </Section>
 
       <Button type="submit" disabled={saving}>
         {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
         Guardar perfil
       </Button>
       <p className="text-xs text-muted-foreground">
-        Al cambiar la especialidad, los términos de la interfaz se adaptan. Los servicios sugeridos para {getTypeLabel(form.professional_type).toLowerCase()} podés crearlos desde la pestaña Servicios.
+        Los servicios sugeridos para {getTypeLabel(form.professional_type).toLowerCase()} podés crearlos desde la pestaña Servicios.
       </p>
     </form>
   );

@@ -37,6 +37,10 @@ export default async function(req) {
       },
       back_url: `${origin}/upgrade-plan?status=success`,
       payer_email: user.email,
+      // Mandamos la URL de notificaciones explícita en vez de depender de que quede
+      // configurada aparte en el panel de Mercado Pago — así el webhook funciona apenas
+      // se carga el Access Token, sin pasos manuales extra.
+      notification_url: 'https://base44.app/api/apps/6a726ce53f9d0f63f3816283/functions/mercadopagoWebhook',
       // Guardamos acá el plan y el id del consultorio para poder identificar todo esto
       // cuando llegue la notificación del webhook (no confiamos solo en el id guardado
       // en nuestra base, por si el usuario reintenta el pago y genera otra suscripción).

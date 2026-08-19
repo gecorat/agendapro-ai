@@ -65,13 +65,14 @@ export default async function(req) {
         const practice = await getPracticeFor(appt);
         const { professionalName, address } = await getAppointmentContext(base44, appt, practice);
 
-        // Asegurar cancel_token para poder ofrecer los mismos botones de la confirmación
-        // (reagendar / cancelar) también acá, no solo texto plano.
+        // Aseguramos un cancel_token para poder ofrecer los mismos botones de la
+        // confirmación (reagendar / cancelar) también acá, no solo texto plano. OJO: no lo
+        // guardamos todavía con un update aparte — dos updates seguidos sobre el mismo
+        // registro en la misma corrida pisaban el cambio (se probó y el cancel_token
+        // volvía a null). Lo combinamos en un único update al final, junto a reminders_sent.
         let cancelToken = appt.cancel_token;
-        if (!cancelToken) {
-          cancelToken = crypto.randomUUID();
-          await base44.asServiceRole.entities.Appointment.update(appt.id, { cancel_token: cancelToken });
-        }
+        const needsTokenSave = !cancelToken;
+        if (!cancelToken) cancelToken = crypto.randomUUID();
         const rescheduleUrl = practice?.handle ? `${appUrl}/reschedule/${cancelToken}` : null;
         const cancelUrl = `${appUrl}/x/${cancelToken}`;
         const waLink = whatsappLink(practice?.phone, `Hola! Te escribo por mi cita de ${serviceName} del ${dateStr}.`);
@@ -143,7 +144,10 @@ export default async function(req) {
           skipped++; continue;
         }
 
-        await base44.asServiceRole.entities.Appointment.update(appt.id, { reminders_sent: (appt.reminders_sent || 0) + 1 });
+        await base44.asServiceRole.entities.Appointment.update(appt.id, {
+          reminders_sent: (appt.reminders_sent || 0) + 1,
+          ...(needsTokenSave ? { cancel_token: cancelToken } : {}),
+        });
         sent++;
       } catch (e) {
         errors.push({ appointment_id: appt.id, error: e?.message || String(e) });

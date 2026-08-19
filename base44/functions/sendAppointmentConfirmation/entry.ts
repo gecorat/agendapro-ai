@@ -60,12 +60,12 @@ export default async function(req: Request): Promise<Response> {
 
     const { professionalName, address } = await getAppointmentContext(base44, appt, practice);
 
-    // Asegurar cancel_token para el botón de cancelar/reagendar
+    // Asegurar cancel_token para el botón de cancelar/reagendar. No lo guardamos con un
+    // update aparte: dos updates seguidos sobre el mismo turno en la misma corrida pueden
+    // pisarse entre sí (ya pasó con reminders_sent). Se combina en un único update al final.
     let cancelToken = appt.cancel_token;
-    if (!cancelToken) {
-      cancelToken = crypto.randomUUID();
-      await base44.asServiceRole.entities.Appointment.update(appt.id, { cancel_token: cancelToken });
-    }
+    const needsTokenSave = !cancelToken;
+    if (!cancelToken) cancelToken = crypto.randomUUID();
 
     const appUrl = await getAppUrl(base44, req);
     const startDate = new Date(appt.start_datetime);
@@ -99,7 +99,10 @@ export default async function(req: Request): Promise<Response> {
       }),
     });
 
-    await base44.asServiceRole.entities.Appointment.update(appt.id, { confirmation_email_sent: true });
+    await base44.asServiceRole.entities.Appointment.update(appt.id, {
+      confirmation_email_sent: true,
+      ...(needsTokenSave ? { cancel_token: cancelToken } : {}),
+    });
 
     return Response.json({ ok: true, sent: true });
   } catch (error) {

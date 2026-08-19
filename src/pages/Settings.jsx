@@ -80,7 +80,7 @@ function PlanRequiredTeamTab() {
       <PlanGate
         feature="Equipo multi-profesional"
         requiredPlan="clinic"
-        description="Sumá hasta 3 profesionales con agendas independientes bajo un mismo WhatsApp. Disponible desde el plan Clinic."
+        description={`Sumá hasta 3 profesionales con agendas independientes bajo un mismo WhatsApp. Disponible desde el plan ${PLAN_LABELS.clinic}.`}
       />
     );
   }
@@ -130,7 +130,7 @@ function PlanSection() {
           </ul>
         </div>
         <div className={`bg-card rounded-2xl p-5 border ${status.plan === "clinic" ? "border-2 border-primary" : "border-border"}`}>
-          <p className="font-heading font-semibold">Clinic</p>
+          <p className="font-heading font-semibold">{PLAN_LABELS.clinic}</p>
           <p className="text-2xl font-heading font-bold mt-1">{PLAN_PRICES.clinic}<span className="text-sm font-normal text-muted-foreground">/mes</span></p>
           <ul className="text-sm text-muted-foreground mt-2 space-y-1">
             <li>· Todo lo de Pro</li>

@@ -11,7 +11,7 @@ export const PLAN_LABELS = {
   trial: "Prueba",
   basic: "Básico",
   pro: "Pro",
-  clinic: "Clinic",
+  clinic: "Premium",
 };
 
 // Cupo de conversaciones/turnos procesados por el bot de WhatsApp, por período de

@@ -59,6 +59,20 @@ export default function AdminConnections() {
   const [botConfig, setBotConfig] = useState(null);
   const [prompt, setPrompt] = useState("");
   const [model, setModel] = useState("automatic");
+  const [webhookCopied, setWebhookCopied] = useState(false);
+
+  // Esta es la URL real que funciona (probada en vivo durante toda la integración): antes
+  // acá se mostraba "{origin}/api/functions/zernioWebhook", que no es una ruta válida — si
+  // alguien la había cargado en Zernio, los mensajes de WhatsApp nunca iban a llegar.
+  const webhookUrl = "https://base44.app/api/apps/6a726ce53f9d0f63f3816283/functions/zernioWebhook";
+
+  const copyWebhookUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(webhookUrl);
+      setWebhookCopied(true);
+      setTimeout(() => setWebhookCopied(false), 2000);
+    } catch { /* noop */ }
+  };
 
   const load = async () => {
     setLoading(true);

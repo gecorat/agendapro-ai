@@ -34,11 +34,19 @@
     },
     "address": {
       "type": "string",
-      "title": "Dirección"
+      "title": "Direcci\u00f3n"
+    },
+    "address_lat": {
+      "type": "number",
+      "title": "Latitud de la direcci\u00f3n"
+    },
+    "address_lng": {
+      "type": "number",
+      "title": "Longitud de la direcci\u00f3n"
     },
     "phone": {
       "type": "string",
-      "title": "Teléfono del consultorio"
+      "title": "Tel\u00e9fono del consultorio"
     },
     "professional_email": {
       "type": "string",
@@ -49,38 +57,44 @@
       "type": "string",
       "title": "Instagram",
       "format": "url",
-      "description": "Enlace a tu perfil de Instagram (se muestra en tu página de reservas)"
+      "description": "Enlace a tu perfil de Instagram (se muestra en tu p\u00e1gina de reservas)"
     },
     "facebook_url": {
       "type": "string",
       "title": "Facebook",
       "format": "url",
-      "description": "Enlace a tu página de Facebook (se muestra en tu página de reservas)"
+      "description": "Enlace a tu p\u00e1gina de Facebook (se muestra en tu p\u00e1gina de reservas)"
     },
     "website_url": {
       "type": "string",
       "title": "Sitio web",
       "format": "url",
-      "description": "Tu sitio web, si tenés (se muestra en tu página de reservas)"
+      "description": "Tu sitio web, si ten\u00e9s (se muestra en tu p\u00e1gina de reservas)"
     },
     "handle": {
       "type": "string",
-      "title": "Usuario público (@)",
-      "description": "Nombre único para tu enlace de reservas, sin espacios ni @"
+      "title": "Usuario p\u00fablico (@)",
+      "description": "Nombre \u00fanico para tu enlace de reservas, sin espacios ni @"
     },
     "photo_url": {
       "type": "string",
       "title": "Foto de perfil",
       "format": "url"
     },
+    "cover_image_url": {
+      "type": "string",
+      "title": "Imagen de portada",
+      "format": "url",
+      "description": "Banner de fondo en la p\u00e1gina p\u00fablica, detr\u00e1s de la foto de perfil. Si no se carga, se usa el color/gradiente del tema."
+    },
     "page_color": {
       "type": "string",
-      "title": "Color de la página pública",
+      "title": "Color de la p\u00e1gina p\u00fablica",
       "default": "#0f172a"
     },
     "theme_preset": {
       "type": "string",
-      "title": "Tema visual de la página pública",
+      "title": "Tema visual de la p\u00e1gina p\u00fablica",
       "enum": [
         "minimal_dark",
         "clean_light",
@@ -92,11 +106,11 @@
     },
     "description": {
       "type": "string",
-      "title": "Descripción / presentación"
+      "title": "Descripci\u00f3n / presentaci\u00f3n"
     },
     "published": {
       "type": "boolean",
-      "title": "Página pública publicada",
+      "title": "P\u00e1gina p\u00fablica publicada",
       "default": true
     },
     "google_calendar_connected": {
@@ -111,18 +125,18 @@
     },
     "zernio_profile_id": {
       "type": "string",
-      "title": "Zernio — Profile ID",
-      "description": "Perfil de Zernio creado automáticamente para este profesional al iniciar la conexión de WhatsApp."
+      "title": "Zernio \u2014 Profile ID",
+      "description": "Perfil de Zernio creado autom\u00e1ticamente para este profesional al iniciar la conexi\u00f3n de WhatsApp."
     },
     "zernio_account_id": {
       "type": "string",
-      "title": "Zernio — Account ID",
-      "description": "ID de la cuenta de WhatsApp conectada en Zernio para este profesional (se obtiene automáticamente al conectar)"
+      "title": "Zernio \u2014 Account ID",
+      "description": "ID de la cuenta de WhatsApp conectada en Zernio para este profesional (se obtiene autom\u00e1ticamente al conectar)"
     },
     "zernio_phone": {
       "type": "string",
-      "title": "Número de WhatsApp del profesional",
-      "description": "Número que usa el profesional para recibir mensajes (con código de país)"
+      "title": "N\u00famero de WhatsApp del profesional",
+      "description": "N\u00famero que usa el profesional para recibir mensajes (con c\u00f3digo de pa\u00eds)"
     },
     "plan": {
       "type": "string",
@@ -138,7 +152,7 @@
     "trial_ends_at": {
       "type": "string",
       "format": "date-time",
-      "title": "Fin del período de prueba"
+      "title": "Fin del per\u00edodo de prueba"
     },
     "trial_origin": {
       "type": "string",
@@ -151,7 +165,7 @@
     },
     "invitation_code": {
       "type": "string",
-      "title": "Código de invitación usado"
+      "title": "C\u00f3digo de invitaci\u00f3n usado"
     },
     "bot_preview_count": {
       "type": "number",
@@ -165,41 +179,41 @@
     },
     "whatsapp_usage_count": {
       "type": "number",
-      "title": "Conversaciones procesadas este período",
-      "description": "Contador de conversaciones/turnos procesados por el bot de WhatsApp en el período de facturación actual. Solo lo escribe el backend.",
+      "title": "Conversaciones procesadas este per\u00edodo",
+      "description": "Contador de conversaciones/turnos procesados por el bot de WhatsApp en el per\u00edodo de facturaci\u00f3n actual. Solo lo escribe el backend.",
       "default": 0
     },
     "whatsapp_usage_period_start": {
       "type": "string",
       "format": "date-time",
-      "title": "Inicio del período de uso actual",
+      "title": "Inicio del per\u00edodo de uso actual",
       "description": "Cuando se reinicia (mensualmente), whatsapp_usage_count vuelve a 0."
     },
     "whatsapp_addon_conversations": {
       "type": "number",
       "title": "Conversaciones extra de packs adicionales",
-      "description": "Cupo comprado aparte del límite del plan (packs +100/+250). Se descuenta antes de bloquear/avisar.",
+      "description": "Cupo comprado aparte del l\u00edmite del plan (packs +100/+250). Se descuenta antes de bloquear/avisar.",
       "default": 0
     },
     "whatsapp_usage_alert_90_sent": {
       "type": "boolean",
-      "title": "Alerta de 90% ya enviada este período",
+      "title": "Alerta de 90% ya enviada este per\u00edodo",
       "default": false
     },
     "whatsapp_usage_alert_95_sent": {
       "type": "boolean",
-      "title": "Alerta de 95% ya enviada este período",
+      "title": "Alerta de 95% ya enviada este per\u00edodo",
       "default": false
     },
     "whatsapp_usage_alert_100_sent": {
       "type": "boolean",
-      "title": "Alerta de 100% ya enviada este período",
+      "title": "Alerta de 100% ya enviada este per\u00edodo",
       "default": false
     },
     "mercadopago_subscription_id": {
       "type": "string",
-      "title": "Mercado Pago — ID de suscripción",
-      "description": "preapproval_id devuelto por Mercado Pago al crear la suscripción recurrente. Lo usa el webhook para identificar a qué consultorio corresponde cada notificación de pago."
+      "title": "Mercado Pago \u2014 ID de suscripci\u00f3n",
+      "description": "preapproval_id devuelto por Mercado Pago al crear la suscripci\u00f3n recurrente. Lo usa el webhook para identificar a qu\u00e9 consultorio corresponde cada notificaci\u00f3n de pago."
     }
   },
   "required": [

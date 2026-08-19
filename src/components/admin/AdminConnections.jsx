@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2, CreditCard, MessageCircle, Bot, Save } from "lucide-react";
+import { Loader2, CreditCard, MessageCircle, Bot, Save, Eye, EyeOff, Copy, Check } from "lucide-react";
 
 const MODELS = [
   { value: "automatic", label: "Automático (recomendado)" },
@@ -16,6 +16,32 @@ const MODELS = [
   { value: "gpt_5_4", label: "GPT-5.4" },
   { value: "claude_sonnet_4_6", label: "Claude Sonnet 4.6 — avanzado" },
 ];
+
+// Campo de texto sensible (tokens/claves): oculto por defecto, con ojito para mostrarlo.
+function SecretField({ id, value, onChange, placeholder }) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div className="relative">
+      <Input
+        id={id}
+        type={visible ? "text" : "password"}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className="pr-10 font-mono text-sm"
+        autoComplete="off"
+      />
+      <button
+        type="button"
+        onClick={() => setVisible((v) => !v)}
+        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+        title={visible ? "Ocultar" : "Mostrar"}
+      >
+        {visible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+      </button>
+    </div>
+  );
+}
 
 export default function AdminConnections() {
   const { toast } = useToast();
@@ -119,11 +145,11 @@ export default function AdminConnections() {
         <div className="space-y-2">
           <div className="space-y-1.5">
             <Label htmlFor="mptoken">Access Token</Label>
-            <Input id="mptoken" value={mpToken} onChange={(e) => setMpToken(e.target.value)} placeholder="APP_USR-..." />
+            <SecretField id="mptoken" value={mpToken} onChange={(e) => setMpToken(e.target.value)} placeholder="APP_USR-..." />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="mpkey">Public Key</Label>
-            <Input id="mpkey" value={mpKey} onChange={(e) => setMpKey(e.target.value)} placeholder="APP_USR-..." />
+            <SecretField id="mpkey" value={mpKey} onChange={(e) => setMpKey(e.target.value)} placeholder="APP_USR-..." />
           </div>
         </div>
       </Card>
@@ -137,7 +163,7 @@ export default function AdminConnections() {
         <p className="text-sm text-muted-foreground">Credenciales del proveedor de WhatsApp. El Account ID vincula los mensajes entrantes al profesional correcto.</p>
         <div className="space-y-1.5">
           <Label htmlFor="zkey">API Key</Label>
-          <Input id="zkey" value={zernioKey} onChange={(e) => setZernioKey(e.target.value)} placeholder="zrn_..." />
+          <SecretField id="zkey" value={zernioKey} onChange={(e) => setZernioKey(e.target.value)} placeholder="zrn_..." />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="zacc">Account ID (referencia interna / testing)</Label>
@@ -146,13 +172,18 @@ export default function AdminConnections() {
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="zsecret">Webhook Secret</Label>
-          <Input id="zsecret" value={webhookSecret} onChange={(e) => setWebhookSecret(e.target.value)} placeholder="secreto compartido (opcional)" />
+          <SecretField id="zsecret" value={webhookSecret} onChange={(e) => setWebhookSecret(e.target.value)} placeholder="secreto compartido (opcional)" />
           <p className="text-xs text-muted-foreground">Opcional pero recomendado. Configurá el mismo valor en el dashboard de Zernio al crear el webhook.</p>
         </div>
         <div className="space-y-1.5 rounded-lg bg-accent/50 p-3">
           <Label>URL del webhook</Label>
-          <p className="text-xs text-muted-foreground break-all font-mono">{typeof window !== "undefined" ? window.location.origin : ""}/api/functions/zernioWebhook</p>
-          <p className="text-xs text-muted-foreground mt-1">Configurá esta URL en Zernio → Webhooks con el evento <strong>message.received</strong>. La app debe estar publicada para que Zernio pueda alcanzarla.</p>
+          <div className="flex items-center gap-2">
+            <p className="text-xs text-muted-foreground break-all font-mono flex-1">{webhookUrl}</p>
+            <Button type="button" size="sm" variant="outline" onClick={copyWebhookUrl} className="shrink-0">
+              {webhookCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">Configurá esta URL en Zernio → Webhooks con el evento <strong>message.received</strong>.</p>
         </div>
       </Card>
 

@@ -1,30 +1,43 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { Plus, Trash2, ChevronDown, ChevronRight, CalendarOff, Coffee, RotateCcw, Loader2 } from "lucide-react";
+import { Plus, Trash2, ChevronDown, ChevronRight, CalendarOff, Coffee, RotateCcw, Loader2, User } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { usePracticeSettings } from "@/hooks/usePracticeSettings";
+import { getPlanStatus } from "@/lib/plan-utils";
 
 const DAYS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+const OWNER_VALUE = "";
 
 export default function AvailabilityEditor() {
   const { toast } = useToast();
+  const { settings } = usePracticeSettings();
+  const status = getPlanStatus(settings);
+  const isClinic = status.canUseMultiProfessional;
+
   const [items, setItems] = useState([]);
+  const [professionals, setProfessionals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [resetting, setResetting] = useState(false);
   const [deleting, setDeleting] = useState(null);
   const [openDay, setOpenDay] = useState(1);
+  const [proFilter, setProFilter] = useState(OWNER_VALUE);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [isClinic]);
 
   async function load() {
     setLoading(true);
     try {
-      const list = await base44.entities.Availability.filter({});
+      const [list, pros] = await Promise.all([
+        base44.entities.Availability.filter({}),
+        isClinic ? base44.entities.Professional.filter({ active: true }) : Promise.resolve([]),
+      ]);
+      setProfessionals(pros || []);
       if ((list || []).length === 0) {
-        // Horario estándar por defecto: Lunes a Viernes, mañana + almuerzo + tarde.
+        // Horario estándar por defecto (solo la primera vez, para el dueño de la cuenta):
+        // Lunes a Viernes, mañana + almuerzo + tarde.
         await base44.entities.Availability.bulkCreate(
           [1, 2, 3, 4, 5].map((d) => ({
             day_of_week: d,
@@ -44,15 +57,20 @@ export default function AvailabilityEditor() {
     }
   }
 
-  const weekly = items.filter((a) => a.type === "work" || a.type === "break");
-  const holidays = items.filter((a) => a.type === "holiday" || a.type === "block");
+  // Todo lo de abajo opera solo sobre las franjas del profesional seleccionado (o el
+  // dueño de la cuenta, por defecto), para no mezclar horarios de gente distinta.
+  const scopedItems = useMemo(
+    () => items.filter((a) => (a.professional_ref_id || OWNER_VALUE) === proFilter),
+    [items, proFilter]
+  );
+  const weekly = scopedItems.filter((a) => a.type === "work" || a.type === "break");
+  const holidays = scopedItems.filter((a) => a.type === "holiday" || a.type === "block");
 
   async function addRange(day, type) {
     const def = type === "break" ? { start_time: "13:00", end_time: "14:00", label: "Pausa" } : { start_time: "09:00", end_time: "18:00", label: "" };
-    // Avoid exact duplicates
-    const dup = items.some((it) => it.day_of_week === day && it.type === type && it.start_time === def.start_time && it.end_time === def.end_time);
+    const dup = scopedItems.some((it) => it.day_of_week === day && it.type === type && it.start_time === def.start_time && it.end_time === def.end_time);
     if (dup) return;
-    await base44.entities.Availability.create({ day_of_week: day, ...def, type });
+    await base44.entities.Availability.create({ day_of_week: day, ...def, type, professional_ref_id: proFilter || undefined });
     load();
   }
 
@@ -76,7 +94,7 @@ export default function AvailabilityEditor() {
   async function resetSchedule() {
     setResetting(true);
     try {
-      const existingIds = items.map((it) => it.id);
+      const existingIds = scopedItems.map((it) => it.id);
       if (existingIds.length > 0) {
         await base44.entities.Availability.deleteMany({ id: { $in: existingIds } });
       }
@@ -87,6 +105,7 @@ export default function AvailabilityEditor() {
           end_time: "18:00",
           type: "work",
           label: "",
+          professional_ref_id: proFilter || undefined,
         }))
       );
       await load();
@@ -101,7 +120,7 @@ export default function AvailabilityEditor() {
   async function addHoliday() {
     const now = new Date();
     const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-    await base44.entities.Availability.create({ day_of_week: 0, start_time: "00:00", end_time: "23:59", type: "holiday", date: today, label: "Feriado" });
+    await base44.entities.Availability.create({ day_of_week: 0, start_time: "00:00", end_time: "23:59", type: "holiday", date: today, label: "Feriado", professional_ref_id: proFilter || undefined });
     load();
   }
 
@@ -130,11 +149,23 @@ export default function AvailabilityEditor() {
         </Button>
       </div>
 
+      {isClinic && professionals.length > 0 && (
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <button onClick={() => setProFilter(OWNER_VALUE)} className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${proFilter === OWNER_VALUE ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:bg-muted"}`}>
+            <User className="w-3 h-3" /> Dueño de la cuenta
+          </button>
+          {professionals.map((p) => (
+            <button key={p.id} onClick={() => setProFilter(p.id)} className={`text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${proFilter === p.id ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:bg-muted"}`}>
+              {p.first_name} {p.last_name}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="space-y-2">
         {DAYS.map((dName, day) => {
           const dayItems = weekly.filter((a) => a.day_of_week === day).sort((a, b) => a.start_time.localeCompare(b.start_time));
           const work = dayItems.filter((a) => a.type === "work");
-          const breaks = dayItems.filter((a) => a.type === "break");
           const isOpen = openDay === day;
           const summary = work.length ? work.map((w) => `${w.start_time}-${w.end_time}`).join(", ") : "Sin atención";
           return (

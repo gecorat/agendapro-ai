@@ -6,8 +6,7 @@ import { getAppointmentContext, whatsappLink } from "../../shared/appointment-co
 
 export default async function(req) {
   try {
-    const base44 = createClientFromRequest(req);
-    const now = new Date();
+    const base44 = createClientFromRequest(req);    const now = new Date();
     const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
     const in3h = new Date(now.getTime() + 3 * 60 * 60 * 1000);
     const appUrl = await getAppUrl(base44, req);

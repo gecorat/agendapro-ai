@@ -13,7 +13,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2, Clock, Calendar, UserPlus, Trash2 } from "lucide-react";
+import { Loader2, Clock, UserPlus, Trash2 } from "lucide-react";
 import { PLAN_LABELS } from "@/lib/plan-utils";
 
 function statusFor(settings) {

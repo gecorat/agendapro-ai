@@ -81,7 +81,7 @@ export default async function(req) {
           title: is3h ? "Tu cita es en 3 horas" : "Recordatorio de tu cita",
           greeting: `Hola ${patientName}`,
           lines: [
-            `Te recordamos tu cita de ${serviceName}. ¡Te esperamos!`,
+            `Tu cita de ${serviceName} fue confirmada. ¡Te esperamos!`,
             "Si necesitás reagendar o cancelar, usá los botones de abajo.",
           ],
           details: [

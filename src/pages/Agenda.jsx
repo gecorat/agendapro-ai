@@ -1,13 +1,17 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { ChevronLeft, ChevronRight, Plus, Filter } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Filter, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AppointmentForm from "@/components/AppointmentForm";
 import DayView from "@/components/agenda/DayView";
 import WeekView from "@/components/agenda/WeekView";
 import MonthView from "@/components/agenda/MonthView";
 import DayDetailSheet from "@/components/agenda/DayDetailSheet";
+import { usePracticeSettings } from "@/hooks/usePracticeSettings";
+import { getPlanStatus } from "@/lib/plan-utils";
+
+const OWNER_VALUE = "__owner__";
 
 const VIEWS = [
   { value: "day", label: "Día" },
@@ -35,6 +39,16 @@ export default function Agenda() {
   const [editing, setEditing] = useState(null);
   const [formDefaultDate, setFormDefaultDate] = useState(null);
   const [daySheetDate, setDaySheetDate] = useState(null);
+  const [professionals, setProfessionals] = useState([]);
+  const [proFilter, setProFilter] = useState("all");
+  const { settings } = usePracticeSettings();
+  const status = getPlanStatus(settings);
+  const isClinic = status.canUseMultiProfessional;
+
+  useEffect(() => {
+    if (!isClinic) return;
+    base44.entities.Professional.filter({ active: true }).then((list) => setProfessionals(list || []));
+  }, [isClinic]);
 
   useEffect(() => {
     loadAppointments();
@@ -101,9 +115,14 @@ export default function Agenda() {
   }
 
   const visibleAppointments = useMemo(() => {
-    if (!statusFilter) return appointments;
-    return appointments.filter((a) => a.status === statusFilter);
-  }, [appointments, statusFilter]);
+    let list = appointments;
+    if (statusFilter) list = list.filter((a) => a.status === statusFilter);
+    if (isClinic && proFilter !== "all") {
+      const target = proFilter === OWNER_VALUE ? "" : proFilter;
+      list = list.filter((a) => (a.professional_ref_id || "") === target);
+    }
+    return list;
+  }, [appointments, statusFilter, proFilter, isClinic]);
 
   const dateLabel = useMemo(() => {
     if (view === "day") {

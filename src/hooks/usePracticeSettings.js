@@ -26,6 +26,22 @@ export function usePracticeSettings() {
     load();
   }, [load]);
 
+  // El plan puede cambiar desde el panel de Admin mientras el profesional ya tiene la
+  // sesión abierta (no hay una fuente de datos en tiempo real). Sin esto, alguien podía
+  // quedar viendo "Trial" en pantalla durante horas después de que un admin lo pasara a
+  // Pro, hasta que cerrara sesión o recargara a mano. Al volver a la pestaña, refrescamos.
+  useEffect(() => {
+    function onFocus() {
+      if (document.visibilityState === "visible") load();
+    }
+    document.addEventListener("visibilitychange", onFocus);
+    window.addEventListener("focus", onFocus);
+    return () => {
+      document.removeEventListener("visibilitychange", onFocus);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [load]);
+
   const preset = settings ? getPreset(settings.professional_type) : getPreset("other");
   const typeLabel = settings ? getTypeLabel(settings.professional_type) : "";
 

@@ -34,11 +34,11 @@
     },
     "address": {
       "type": "string",
-      "title": "Direcci\u00f3n"
+      "title": "Dirección"
     },
     "phone": {
       "type": "string",
-      "title": "Tel\u00e9fono del consultorio"
+      "title": "Teléfono del consultorio"
     },
     "professional_email": {
       "type": "string",
@@ -49,18 +49,24 @@
       "type": "string",
       "title": "Instagram",
       "format": "url",
-      "description": "Enlace a tu perfil de Instagram (se muestra en tu p\u00e1gina de reservas)"
+      "description": "Enlace a tu perfil de Instagram (se muestra en tu página de reservas)"
     },
     "facebook_url": {
       "type": "string",
       "title": "Facebook",
       "format": "url",
-      "description": "Enlace a tu p\u00e1gina de Facebook (se muestra en tu p\u00e1gina de reservas)"
+      "description": "Enlace a tu página de Facebook (se muestra en tu página de reservas)"
+    },
+    "website_url": {
+      "type": "string",
+      "title": "Sitio web",
+      "format": "url",
+      "description": "Tu sitio web, si tenés (se muestra en tu página de reservas)"
     },
     "handle": {
       "type": "string",
-      "title": "Usuario p\u00fablico (@)",
-      "description": "Nombre \u00fanico para tu enlace de reservas, sin espacios ni @"
+      "title": "Usuario público (@)",
+      "description": "Nombre único para tu enlace de reservas, sin espacios ni @"
     },
     "photo_url": {
       "type": "string",
@@ -69,16 +75,16 @@
     },
     "page_color": {
       "type": "string",
-      "title": "Color de la p\u00e1gina p\u00fablica",
+      "title": "Color de la página pública",
       "default": "#0f172a"
     },
     "description": {
       "type": "string",
-      "title": "Descripci\u00f3n / presentaci\u00f3n"
+      "title": "Descripción / presentación"
     },
     "published": {
       "type": "boolean",
-      "title": "P\u00e1gina p\u00fablica publicada",
+      "title": "Página pública publicada",
       "default": true
     },
     "google_calendar_connected": {
@@ -93,18 +99,18 @@
     },
     "zernio_profile_id": {
       "type": "string",
-      "title": "Zernio \u2014 Profile ID",
-      "description": "Perfil de Zernio creado autom\u00e1ticamente para este profesional al iniciar la conexi\u00f3n de WhatsApp."
+      "title": "Zernio — Profile ID",
+      "description": "Perfil de Zernio creado automáticamente para este profesional al iniciar la conexión de WhatsApp."
     },
     "zernio_account_id": {
       "type": "string",
-      "title": "Zernio \u2014 Account ID",
-      "description": "ID de la cuenta de WhatsApp conectada en Zernio para este profesional (se obtiene autom\u00e1ticamente al conectar)"
+      "title": "Zernio — Account ID",
+      "description": "ID de la cuenta de WhatsApp conectada en Zernio para este profesional (se obtiene automáticamente al conectar)"
     },
     "zernio_phone": {
       "type": "string",
-      "title": "N\u00famero de WhatsApp del profesional",
-      "description": "N\u00famero que usa el profesional para recibir mensajes (con c\u00f3digo de pa\u00eds)"
+      "title": "Número de WhatsApp del profesional",
+      "description": "Número que usa el profesional para recibir mensajes (con código de país)"
     },
     "plan": {
       "type": "string",
@@ -120,7 +126,7 @@
     "trial_ends_at": {
       "type": "string",
       "format": "date-time",
-      "title": "Fin del per\u00edodo de prueba"
+      "title": "Fin del período de prueba"
     },
     "trial_origin": {
       "type": "string",
@@ -133,7 +139,7 @@
     },
     "invitation_code": {
       "type": "string",
-      "title": "C\u00f3digo de invitaci\u00f3n usado"
+      "title": "Código de invitación usado"
     },
     "bot_preview_count": {
       "type": "number",
@@ -147,41 +153,41 @@
     },
     "whatsapp_usage_count": {
       "type": "number",
-      "title": "Conversaciones procesadas este per\u00edodo",
-      "description": "Contador de conversaciones/turnos procesados por el bot de WhatsApp en el per\u00edodo de facturaci\u00f3n actual. Solo lo escribe el backend.",
+      "title": "Conversaciones procesadas este período",
+      "description": "Contador de conversaciones/turnos procesados por el bot de WhatsApp en el período de facturación actual. Solo lo escribe el backend.",
       "default": 0
     },
     "whatsapp_usage_period_start": {
       "type": "string",
       "format": "date-time",
-      "title": "Inicio del per\u00edodo de uso actual",
+      "title": "Inicio del período de uso actual",
       "description": "Cuando se reinicia (mensualmente), whatsapp_usage_count vuelve a 0."
     },
     "whatsapp_addon_conversations": {
       "type": "number",
       "title": "Conversaciones extra de packs adicionales",
-      "description": "Cupo comprado aparte del l\u00edmite del plan (packs +100/+250). Se descuenta antes de bloquear/avisar.",
+      "description": "Cupo comprado aparte del límite del plan (packs +100/+250). Se descuenta antes de bloquear/avisar.",
       "default": 0
     },
     "whatsapp_usage_alert_90_sent": {
       "type": "boolean",
-      "title": "Alerta de 90% ya enviada este per\u00edodo",
+      "title": "Alerta de 90% ya enviada este período",
       "default": false
     },
     "whatsapp_usage_alert_95_sent": {
       "type": "boolean",
-      "title": "Alerta de 95% ya enviada este per\u00edodo",
+      "title": "Alerta de 95% ya enviada este período",
       "default": false
     },
     "whatsapp_usage_alert_100_sent": {
       "type": "boolean",
-      "title": "Alerta de 100% ya enviada este per\u00edodo",
+      "title": "Alerta de 100% ya enviada este período",
       "default": false
     },
     "mercadopago_subscription_id": {
       "type": "string",
-      "title": "Mercado Pago \u2014 ID de suscripci\u00f3n",
-      "description": "preapproval_id devuelto por Mercado Pago al crear la suscripci\u00f3n recurrente. Lo usa el webhook para identificar a qu\u00e9 consultorio corresponde cada notificaci\u00f3n de pago."
+      "title": "Mercado Pago — ID de suscripción",
+      "description": "preapproval_id devuelto por Mercado Pago al crear la suscripción recurrente. Lo usa el webhook para identificar a qué consultorio corresponde cada notificación de pago."
     }
   },
   "required": [

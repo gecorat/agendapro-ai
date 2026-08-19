@@ -258,7 +258,7 @@ export default function Landing() {
                 <span className="font-heading font-semibold text-lg">Premium</span>
                 <Sparkles className="w-4 h-4 text-amber-500" />
               </div>
-              <p className="text-3xl font-heading font-bold mt-3">{PLAN_PRICES.premium.toLocaleString("es-AR")}<span className="text-sm font-normal text-slate-500"> ARS / mes</span></p>
+              <p className="text-3xl font-heading font-bold mt-3">{PLAN_PRICES.clinic.toLocaleString("es-AR")}<span className="text-sm font-normal text-slate-500"> ARS / mes</span></p>
               <ul className="mt-5 space-y-3 flex-1">
                 <li className="text-xs font-medium text-slate-400 uppercase tracking-wide pb-1">Todo lo del Pro +</li>
                 {PREMIUM_EXTRAS.map((f) => <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700"><Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" /> {f}</li>)}

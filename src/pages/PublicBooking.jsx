@@ -241,16 +241,18 @@ export default function PublicBooking() {
   return (
     <div className="min-h-screen" style={{ background: theme.bg }}>
       <div className="max-w-md mx-auto">
-        {/* Banner de color del tema (o la portada subida), con el avatar superpuesto */}
+        {/* Banner de color del tema (o la portada subida), con el avatar superpuesto.
+            overflow-hidden + z-index explícito en el avatar: así queda garantizado que el
+            avatar SIEMPRE se pinta arriba del banner, sin depender de orden implícito del DOM. */}
         <div
-          className="h-24 relative"
+          className="h-28 relative overflow-hidden"
           style={{
             background: settings?.cover_image_url ? `url(${settings.cover_image_url}) center/cover` : `linear-gradient(135deg, ${brand}, ${brand}99)`,
           }}
         >
           {settings?.cover_image_url && <div className="absolute inset-0 bg-black/25" />}
         </div>
-        <div className="px-5 -mt-12 text-center pb-2">
+        <div className="relative z-10 px-5 -mt-10 text-center pb-2">
           {settings?.photo_url ? (
             <img
               src={settings.photo_url}

@@ -253,12 +253,11 @@ export default function PublicBooking() {
         </div>
         <div className="px-5 -mt-12 text-center pb-2">
           {settings?.photo_url ? (
-            <Image
+            <img
               src={settings.photo_url}
               alt={settings.practice_name}
-              fittingType="fill"
-              className="w-24 h-24 rounded-full object-cover shadow-lg mx-auto ring-4"
-              style={{ ringColor: theme.cardBg, boxShadow: `0 0 0 4px ${theme.cardBg}` }}
+              className="w-24 h-24 rounded-full object-cover mx-auto block"
+              style={{ boxShadow: `0 0 0 4px ${theme.cardBg}` }}
             />
           ) : (
             <div className="w-24 h-24 rounded-full mx-auto flex items-center justify-center text-2xl font-heading font-bold shadow-lg" style={{ background: brand, color: theme.accentText, boxShadow: `0 0 0 4px ${theme.cardBg}` }}>

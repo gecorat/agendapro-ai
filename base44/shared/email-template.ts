@@ -27,15 +27,19 @@ export function buildEmailHtml({
   title,
   greeting,
   lines,
+  details,
   primaryButton,
   secondaryButton,
+  whatsappButton,
   footer,
 }: {
   title: string;
   greeting?: string;
   lines: string[];
+  details?: { label: string; value: string }[];
   primaryButton?: { label: string; url: string };
   secondaryButton?: { label: string; url: string };
+  whatsappButton?: { label: string; url: string };
   footer?: string;
 }): string {
   const greetingHtml = greeting ? `<p style="margin:0 0 16px;font-size:16px;color:#1e293b;">${escapeHtml(greeting)}</p>` : "";
@@ -46,16 +50,32 @@ export function buildEmailHtml({
     )
     .join("");
 
+  const detailsHtml = details && details.length
+    ? `<table width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0 4px;background:#f8fafc;border-radius:10px;overflow:hidden;">
+${details
+  .map(
+    (d, i) => `<tr>
+<td style="padding:11px 16px;font-size:13px;color:#64748b;${i < details.length - 1 ? "border-bottom:1px solid #eef2f7;" : ""}">${escapeHtml(d.label)}</td>
+<td style="padding:11px 16px;font-size:13px;color:#0f172a;font-weight:600;text-align:right;${i < details.length - 1 ? "border-bottom:1px solid #eef2f7;" : ""}">${escapeHtml(d.value)}</td>
+</tr>`
+  )
+  .join("")}
+</table>`
+    : "";
+
   const primaryHtml = primaryButton
     ? `<a href="${escapeHtml(primaryButton.url)}" style="display:inline-block;background:#059669;color:#ffffff;font-family:Inter,Arial,sans-serif;font-size:15px;font-weight:600;text-decoration:none;padding:12px 28px;border-radius:8px;margin:8px 8px 8px 0;">${escapeHtml(primaryButton.label)}</a>`
     : "";
   const secondaryHtml = secondaryButton
-    ? `<a href="${escapeHtml(secondaryButton.url)}" style="display:inline-block;background:#f1f5f9;color:#334155;font-family:Inter,Arial,sans-serif;font-size:15px;font-weight:600;text-decoration:none;padding:12px 28px;border-radius:8px;border:1px solid #e2e8f0;">${escapeHtml(secondaryButton.label)}</a>`
+    ? `<a href="${escapeHtml(secondaryButton.url)}" style="display:inline-block;background:#f1f5f9;color:#334155;font-family:Inter,Arial,sans-serif;font-size:15px;font-weight:600;text-decoration:none;padding:12px 28px;border-radius:8px;border:1px solid #e2e8f0;margin:8px 8px 8px 0;">${escapeHtml(secondaryButton.label)}</a>`
+    : "";
+  const whatsappHtml = whatsappButton
+    ? `<a href="${escapeHtml(whatsappButton.url)}" style="display:inline-block;background:#25D366;color:#ffffff;font-family:Inter,Arial,sans-serif;font-size:15px;font-weight:600;text-decoration:none;padding:12px 28px;border-radius:8px;margin:8px 8px 8px 0;">${escapeHtml(whatsappButton.label)}</a>`
     : "";
 
   const buttonsHtml =
-    primaryHtml || secondaryHtml
-      ? `<div style="margin:24px 0 8px;">${primaryHtml}${secondaryHtml}</div>`
+    primaryHtml || secondaryHtml || whatsappHtml
+      ? `<div style="margin:20px 0 8px;">${primaryHtml}${secondaryHtml}${whatsappHtml}</div>`
       : "";
 
   const footerText = footer || "Kame Agenda";
@@ -81,6 +101,7 @@ export function buildEmailHtml({
 <h1 style="margin:0 0 16px;font-size:20px;font-weight:700;color:#0f172a;letter-spacing:-0.02em;">${escapeHtml(title)}</h1>
 ${greetingHtml}
 ${linesHtml}
+${detailsHtml}
 ${buttonsHtml}
 </td>
 </tr>

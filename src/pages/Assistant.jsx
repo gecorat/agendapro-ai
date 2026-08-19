@@ -35,7 +35,7 @@ function UpgradeBlock({ plan }) {
             <Button size="sm" variant="outline" asChild className="gap-1.5">
               <Link to="/upgrade-plan">
                 <Sparkles className="w-3.5 h-3.5" />
-                Ver Premium ({PLAN_PRICES.premium})
+                Ver {PLAN_LABELS.clinic} ({PLAN_PRICES.clinic})
               </Link>
             </Button>
           </div>

@@ -9,6 +9,24 @@ export default async function(req) {
     const body = await req.json();
     const { practiceData, services = [] } = body;
 
+    // Validar y consumir el código de invitación si vino uno. Antes esto no existía: se
+    // guardaba el código como texto suelto pero nunca se verificaba contra la tabla
+    // Invitation ni se marcaba como usado — cualquier string servía igual. No bloqueamos
+    // el onboarding si el código no es válido (es atribución, no una restricción dura), pero
+    // solo se acredita como "invitation" si realmente existía, estaba pendiente y no expiró.
+    const invitationCode = practiceData?.invitation_code;
+    let invitationValid = false;
+    if (invitationCode) {
+      try {
+        const invites = await base44.asServiceRole.entities.Invitation.filter({ code: invitationCode });
+        const invite = invites?.[0];
+        if (invite && invite.status === 'pending' && (!invite.expires_at || new Date(invite.expires_at) >= new Date())) {
+          await base44.asServiceRole.entities.Invitation.update(invite.id, { status: 'used', used_by_id: user.id });
+          invitationValid = true;
+        }
+      } catch { /* si falla la validación, seguimos sin bloquear el alta */ }
+    }
+
     // Check if user already has PracticeSettings (avoid duplicates)
     const existing = await base44.asServiceRole.entities.PracticeSettings.filter(
       { created_by_id: user.id }
@@ -28,7 +46,7 @@ export default async function(req) {
       created_by_id: user.id,
       plan: 'trial',
       trial_ends_at: trialEnds.toISOString(),
-      trial_origin: practiceData?.trial_origin === 'invitation' ? 'invitation' : 'landing',
+      trial_origin: (practiceData?.trial_origin === 'invitation' && invitationValid) ? 'invitation' : 'landing',
       suspended: false,
     });
 

@@ -9,7 +9,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 const EDITABLE_FIELDS = [
   'professional_type', 'practice_name', 'specialty', 'address', 'phone',
   'professional_email', 'instagram_url', 'facebook_url', 'website_url', 'handle', 'photo_url',
-  'page_color', 'description', 'published',
+  'page_color', 'theme_preset', 'description', 'published',
 ];
 
 export default async function (req: Request): Promise<Response> {

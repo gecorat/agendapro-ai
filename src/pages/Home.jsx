@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import { getPlanStatus } from "@/lib/plan-utils";
 import WelcomeGuide from "@/pages/WelcomeGuide";

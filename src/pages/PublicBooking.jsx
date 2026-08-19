@@ -242,8 +242,15 @@ export default function PublicBooking() {
   return (
     <div className="min-h-screen" style={{ background: theme.bg }}>
       <div className="max-w-md mx-auto">
-        {/* Banner de color del tema, con el avatar superpuesto */}
-        <div className="h-24" style={{ background: `linear-gradient(135deg, ${brand}, ${brand}99)` }} />
+        {/* Banner de color del tema (o la portada subida), con el avatar superpuesto */}
+        <div
+          className="h-24 relative"
+          style={{
+            background: settings?.cover_image_url ? `url(${settings.cover_image_url}) center/cover` : `linear-gradient(135deg, ${brand}, ${brand}99)`,
+          }}
+        >
+          {settings?.cover_image_url && <div className="absolute inset-0 bg-black/25" />}
+        </div>
         <div className="px-5 -mt-12 text-center pb-2">
           {settings?.photo_url ? (
             <Image

@@ -8,7 +8,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 // importar qué mande el cliente en el body.
 const EDITABLE_FIELDS = [
   'professional_type', 'practice_name', 'specialty', 'address', 'phone',
-  'professional_email', 'instagram_url', 'facebook_url', 'handle', 'photo_url',
+  'professional_email', 'instagram_url', 'facebook_url', 'website_url', 'handle', 'photo_url',
   'page_color', 'description', 'published',
 ];
 

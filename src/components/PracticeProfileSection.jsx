@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Upload, Check, Copy, ExternalLink, Share2 } from "lucide-react";
+import { Loader2, Upload, Check, Copy, ExternalLink, Share2, Link2 } from "lucide-react";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import { PROFESSIONAL_TYPES, getTypeLabel } from "@/lib/professional-presets";
 import { THEME_PRESETS, resolveTheme } from "@/lib/theme-presets";
@@ -63,8 +63,8 @@ function HeaderPreview({ form }) {
   );
 }
 
-// Tarjeta neutra (no usa el color/tema elegido, para no confundirse con la vista previa
-// de arriba): usuario público + link + acciones, todo en un mismo bloque.
+// Tarjeta neutra y destacada (no usa el color/tema elegido, para no confundirse con la
+// vista previa de arriba): usuario público + link + acciones, todo en un mismo bloque.
 function BookingLinkCard({ handle, onChangeHandle, url, practiceName }) {
   const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(false);
@@ -92,31 +92,37 @@ function BookingLinkCard({ handle, onChangeHandle, url, practiceName }) {
   };
 
   return (
-    <div className="rounded-2xl border border-border bg-card overflow-hidden">
-      <div className="p-4 space-y-1.5">
+    <div className="rounded-2xl border-2 border-primary/30 bg-primary/[0.03] overflow-hidden">
+      <div className="px-4 pt-4 pb-1 flex items-center gap-2">
+        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+          <Link2 className="w-4 h-4 text-primary" />
+        </div>
+        <p className="text-sm font-heading font-semibold">Este es el link que le compartís a tus pacientes</p>
+      </div>
+      <div className="p-4 pt-3 space-y-1.5">
         <Label htmlFor="handle">Usuario público (@)</Label>
         <div className="flex items-center gap-2">
           <span className="text-muted-foreground text-sm">@</span>
-          <Input id="handle" value={handle} onChange={(e) => onChangeHandle(e.target.value)} placeholder="drmartinez" className="flex-1" />
+          <Input id="handle" value={handle} onChange={(e) => onChangeHandle(e.target.value)} placeholder="drmartinez" className="flex-1 bg-card" />
         </div>
-        <p className="text-xs text-muted-foreground">Sin espacios ni @. Este es tu link para compartir con pacientes.</p>
+        <p className="text-xs text-muted-foreground">Elegí cómo se ve tu enlace. Sin espacios ni @.</p>
       </div>
       {url && (
-        <div className="px-4 pb-4 pt-1 space-y-3 border-t border-border">
-          <div className="bg-muted/60 rounded-xl px-3 py-2.5 overflow-x-auto">
+        <div className="px-4 pb-4 pt-1 space-y-3">
+          <div className="bg-card border border-border rounded-xl px-3 py-2.5 overflow-x-auto">
             <p className="font-mono text-xs whitespace-nowrap text-foreground/80">{url}</p>
           </div>
           <div className="grid grid-cols-3 gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={copy} className="rounded-xl gap-1.5">
+            <Button type="button" variant="outline" size="sm" onClick={copy} className="rounded-xl gap-1.5 bg-card">
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
               {copied ? "Copiado" : "Copiar"}
             </Button>
-            <Button type="button" variant="outline" size="sm" className="rounded-xl gap-1.5" asChild>
+            <Button type="button" variant="outline" size="sm" className="rounded-xl gap-1.5 bg-card" asChild>
               <a href={url} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="w-3.5 h-3.5" /> Ver
               </a>
             </Button>
-            <Button type="button" variant="outline" size="sm" onClick={share} className="rounded-xl gap-1.5">
+            <Button type="button" size="sm" onClick={share} className="rounded-xl gap-1.5">
               <Share2 className="w-3.5 h-3.5" /> {shared ? "Copiado" : "Compartir"}
             </Button>
           </div>

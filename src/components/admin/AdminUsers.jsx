@@ -144,7 +144,7 @@ export default function AdminUsers() {
             <DialogTitle>Invitar profesional</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">El invitado recibirá un correo para registrarse. Una vez que complete el onboarding, podrá asignarle un plan (incluido Premium) desde esta misma lista.</p>
+            <p className="text-sm text-muted-foreground">El invitado recibirá un correo para registrarse. Una vez que complete el onboarding, podrás asignarle un plan (incluido Clinic) desde esta misma lista.</p>
             <div className="space-y-2">
               <Label htmlFor="invite-email">Email</Label>
               <Input id="invite-email" type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="profesional@email.com" />

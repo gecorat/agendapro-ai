@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CalendarClock, Clock, ArrowRight, Check, Loader2, Calendar, MapPin, Phone, Mail, CalendarX, MessageCircle, Instagram, Facebook, Globe, ExternalLink } from "lucide-react";
-import { resolveTheme, normalizeSocialUrl, whatsappUrl, googleMapsUrl } from "@/lib/theme-presets";
+import { resolveTheme, normalizeSocialUrl, whatsappUrl, googleMapsUrl, googleMapsEmbedSrc } from "@/lib/theme-presets";
 
 function parseTimeToDate(date, time) {
   const [h, m] = time.split(":").map(Number);
@@ -234,7 +234,7 @@ export default function PublicBooking() {
   const fbUrl = normalizeSocialUrl(settings?.facebook_url, "facebook");
   const webUrl = normalizeSocialUrl(settings?.website_url, "website");
   const waUrl = whatsappUrl(settings?.phone);
-  const mapsUrl = googleMapsUrl(settings?.address);
+  const mapsUrl = googleMapsUrl(settings?.address, settings?.address_city, settings?.address_province);
 
   const cardStyle = { background: theme.cardBg, borderColor: theme.cardBorder, color: theme.text };
 
@@ -339,17 +339,13 @@ export default function PublicBooking() {
                 <div className="rounded-2xl border overflow-hidden" style={cardStyle}>
                   <div className="px-4 py-3.5 flex items-start gap-3">
                     <MapPin className="w-4 h-4 shrink-0 mt-0.5" style={{ color: theme.muted }} />
-                    <p className="text-sm" style={{ color: theme.text }}>{settings.address}</p>
+                    <p className="text-sm" style={{ color: theme.text }}>{[settings.address, settings.address_city, settings.address_province].filter(Boolean).join(", ")}</p>
                   </div>
                   <iframe
                     title="Ubicación"
                     className="w-full h-48 border-0"
                     loading="lazy"
-                    src={
-                      settings.address_lat && settings.address_lng
-                        ? `https://maps.google.com/maps?q=${settings.address_lat},${settings.address_lng}&z=16&output=embed`
-                        : `https://maps.google.com/maps?q=${encodeURIComponent(settings.address)}&z=15&output=embed`
-                    }
+                    src={googleMapsEmbedSrc({ address: settings.address, city: settings.address_city, province: settings.address_province, lat: settings.address_lat, lng: settings.address_lng })}
                   />
                   <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 px-4 py-3 text-sm font-medium hover:opacity-80 transition-opacity" style={{ borderTop: `1px solid ${theme.cardBorder}`, color: brand }}>
                     Abrir en Google Maps <ExternalLink className="w-3.5 h-3.5" />

@@ -6,9 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2, Upload, Check } from "lucide-react";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import { PROFESSIONAL_TYPES, getTypeLabel } from "@/lib/professional-presets";
+import { THEME_PRESETS, resolveTheme } from "@/lib/theme-presets";
 import { useToast } from "@/components/ui/use-toast";
 import PublicLinkCard from "@/components/PublicLinkCard";
 
@@ -40,6 +41,7 @@ export default function PracticeProfileSection() {
     handle: "",
     photo_url: "",
     page_color: "#0f172a",
+    theme_preset: "clean_light",
     description: "",
     published: true,
   });
@@ -64,6 +66,7 @@ export default function PracticeProfileSection() {
         handle: settings.handle || "",
         photo_url: settings.photo_url || "",
         page_color: settings.page_color || "#0f172a",
+        theme_preset: settings.theme_preset || "clean_light",
         description: settings.description || "",
         published: settings.published !== false,
       });
@@ -155,17 +158,45 @@ export default function PracticeProfileSection() {
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="page_color">Color de tu página</Label>
-          <div className="flex items-center gap-2">
-            <input
-              type="color"
-              id="page_color"
-              value={form.page_color}
-              onChange={(e) => set("page_color", e.target.value)}
-              className="w-10 h-9 rounded border border-input p-1 cursor-pointer"
-            />
-            <Input value={form.page_color} onChange={(e) => set("page_color", e.target.value)} className="flex-1 font-mono text-xs" />
+          <Label htmlFor="page_color">Tema de tu página de reservas</Label>
+          <p className="text-xs text-muted-foreground mb-2">Así se va a ver /u/{cleanHandle || "tuusuario"}. Elegí un estilo con un clic.</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            {Object.entries(THEME_PRESETS).map(([key, preset]) => {
+              const theme = key === "brand_accent" ? resolveTheme(key, form.page_color) : preset;
+              const selected = form.theme_preset === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => set("theme_preset", key)}
+                  className={`text-left rounded-xl border-2 overflow-hidden transition-all ${selected ? "border-primary shadow-sm" : "border-border hover:border-primary/40"}`}
+                >
+                  <div className="h-14 flex items-center justify-center gap-1.5" style={{ background: theme.bg }}>
+                    <div className="w-5 h-5 rounded-full" style={{ background: theme.accent }} />
+                    <div className="w-8 h-2.5 rounded-full" style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}` }} />
+                  </div>
+                  <div className="px-2.5 py-2 bg-card">
+                    <div className="flex items-center gap-1">
+                      <p className="text-xs font-medium">{preset.label}</p>
+                      {selected && <Check className="w-3 h-3 text-primary ml-auto" />}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
           </div>
+          {form.theme_preset === "brand_accent" && (
+            <div className="flex items-center gap-2 pt-1">
+              <input
+                type="color"
+                id="page_color"
+                value={form.page_color}
+                onChange={(e) => set("page_color", e.target.value)}
+                className="w-10 h-9 rounded border border-input p-1 cursor-pointer"
+              />
+              <Input value={form.page_color} onChange={(e) => set("page_color", e.target.value)} className="flex-1 font-mono text-xs" placeholder="#0f172a" />
+            </div>
+          )}
         </div>
       </Section>
 

@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Calendar, Mail, CheckCircle2, Check, Clock3, Link2, Copy, ExternalLink, Share2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import PracticeProfileSection from "@/components/PracticeProfileSection";

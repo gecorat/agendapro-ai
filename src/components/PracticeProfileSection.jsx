@@ -6,12 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Upload, Check } from "lucide-react";
+import { Loader2, Upload, Check, Copy, ExternalLink, Share2 } from "lucide-react";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import { PROFESSIONAL_TYPES, getTypeLabel } from "@/lib/professional-presets";
 import { THEME_PRESETS, resolveTheme } from "@/lib/theme-presets";
 import { useToast } from "@/components/ui/use-toast";
-import PublicLinkCard from "@/components/PublicLinkCard";
 import AddressAutocompleteInput from "@/components/AddressAutocompleteInput";
 
 function Section({ title, description, children }) {
@@ -27,8 +26,7 @@ function Section({ title, description, children }) {
 }
 
 // Preview real del header de la página pública, calculado en cada render a partir del
-// estado actual del formulario — por eso nunca puede "quedarse pegado" en un tema viejo
-// (antes no existía este preview y aparentemente algo daba esa sensación).
+// estado actual del formulario — por eso nunca puede "quedarse pegado" en un tema viejo.
 function HeaderPreview({ form }) {
   const theme = resolveTheme(form.theme_preset, form.page_color);
   return (
@@ -43,9 +41,9 @@ function HeaderPreview({ form }) {
       </div>
       <div className="px-4 pb-4 text-center -mt-8" style={{ background: theme.bg }}>
         {form.photo_url ? (
-          <img src={form.photo_url} alt="" className="w-16 h-16 rounded-full object-cover mx-auto shadow" style={{ boxShadow: `0 0 0 3px ${theme.bg}` }} />
+          <img src={form.photo_url} alt="" className="w-16 h-16 rounded-full object-cover mx-auto block" style={{ boxShadow: `0 0 0 3px ${theme.bg}` }} />
         ) : (
-          <div className="w-16 h-16 rounded-full mx-auto flex items-center justify-center font-heading font-bold shadow" style={{ background: theme.accent, color: theme.accentText, boxShadow: `0 0 0 3px ${theme.bg}` }}>
+          <div className="w-16 h-16 rounded-full mx-auto flex items-center justify-center font-heading font-bold" style={{ background: theme.accent, color: theme.accentText, boxShadow: `0 0 0 3px ${theme.bg}` }}>
             {(form.practice_name || "?")[0]?.toUpperCase()}
           </div>
         )}
@@ -60,6 +58,69 @@ function HeaderPreview({ form }) {
   );
 }
 
+// Tarjeta neutra (no usa el color/tema elegido, para no confundirse con la vista previa
+// de arriba): usuario público + link + acciones, todo en un mismo bloque.
+function BookingLinkCard({ handle, onChangeHandle, url, practiceName }) {
+  const [copied, setCopied] = useState(false);
+  const [shared, setShared] = useState(false);
+
+  const copy = async () => {
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch { /* ignore */ }
+  };
+
+  const share = async () => {
+    if (!url) return;
+    if (navigator.share) {
+      try { await navigator.share({ title: practiceName || "Reservá tu turno", text: "Reservá tu turno online:", url }); } catch { /* cancelado */ }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setShared(true);
+      setTimeout(() => setShared(false), 2000);
+    } catch { /* noop */ }
+  };
+
+  return (
+    <div className="rounded-2xl border border-border bg-card overflow-hidden">
+      <div className="p-4 space-y-1.5">
+        <Label htmlFor="handle">Usuario público (@)</Label>
+        <div className="flex items-center gap-2">
+          <span className="text-muted-foreground text-sm">@</span>
+          <Input id="handle" value={handle} onChange={(e) => onChangeHandle(e.target.value)} placeholder="drmartinez" className="flex-1" />
+        </div>
+        <p className="text-xs text-muted-foreground">Sin espacios ni @. Este es tu link para compartir con pacientes.</p>
+      </div>
+      {url && (
+        <div className="px-4 pb-4 pt-1 space-y-3 border-t border-border">
+          <div className="bg-muted/60 rounded-xl px-3 py-2.5 overflow-x-auto">
+            <p className="font-mono text-xs whitespace-nowrap text-foreground/80">{url}</p>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={copy} className="rounded-xl gap-1.5">
+              {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+              {copied ? "Copiado" : "Copiar"}
+            </Button>
+            <Button type="button" variant="outline" size="sm" className="rounded-xl gap-1.5" asChild>
+              <a href={url} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="w-3.5 h-3.5" /> Ver
+              </a>
+            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={share} className="rounded-xl gap-1.5">
+              <Share2 className="w-3.5 h-3.5" /> {shared ? "Copiado" : "Compartir"}
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function PracticeProfileSection() {
   const { settings, save, reload } = usePracticeSettings();
   const { toast } = useToast();
@@ -68,6 +129,8 @@ export default function PracticeProfileSection() {
     practice_name: "",
     specialty: "",
     address: "",
+    address_city: "",
+    address_province: "",
     address_lat: null,
     address_lng: null,
     phone: "",
@@ -97,6 +160,8 @@ export default function PracticeProfileSection() {
         practice_name: settings.practice_name || "",
         specialty: settings.specialty || "",
         address: settings.address || "",
+        address_city: settings.address_city || "",
+        address_province: settings.address_province || "",
         address_lat: settings.address_lat ?? null,
         address_lng: settings.address_lng ?? null,
         phone: settings.phone || "",
@@ -185,36 +250,19 @@ export default function PracticeProfileSection() {
           <Input id="practice_name" value={form.practice_name} onChange={(e) => set("practice_name", e.target.value)} />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Foto de perfil</Label>
-            <div className="flex items-center gap-3">
-              <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-border bg-accent flex items-center justify-center shrink-0">
-                {form.photo_url ? <img src={form.photo_url} alt="perfil" className="w-full h-full object-cover" /> : <Upload className="w-4 h-4 text-muted-foreground" />}
-              </div>
-              <label className="cursor-pointer">
-                <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md border border-input hover:bg-accent transition-colors">
-                  {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-                  {form.photo_url ? "Cambiar" : "Subir"}
-                </span>
-                <input type="file" accept="image/*" className="hidden" onChange={handlePhoto} disabled={uploading} />
-              </label>
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Foto de perfil</Label>
+          <div className="flex items-center gap-3">
+            <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-border bg-accent flex items-center justify-center shrink-0">
+              {form.photo_url ? <img src={form.photo_url} alt="perfil" className="w-full h-full object-cover" /> : <Upload className="w-4 h-4 text-muted-foreground" />}
             </div>
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Portada (opcional)</Label>
-            <div className="flex items-center gap-3">
-              <div className="w-14 h-14 rounded-lg overflow-hidden border-2 border-border bg-accent flex items-center justify-center shrink-0">
-                {form.cover_image_url ? <img src={form.cover_image_url} alt="portada" className="w-full h-full object-cover" /> : <Upload className="w-4 h-4 text-muted-foreground" />}
-              </div>
-              <label className="cursor-pointer">
-                <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md border border-input hover:bg-accent transition-colors">
-                  {uploadingCover ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-                  {form.cover_image_url ? "Cambiar" : "Subir"}
-                </span>
-                <input type="file" accept="image/*" className="hidden" onChange={handleCover} disabled={uploadingCover} />
-              </label>
-            </div>
+            <label className="cursor-pointer">
+              <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md border border-input hover:bg-accent transition-colors">
+                {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                {form.photo_url ? "Cambiar foto" : "Subir foto"}
+              </span>
+              <input type="file" accept="image/*" className="hidden" onChange={handlePhoto} disabled={uploading} />
+            </label>
           </div>
         </div>
 
@@ -262,22 +310,42 @@ export default function PracticeProfileSection() {
             <Input value={form.page_color} onChange={(e) => set("page_color", e.target.value)} className="flex-1 font-mono text-xs" placeholder="#0f172a" />
           </div>
         )}
-        <div className="pt-1">
+
+        <div className="space-y-1.5 pt-1">
+          <Label className="text-xs text-muted-foreground">Portada personalizada (opcional)</Label>
+          <p className="text-xs text-muted-foreground">Reemplaza el color de fondo del header en cualquier tema que elijas arriba.</p>
+          <div className="flex items-center gap-3 pt-1">
+            <div className="w-20 h-12 rounded-lg overflow-hidden border-2 border-border bg-accent flex items-center justify-center shrink-0">
+              {form.cover_image_url ? <img src={form.cover_image_url} alt="portada" className="w-full h-full object-cover" /> : <Upload className="w-4 h-4 text-muted-foreground" />}
+            </div>
+            <label className="cursor-pointer">
+              <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md border border-input hover:bg-accent transition-colors">
+                {uploadingCover ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                {form.cover_image_url ? "Cambiar portada" : "Subir portada"}
+              </span>
+              <input type="file" accept="image/*" className="hidden" onChange={handleCover} disabled={uploadingCover} />
+            </label>
+            {form.cover_image_url && (
+              <button type="button" onClick={() => set("cover_image_url", "")} className="text-xs text-muted-foreground hover:text-destructive underline">
+                Quitar
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="pt-2">
           <p className="text-xs text-muted-foreground mb-1.5">Así se ve ahora mismo:</p>
           <HeaderPreview form={form} />
         </div>
       </Section>
 
       <Section title="Enlace de reservas">
-        <div className="space-y-1.5">
-          <Label htmlFor="handle">Usuario público (@)</Label>
-          <div className="flex items-center gap-2">
-            <span className="text-muted-foreground text-sm">@</span>
-            <Input id="handle" value={form.handle} onChange={(e) => set("handle", e.target.value)} placeholder="drmartinez" className="flex-1" />
-          </div>
-          <p className="text-xs text-muted-foreground">Sin espacios ni @. Tu enlace será /u/{cleanHandle || "tuusuario"}</p>
-        </div>
-        {publicLink && <PublicLinkCard url={publicLink} practiceName={form.practice_name} brand={form.page_color} />}
+        <BookingLinkCard
+          handle={form.handle}
+          onChangeHandle={(v) => set("handle", v)}
+          url={publicLink}
+          practiceName={form.practice_name}
+        />
       </Section>
 
       <Section title="Contacto">
@@ -290,6 +358,17 @@ export default function PracticeProfileSection() {
             onPlaceSelect={({ address, lat, lng }) => setForm((f) => ({ ...f, address, address_lat: lat, address_lng: lng }))}
           />
         </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="address_city">Localidad</Label>
+            <Input id="address_city" value={form.address_city} onChange={(e) => set("address_city", e.target.value)} placeholder="Ej. Villa Carlos Paz" />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="address_province">Provincia</Label>
+            <Input id="address_province" value={form.address_province} onChange={(e) => set("address_province", e.target.value)} placeholder="Ej. Córdoba" />
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground -mt-1">Ayuda a que el mapa de tu página pública ubique el lugar correcto, sobre todo si todavía no cargaste la búsqueda automática de dirección.</p>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <Label htmlFor="phone">Teléfono</Label>

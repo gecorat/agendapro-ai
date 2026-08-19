@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,36 +7,59 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Plus, Pencil, Trash2, Clock, DollarSign, Loader2 } from "lucide-react";
+import { usePracticeSettings } from "@/hooks/usePracticeSettings";
+import { getPlanStatus } from "@/lib/plan-utils";
+import { Plus, Pencil, Trash2, Clock, DollarSign, Loader2, User } from "lucide-react";
 
-const EMPTY = { name: "", description: "", prep_notes: "", duration_minutes: 30, margin_minutes: 0, color: "#3b82f6", price: "", follow_up_days: 0, active: true };
+const EMPTY = { name: "", description: "", prep_notes: "", duration_minutes: 30, margin_minutes: 0, color: "#3b82f6", price: "", follow_up_days: 0, active: true, professional_ref_id: "" };
+const OWNER_VALUE = "__owner__";
 
 // Única fuente de verdad para gestionar Servicios: la usan tanto la página standalone
 // (ServiceManager.jsx) como la pestaña "Servicios" de Configuración, para no mantener dos
 // formularios/listas distintas que terminan desincronizadas (a una le faltaban campos).
 export default function ServiceManagerPanel({ showHeader = true }) {
   const { toast } = useToast();
+  const { settings } = usePracticeSettings();
+  const status = getPlanStatus(settings);
+  const isClinic = status.canUseMultiProfessional;
+
   const [services, setServices] = useState([]);
+  const [professionals, setProfessionals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
+  const [filterProId, setFilterProId] = useState("all");
 
   const load = async () => {
     setLoading(true);
     try {
-      setServices((await base44.entities.Service.list("-created_date")) || []);
+      const [svcs, pros] = await Promise.all([
+        base44.entities.Service.list("-created_date"),
+        isClinic ? base44.entities.Professional.filter({ active: true }) : Promise.resolve([]),
+      ]);
+      setServices(svcs || []);
+      setProfessionals(pros || []);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [isClinic]);
+
+  const proById = useMemo(() => Object.fromEntries(professionals.map((p) => [p.id, p])), [professionals]);
+
+  const filteredServices = useMemo(() => {
+    if (!isClinic || filterProId === "all") return services;
+    const target = filterProId === OWNER_VALUE ? "" : filterProId;
+    return services.filter((s) => (s.professional_ref_id || "") === target);
+  }, [services, filterProId, isClinic]);
 
   const openNew = () => { setEditing(null); setForm(EMPTY); setOpen(true); };
-  const openEdit = (s) => { setEditing(s); setForm({ ...s, price: s.price ?? "" }); setOpen(true); };
+  const openEdit = (s) => { setEditing(s); setForm({ ...s, price: s.price ?? "", professional_ref_id: s.professional_ref_id || "" }); setOpen(true); };
 
   const save = async (e) => {
     e.preventDefault();
@@ -84,39 +107,59 @@ export default function ServiceManagerPanel({ showHeader = true }) {
         <Button onClick={openNew} className="shadow-sm shrink-0"><Plus className="w-4 h-4 mr-1" /> Nuevo</Button>
       </div>
 
+      {isClinic && professionals.length > 0 && (
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <button onClick={() => setFilterProId("all")} className={`text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${filterProId === "all" ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:bg-muted"}`}>Todos</button>
+          <button onClick={() => setFilterProId(OWNER_VALUE)} className={`text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${filterProId === OWNER_VALUE ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:bg-muted"}`}>Dueño de la cuenta</button>
+          {professionals.map((p) => (
+            <button key={p.id} onClick={() => setFilterProId(p.id)} className={`text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${filterProId === p.id ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:bg-muted"}`}>
+              {p.first_name} {p.last_name}
+            </button>
+          ))}
+        </div>
+      )}
+
       {loading ? (
         <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
-      ) : services.length === 0 ? (
+      ) : filteredServices.length === 0 ? (
         <div className="text-center py-16">
-          <p className="text-muted-foreground text-sm">Aún no cargaste servicios. Creá tu primer tipo de consulta.</p>
+          <p className="text-muted-foreground text-sm">{services.length === 0 ? "Aún no cargaste servicios. Creá tu primer tipo de consulta." : "Sin servicios para este profesional."}</p>
         </div>
       ) : (
         <div className="space-y-2.5">
-          {services.map((s) => (
-            <div key={s.id} className="bg-card rounded-2xl border border-border p-4 hover:shadow-sm transition-shadow">
-              <div className="flex items-start gap-3">
-                <div className="w-1.5 self-stretch rounded-full shrink-0" style={{ background: s.color || "#3b82f6" }} />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-heading font-medium">{s.name}</p>
-                    {!s.active && <Badge variant="secondary">Inactivo</Badge>}
+          {filteredServices.map((s) => {
+            const pro = s.professional_ref_id ? proById[s.professional_ref_id] : null;
+            return (
+              <div key={s.id} className="bg-card rounded-2xl border border-border p-4 hover:shadow-sm transition-shadow">
+                <div className="flex items-start gap-3">
+                  <div className="w-1.5 self-stretch rounded-full shrink-0" style={{ background: s.color || "#3b82f6" }} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-heading font-medium">{s.name}</p>
+                      {!s.active && <Badge variant="secondary">Inactivo</Badge>}
+                      {isClinic && (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                          <User className="w-3 h-3" /> {pro ? `${pro.first_name} ${pro.last_name || ""}`.trim() : "Dueño de la cuenta"}
+                        </span>
+                      )}
+                    </div>
+                    {s.description && <p className="text-sm text-muted-foreground mt-0.5">{s.description}</p>}
+                    {s.prep_notes && <p className="text-xs text-muted-foreground mt-1.5 bg-muted/60 rounded-lg px-2.5 py-1.5">📋 {s.prep_notes}</p>}
+                    <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground flex-wrap">
+                      <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {s.duration_minutes} min</span>
+                      {s.margin_minutes > 0 && <span>+{s.margin_minutes} min margen</span>}
+                      {s.price ? <span className="flex items-center gap-1"><DollarSign className="w-3.5 h-3.5" /> ${s.price}</span> : null}
+                      {s.follow_up_days > 0 && <span>Control en {s.follow_up_days}d</span>}
+                    </div>
                   </div>
-                  {s.description && <p className="text-sm text-muted-foreground mt-0.5">{s.description}</p>}
-                  {s.prep_notes && <p className="text-xs text-muted-foreground mt-1.5 bg-muted/60 rounded-lg px-2.5 py-1.5">📋 {s.prep_notes}</p>}
-                  <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground flex-wrap">
-                    <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {s.duration_minutes} min</span>
-                    {s.margin_minutes > 0 && <span>+{s.margin_minutes} min margen</span>}
-                    {s.price ? <span className="flex items-center gap-1"><DollarSign className="w-3.5 h-3.5" /> ${s.price}</span> : null}
-                    {s.follow_up_days > 0 && <span>Control en {s.follow_up_days}d</span>}
+                  <div className="flex gap-0.5 shrink-0">
+                    <Button size="icon" variant="ghost" className="rounded-lg" onClick={() => openEdit(s)}><Pencil className="w-4 h-4" /></Button>
+                    <Button size="icon" variant="ghost" className="rounded-lg" onClick={() => remove(s)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                   </div>
-                </div>
-                <div className="flex gap-0.5 shrink-0">
-                  <Button size="icon" variant="ghost" className="rounded-lg" onClick={() => openEdit(s)}><Pencil className="w-4 h-4" /></Button>
-                  <Button size="icon" variant="ghost" className="rounded-lg" onClick={() => remove(s)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -128,6 +171,20 @@ export default function ServiceManagerPanel({ showHeader = true }) {
               <Label>Nombre *</Label>
               <Input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="Ej. Consulta general" required />
             </div>
+            {isClinic && professionals.length > 0 && (
+              <div className="space-y-1.5">
+                <Label>Profesional</Label>
+                <Select value={form.professional_ref_id || OWNER_VALUE} onValueChange={(v) => set("professional_ref_id", v === OWNER_VALUE ? "" : v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={OWNER_VALUE}>Dueño de la cuenta</SelectItem>
+                    {professionals.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>{p.first_name} {p.last_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="space-y-1.5">
               <Label>Descripción</Label>
               <Textarea rows={2} value={form.description} onChange={(e) => set("description", e.target.value)} />

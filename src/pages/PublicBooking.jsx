@@ -315,39 +315,52 @@ export default function PublicBooking() {
                   <p className="text-sm leading-relaxed" style={{ color: theme.text }}>{settings.description}</p>
                 </div>
               )}
-              <div className="rounded-2xl border overflow-hidden" style={cardStyle}>
-                {settings?.address && (
-                  <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-3.5 hover:opacity-80 transition-opacity" style={{ borderBottom: `1px solid ${theme.cardBorder}` }}>
-                    <MapPin className="w-4 h-4 shrink-0" style={{ color: theme.muted }} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm truncate" style={{ color: theme.text }}>{settings.address}</p>
-                      <p className="text-xs" style={{ color: theme.muted }}>Ver en Google Maps</p>
-                    </div>
-                    <ExternalLink className="w-3.5 h-3.5 shrink-0" style={{ color: theme.muted }} />
+              {(settings?.phone || settings?.professional_email || fbUrl) && (
+                <div className="rounded-2xl border overflow-hidden" style={cardStyle}>
+                  {settings?.phone && (
+                    <a href={`tel:${settings.phone}`} className="flex items-center gap-3 px-4 py-3.5 hover:opacity-80 transition-opacity" style={{ borderBottom: `1px solid ${theme.cardBorder}` }}>
+                      <Phone className="w-4 h-4 shrink-0" style={{ color: theme.muted }} />
+                      <p className="text-sm" style={{ color: theme.text }}>{settings.phone}</p>
+                    </a>
+                  )}
+                  {settings?.professional_email && (
+                    <a href={`mailto:${settings.professional_email}`} className="flex items-center gap-3 px-4 py-3.5 hover:opacity-80 transition-opacity" style={{ borderBottom: fbUrl ? `1px solid ${theme.cardBorder}` : "none" }}>
+                      <Mail className="w-4 h-4 shrink-0" style={{ color: theme.muted }} />
+                      <p className="text-sm truncate" style={{ color: theme.text }}>{settings.professional_email}</p>
+                    </a>
+                  )}
+                  {fbUrl && (
+                    <a href={fbUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-3.5 hover:opacity-80 transition-opacity">
+                      <Facebook className="w-4 h-4 shrink-0" style={{ color: theme.muted }} />
+                      <p className="text-sm" style={{ color: theme.text }}>Facebook</p>
+                    </a>
+                  )}
+                </div>
+              )}
+              {settings?.address && (
+                <div className="rounded-2xl border overflow-hidden" style={cardStyle}>
+                  <div className="px-4 py-3.5 flex items-start gap-3">
+                    <MapPin className="w-4 h-4 shrink-0 mt-0.5" style={{ color: theme.muted }} />
+                    <p className="text-sm" style={{ color: theme.text }}>{settings.address}</p>
+                  </div>
+                  <iframe
+                    title="Ubicación"
+                    className="w-full h-48 border-0"
+                    loading="lazy"
+                    src={
+                      settings.address_lat && settings.address_lng
+                        ? `https://maps.google.com/maps?q=${settings.address_lat},${settings.address_lng}&z=16&output=embed`
+                        : `https://maps.google.com/maps?q=${encodeURIComponent(settings.address)}&z=15&output=embed`
+                    }
+                  />
+                  <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 px-4 py-3 text-sm font-medium hover:opacity-80 transition-opacity" style={{ borderTop: `1px solid ${theme.cardBorder}`, color: brand }}>
+                    Abrir en Google Maps <ExternalLink className="w-3.5 h-3.5" />
                   </a>
-                )}
-                {settings?.phone && (
-                  <a href={`tel:${settings.phone}`} className="flex items-center gap-3 px-4 py-3.5 hover:opacity-80 transition-opacity" style={{ borderBottom: `1px solid ${theme.cardBorder}` }}>
-                    <Phone className="w-4 h-4 shrink-0" style={{ color: theme.muted }} />
-                    <p className="text-sm" style={{ color: theme.text }}>{settings.phone}</p>
-                  </a>
-                )}
-                {settings?.professional_email && (
-                  <a href={`mailto:${settings.professional_email}`} className="flex items-center gap-3 px-4 py-3.5 hover:opacity-80 transition-opacity" style={{ borderBottom: fbUrl ? `1px solid ${theme.cardBorder}` : "none" }}>
-                    <Mail className="w-4 h-4 shrink-0" style={{ color: theme.muted }} />
-                    <p className="text-sm truncate" style={{ color: theme.text }}>{settings.professional_email}</p>
-                  </a>
-                )}
-                {fbUrl && (
-                  <a href={fbUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-3.5 hover:opacity-80 transition-opacity">
-                    <Facebook className="w-4 h-4 shrink-0" style={{ color: theme.muted }} />
-                    <p className="text-sm" style={{ color: theme.text }}>Facebook</p>
-                  </a>
-                )}
-                {!settings?.address && !settings?.phone && !settings?.professional_email && !fbUrl && (
-                  <p className="text-sm text-center py-6" style={{ color: theme.muted }}>Sin datos de contacto cargados.</p>
-                )}
-              </div>
+                </div>
+              )}
+              {!settings?.description && !settings?.address && !settings?.phone && !settings?.professional_email && !fbUrl && (
+                <p className="text-sm text-center py-6" style={{ color: theme.muted }}>Sin datos de contacto cargados.</p>
+              )}
             </div>
           ) : (
             <>

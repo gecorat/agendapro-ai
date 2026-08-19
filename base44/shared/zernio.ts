@@ -278,10 +278,17 @@ export async function listZernioAccounts(apiKey) {
 
 export function findWhatsAppAccount(accounts, profileId) {
   const wa = accounts.filter((a) => (a.platform || "").toLowerCase() === "whatsapp");
-  const byProfile = wa.find(
-    (a) => a.profileId === profileId || a.profile === profileId || a.profile?._id === profileId
-  );
-  return byProfile || wa[wa.length - 1] || null;
+  // Zernio devuelve profileId como OBJETO ({ _id, name }), no como string plano — el
+  // código viejo comparaba contra a.profile (campo que ni siquiera existe en la respuesta
+  // real), así que nunca encontraba el match correcto y terminaba agarrando "la última
+  // cuenta de la lista" a ciegas. Eso podía vincular el WhatsApp equivocado a un
+  // profesional. Ahora comparamos explícitamente contra profileId._id (u, por las dudas,
+  // el caso en que venga como string plano) y NO hacemos fallback ambiguo: si no hay
+  // match exacto, mejor decir "pendiente" y reintentar que adivinar.
+  return wa.find((a) => {
+    const pid = typeof a.profileId === "object" && a.profileId !== null ? a.profileId._id : a.profileId;
+    return pid === profileId;
+  }) || null;
 }
 
 export function extractWhatsAppPhone(account) {

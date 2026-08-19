@@ -2,7 +2,7 @@ export const PROFESSIONAL_TYPES = [
   { value: "dentist", label: "Odontólogo" },
   { value: "psychologist", label: "Psicólogo" },
   { value: "doctor", label: "Médico clínico" },
-  { value: "physiotherapist", label: "Fisioterapeuta" },
+  { value: "physiotherapist", label: "Fisioterapeuta / Kinesiólogo" },
   { value: "nutritionist", label: "Nutricionista" },
   { value: "dermatologist", label: "Dermatólogo" },
   { value: "pediatrician", label: "Pediatra" },
@@ -13,6 +13,13 @@ export const PROFESSIONAL_TYPES = [
   { value: "occupational_therapist", label: "Terapista ocupacional" },
   { value: "podiatrist", label: "Podólogo" },
   { value: "veterinarian", label: "Veterinario" },
+  { value: "barber", label: "Barbero / Peluquero" },
+  { value: "esthetician", label: "Esteticista / Centro de estética" },
+  { value: "personal_trainer", label: "Entrenador personal" },
+  { value: "masseuse", label: "Masajista / Spa" },
+  { value: "lawyer", label: "Abogado" },
+  { value: "accountant", label: "Contador" },
+  { value: "coach", label: "Coach / Consultor" },
   { value: "other", label: "Otro" },
 ];
 
@@ -151,6 +158,64 @@ export const PRESETS = {
       { name: "Consulta general", description: "Consulta de rutina", duration_minutes: 30, margin_minutes: 5, color: "#3b82f6", follow_up_days: 0 },
       { name: "Primera consulta", description: "Evaluación inicial", duration_minutes: 45, margin_minutes: 10, color: "#10b981", follow_up_days: 30 },
       { name: "Control de seguimiento", description: "Control post-consulta", duration_minutes: 20, margin_minutes: 5, color: "#f59e0b", follow_up_days: 30 },
+    ],
+  },
+  barber: {
+    patientLabel: "Clientes",
+    services: [
+      { name: "Corte de cabello", description: "Corte clásico o a máquina", duration_minutes: 30, margin_minutes: 5, color: "#3b82f6", follow_up_days: 21 },
+      { name: "Corte + barba", description: "Corte y perfilado de barba", duration_minutes: 45, margin_minutes: 10, color: "#10b981", follow_up_days: 21 },
+      { name: "Afeitado clásico", description: "Afeitado a navaja con toalla caliente", duration_minutes: 30, margin_minutes: 5, color: "#f59e0b", follow_up_days: 14 },
+      { name: "Coloración", description: "Color o platinado", duration_minutes: 60, margin_minutes: 15, color: "#8b5cf6", follow_up_days: 30 },
+    ],
+  },
+  esthetician: {
+    patientLabel: "Clientes",
+    services: [
+      { name: "Limpieza facial", description: "Limpieza profunda con extracciones", duration_minutes: 60, margin_minutes: 10, color: "#ec4899", follow_up_days: 30 },
+      { name: "Manicuría", description: "Manicuría tradicional o semipermanente", duration_minutes: 45, margin_minutes: 10, color: "#3b82f6", follow_up_days: 21 },
+      { name: "Depilación", description: "Depilación con cera", duration_minutes: 30, margin_minutes: 10, color: "#10b981", follow_up_days: 30 },
+      { name: "Tratamiento corporal", description: "Sesión de estética corporal", duration_minutes: 60, margin_minutes: 15, color: "#8b5cf6", follow_up_days: 15 },
+    ],
+  },
+  personal_trainer: {
+    patientLabel: "Clientes",
+    services: [
+      { name: "Sesión individual", description: "Entrenamiento personalizado", duration_minutes: 60, margin_minutes: 10, color: "#3b82f6", follow_up_days: 3 },
+      { name: "Evaluación física inicial", description: "Evaluación y armado de plan", duration_minutes: 45, margin_minutes: 15, color: "#f59e0b", follow_up_days: 30 },
+      { name: "Sesión en pareja", description: "Entrenamiento para dos personas", duration_minutes: 60, margin_minutes: 10, color: "#10b981", follow_up_days: 3 },
+    ],
+  },
+  masseuse: {
+    patientLabel: "Clientes",
+    services: [
+      { name: "Masaje descontracturante", description: "Masaje terapéutico de espalda", duration_minutes: 45, margin_minutes: 10, color: "#3b82f6", follow_up_days: 14 },
+      { name: "Masaje relajante", description: "Masaje corporal completo", duration_minutes: 60, margin_minutes: 10, color: "#8b5cf6", follow_up_days: 21 },
+      { name: "Drenaje linfático", description: "Técnica de drenaje manual", duration_minutes: 45, margin_minutes: 10, color: "#10b981", follow_up_days: 14 },
+    ],
+  },
+  lawyer: {
+    patientLabel: "Clientes",
+    services: [
+      { name: "Consulta inicial", description: "Primera consulta y evaluación del caso", duration_minutes: 45, margin_minutes: 15, color: "#3b82f6", follow_up_days: 0 },
+      { name: "Asesoría legal", description: "Consulta de asesoramiento", duration_minutes: 30, margin_minutes: 10, color: "#64748b", follow_up_days: 30 },
+      { name: "Seguimiento de causa", description: "Reunión de avance de expediente", duration_minutes: 30, margin_minutes: 10, color: "#f59e0b", follow_up_days: 30 },
+    ],
+  },
+  accountant: {
+    patientLabel: "Clientes",
+    services: [
+      { name: "Consulta impositiva", description: "Asesoramiento fiscal e impositivo", duration_minutes: 45, margin_minutes: 10, color: "#3b82f6", follow_up_days: 30 },
+      { name: "Alta de monotributo/sociedad", description: "Gestión de inicio de actividad", duration_minutes: 60, margin_minutes: 15, color: "#10b981", follow_up_days: 0 },
+      { name: "Revisión mensual", description: "Chequeo mensual de cuentas", duration_minutes: 30, margin_minutes: 5, color: "#f59e0b", follow_up_days: 30 },
+    ],
+  },
+  coach: {
+    patientLabel: "Clientes",
+    services: [
+      { name: "Sesión de coaching", description: "Sesión individual", duration_minutes: 60, margin_minutes: 10, color: "#8b5cf6", follow_up_days: 7 },
+      { name: "Primera sesión diagnóstica", description: "Evaluación de objetivos", duration_minutes: 60, margin_minutes: 15, color: "#3b82f6", follow_up_days: 7 },
+      { name: "Consultoría puntual", description: "Sesión de consultoría breve", duration_minutes: 30, margin_minutes: 5, color: "#f59e0b", follow_up_days: 14 },
     ],
   },
 };

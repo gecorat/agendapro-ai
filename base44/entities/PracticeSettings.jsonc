@@ -78,6 +78,18 @@
       "title": "Color de la página pública",
       "default": "#0f172a"
     },
+    "theme_preset": {
+      "type": "string",
+      "title": "Tema visual de la página pública",
+      "enum": [
+        "minimal_dark",
+        "clean_light",
+        "pastel_soft",
+        "brand_accent"
+      ],
+      "default": "clean_light",
+      "description": "Preset de estilo para /u/tuusuario. brand_accent usa page_color como acento; los demas tienen paleta fija."
+    },
     "description": {
       "type": "string",
       "title": "Descripción / presentación"

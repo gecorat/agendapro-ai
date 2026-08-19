@@ -85,7 +85,11 @@ export default function AvailabilityEditor() {
       await base44.entities.Availability.delete(id);
       setItems((prev) => prev.filter((it) => it.id !== id));
     } catch (err) {
-      toast({ title: "No se pudo eliminar", description: err?.message, variant: "destructive" });
+      // Si el registro ya no existe del lado del servidor (por ejemplo, la pantalla tenía
+      // datos viejos de una sesión larga), no lo dejamos como una tarjeta fantasma
+      // imposible de borrar: recargamos para que la vista vuelva a coincidir con la base.
+      toast({ title: "Ese horario ya no existía", description: "Actualizamos la lista.", variant: "destructive" });
+      await load();
     } finally {
       setDeleting(null);
     }

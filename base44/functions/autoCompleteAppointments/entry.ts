@@ -7,7 +7,8 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 // en dos lugares.
 export default async function (req: Request): Promise<Response> {
   try {
-    const base44 = createClientFromRequest(req);    const now = new Date();
+    const base44 = createClientFromRequest(req);
+    const now = new Date();
 
     const appts = await base44.asServiceRole.entities.Appointment.filter({ status: 'confirmed' });
     const due = (appts || []).filter((a) => a.end_datetime && new Date(a.end_datetime) < now);

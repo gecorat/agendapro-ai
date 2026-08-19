@@ -39,14 +39,19 @@ function HeaderPreview({ form }) {
       >
         {form.cover_image_url && <div className="absolute inset-0 bg-black/20" />}
       </div>
-      <div className="relative z-10 px-4 pb-4 text-center -mt-9" style={{ background: theme.bg }}>
-        {form.photo_url ? (
-          <img src={form.photo_url} alt="" className="w-16 h-16 rounded-full object-cover mx-auto block" style={{ boxShadow: `0 0 0 3px ${theme.bg}` }} />
-        ) : (
-          <div className="w-16 h-16 rounded-full mx-auto flex items-center justify-center font-heading font-bold" style={{ background: theme.accent, color: theme.accentText, boxShadow: `0 0 0 3px ${theme.bg}` }}>
-            {(form.practice_name || "?")[0]?.toUpperCase()}
-          </div>
-        )}
+      <div className="px-4 pb-4 text-center" style={{ background: theme.bg }}>
+        {/* El margen negativo va solo en este wrapper chico (transparente), no en el
+            contenedor entero — así el avatar se superpone al banner sin que un rectángulo
+            de color sólido tape parte del banner en la zona de superposición. */}
+        <div className="relative z-10 -mt-9 inline-block">
+          {form.photo_url ? (
+            <img src={form.photo_url} alt="" className="w-16 h-16 rounded-full object-cover mx-auto block" style={{ boxShadow: `0 0 0 3px ${theme.bg}` }} />
+          ) : (
+            <div className="w-16 h-16 rounded-full mx-auto flex items-center justify-center font-heading font-bold" style={{ background: theme.accent, color: theme.accentText, boxShadow: `0 0 0 3px ${theme.bg}` }}>
+              {(form.practice_name || "?")[0]?.toUpperCase()}
+            </div>
+          )}
+        </div>
         <p className="text-sm font-heading font-semibold mt-2" style={{ color: theme.text }}>{form.practice_name || "Tu consultorio"}</p>
         {form.specialty && <p className="text-xs mt-0.5" style={{ color: theme.muted }}>{form.specialty}</p>}
         <div className="inline-flex items-center gap-1 mt-2.5 p-1 rounded-full" style={{ background: theme.chipBg || `${theme.text}0d` }}>

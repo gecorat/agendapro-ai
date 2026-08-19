@@ -2,7 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { sendEmail } from "../../shared/email-sender.ts";
 import { sendWhatsApp } from "../../shared/zernio.ts";
 import { buildEmailHtml, getAppUrl } from "../../shared/email-template.ts";
-import { getAppointmentContext, whatsappLink } from "../../shared/appointment-context.ts";
+import { getAppointmentContext } from "../../shared/appointment-context.ts";
 
 export default async function(req) {
   try {
@@ -75,7 +75,6 @@ export default async function(req) {
         if (!cancelToken) cancelToken = crypto.randomUUID();
         const rescheduleUrl = practice?.handle ? `${appUrl}/reschedule/${cancelToken}` : null;
         const cancelUrl = `${appUrl}/x/${cancelToken}`;
-        const waLink = whatsappLink(practice?.phone, `Hola! Te escribo por mi cita de ${serviceName} del ${dateStr}.`);
 
         const subject = is3h ? `Tu cita es en 3 horas — ${serviceName}` : `Recordatorio: tu cita de mañana — ${serviceName}`;
         const emailBody = buildEmailHtml({
@@ -92,7 +91,6 @@ export default async function(req) {
           ],
           primaryButton: rescheduleUrl ? { label: "Reagendar", url: rescheduleUrl } : null,
           secondaryButton: { label: "Cancelar cita", url: cancelUrl },
-          whatsappButton: waLink ? { label: "Escribir por WhatsApp", url: waLink } : null,
           footer: practice?.practice_name || "Kame Agenda",
         });
 

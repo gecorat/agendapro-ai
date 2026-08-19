@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CalendarClock, Clock, ArrowRight, Check, Loader2, Calendar, MapPin, Phone, Mail, CalendarX, MessageCircle, Instagram, Facebook, Globe, ExternalLink } from "lucide-react";
-import { Image } from "@/components/ui/image";
 import { resolveTheme, normalizeSocialUrl, whatsappUrl, googleMapsUrl } from "@/lib/theme-presets";
 
 function parseTimeToDate(date, time) {

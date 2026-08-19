@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Calendar, Mail, CheckCircle2, Check, Clock3, Link2, Copy, ExternalLink, Share2 } from "lucide-react";
+import { Calendar, Mail, CheckCircle2, Clock3 } from "lucide-react";
 import { Link } from "react-router-dom";
+import PublicLinkCard from "@/components/PublicLinkCard";
 import PracticeProfileSection from "@/components/PracticeProfileSection";
 import AvailabilityEditor from "@/components/AvailabilityEditor";
 import WhatsAppConnectCard from "@/components/WhatsAppConnectCard";
@@ -55,7 +56,7 @@ export default function Settings() {
             <p className="text-sm text-muted-foreground">Conectá tus cuentas para automatizar</p>
           </div>
 
-          <PublicLinkCard />
+          <PublicLinkSection />
 
           <IntegrationCard icon={Calendar} name="Google Calendar" description="Sincronización bidireccional de citas" state="soon" />
           <WhatsAppConnectCard />
@@ -146,86 +147,19 @@ function PlanSection() {
   );
 }
 
-function PublicLinkCard() {
+function PublicLinkSection() {
   const { settings } = usePracticeSettings();
-  const [copied, setCopied] = useState(false);
-  const [shared, setShared] = useState(false);
   const handle = (settings?.handle || "").replace(/^@/, "");
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const url = origin + (handle ? `/u/${handle}` : "");
-  const brand = settings?.page_color || "#0000ff";
-
-  const copy = async () => {
-    if (!url) return;
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      setCopied(false);
-    }
-  };
-
-  const share = async () => {
-    if (!url) return;
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: settings?.practice_name || "Reservá tu turno", text: "Reservá tu turno online:", url });
-        return;
-      } catch {
-        // el usuario canceló el share nativo, no hacemos nada más
-        return;
-      }
-    }
-    // Sin Web Share API (típico en desktop): copiamos y avisamos, es lo más útil que
-    // podemos ofrecer sin abrir una red social específica sin que nos lo pidan.
-    try {
-      await navigator.clipboard.writeText(url);
-      setShared(true);
-      setTimeout(() => setShared(false), 2000);
-    } catch { /* noop */ }
-  };
-
-  return (
-    <div className="relative overflow-hidden rounded-2xl border border-border bg-card">
-      <div className="h-16 relative" style={{ background: `linear-gradient(135deg, ${brand}, ${brand}99)` }}>
-        <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-white/10 blur-xl" />
-        <div className="absolute -bottom-8 left-10 w-20 h-20 rounded-full bg-white/10 blur-lg" />
+  const url = (typeof window !== "undefined" ? window.location.origin : "") + (handle ? `/u/${handle}` : "");
+  if (!handle) {
+    return (
+      <div className="bg-card rounded-2xl border border-border p-4">
+        <p className="font-medium mb-1">Tu página de reservas</p>
+        <p className="text-sm text-muted-foreground">Elegí tu @usuario en la pestaña <strong>Perfil</strong> para activar tu enlace.</p>
       </div>
-      <div className="px-4 pb-4 -mt-7">
-        <div className="w-12 h-12 rounded-xl bg-card shadow-md border border-border flex items-center justify-center mb-2.5">
-          <Link2 className="w-5 h-5" style={{ color: brand }} />
-        </div>
-        <p className="font-heading font-semibold">Tu página de reservas</p>
-        <p className="text-sm text-muted-foreground mb-3">
-          Compartila con tus pacientes. Reservan solos, sin escribirte.
-        </p>
-        {handle ? (
-          <>
-            <div className="bg-muted/60 rounded-xl px-3 py-2.5 mb-3 overflow-x-auto">
-              <p className="font-mono text-xs whitespace-nowrap text-foreground/80">{url}</p>
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              <Button variant="outline" size="sm" onClick={copy} className="rounded-xl gap-1.5">
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                {copied ? "Copiado" : "Copiar"}
-              </Button>
-              <Button variant="outline" size="sm" className="rounded-xl gap-1.5" asChild>
-                <a href={url} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="w-3.5 h-3.5" /> Ver
-                </a>
-              </Button>
-              <Button size="sm" onClick={share} className="rounded-xl gap-1.5 text-white" style={{ backgroundColor: brand }}>
-                <Share2 className="w-3.5 h-3.5" /> {shared ? "Copiado" : "Compartir"}
-              </Button>
-            </div>
-          </>
-        ) : (
-          <p className="text-sm text-muted-foreground">Elegí tu @usuario en la pestaña <strong>Perfil</strong> para activar tu enlace.</p>
-        )}
-      </div>
-    </div>
-  );
+    );
+  }
+  return <PublicLinkCard url={url} practiceName={settings?.practice_name} brand={settings?.page_color} />;
 }
 
 // state: "connected" | "soon" (todavía no integrado — mostramos esto en vez de un botón

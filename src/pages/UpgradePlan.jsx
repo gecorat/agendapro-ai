@@ -105,7 +105,7 @@ export default function UpgradePlan() {
 
         <Card className={`p-6 flex flex-col ${status.plan === "clinic" ? "border-2 border-primary" : ""}`}>
           <div className="flex items-center gap-2">
-            <span className="font-heading font-semibold text-lg">Clinic</span>
+            <span className="font-heading font-semibold text-lg">{PLAN_LABELS.clinic}</span>
             <Sparkles className="w-4 h-4 text-amber-500" />
           </div>
           <p className="text-3xl font-heading font-bold mt-2">{PLAN_PRICES.clinic}<span className="text-sm font-normal text-muted-foreground"> ARS/mes</span></p>

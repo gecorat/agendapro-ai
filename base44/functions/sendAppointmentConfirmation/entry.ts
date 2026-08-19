@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { buildEmailHtml, getAppUrl } from "../../shared/email-template.ts";
 import { sendEmail } from "../../shared/email-sender.ts";
-import { getAppointmentContext, whatsappLink } from "../../shared/appointment-context.ts";
+import { getAppointmentContext } from "../../shared/appointment-context.ts";
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -75,7 +75,6 @@ export default async function(req: Request): Promise<Response> {
 
     const rescheduleUrl = handle ? `${appUrl}/reschedule/${cancelToken}` : null;
     const cancelUrl = `${appUrl}/x/${cancelToken}`;
-    const waLink = whatsappLink(practice?.phone, `Hola! Te escribo por mi cita de ${serviceName} del ${dateStr}.`);
 
     await sendEmail(base44, {
       to: email,
@@ -94,7 +93,6 @@ export default async function(req: Request): Promise<Response> {
         ],
         primaryButton: rescheduleUrl ? { label: "Reagendar", url: rescheduleUrl } : null,
         secondaryButton: { label: "Cancelar cita", url: cancelUrl },
-        whatsappButton: waLink ? { label: "Escribir por WhatsApp", url: waLink } : null,
         footer: signature,
       }),
     });

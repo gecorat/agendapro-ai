@@ -4,9 +4,9 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
-import { CalendarClock, Clock, ArrowRight, Check, Loader2, Calendar, MapPin, FileText, Phone, Mail, CalendarX, MessageCircle, Instagram, Facebook } from "lucide-react";
+import { CalendarClock, Clock, ArrowRight, Check, Loader2, Calendar, MapPin, FileText, Phone, Mail, CalendarX, MessageCircle, Instagram, Facebook, Globe, ExternalLink } from "lucide-react";
 import { Image } from "@/components/ui/image";
+import { resolveTheme, normalizeSocialUrl, whatsappUrl, googleMapsUrl } from "@/lib/theme-presets";
 
 function parseTimeToDate(date, time) {
   const [h, m] = time.split(":").map(Number);
@@ -34,9 +34,6 @@ function isBlockedDate(availability, date) {
 function getWorkRanges(availability, dayOfWeek) {
   const work = availability.filter((a) => a.type === "work" && a.day_of_week === dayOfWeek);
   if (work.length) return work.map((w) => ({ start: w.start_time, end: w.end_time })).sort((a, b) => a.start.localeCompare(b.start));
-  // Solo aplicamos un horario por defecto si el profesional todavía no configuró NINGÚN
-  // horario de trabajo (cuenta nueva). Si ya tiene horarios cargados pero este día en
-  // particular está vacío, es porque lo dejó libre a propósito: no debe ofrecerse.
   const hasAnyWorkConfigured = availability.some((a) => a.type === "work");
   if (!hasAnyWorkConfigured && dayOfWeek >= 1 && dayOfWeek <= 5) return [{ start: "09:00", end: "18:00" }];
   return [];
@@ -111,6 +108,7 @@ export default function PublicBooking() {
   const [availability, setAvailability] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [tab, setTab] = useState("agendar");
 
   const [step, setStep] = useState(1);
   const [service, setService] = useState(null);
@@ -177,9 +175,6 @@ export default function PublicBooking() {
     setSaving(true);
     setBookingError(null);
     try {
-      // La creación del paciente/turno se hace en una función de backend
-      // (createPublicAppointment) que re-valida el horario justo antes de guardar, para
-      // evitar que dos visitantes reserven el mismo turno si confirman casi al mismo tiempo.
       const res = await base44.functions.invoke("createPublicAppointment", {
         professional_id: professionalId,
         service_id: service.id,
@@ -194,8 +189,6 @@ export default function PublicBooking() {
     } catch (err) {
       const message = err?.response?.data?.message || err?.response?.data?.error || "No se pudo confirmar el turno. Probá de nuevo.";
       setBookingError(message);
-      // Si el horario ya fue tomado por otra persona, volvemos a la selección de horario y
-      // refrescamos la disponibilidad para que no vuelva a aparecer como libre.
       setSlot(null);
       setStep(2);
       try {
@@ -214,6 +207,8 @@ export default function PublicBooking() {
       setSaving(false);
     }
   }, [service, slot, form, professionalId]);
+
+  const theme = resolveTheme(settings?.theme_preset || "clean_light", settings?.page_color);
 
   if (loading) {
     return (
@@ -235,262 +230,302 @@ export default function PublicBooking() {
     );
   }
 
-  const brand = settings?.page_color || "#0f172a";
+  const brand = theme.accent;
+  const igUrl = normalizeSocialUrl(settings?.instagram_url, "instagram");
+  const fbUrl = normalizeSocialUrl(settings?.facebook_url, "facebook");
+  const webUrl = normalizeSocialUrl(settings?.website_url, "website");
+  const waUrl = whatsappUrl(settings?.phone);
+  const mapsUrl = googleMapsUrl(settings?.address);
+
+  const cardStyle = { background: theme.cardBg, borderColor: theme.cardBorder, color: theme.text };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Header full-bleed oscuro premium */}
-      <div
-        className="w-full relative overflow-hidden"
-        style={{ background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)" }}
-      >
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle at 18% 50%, white 0%, transparent 55%)" }} />
-        <div className="relative px-4 py-5 sm:px-6 sm:py-6 text-white">
-          <div className="flex items-start gap-4 sm:gap-6">
-            {settings?.photo_url && (
-              <Image
-                src={settings.photo_url}
-                alt={settings.practice_name}
-                fittingType="fill"
-                className="w-[130px] h-[130px] sm:w-[170px] sm:h-[170px] rounded-2xl overflow-hidden object-cover shadow-xl ring-1 ring-white/15 shrink-0"
-              />
-            )}
-            <div className="flex-1 min-w-0">
-              <h1 className="text-3xl font-heading font-extrabold tracking-tight leading-tight">{settings?.practice_name || "Reservá tu turno"}</h1>
-              {settings?.specialty && <p className="text-sm text-white/70 mt-0.5">{settings.specialty}</p>}
-              <div className="h-px w-full bg-white/20 my-3" />
-              <div className="flex flex-wrap items-start gap-2">
-                {settings?.phone && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm text-xs font-medium">
-                    <Phone className="w-3.5 h-3.5 shrink-0" /> {settings.phone}
-                  </span>
-                )}
-                {settings?.address && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm text-xs font-medium">
-                    <MapPin className="w-3.5 h-3.5 shrink-0" /> {settings.address}
-                  </span>
-                )}
-                {settings?.description && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm text-xs font-medium">
-                    <FileText className="w-3.5 h-3.5 shrink-0" /> <span className="line-clamp-1">{settings.description}</span>
-                  </span>
-                )}
-              </div>
-              {(settings?.instagram_url || settings?.facebook_url) && (
-                <div className="flex flex-wrap items-start gap-2 mt-2">
-                  {settings?.instagram_url && (
-                    <a href={settings.instagram_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm text-xs font-medium hover:bg-white/20 transition-colors">
-                      <Instagram className="w-3.5 h-3.5 shrink-0" /> Instagram
-                    </a>
-                  )}
-                  {settings?.facebook_url && (
-                    <a href={settings.facebook_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm text-xs font-medium hover:bg-white/20 transition-colors">
-                      <Facebook className="w-3.5 h-3.5 shrink-0" /> Facebook
-                    </a>
-                  )}
-                </div>
+    <div className="min-h-screen" style={{ background: theme.bg }}>
+      <div className="max-w-md mx-auto">
+        {/* Banner de color del tema, con el avatar superpuesto */}
+        <div className="h-24" style={{ background: `linear-gradient(135deg, ${brand}, ${brand}99)` }} />
+        <div className="px-5 -mt-12 text-center pb-2">
+          {settings?.photo_url ? (
+            <Image
+              src={settings.photo_url}
+              alt={settings.practice_name}
+              fittingType="fill"
+              className="w-24 h-24 rounded-full object-cover shadow-lg mx-auto ring-4"
+              style={{ ringColor: theme.cardBg, boxShadow: `0 0 0 4px ${theme.cardBg}` }}
+            />
+          ) : (
+            <div className="w-24 h-24 rounded-full mx-auto flex items-center justify-center text-2xl font-heading font-bold shadow-lg" style={{ background: brand, color: theme.accentText, boxShadow: `0 0 0 4px ${theme.cardBg}` }}>
+              {(settings?.practice_name || "?")[0]?.toUpperCase()}
+            </div>
+          )}
+          <h1 className="text-xl font-heading font-bold mt-3 leading-tight" style={{ color: theme.text }}>{settings?.practice_name || "Reservá tu turno"}</h1>
+          {settings?.specialty && <p className="text-sm mt-0.5" style={{ color: theme.muted }}>{settings.specialty}</p>}
+
+          {(igUrl || waUrl || webUrl) && (
+            <div className="flex items-center justify-center gap-2 mt-3">
+              {igUrl && (
+                <a href={igUrl} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full flex items-center justify-center transition-transform hover:scale-105" style={{ background: theme.chipBg, color: theme.text }}>
+                  <Instagram className="w-4 h-4" />
+                </a>
+              )}
+              {waUrl && (
+                <a href={waUrl} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full flex items-center justify-center transition-transform hover:scale-105" style={{ background: theme.chipBg, color: theme.text }}>
+                  <MessageCircle className="w-4 h-4" />
+                </a>
+              )}
+              {webUrl && (
+                <a href={webUrl} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full flex items-center justify-center transition-transform hover:scale-105" style={{ background: theme.chipBg, color: theme.text }}>
+                  <Globe className="w-4 h-4" />
+                </a>
               )}
             </div>
+          )}
+
+          {/* Tabs Agendar / Información */}
+          <div className="inline-flex items-center gap-1 mt-4 p-1 rounded-full" style={{ background: theme.chipBg || `${theme.text}0d` }}>
+            <button
+              onClick={() => setTab("agendar")}
+              className="px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
+              style={tab === "agendar" ? { background: brand, color: theme.accentText } : { color: theme.muted }}
+            >
+              Agendar
+            </button>
+            <button
+              onClick={() => setTab("info")}
+              className="px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
+              style={tab === "info" ? { background: brand, color: theme.accentText } : { color: theme.muted }}
+            >
+              Información
+            </button>
           </div>
         </div>
-      </div>
 
-      <div className="max-w-lg mx-auto px-4 py-6">
-        {/* Stepper con texto descriptivo */}
-        {step < 4 && (
-          <div className="flex items-start justify-center gap-1 mb-6">
-            {STEPS.map((s, i) => (
-              <React.Fragment key={s.num}>
-                <div className="flex flex-col items-center gap-1.5 w-20">
-                  <span
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
-                      step >= s.num ? "text-white shadow-md" : "bg-slate-200 text-slate-500"
-                    }`}
-                    style={step >= s.num ? { backgroundColor: brand } : {}}
-                  >
-                    {step > s.num ? <Check className="w-4 h-4" /> : s.num}
-                  </span>
-                  <span className={`text-[10px] font-medium text-center leading-tight ${step >= s.num ? "text-foreground" : "text-muted-foreground"}`}>
-                    {s.label}
-                  </span>
+        <div className="px-4 py-5">
+          {tab === "info" ? (
+            <div className="space-y-3">
+              {settings?.description && (
+                <div className="rounded-2xl border p-4" style={cardStyle}>
+                  <p className="text-sm leading-relaxed" style={{ color: theme.text }}>{settings.description}</p>
                 </div>
-                {i < STEPS.length - 1 && (
-                  <div className={`flex-1 h-px mt-4 mx-1 ${step > s.num ? "" : "bg-slate-300"}`} style={step > s.num ? { backgroundColor: brand } : {}} />
+              )}
+              <div className="rounded-2xl border overflow-hidden" style={cardStyle}>
+                {settings?.address && (
+                  <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-3.5 hover:opacity-80 transition-opacity" style={{ borderBottom: `1px solid ${theme.cardBorder}` }}>
+                    <MapPin className="w-4 h-4 shrink-0" style={{ color: theme.muted }} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm truncate" style={{ color: theme.text }}>{settings.address}</p>
+                      <p className="text-xs" style={{ color: theme.muted }}>Ver en Google Maps</p>
+                    </div>
+                    <ExternalLink className="w-3.5 h-3.5 shrink-0" style={{ color: theme.muted }} />
+                  </a>
                 )}
-              </React.Fragment>
-            ))}
-          </div>
-        )}
+                {settings?.phone && (
+                  <a href={`tel:${settings.phone}`} className="flex items-center gap-3 px-4 py-3.5 hover:opacity-80 transition-opacity" style={{ borderBottom: `1px solid ${theme.cardBorder}` }}>
+                    <Phone className="w-4 h-4 shrink-0" style={{ color: theme.muted }} />
+                    <p className="text-sm" style={{ color: theme.text }}>{settings.phone}</p>
+                  </a>
+                )}
+                {settings?.professional_email && (
+                  <a href={`mailto:${settings.professional_email}`} className="flex items-center gap-3 px-4 py-3.5 hover:opacity-80 transition-opacity" style={{ borderBottom: fbUrl ? `1px solid ${theme.cardBorder}` : "none" }}>
+                    <Mail className="w-4 h-4 shrink-0" style={{ color: theme.muted }} />
+                    <p className="text-sm truncate" style={{ color: theme.text }}>{settings.professional_email}</p>
+                  </a>
+                )}
+                {fbUrl && (
+                  <a href={fbUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-3.5 hover:opacity-80 transition-opacity">
+                    <Facebook className="w-4 h-4 shrink-0" style={{ color: theme.muted }} />
+                    <p className="text-sm" style={{ color: theme.text }}>Facebook</p>
+                  </a>
+                )}
+                {!settings?.address && !settings?.phone && !settings?.professional_email && !fbUrl && (
+                  <p className="text-sm text-center py-6" style={{ color: theme.muted }}>Sin datos de contacto cargados.</p>
+                )}
+              </div>
+            </div>
+          ) : (
+            <>
+              {step < 4 && (
+                <div className="flex items-start justify-center gap-1 mb-6">
+                  {STEPS.map((s, i) => (
+                    <React.Fragment key={s.num}>
+                      <div className="flex flex-col items-center gap-1.5 w-20">
+                        <span
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors"
+                          style={step >= s.num ? { backgroundColor: brand, color: theme.accentText } : { background: theme.chipBg || "#e2e8f0", color: theme.muted }}
+                        >
+                          {step > s.num ? <Check className="w-4 h-4" /> : s.num}
+                        </span>
+                        <span className="text-[10px] font-medium text-center leading-tight" style={{ color: step >= s.num ? theme.text : theme.muted }}>
+                          {s.label}
+                        </span>
+                      </div>
+                      {i < STEPS.length - 1 && (
+                        <div className="flex-1 h-px mt-4 mx-1" style={{ background: step > s.num ? brand : theme.cardBorder }} />
+                      )}
+                    </React.Fragment>
+                  ))}
+                </div>
+              )}
 
-        {step === 1 && (
-          <div className="space-y-3">
-            <h2 className="font-heading font-semibold text-lg">Elegí el servicio</h2>
-            {services.length === 0 ? (
-              <Card className="p-8 text-center space-y-3 border-dashed">
-                <CalendarX className="w-12 h-12 text-muted-foreground/40 mx-auto" />
-                <div>
-                  <p className="font-medium">Todavía no hay servicios disponibles</p>
-                  <p className="text-sm text-muted-foreground mt-1">Contactate directamente con el profesional para coordinar tu cita.</p>
-                </div>
-                {(settings?.phone || settings?.professional_email) && (
-                  <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-2">
-                    {settings?.phone && (
-                      <a href={`tel:${settings.phone}`} className="inline-flex items-center gap-1.5 text-sm font-medium px-3 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
-                        <Phone className="w-4 h-4" /> {settings.phone}
-                      </a>
-                    )}
-                    {settings?.professional_email && (
-                      <a href={`mailto:${settings.professional_email}`} className="inline-flex items-center gap-1.5 text-sm font-medium px-3 py-2 rounded-lg border border-input hover:bg-accent transition-colors">
-                        <Mail className="w-4 h-4" /> {settings.professional_email}
-                      </a>
-                    )}
-                  </div>
-                )}
-              </Card>
-            ) : (
-              <div className="space-y-2.5">
-                {services.map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => { setService(s); setStep(2); }}
-                    className="group w-full text-left p-4 rounded-xl border-2 border-slate-200 hover:border-slate-400 hover:shadow-md transition-all cursor-pointer flex items-center justify-between bg-white"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-1.5 h-12 rounded-full shrink-0" style={{ background: s.color || "#3b82f6" }} />
-                      <div className="min-w-0">
-                        <p className="font-semibold truncate">{s.name}</p>
-                        {s.description && <p className="text-xs text-muted-foreground truncate">{s.description}</p>}
-                        <div className="flex items-center gap-3 mt-1">
-                          <span className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Clock className="w-3.5 h-3.5" /> {s.duration_minutes} min
-                          </span>
-                          {s.price != null && (
-                            <span className="text-xs font-semibold text-foreground">${s.price.toLocaleString("es-AR")}</span>
-                          )}
-                        </div>
+              {step === 1 && (
+                <div className="space-y-3">
+                  <h2 className="font-heading font-semibold text-lg" style={{ color: theme.text }}>Elegí el servicio</h2>
+                  {services.length === 0 ? (
+                    <div className="p-8 text-center space-y-3 rounded-2xl border border-dashed" style={cardStyle}>
+                      <CalendarX className="w-12 h-12 mx-auto opacity-40" style={{ color: theme.muted }} />
+                      <div>
+                        <p className="font-medium" style={{ color: theme.text }}>Todavía no hay servicios disponibles</p>
+                        <p className="text-sm mt-1" style={{ color: theme.muted }}>Contactate directamente con el profesional para coordinar tu cita.</p>
                       </div>
                     </div>
-                    <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {step === 2 && (
-          <Card className="p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="font-heading font-semibold">Elegí fecha y hora</h2>
-              <button className="text-sm text-muted-foreground hover:underline" onClick={() => setStep(1)}>Cambiar servicio</button>
-            </div>
-            {bookingError && (
-              <div className="rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm p-3">
-                {bookingError}
-              </div>
-            )}
-            <div>
-              <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {service?.name}</p>
-              <div className="grid grid-cols-4 gap-2">
-                {upcomingDays.map((d) => {
-                  const selected = date && d.toDateString() === date.toDateString();
-                  return (
-                    <button key={d.toISOString()} onClick={() => { setDate(d); setSlot(null); setBookingError(null); }} className={`p-2 rounded-lg border text-center transition-colors ${selected ? "border-transparent text-white" : "border-slate-200 hover:border-slate-400"}`} style={selected ? { backgroundColor: brand } : {}}>
-                      <p className="text-xs text-muted-foreground capitalize">{d.toLocaleDateString("es-AR", { weekday: "short" })}</p>
-                      <p className="font-medium text-sm">{d.getDate()}</p>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-            {date && (
-              <div>
-                <p className="text-sm font-medium mb-2 capitalize">{formatLongDate(date)}</p>
-                {slots.length === 0 ? (
-                  <p className="text-sm text-muted-foreground py-4 text-center">No hay horarios disponibles este día.</p>
-                ) : (
-                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                    {slots.map((s) => (
-                      <button key={s.toISOString()} onClick={() => { setSlot(s); setBookingError(null); }} className={`p-2 rounded-lg border text-sm transition-colors ${slot && slot.toISOString() === s.toISOString() ? "border-transparent text-white" : "border-slate-200 hover:border-slate-400"}`} style={slot && slot.toISOString() === s.toISOString() ? { backgroundColor: brand } : {}}>{formatSlot(s)}</button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-            <Button className="w-full" style={{ backgroundColor: brand }} disabled={!slot} onClick={() => setStep(3)}>Continuar</Button>
-          </Card>
-        )}
-
-        {step === 3 && (
-          <Card className="p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="font-heading font-semibold">Tus datos</h2>
-              <button className="text-sm text-muted-foreground hover:underline" onClick={() => setStep(2)}>Atrás</button>
-            </div>
-            <div className="rounded-lg bg-slate-50 border border-slate-200 p-3 text-sm">
-              <p className="font-medium">{service?.name}</p>
-              <p className="text-muted-foreground capitalize">{date && formatLongDate(date)} · {slot && formatSlot(slot)}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2"><Label htmlFor="first_name">Nombre *</Label><Input id="first_name" value={form.first_name} onChange={(e) => setForm({ ...form, first_name: e.target.value })} required /></div>
-              <div className="space-y-2"><Label htmlFor="last_name">Apellido *</Label><Input id="last_name" value={form.last_name} onChange={(e) => setForm({ ...form, last_name: e.target.value })} required /></div>
-            </div>
-            <div className="space-y-2"><Label htmlFor="phone">Teléfono (WhatsApp) *</Label><Input id="phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+54 9 11 1234 5678" required /></div>
-            <div className="space-y-2"><Label htmlFor="email">Email *</Label><Input id="email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></div>
-            <Button className="w-full" style={{ backgroundColor: brand }} disabled={!form.first_name || !form.last_name || !form.phone || !form.email} onClick={() => setStep(4)}>
-              Continuar
-            </Button>
-          </Card>
-        )}
-
-        {step === 4 && (
-          <Card className="p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="font-heading font-semibold">Revisá tu reserva</h2>
-              <button className="text-sm text-muted-foreground hover:underline" onClick={() => setStep(3)}>Atrás</button>
-            </div>
-            <div className="rounded-lg bg-slate-50 border border-slate-200 p-4 space-y-2 text-sm">
-              <div className="flex justify-between gap-2"><span className="text-muted-foreground">Servicio</span><span className="font-medium text-right">{service?.name}</span></div>
-              <div className="flex justify-between gap-2"><span className="text-muted-foreground">Fecha</span><span className="font-medium capitalize">{date && formatLongDate(date)}</span></div>
-              <div className="flex justify-between gap-2"><span className="text-muted-foreground">Hora</span><span className="font-medium">{slot && formatSlot(slot)}</span></div>
-              <div className="flex justify-between gap-2"><span className="text-muted-foreground">A nombre de</span><span className="font-medium text-right">{form.first_name} {form.last_name}</span></div>
-            </div>
-            <div className="flex flex-col gap-2">
-              <Button variant="outline" className="w-full" onClick={() => setStep(2)}>
-                ← Cambiar fecha u hora
-              </Button>
-              <Button className="w-full" style={{ backgroundColor: brand }} disabled={saving} onClick={handleConfirm}>
-                {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Confirmar
-              </Button>
-            </div>
-          </Card>
-        )}
-
-        {step === 5 && created && (() => {
-          const waNumber = (settings?.zernio_phone || settings?.phone || "").replace(/\D/g, "");
-          const waMsg = buildWaMessage(service, date, slot, form);
-          const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(waMsg)}`;
-          return (
-            <Card className="p-6 text-center space-y-3">
-              <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center mx-auto"><Check className="w-7 h-7 text-emerald-600" /></div>
-              <h2 className="font-heading font-semibold text-lg">¡Solicitud registrada!</h2>
-              <p className="text-sm text-muted-foreground">{service?.name}</p>
-              <p className="font-medium capitalize">{date && formatLongDate(date)} · {slot && formatSlot(slot)}</p>
-              <p className="text-sm text-muted-foreground">{settings?.practice_name || "Consultorio"}{settings?.address ? ` · ${settings.address}` : ""}</p>
-              {waNumber ? (
-                <>
-                  <p className="text-sm text-muted-foreground pt-1">Escribile al profesional por WhatsApp para confirmar tu turno cuanto antes — mientras antes avises, más rápido te lo confirma. Si no se abrió solo, usá este botón:</p>
-                  <a href={waUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 w-full rounded-md bg-[#25D366] hover:bg-[#1ebe5d] text-white font-semibold text-sm h-11 px-4 py-2 transition-colors shadow-sm">
-                    <MessageCircle className="w-5 h-5" /> Confirmar por WhatsApp
-                  </a>
-                </>
-              ) : (
-                <p className="text-sm text-muted-foreground pt-1">El profesional confirmará tu turno. Guardá esta referencia: <span className="font-mono">{created.appointment.id.slice(-8)}</span></p>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {services.map((s) => (
+                        <button
+                          key={s.id}
+                          onClick={() => { setService(s); setStep(2); }}
+                          className="group w-full text-left p-4 rounded-xl border-2 hover:shadow-md transition-all cursor-pointer flex items-center justify-between"
+                          style={{ ...cardStyle, borderColor: theme.cardBorder }}
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-1.5 h-12 rounded-full shrink-0" style={{ background: s.color || brand }} />
+                            <div className="min-w-0">
+                              <p className="font-semibold truncate" style={{ color: theme.text }}>{s.name}</p>
+                              {s.description && <p className="text-xs truncate" style={{ color: theme.muted }}>{s.description}</p>}
+                              <div className="flex items-center gap-3 mt-1">
+                                <span className="text-xs flex items-center gap-1" style={{ color: theme.muted }}>
+                                  <Clock className="w-3.5 h-3.5" /> {s.duration_minutes} min
+                                </span>
+                                {s.price != null && (
+                                  <span className="text-xs font-semibold" style={{ color: theme.text }}>${s.price.toLocaleString("es-AR")}</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-all shrink-0 ml-2" style={{ color: theme.muted }} />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
-              <Button variant="outline" className="mt-2" onClick={() => { setStep(1); setService(null); setDate(null); setSlot(null); setForm({ first_name: "", last_name: "", phone: "", email: "" }); setCreated(null); }}>Reservar otro turno</Button>
-            </Card>
-          );
-        })()}
+
+              {step === 2 && (
+                <div className="rounded-2xl border p-5 space-y-4" style={cardStyle}>
+                  <div className="flex items-center justify-between">
+                    <h2 className="font-heading font-semibold" style={{ color: theme.text }}>Elegí fecha y hora</h2>
+                    <button className="text-sm hover:underline" style={{ color: theme.muted }} onClick={() => setStep(1)}>Cambiar servicio</button>
+                  </div>
+                  {bookingError && (
+                    <div className="rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm p-3">
+                      {bookingError}
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-xs mb-2 flex items-center gap-1" style={{ color: theme.muted }}><Calendar className="w-3.5 h-3.5" /> {service?.name}</p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {upcomingDays.map((d) => {
+                        const selected = date && d.toDateString() === date.toDateString();
+                        return (
+                          <button key={d.toISOString()} onClick={() => { setDate(d); setSlot(null); setBookingError(null); }} className="p-2 rounded-lg border text-center transition-colors" style={selected ? { backgroundColor: brand, borderColor: brand, color: theme.accentText } : { borderColor: theme.cardBorder, color: theme.text }}>
+                            <p className="text-xs capitalize opacity-70">{d.toLocaleDateString("es-AR", { weekday: "short" })}</p>
+                            <p className="font-medium text-sm">{d.getDate()}</p>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  {date && (
+                    <div>
+                      <p className="text-sm font-medium mb-2 capitalize" style={{ color: theme.text }}>{formatLongDate(date)}</p>
+                      {slots.length === 0 ? (
+                        <p className="text-sm py-4 text-center" style={{ color: theme.muted }}>No hay horarios disponibles este día.</p>
+                      ) : (
+                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                          {slots.map((s) => (
+                            <button key={s.toISOString()} onClick={() => { setSlot(s); setBookingError(null); }} className="p-2 rounded-lg border text-sm transition-colors" style={slot && slot.toISOString() === s.toISOString() ? { backgroundColor: brand, borderColor: brand, color: theme.accentText } : { borderColor: theme.cardBorder, color: theme.text }}>{formatSlot(s)}</button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <Button className="w-full" style={{ backgroundColor: brand, color: theme.accentText }} disabled={!slot} onClick={() => setStep(3)}>Continuar</Button>
+                </div>
+              )}
+
+              {step === 3 && (
+                <div className="rounded-2xl border p-5 space-y-4" style={cardStyle}>
+                  <div className="flex items-center justify-between">
+                    <h2 className="font-heading font-semibold" style={{ color: theme.text }}>Tus datos</h2>
+                    <button className="text-sm hover:underline" style={{ color: theme.muted }} onClick={() => setStep(2)}>Atrás</button>
+                  </div>
+                  <div className="rounded-lg p-3 text-sm" style={{ background: theme.chipBg || "#f8fafc", color: theme.text }}>
+                    <p className="font-medium">{service?.name}</p>
+                    <p className="capitalize" style={{ color: theme.muted }}>{date && formatLongDate(date)} · {slot && formatSlot(slot)}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2"><Label htmlFor="first_name">Nombre *</Label><Input id="first_name" value={form.first_name} onChange={(e) => setForm({ ...form, first_name: e.target.value })} required /></div>
+                    <div className="space-y-2"><Label htmlFor="last_name">Apellido *</Label><Input id="last_name" value={form.last_name} onChange={(e) => setForm({ ...form, last_name: e.target.value })} required /></div>
+                  </div>
+                  <div className="space-y-2"><Label htmlFor="phone">Teléfono (WhatsApp) *</Label><Input id="phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+54 9 11 1234 5678" required /></div>
+                  <div className="space-y-2"><Label htmlFor="email">Email *</Label><Input id="email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></div>
+                  <Button className="w-full" style={{ backgroundColor: brand, color: theme.accentText }} disabled={!form.first_name || !form.last_name || !form.phone || !form.email} onClick={() => setStep(4)}>
+                    Continuar
+                  </Button>
+                </div>
+              )}
+
+              {step === 4 && (
+                <div className="rounded-2xl border p-5 space-y-4" style={cardStyle}>
+                  <div className="flex items-center justify-between">
+                    <h2 className="font-heading font-semibold" style={{ color: theme.text }}>Revisá tu reserva</h2>
+                    <button className="text-sm hover:underline" style={{ color: theme.muted }} onClick={() => setStep(3)}>Atrás</button>
+                  </div>
+                  <div className="rounded-lg p-4 space-y-2 text-sm" style={{ background: theme.chipBg || "#f8fafc" }}>
+                    <div className="flex justify-between gap-2"><span style={{ color: theme.muted }}>Servicio</span><span className="font-medium text-right" style={{ color: theme.text }}>{service?.name}</span></div>
+                    <div className="flex justify-between gap-2"><span style={{ color: theme.muted }}>Fecha</span><span className="font-medium capitalize" style={{ color: theme.text }}>{date && formatLongDate(date)}</span></div>
+                    <div className="flex justify-between gap-2"><span style={{ color: theme.muted }}>Hora</span><span className="font-medium" style={{ color: theme.text }}>{slot && formatSlot(slot)}</span></div>
+                    <div className="flex justify-between gap-2"><span style={{ color: theme.muted }}>A nombre de</span><span className="font-medium text-right" style={{ color: theme.text }}>{form.first_name} {form.last_name}</span></div>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <Button variant="outline" className="w-full" onClick={() => setStep(2)}>
+                      ← Cambiar fecha u hora
+                    </Button>
+                    <Button className="w-full" style={{ backgroundColor: brand, color: theme.accentText }} disabled={saving} onClick={handleConfirm}>
+                      {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Confirmar
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {step === 5 && created && (() => {
+                const waNumber = (settings?.zernio_phone || settings?.phone || "").replace(/\D/g, "");
+                const waMsg = buildWaMessage(service, date, slot, form);
+                const confirmWaUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(waMsg)}`;
+                return (
+                  <div className="rounded-2xl border p-6 text-center space-y-3" style={cardStyle}>
+                    <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center mx-auto"><Check className="w-7 h-7 text-emerald-600" /></div>
+                    <h2 className="font-heading font-semibold text-lg" style={{ color: theme.text }}>¡Solicitud registrada!</h2>
+                    <p className="text-sm" style={{ color: theme.muted }}>{service?.name}</p>
+                    <p className="font-medium capitalize" style={{ color: theme.text }}>{date && formatLongDate(date)} · {slot && formatSlot(slot)}</p>
+                    <p className="text-sm" style={{ color: theme.muted }}>{settings?.practice_name || "Consultorio"}{settings?.address ? ` · ${settings.address}` : ""}</p>
+                    {waNumber ? (
+                      <>
+                        <p className="text-sm pt-1" style={{ color: theme.muted }}>Escribile al profesional por WhatsApp para confirmar tu turno cuanto antes. Si no se abrió solo, usá este botón:</p>
+                        <a href={confirmWaUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 w-full rounded-md bg-[#25D366] hover:bg-[#1ebe5d] text-white font-semibold text-sm h-11 px-4 py-2 transition-colors shadow-sm">
+                          <MessageCircle className="w-5 h-5" /> Confirmar por WhatsApp
+                        </a>
+                      </>
+                    ) : (
+                      <p className="text-sm pt-1" style={{ color: theme.muted }}>El profesional confirmará tu turno. Guardá esta referencia: <span className="font-mono">{created.appointment.id.slice(-8)}</span></p>
+                    )}
+                    <Button variant="outline" className="mt-2" onClick={() => { setStep(1); setService(null); setDate(null); setSlot(null); setForm({ first_name: "", last_name: "", phone: "", email: "" }); setCreated(null); }}>Reservar otro turno</Button>
+                  </div>
+                );
+              })()}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

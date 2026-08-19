@@ -182,8 +182,9 @@ export default function AdminUsers() {
                       <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="trial">Trial</SelectItem>
+                        <SelectItem value="basic">Básico</SelectItem>
                         <SelectItem value="pro">Pro</SelectItem>
-                        <SelectItem value="premium">Premium</SelectItem>
+                        <SelectItem value="clinic">Clinic</SelectItem>
                       </SelectContent>
                     </Select>
                     {s.plan === "trial" && (

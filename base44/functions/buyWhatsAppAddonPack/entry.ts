@@ -38,6 +38,7 @@ export default async function(req) {
         pending: `${origin}/configuracion?addon=pending`,
       },
       auto_return: 'approved',
+      notification_url: 'https://base44.app/api/apps/6a726ce53f9d0f63f3816283/functions/mercadopagoWebhook',
       // El webhook de pagos individuales usa esto para saber a qué consultorio sumarle
       // el cupo, y cuántas conversaciones corresponden al pack comprado.
       metadata: { practice_id: practice.id, addon_pack: packId, conversations: pack.conversations },

@@ -1,0 +1,44 @@
+{
+  "description": "Cada hora, revisa las citas confirmadas cuyo horario ya pas\u00f3 y las marca como completadas autom\u00e1ticamente (antes solo pasaba si alguien lo hac\u00eda a mano en la Agenda).",
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "auto_complete_appointments",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "auto_complete": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "autoCompleteAppointments"
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Completar citas vencidas",
+            "description": "Confirmadas cuyo horario ya pas\u00f3 \u2192 completadas"
+          }
+        }
+      }
+    ]
+  },
+  "name": "Auto-completar citas",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 * * * *",
+      "one_time_date": null,
+      "timezone": "America/Buenos_Aires",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  }
+}

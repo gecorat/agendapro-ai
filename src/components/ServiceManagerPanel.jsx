@@ -87,9 +87,12 @@ export default function ServiceManagerPanel({ showHeader = true }) {
     try {
       await base44.entities.Service.delete(s.id);
       toast({ title: "Servicio eliminado" });
-      load();
     } catch (err) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      // Si ya no existía del lado del servidor (pantalla con datos viejos de una sesión
+      // larga), no lo dejamos como tarjeta fantasma imposible de borrar: recargamos.
+      toast({ title: "Ese servicio ya no existía", description: "Actualizamos la lista.", variant: "destructive" });
+    } finally {
+      load();
     }
   };
 

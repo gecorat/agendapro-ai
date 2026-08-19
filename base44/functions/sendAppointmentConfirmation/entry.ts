@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { buildEmailHtml, getAppUrl } from "../../shared/email-template.ts";
 import { sendEmail } from "../../shared/email-sender.ts";
+import { getAppointmentContext, whatsappLink } from "../../shared/appointment-context.ts";
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -45,16 +46,19 @@ export default async function(req: Request): Promise<Response> {
       return Response.json({ skipped: true, reason: 'no patient email' });
     }
 
-    // Configuración del profesional (nombre del consultorio + handle)
+    // Configuración del profesional (nombre del consultorio + handle + teléfono/dirección)
     const professionalId = appt.professional_id || appt.created_by_id;
     let practiceName = "";
     let handle = "";
+    let practice = null;
     try {
       const practices = await base44.asServiceRole.entities.PracticeSettings.filter({});
-      const practice = practices?.find((p) => p.created_by_id === professionalId);
+      practice = practices?.find((p) => p.created_by_id === professionalId) || null;
       if (practice?.practice_name) practiceName = practice.practice_name;
       if (practice?.handle) handle = practice.handle;
     } catch {}
+
+    const { professionalName, address } = await getAppointmentContext(base44, appt, practice);
 
     // Asegurar cancel_token para el botón de cancelar/reagendar
     let cancelToken = appt.cancel_token;
@@ -71,6 +75,7 @@ export default async function(req: Request): Promise<Response> {
 
     const rescheduleUrl = handle ? `${appUrl}/reschedule/${cancelToken}` : null;
     const cancelUrl = `${appUrl}/x/${cancelToken}`;
+    const waLink = whatsappLink(practice?.phone, `Hola! Te escribo por mi cita de ${serviceName} del ${dateStr}.`);
 
     await sendEmail(base44, {
       to: email,
@@ -79,12 +84,17 @@ export default async function(req: Request): Promise<Response> {
         title: "Cita confirmada",
         greeting: `Hola ${patientName}`,
         lines: [
-          `Tu cita de ${serviceName} fue confirmada para el ${dateStr}.`,
-          "¡Te esperamos!",
+          `Tu cita de ${serviceName} fue confirmada. ¡Te esperamos!`,
           "Si necesitás reagendar o cancelar, usá los botones de abajo.",
+        ],
+        details: [
+          { label: "Día y horario", value: dateStr },
+          { label: "Profesional", value: professionalName || "—" },
+          ...(address ? [{ label: "Dirección", value: address }] : []),
         ],
         primaryButton: rescheduleUrl ? { label: "Reagendar", url: rescheduleUrl } : null,
         secondaryButton: { label: "Cancelar cita", url: cancelUrl },
+        whatsappButton: waLink ? { label: "Escribir por WhatsApp", url: waLink } : null,
         footer: signature,
       }),
     });

@@ -201,6 +201,20 @@ export default function Agenda() {
         </div>
       </div>
 
+      {isClinic && professionals.length > 0 && (
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <button onClick={() => setProFilter("all")} className={`text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${proFilter === "all" ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:bg-muted"}`}>Todos</button>
+          <button onClick={() => setProFilter(OWNER_VALUE)} className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${proFilter === OWNER_VALUE ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:bg-muted"}`}>
+            <User className="w-3 h-3" /> Dueño de la cuenta
+          </button>
+          {professionals.map((p) => (
+            <button key={p.id} onClick={() => setProFilter(p.id)} className={`text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${proFilter === p.id ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:bg-muted"}`}>
+              {p.first_name} {p.last_name}
+            </button>
+          ))}
+        </div>
+      )}
+
       {statusFilter && (
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-amber-200 bg-amber-50 text-amber-800 text-sm">
           <Filter className="w-4 h-4" />

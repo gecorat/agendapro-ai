@@ -1,6 +1,8 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { sendEmail } from "../../shared/email-sender.ts";
-import { sendWhatsApp, getPlatformConfig } from "../../shared/zernio.ts";
+import { sendWhatsApp } from "../../shared/zernio.ts";
+import { buildEmailHtml, getAppUrl } from "../../shared/email-template.ts";
+import { getAppointmentContext, whatsappLink } from "../../shared/appointment-context.ts";
 
 export default async function(req) {
   try {
@@ -8,6 +10,7 @@ export default async function(req) {
     const now = new Date();
     const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
     const in3h = new Date(now.getTime() + 3 * 60 * 60 * 1000);
+    const appUrl = await getAppUrl(base44, req);
 
     const all = await base44.asServiceRole.entities.Appointment.filter({ status: "confirmed" });
     const toRemind = (all || []).filter((a) => {
@@ -57,22 +60,54 @@ export default async function(req) {
         const startDate = new Date(appt.start_datetime);
         const dateStr = startDate.toLocaleString("es-AR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "America/Argentina/Buenos_Aires" });
         const is3h = (appt.reminders_sent || 0) >= 1;
-        const subject = is3h ? "Recordatorio: tu cita es en 3 horas" : "Recordatorio de tu cita";
-        const body = `Hola ${patientName},
+        const serviceName = appt.service_name || "consulta";
 
-Te recordamos tu cita de ${appt.service_name || "consulta"} para el ${dateStr}.
+        const practice = await getPracticeFor(appt);
+        const { professionalName, address } = await getAppointmentContext(base44, appt, practice);
 
-Si necesitás reprogramar, respondé a este email.
+        // Asegurar cancel_token para poder ofrecer los mismos botones de la confirmación
+        // (reagendar / cancelar) también acá, no solo texto plano.
+        let cancelToken = appt.cancel_token;
+        if (!cancelToken) {
+          cancelToken = crypto.randomUUID();
+          await base44.asServiceRole.entities.Appointment.update(appt.id, { cancel_token: cancelToken });
+        }
+        const rescheduleUrl = practice?.handle ? `${appUrl}/reschedule/${cancelToken}` : null;
+        const cancelUrl = `${appUrl}/x/${cancelToken}`;
+        const waLink = whatsappLink(practice?.phone, `Hola! Te escribo por mi cita de ${serviceName} del ${dateStr}.`);
 
-¡Te esperamos!
+        const subject = is3h ? `Tu cita es en 3 horas — ${serviceName}` : `Recordatorio: tu cita de mañana — ${serviceName}`;
+        const emailBody = buildEmailHtml({
+          title: is3h ? "Tu cita es en 3 horas" : "Recordatorio de tu cita",
+          greeting: `Hola ${patientName}`,
+          lines: [
+            `Te recordamos tu cita de ${serviceName}. ¡Te esperamos!`,
+            "Si necesitás reagendar o cancelar, usá los botones de abajo.",
+          ],
+          details: [
+            { label: "Día y horario", value: dateStr },
+            { label: "Profesional", value: professionalName || "—" },
+            ...(address ? [{ label: "Dirección", value: address }] : []),
+          ],
+          primaryButton: rescheduleUrl ? { label: "Reagendar", url: rescheduleUrl } : null,
+          secondaryButton: { label: "Cancelar cita", url: cancelUrl },
+          whatsappButton: waLink ? { label: "Escribir por WhatsApp", url: waLink } : null,
+          footer: practice?.practice_name || "Kame Agenda",
+        });
 
-Kame Agenda`;
+        const waReminderText = [
+          `Hola ${patientName}, te recordamos tu cita de ${serviceName} para el ${dateStr}.`,
+          address ? `📍 ${address}` : null,
+          "¡Te esperamos!",
+        ].filter(Boolean).join("\n");
 
         // Decidir canal
-        const practice = await getPracticeFor(appt);
         const plan = practice?.plan || "trial";
         const pref = patient?.contact_preference || "email";
-        const whatsappAllowed = plan === "pro" || plan === "premium";
+        // Bug corregido: comparaba contra "premium", que ya no existe (el plan se llama
+        // "clinic" desde el rediseño de precios) — los recordatorios por WhatsApp nunca se
+        // disparaban para cuentas Clinic.
+        const whatsappAllowed = plan === "pro" || plan === "clinic";
         const wantsWhatsApp = pref === "whatsapp" || pref === "both";
 
         let channelUsed = "email";
@@ -85,25 +120,25 @@ Kame Agenda`;
                 apiKey: plat?.zernio_api_key,
                 accountId: practice.zernio_account_id,
                 phone: patient.phone,
-                message: `Hola ${patientName}, te recordamos tu cita de ${appt.service_name || "consulta"} para el ${dateStr}. ¡Te esperamos!`,
+                message: waReminderText,
               });
               channelUsed = "whatsapp";
             } catch (e) {
               // Fallback a email si WhatsApp falla y el paciente acepta email
               if (pref === "both" && patient.email) {
-                await sendEmail(base44, { to: patient.email, subject, body });
+                await sendEmail(base44, { to: patient.email, subject, body: emailBody });
                 channelUsed = "email";
               } else {
                 throw e;
               }
             }
           } else if (patient.email) {
-            await sendEmail(base44, { to: patient.email, subject, body });
+            await sendEmail(base44, { to: patient.email, subject, body: emailBody });
           } else {
             skipped++; continue;
           }
         } else if (patient?.email) {
-          await sendEmail(base44, { to: patient.email, subject, body });
+          await sendEmail(base44, { to: patient.email, subject, body: emailBody });
         } else {
           skipped++; continue;
         }

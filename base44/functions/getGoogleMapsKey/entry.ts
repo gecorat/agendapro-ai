@@ -7,7 +7,8 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 // restricción por dominio (HTTP referrer) que se configura en Google Cloud Console.
 export default async function (req: Request): Promise<Response> {
   try {
-    const base44 = createClientFromRequest(req);    const cfgList = await base44.asServiceRole.entities.PlatformConfig.filter({});
+    const base44 = createClientFromRequest(req);
+    const cfgList = await base44.asServiceRole.entities.PlatformConfig.filter({});
     const apiKey = cfgList?.[0]?.google_maps_api_key || '';
     return Response.json({ apiKey });
   } catch (error) {

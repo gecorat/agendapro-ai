@@ -20,6 +20,10 @@ import {
 } from "@/components/ui/select";
 import { Loader2, Plus, Repeat } from "lucide-react";
 import PatientForm from "@/components/PatientForm";
+import { usePracticeSettings } from "@/hooks/usePracticeSettings";
+import { getPlanStatus } from "@/lib/plan-utils";
+
+const OWNER_VALUE = "__owner__";
 
 const FREQUENCIES = [
   { value: "weekly", label: "Semanal" },
@@ -44,9 +48,12 @@ function toLocalInput(date) {
 export default function AppointmentForm({ open, onClose, onSaved, appointment, defaultDate }) {
   const [patients, setPatients] = useState([]);
   const [services, setServices] = useState([]);
+  const [professionals, setProfessionals] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [patientFormOpen, setPatientFormOpen] = useState(false);
+  const { settings } = usePracticeSettings();
+  const isClinic = getPlanStatus(settings).canUseMultiProfessional;
 
   const [recurring, setRecurring] = useState(false);
   const [frequency, setFrequency] = useState("weekly");
@@ -57,6 +64,7 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
     start_datetime: "",
     status: "pending",
     notes: "",
+    professional_ref_id: "",
   });
 
   useEffect(() => {
@@ -72,6 +80,7 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
           start_datetime: toLocalInput(appointment.start_datetime),
           status: appointment.status || "pending",
           notes: appointment.notes || "",
+          professional_ref_id: appointment.professional_ref_id || "",
         });
       } else {
         const base = defaultDate ? new Date(defaultDate) : new Date();
@@ -82,6 +91,7 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
           start_datetime: toLocalInput(base),
           status: "pending",
           notes: "",
+          professional_ref_id: "",
         });
       }
     }
@@ -90,12 +100,14 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
   async function loadData() {
     setLoading(true);
     try {
-      const [pats, servs] = await Promise.all([
+      const [pats, servs, pros] = await Promise.all([
         base44.entities.Patient.filter({}),
         base44.entities.Service.filter({ active: true }),
+        isClinic ? base44.entities.Professional.filter({ active: true }) : Promise.resolve([]),
       ]);
       setPatients(pats || []);
       setServices(servs || []);
+      setProfessionals(pros || []);
     } finally {
       setLoading(false);
     }
@@ -128,6 +140,7 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
         status: form.status,
         notes: form.notes,
         origin: "manual",
+        professional_ref_id: form.professional_ref_id || "",
       };
 
       let apptId = appointment?.id;
@@ -241,6 +254,23 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
                 </SelectContent>
               </Select>
             </div>
+
+            {isClinic && professionals.length > 0 && (
+              <div className="space-y-2">
+                <Label>Profesional</Label>
+                <Select value={form.professional_ref_id || OWNER_VALUE} onValueChange={(v) => setForm({ ...form, professional_ref_id: v === OWNER_VALUE ? "" : v })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={OWNER_VALUE}>Dueño de la cuenta</SelectItem>
+                    {professionals.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>{p.first_name} {p.last_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="start">Fecha y hora</Label>

@@ -7,6 +7,7 @@ export default async function(req: Request): Promise<Response> {
   try {
     const rawBody = await req.text();
     const payload = JSON.parse(rawBody);
+    const base44 = createClientFromRequest(req);
 
     // DEBUG TEMPORAL: guardamos el payload real de Zernio para poder verlo, ya que el
     // formato exacto de campos no coincidía con lo documentado/asumido y varios mensajes
@@ -23,7 +24,6 @@ export default async function(req: Request): Promise<Response> {
       return Response.json({ ok: true, skipped: true });
     }
 
-    const base44 = createClientFromRequest(req);
     const plat = await getPlatformConfig(base44);
 
     const secret = plat?.zernio_webhook_secret;

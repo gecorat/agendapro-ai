@@ -3,7 +3,8 @@
 // si cambian precios o límites.
 
 export const PLAN_PRICES = {
-  basic: 29000,  pro: 49000,
+  basic: 29000,
+  pro: 49000,
   clinic: 69000,
 };
 

@@ -3,9 +3,9 @@
 // si cambian precios o límites.
 
 export const PLAN_PRICES = {
-  basic: 39000,
-  pro: 69000,
-  clinic: 119000,
+  basic: 29000,
+  pro: 49000,
+  clinic: 69000,
 };
 
 export const PLAN_LABELS = {
@@ -28,6 +28,10 @@ export const ADDON_PACKS = {
   pack_100: { conversations: 100, price: 15000, label: "+100 conversaciones" },
   pack_250: { conversations: 250, price: 30000, label: "+250 conversaciones" },
 };
+
+// Tope de profesionales incluidos en plan Clinic (sin cobro automático por adicional
+// todavía). Mantener en sync con src/lib/plan-utils.js.
+export const CLINIC_MAX_PROFESSIONALS = 3;
 
 export function isPlanActive(practice) {
   if (!practice) return false;

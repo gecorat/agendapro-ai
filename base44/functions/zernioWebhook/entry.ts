@@ -40,7 +40,11 @@ export default async function(req: Request): Promise<Response> {
     const account = payload.account || {};
 
     const text = msg.text || msg.body || msg.content || "";
-    const fromPhone = msg.from || conv.contact?.phone || conv.phone || msg.senderPhone || "";
+    // Confirmado con un payload real capturado en producción: el teléfono viene en
+    // message.sender.phoneNumber, no en message.from como asumíamos antes — por eso
+    // fromPhone quedaba vacío y el mensaje se descartaba en silencio ("no_text_or_phone"),
+    // aunque el webhook respondiera 200 OK.
+    const fromPhone = msg.sender?.phoneNumber || msg.from || conv.participantUsername || conv.contact?.phone || conv.phone || msg.senderPhone || "";
     const conversationId = conv.id || conv.conversationId || "";
     const accountId = account.id || account.accountId || "";
 

@@ -2,9 +2,9 @@ export const TRIAL_DAYS = 14;
 
 // Mantener en sync con base44/shared/plan.ts (versión backend de esta misma lógica).
 export const PLAN_PRICES = {
-  basic: "$39.000",
-  pro: "$69.000",
-  clinic: "$119.000",
+  basic: "$29.000",
+  pro: "$49.000",
+  clinic: "$69.000",
 };
 
 export const PLAN_LABELS = {
@@ -25,6 +25,10 @@ export const ADDON_PACKS = {
   pack_100: { conversations: 100, price: 15000, label: "+100 conversaciones" },
   pack_250: { conversations: 250, price: 30000, label: "+250 conversaciones" },
 };
+
+// Tope de profesionales incluidos en plan Clinic. No hay cobro automático por adicional
+// todavía — al llegar al tope se le pide al usuario que contacte para sumar más a mano.
+export const CLINIC_MAX_PROFESSIONALS = 3;
 
 export function getPlanStatus(settings) {
   if (!settings) {

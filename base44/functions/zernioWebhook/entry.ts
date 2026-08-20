@@ -8,6 +8,17 @@ export default async function(req: Request): Promise<Response> {
     const rawBody = await req.text();
     const payload = JSON.parse(rawBody);
 
+    // DEBUG TEMPORAL: guardamos el payload real de Zernio para poder verlo, ya que el
+    // formato exacto de campos no coincidía con lo documentado/asumido y varios mensajes
+    // reales se estaban descartando en silencio (devolvíamos 200 igual, por diseño, para
+    // no generar reintentos de Zernio). Esto no afecta el flujo normal.
+    try {
+      const cfg = await base44.asServiceRole.entities.PlatformConfig.filter({});
+      if (cfg?.[0]) {
+        await base44.asServiceRole.entities.PlatformConfig.update(cfg[0].id, { debug_last_webhook_payload: rawBody.slice(0, 4000) });
+      }
+    } catch {}
+
     if (payload.event !== "message.received") {
       return Response.json({ ok: true, skipped: true });
     }

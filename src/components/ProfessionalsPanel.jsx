@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
-import { Plus, Pencil, Trash2, Loader2, Users } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Users, Lock } from "lucide-react";
+import { CLINIC_MAX_PROFESSIONALS } from "@/lib/plan-utils";
 
 const EMPTY = { first_name: "", last_name: "", specialty: "", color: "#3b82f6", active: true };
 
@@ -39,6 +40,12 @@ export default function ProfessionalsPanel() {
   const save = async (e) => {
     e.preventDefault();
     if (!form.first_name) return;
+    // Defensa por si el diálogo quedó abierto de antes de llegar al tope (ej. dos
+    // pestañas abiertas) — el botón "Nuevo" ya debería estar bloqueado antes de esto.
+    if (!editing && list.length >= CLINIC_MAX_PROFESSIONALS) {
+      toast({ title: "Llegaste al límite de tu plan", description: `Tu plan incluye hasta ${CLINIC_MAX_PROFESSIONALS} profesionales. Escribinos para sumar más.`, variant: "destructive" });
+      return;
+    }
     setSaving(true);
     try {
       if (editing) {
@@ -68,6 +75,8 @@ export default function ProfessionalsPanel() {
     }
   };
 
+  const atLimit = list.length >= CLINIC_MAX_PROFESSIONALS;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
@@ -75,8 +84,19 @@ export default function ProfessionalsPanel() {
           <h2 className="font-heading font-semibold">Profesionales</h2>
           <p className="text-sm text-muted-foreground">Tu equipo. El bot de WhatsApp les pregunta a los pacientes con quién quieren agendar.</p>
         </div>
-        <Button onClick={openNew} className="shadow-sm shrink-0"><Plus className="w-4 h-4 mr-1" /> Nuevo</Button>
+        <Button onClick={openNew} className="shadow-sm shrink-0" disabled={atLimit} title={atLimit ? `Tu plan incluye hasta ${CLINIC_MAX_PROFESSIONALS} profesionales` : undefined}>
+          <Plus className="w-4 h-4 mr-1" /> Nuevo
+        </Button>
       </div>
+
+      {atLimit && (
+        <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3">
+          <Lock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+          <p className="text-sm text-amber-800">
+            Llegaste al límite de <strong>{CLINIC_MAX_PROFESSIONALS} profesionales</strong> incluidos en tu plan Clinic. Escribinos si necesitás sumar más.
+          </p>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>

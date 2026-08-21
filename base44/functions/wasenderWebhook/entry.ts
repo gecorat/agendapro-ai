@@ -28,6 +28,26 @@ export default async function (req: Request): Promise<Response> {
       return Response.json({ error: "Invalid signature" }, { status: 401 });
     }
 
+    if (payload.event === "message.sent") {
+      // Confirmación real de entrega (o fallo real) de un mensaje que mandamos nosotros.
+      // Esto puede llegar AUNQUE el envío inicial haya respondido 200/"in_progress" —
+      // confirmado en vivo: un envío puede parecer exitoso al toque y fallar recién acá,
+      // de forma asíncrona.
+      const msgId = payload.data?.key?.id;
+      const success = payload.data?.success;
+      if (msgId && success === false) {
+        try {
+          const rows = await base44.asServiceRole.entities.Conversation.filter({ professional_id: practice.created_by_id, wasender_msg_id: String(msgId) });
+          if (rows?.[0]) {
+            await base44.asServiceRole.entities.Conversation.update(rows[0].id, { delivery_failed: true });
+          }
+        } catch (e) {
+          console.error("error marcando delivery_failed desde message.sent:", e?.message || e);
+        }
+      }
+      return Response.json({ ok: true });
+    }
+
     if (payload.event !== "messages.received") {
       return Response.json({ ok: true, skipped: `unhandled_event:${payload.event}` });
     }

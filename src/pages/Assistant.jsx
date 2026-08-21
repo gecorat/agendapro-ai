@@ -309,7 +309,7 @@ function FullAssistant({ settings, reloadSettings }) {
 
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {activeMessages.map((msg, idx) => (
-                <MessageBubble key={idx} message={{ role: msg.role, content: msg.text }} />
+                <MessageBubble key={idx} message={{ role: msg.role, content: msg.text, delivery_failed: msg.delivery_failed }} />
               ))}
               {sending && (
                 <div className="flex justify-start">

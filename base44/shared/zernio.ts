@@ -163,7 +163,6 @@ Instrucciones: Respondé al paciente. Si el paciente quiere agendar y tenés tod
     account_id: accountId,
   });
 
-  const plat = await getPlatformConfig(base44);
   const { sendWhatsAppMessage } = await import("./whatsapp-providers.ts");
   await sendWhatsAppMessage(base44, practice, fromPhone, reply.reply);
 

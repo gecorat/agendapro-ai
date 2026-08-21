@@ -3,9 +3,9 @@
 // si cambian precios o límites.
 
 export const PLAN_PRICES = {
-  basic: 29000,
-  pro: 49000,
-  clinic: 69000,
+  basic: 100,
+  pro: 100,
+  clinic: 100,
 };
 
 export const PLAN_LABELS = {

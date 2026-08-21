@@ -293,21 +293,38 @@ REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno está "
   });
 
   // El envío por WhatsApp va AL FINAL, después de que todo lo importante (la cita, el
-  // registro de la conversación) ya está guardado de forma durable. Antes el envío pasaba
-  // ANTES de crear la cita: si fallaba el envío, la cita ni se llegaba a crear. Ahora un
-  // fallo acá no le pega a los datos ya guardados. Con reintento simple (1 vez) ante
-  // errores temporales/timeouts de WasenderAPI o Zernio.
+  // registro de la conversación) ya está guardado de forma durable. Con 3 reintentos y
+  // espera creciente (1s, 3s, 6s) ante errores temporales/timeouts — se probó en vivo que
+  // mensajes muy seguidos (menos de 30s de diferencia) pueden chocar con algún límite de
+  // velocidad del proveedor. Si TODOS los intentos fallan, no lo escondemos: lo marcamos
+  // en el propio registro de la conversación para que se vea en la bandeja de Chats que
+  // ese mensaje puede no haber llegado.
   const { sendWhatsAppMessage } = await import("./whatsapp-providers.ts");
-  try {
-    await sendWhatsAppMessage(base44, practice, fromPhone, finalReplyText);
-  } catch (e) {
-    console.error("sendWhatsAppMessage error, reintentando una vez:", e?.message || e);
+  const delays = [1000, 3000, 6000];
+  let sent = false;
+  let lastError = null;
+  for (let attempt = 0; attempt <= delays.length; attempt++) {
     try {
-      await new Promise((r) => setTimeout(r, 1500));
       await sendWhatsAppMessage(base44, practice, fromPhone, finalReplyText);
-    } catch (e2) {
-      console.error("sendWhatsAppMessage error tras reintento, se abandona el envío:", e2?.message || e2);
+      sent = true;
+      break;
+    } catch (e) {
+      lastError = e;
+      console.error(`sendWhatsAppMessage intento ${attempt + 1} falló:`, e?.message || e);
+      if (attempt < delays.length) {
+        await new Promise((r) => setTimeout(r, delays[attempt]));
+      }
     }
+  }
+  if (!sent) {
+    console.error("sendWhatsAppMessage: se agotaron los reintentos, el mensaje quedó sin enviar:", lastError?.message || lastError);
+    try {
+      const convs = await base44.asServiceRole.entities.Conversation.filter({ professional_id: professionalId, phone: fromPhone, role: "assistant", text: finalReplyText });
+      const last = (convs || []).sort((a, b) => new Date(b.created_date) - new Date(a.created_date))[0];
+      if (last) {
+        await base44.asServiceRole.entities.Conversation.update(last.id, { delivery_failed: true });
+      }
+    } catch { /* no romper el flujo por esto */ }
   }
 
   return { ...reply, reply: finalReplyText, appointment_created: !!appointmentCreated };

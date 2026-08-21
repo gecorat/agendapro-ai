@@ -21,6 +21,8 @@ export default function UpgradePlan() {
   const status = getPlanStatus(settings);
   const [paying, setPaying] = useState(null);
   const [mpStatus, setMpStatus] = useState(null);
+  const [emailDialogPlan, setEmailDialogPlan] = useState(null);
+  const [mpEmail, setMpEmail] = useState("");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);

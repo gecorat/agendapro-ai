@@ -154,17 +154,12 @@ Instrucciones: Respondé al paciente. Si el paciente quiere agendar y tenés tod
 
   const reply = typeof llmRes === "string" ? JSON.parse(llmRes) : llmRes;
 
-  await base44.asServiceRole.entities.Conversation.create({
-    phone: fromPhone,
-    professional_id: professionalId,
-    role: "assistant",
-    text: reply.reply,
-    conversation_id: conversationId,
-    account_id: accountId,
-  });
-
-  const { sendWhatsAppMessage } = await import("./whatsapp-providers.ts");
-  await sendWhatsAppMessage(base44, practice, fromPhone, reply.reply);
+  // A partir de acá, reply.reply puede quedar SOBRESCRITO según lo que realmente haya
+  // pasado en la base de datos. Antes se mandaba el texto de la IA literal (que podía decir
+  // "confirmado" sin haberse guardado nada) — ahora el mensaje final siempre refleja la
+  // realidad, no lo que la IA cree que pasó.
+  let finalReplyText = reply.reply;
+  let appointmentCreated = null;
 
   if (
     reply.action === "book" &&
@@ -174,64 +169,137 @@ Instrucciones: Respondé al paciente. Si el paciente quiere agendar y tenés tod
     const service = myServices.find(
       (s) => s.name.toLowerCase() === reply.appointment.service_name.toLowerCase()
     );
-    if (service) {
-      let patientId = existingPatient?.id;
-      let patientName = existingPatient
-        ? `${existingPatient.first_name} ${existingPatient.last_name || ""}`.trim()
-        : "Paciente WhatsApp";
-      if (!patientId) {
-        const newPatient = await base44.asServiceRole.entities.Patient.create({
-          first_name: "Paciente",
-          phone: fromPhone,
-          professional_id: professionalId,
-        });
-        patientId = newPatient.id;
-      }
+
+    if (!service) {
+      // Antes esto fallaba en silencio: no se creaba la cita pero igual se mandaba el
+      // "confirmado" de la IA. Ahora, si no reconocemos el servicio, se lo decimos al
+      // paciente en vez de mentirle.
+      const availableNames = myServices.map((s) => s.name).join(", ");
+      finalReplyText = `Disculpá, no tengo cargado un servicio que coincida exactamente con "${reply.appointment.service_name}". Los servicios disponibles son: ${availableNames || "(ninguno cargado todavía)"}. ¿Cuál de estos te gustaría agendar?`;
+    } else {
       const start = new Date(reply.appointment.datetime);
       const end = new Date(start.getTime() + (service.duration_minutes || 30) * 60000);
 
-      // Plan Clinic: resolver a qué profesional del equipo se le asigna el turno. Si el
-      // paciente eligió uno por nombre, usamos ese; si no, el primero activo que no tenga
-      // otro turno superpuesto a esa hora ("primer profesional con disponibilidad libre").
-      let assignedProfessionalRefId;
-      if (isClinic && professionals?.length) {
-        const chosenName = (reply.appointment.professional_name || "").toLowerCase().trim();
-        let candidate = chosenName
-          ? professionals.find((p) => `${p.first_name} ${p.last_name || ""}`.toLowerCase().includes(chosenName))
-          : null;
-        if (!candidate) {
-          const overlapping = (appts || []).filter(
-            (a) => a.status !== "cancelled" && new Date(a.start_datetime) < end && new Date(a.end_datetime) > start
-          );
-          candidate = professionals.find(
-            (p) => !overlapping.some((a) => a.professional_ref_id === p.id)
-          );
-        }
-        assignedProfessionalRefId = candidate?.id;
-      }
+      if (isNaN(start.getTime())) {
+        finalReplyText = "No pude entender bien la fecha y hora. ¿Podés indicarme el día y horario de otra forma? Por ejemplo: 'mañana a las 15hs'.";
+      } else {
+        // Chequeo real de disponibilidad ANTES de confirmar nada: la IA puede
+        // equivocarse o alucinar que un horario está libre. Esto es la verdad de la base
+        // de datos, no lo que dijo el modelo.
+        const overlapping = (appts || []).filter((a) => {
+          if (a.status === "cancelled") return false;
+          if (a.created_by_id !== professionalId) return false;
+          const aStart = new Date(a.start_datetime);
+          const aEnd = new Date(a.end_datetime);
+          return aStart < end && start < aEnd;
+        });
 
-      const newAppt = await base44.asServiceRole.entities.Appointment.create({
-        patient_id: patientId,
-        patient_name: patientName,
-        service_id: service.id,
-        service_name: service.name,
-        start_datetime: start.toISOString(),
-        end_datetime: end.toISOString(),
-        status: "confirmed",
-        origin: "whatsapp",
-        professional_id: professionalId,
-        professional_ref_id: assignedProfessionalRefId,
-        confirm_token: crypto.randomUUID(),
-        cancel_token: crypto.randomUUID(),
-      });
-      // Flujo unificado: disparar email de confirmación al paciente con links de gestión
-      try {
-        await base44.asServiceRole.functions.invoke("sendAppointmentConfirmation", { appointment_id: newAppt.id });
-      } catch { /* no romper el flujo del bot */ }
+        let assignedProfessionalRefId;
+        let conflict = false;
+        if (isClinic && professionals?.length) {
+          const chosenName = (reply.appointment.professional_name || "").toLowerCase().trim();
+          let candidate = chosenName
+            ? professionals.find((p) => `${p.first_name} ${p.last_name || ""}`.toLowerCase().includes(chosenName))
+            : null;
+          if (!candidate) {
+            candidate = professionals.find(
+              (p) => !overlapping.some((a) => a.professional_ref_id === p.id)
+            );
+          } else if (overlapping.some((a) => a.professional_ref_id === candidate.id)) {
+            conflict = true;
+          }
+          assignedProfessionalRefId = candidate?.id;
+          if (!candidate && !conflict) conflict = true; // sin nadie libre en ese horario
+        } else if (overlapping.length > 0) {
+          conflict = true;
+        }
+
+        if (conflict) {
+          finalReplyText = `Che, disculpá — ese horario ya no está disponible (se ocupó justo antes). ¿Querés que te proponga otro horario cercano, o preferis decirme vos otra opción?`;
+        } else {
+          let patientId = existingPatient?.id;
+          let patientName = existingPatient
+            ? `${existingPatient.first_name} ${existingPatient.last_name || ""}`.trim()
+            : "Paciente WhatsApp";
+          try {
+            if (!patientId) {
+              const newPatient = await base44.asServiceRole.entities.Patient.create({
+                first_name: "Paciente",
+                phone: fromPhone,
+                professional_id: professionalId,
+              });
+              patientId = newPatient.id;
+            }
+
+            const newAppt = await base44.asServiceRole.entities.Appointment.create({
+              patient_id: patientId,
+              patient_name: patientName,
+              service_id: service.id,
+              service_name: service.name,
+              start_datetime: start.toISOString(),
+              end_datetime: end.toISOString(),
+              status: "confirmed",
+              origin: "whatsapp",
+              professional_id: professionalId,
+              professional_ref_id: assignedProfessionalRefId,
+              confirm_token: crypto.randomUUID(),
+              cancel_token: crypto.randomUUID(),
+            });
+
+            appointmentCreated = newAppt;
+
+            // El texto de confirmación lo armamos NOSOTROS con los datos reales que se
+            // guardaron, no confiamos en la redacción libre de la IA para los detalles
+            // (día, hora, servicio) — así el paciente nunca lee algo distinto de lo que
+            // efectivamente quedó en la agenda.
+            const dateStr = start.toLocaleString("es-AR", {
+              weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit",
+              timeZone: "America/Argentina/Buenos_Aires",
+            });
+            finalReplyText = `¡Listo! Tu turno de ${service.name} quedó confirmado para el ${dateStr}. Te esperamos.`;
+
+            try {
+              await base44.asServiceRole.functions.invoke("sendAppointmentConfirmation", { appointment_id: newAppt.id });
+            } catch (e) {
+              console.error("sendAppointmentConfirmation invoke error:", e?.message || e);
+            }
+          } catch (e) {
+            console.error("Appointment.create error:", e?.message || e);
+            finalReplyText = "Uy, tuve un problema técnico al guardar tu turno. ¿Podés confirmarme de nuevo el día y horario para intentarlo otra vez?";
+          }
+        }
+      }
     }
   }
 
-  return reply;
+  await base44.asServiceRole.entities.Conversation.create({
+    phone: fromPhone,
+    professional_id: professionalId,
+    role: "assistant",
+    text: finalReplyText,
+    conversation_id: conversationId,
+    account_id: accountId,
+  });
+
+  // El envío por WhatsApp va AL FINAL, después de que todo lo importante (la cita, el
+  // registro de la conversación) ya está guardado de forma durable. Antes el envío pasaba
+  // ANTES de crear la cita: si fallaba el envío, la cita ni se llegaba a crear. Ahora un
+  // fallo acá no le pega a los datos ya guardados. Con reintento simple (1 vez) ante
+  // errores temporales/timeouts de WasenderAPI o Zernio.
+  const { sendWhatsAppMessage } = await import("./whatsapp-providers.ts");
+  try {
+    await sendWhatsAppMessage(base44, practice, fromPhone, finalReplyText);
+  } catch (e) {
+    console.error("sendWhatsAppMessage error, reintentando una vez:", e?.message || e);
+    try {
+      await new Promise((r) => setTimeout(r, 1500));
+      await sendWhatsAppMessage(base44, practice, fromPhone, finalReplyText);
+    } catch (e2) {
+      console.error("sendWhatsAppMessage error tras reintento, se abandona el envío:", e2?.message || e2);
+    }
+  }
+
+  return { ...reply, reply: finalReplyText, appointment_created: !!appointmentCreated };
 }
 
 const ZERNIO_BASE = "https://zernio.com/api/v1";

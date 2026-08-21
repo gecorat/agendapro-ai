@@ -1,6 +1,6 @@
 import React from "react";
 import ReactMarkdown from "react-markdown";
-import { Bot } from "lucide-react";
+import { Bot, AlertTriangle } from "lucide-react";
 import FunctionDisplay from "./FunctionDisplay";
 
 export default function MessageBubble({ message }) {
@@ -33,6 +33,12 @@ export default function MessageBubble({ message }) {
         {message.tool_calls?.map((toolCall, idx) => (
           <FunctionDisplay key={idx} toolCall={toolCall} />
         ))}
+        {message.delivery_failed && (
+          <div className="flex items-center gap-1.5 mt-1.5 text-xs text-amber-600">
+            <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+            <span>Puede no haber llegado al WhatsApp del paciente</span>
+          </div>
+        )}
       </div>
     </div>
   );

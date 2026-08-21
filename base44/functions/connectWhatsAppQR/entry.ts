@@ -28,38 +28,60 @@ export default async function (req: Request): Promise<Response> {
     // exacto de un proveedor externo la primera vez, con Zernio).
     const webhookUrl = `https://base44.app/api/apps/6a726ce53f9d0f63f3816283/functions/wasenderWebhook?practiceId=${practice.id}`;
 
-    const createRes = await fetch('https://www.wasenderapi.com/api/whatsapp-sessions', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${pat}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: `Kame Agenda - ${practice.practice_name || user.email}`,
-        phone_number: phoneNumber,
-        account_protection: true,
-        log_messages: true,
-        read_incoming_messages: false,
-        webhook_url: webhookUrl,
-        webhook_enabled: true,
-        webhook_events: ['messages.received', 'session.status'],
-        ignore_groups: true,
-        ignore_channels: true,
-        ignore_broadcasts: true,
-      }),
-    });
-    const createData = await createRes.json().catch(() => ({}));
-    if (!createRes.ok || !createData?.success) {
-      return Response.json({ error: createData?.message || 'No se pudo crear la sesión de WhatsApp' }, { status: 400 });
+    let session;
+    // Si ya había una sesión creada antes (por ejemplo, un intento anterior que no llegó a
+    // conectarse), la reutilizamos en vez de crear una nueva: WasenderAPI no permite dos
+    // sesiones con el mismo número de teléfono, así que reintentar sin esto tiraba "The
+    // phone number has already been taken".
+    if (practice.wasender_session_id) {
+      const detailRes = await fetch(`https://www.wasenderapi.com/api/whatsapp-sessions/${practice.wasender_session_id}`, {
+        headers: { Authorization: `Bearer ${pat}` },
+      });
+      const detailData = await detailRes.json().catch(() => ({}));
+      if (detailRes.ok && detailData?.success) {
+        session = detailData.data;
+      }
     }
 
-    const session = createData.data;
+    if (!session) {
+      const createRes = await fetch('https://www.wasenderapi.com/api/whatsapp-sessions', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${pat}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: `Kame Agenda - ${practice.practice_name || user.email}`,
+          phone_number: phoneNumber,
+          account_protection: true,
+          log_messages: true,
+          read_incoming_messages: false,
+          webhook_url: webhookUrl,
+          webhook_enabled: true,
+          webhook_events: ['messages.received', 'session.status'],
+          ignore_groups: true,
+          ignore_channels: true,
+          ignore_broadcasts: true,
+        }),
+      });
+      const createData = await createRes.json().catch(() => ({}));
+      if (!createRes.ok || !createData?.success) {
+        return Response.json({ error: createData?.message || 'No se pudo crear la sesión de WhatsApp' }, { status: 400 });
+      }
+      session = createData.data;
+    }
 
-    await base44.asServiceRole.entities.PracticeSettings.update(practice.id, {
-      whatsapp_connection_type: 'qr',
-      wasender_session_id: String(session.id),
-      wasender_api_key: session.api_key,
-      wasender_webhook_secret: session.webhook_secret,
-      whatsapp_status: 'connecting',
-      whatsapp_connected: false,
-    });
+    // Si ya estaba conectada de antes (por ejemplo, el usuario escaneó en un intento previo
+    // pero el polling no lo detectó a tiempo), lo reflejamos directo sin volver a pedir QR.
+    if (session.status === 'connected') {
+      await base44.asServiceRole.entities.PracticeSettings.update(practice.id, {
+        whatsapp_connection_type: 'qr',
+        wasender_session_id: String(session.id),
+        wasender_api_key: session.api_key,
+        wasender_webhook_secret: session.webhook_secret,
+        whatsapp_status: 'connected',
+        whatsapp_connected: true,
+        whatsapp_phone_number: session.phone_number,
+      });
+      return Response.json({ qrCode: null, status: 'ALREADY_CONNECTED', connected: true });
+    }
 
     const connectRes = await fetch(`https://www.wasenderapi.com/api/whatsapp-sessions/${session.id}/connect`, {
       method: 'POST',
@@ -73,7 +95,12 @@ export default async function (req: Request): Promise<Response> {
 
     const qrCode = connectData.data?.qrCode || null;
     await base44.asServiceRole.entities.PracticeSettings.update(practice.id, {
+      whatsapp_connection_type: 'qr',
+      wasender_session_id: String(session.id),
+      wasender_api_key: session.api_key,
+      wasender_webhook_secret: session.webhook_secret,
       whatsapp_status: qrCode ? 'need_scan' : (connectData.data?.status || 'connecting').toLowerCase(),
+      whatsapp_connected: false,
     });
 
     return Response.json({ qrCode, status: connectData.data?.status || 'NEED_SCAN' });

@@ -38,13 +38,20 @@ export async function sendWhatsAppMessage(base44, practice, phone, text) {
 async function sendViaWasender(practice, phone, text) {
   const apiKey = practice?.wasender_api_key;
   if (!apiKey) throw new Error("wasender_api_key faltante para este consultorio");
-  const res = await fetch("https://www.wasenderapi.com/api/send-message", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ to: phone, text }),
-  });
+  let res;
+  try {
+    res = await fetch("https://www.wasenderapi.com/api/send-message", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ to: phone, text }),
+    });
+  } catch (networkErr) {
+    console.error(`[WasenderAPI] error de red al enviar a ${phone}:`, networkErr?.message || networkErr);
+    throw networkErr;
+  }
   const data = await res.json().catch(() => ({}));
   if (!res.ok || data?.success === false) {
+    console.error(`[WasenderAPI] fallo al enviar a ${phone} — status ${res.status}:`, data?.message || JSON.stringify(data));
     throw new Error(data?.message || `WasenderAPI send-message falló (${res.status})`);
   }
   return data;

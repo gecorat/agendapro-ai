@@ -27,8 +27,20 @@ export default async function(req: Request): Promise<Response> {
     // con los mensajes que llegó el paciente.
     const result = await sendWhatsAppMessage(base44, practice, phone, message);
 
+    // Al responder a mano, pausamos automáticamente el bot para esta conversación — así no
+    // se pisan las respuestas. Se reanuda explícitamente con el botón de la bandeja.
+    const normalized = normalizePhone(phone);
+    try {
+      const existing = await base44.asServiceRole.entities.ChatPause.filter({ professional_id: user.id, phone: normalized });
+      if (existing?.[0]) {
+        await base44.asServiceRole.entities.ChatPause.update(existing[0].id, { paused: true });
+      } else {
+        await base44.asServiceRole.entities.ChatPause.create({ professional_id: user.id, phone: normalized, paused: true });
+      }
+    } catch { /* no bloquear el envío si esto falla */ }
+
     await base44.asServiceRole.entities.Conversation.create({
-      phone: normalizePhone(phone),
+      phone: normalized,
       professional_id: user.id,
       role: "assistant",
       text: message,

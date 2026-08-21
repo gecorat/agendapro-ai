@@ -332,11 +332,7 @@ REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno está "
   if (!sent) {
     console.error("sendWhatsAppMessage: se agotaron los reintentos, el mensaje quedó sin enviar:", lastError?.message || lastError);
     try {
-      const convs = await base44.asServiceRole.entities.Conversation.filter({ professional_id: professionalId, phone: fromPhone, role: "assistant", text: finalReplyText });
-      const last = (convs || []).sort((a, b) => new Date(b.created_date) - new Date(a.created_date))[0];
-      if (last) {
-        await base44.asServiceRole.entities.Conversation.update(last.id, { delivery_failed: true });
-      }
+      await base44.asServiceRole.entities.Conversation.update(savedMsg.id, { delivery_failed: true });
     } catch { /* no romper el flujo por esto */ }
   }
 

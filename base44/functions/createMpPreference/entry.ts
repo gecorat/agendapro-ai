@@ -13,6 +13,12 @@ export default async function(req) {
     const body = await req.json();
     const plan = body?.plan;
     const origin = body?.origin || 'https://agendate.base44.app';
+    // Antes se usaba user.email (el login de la app) como payer_email — pero Mercado Pago
+    // exige que coincida EXACTO con la cuenta de MP que realmente paga, y no tienen por qué
+    // ser el mismo email. Confirmado en vivo: si no coinciden, MP rechaza el pago con "tu
+    // email no coincide con el de la suscripción". Ahora se lo pedimos al profesional en
+    // el momento de pagar, en vez de asumirlo.
+    const payerEmail = body?.payer_email || user.email;
     if (!plan || !PLAN_PRICES[plan]) {
       return Response.json({ error: 'Plan inválido' }, { status: 400 });
     }
@@ -36,7 +42,7 @@ export default async function(req) {
         currency_id: 'ARS',
       },
       back_url: `${origin}/upgrade-plan?status=success`,
-      payer_email: user.email,
+      payer_email: payerEmail,
       // Mandamos la URL de notificaciones explícita en vez de depender de que quede
       // configurada aparte en el panel de Mercado Pago — así el webhook funciona apenas
       // se carga el Access Token, sin pasos manuales extra.

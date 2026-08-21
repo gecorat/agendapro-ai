@@ -8,6 +8,18 @@ export function normalizePhone(phone) {
   return (phone || "").replace(/[^\d]/g, "");
 }
 
+// Consultado por los webhooks antes de invocar al bot. Si el profesional pausó esta
+// conversación puntual (a mano, o automáticamente al responder él mismo), el bot no debe
+// contestarle a ese paciente hasta que se reanude explícitamente.
+export async function isChatPaused(base44, professionalId, phone) {
+  try {
+    const rows = await base44.asServiceRole.entities.ChatPause.filter({ professional_id: professionalId, phone: normalizePhone(phone) });
+    return !!rows?.[0]?.paused;
+  } catch {
+    return false;
+  }
+}
+
 export async function sendWhatsAppMessage(base44, practice, phone, text) {
   if (practice?.whatsapp_connection_type === "qr") {
     return sendViaWasender(practice, phone, text);

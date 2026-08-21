@@ -36,9 +36,16 @@ export default function UpgradePlan() {
   }, [toast]);
 
   const handlePay = async (plan) => {
+    setMpEmail(settings?.professional_email || "");
+    setEmailDialogPlan(plan);
+  };
+
+  const confirmPay = async () => {
+    const plan = emailDialogPlan;
+    if (!mpEmail || !mpEmail.includes("@")) return;
     setPaying(plan);
     try {
-      const res = await base44.functions.invoke("createMpPreference", { plan, origin: window.location.origin });
+      const res = await base44.functions.invoke("createMpPreference", { plan, origin: window.location.origin, payer_email: mpEmail });
       if (res?.data?.init_point) {
         window.location.href = res.data.init_point;
       } else {
@@ -48,6 +55,7 @@ export default function UpgradePlan() {
       toast({ title: "No se pudo iniciar el pago", description: err.message, variant: "destructive" });
     } finally {
       setPaying(null);
+      setEmailDialogPlan(null);
     }
   };
 

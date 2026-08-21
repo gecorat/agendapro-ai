@@ -56,6 +56,13 @@ export default async function (req: Request): Promise<Response> {
       account_id: practice.wasender_session_id,
     });
 
+    // Si el profesional puso esta conversación en pausa (a mano, o automáticamente al
+    // responder él mismo), el bot no contesta — solo queda guardado el mensaje del
+    // paciente para que lo atienda a mano desde la bandeja.
+    if (await isChatPaused(base44, professionalId, fromPhone)) {
+      return Response.json({ ok: true, skipped: "chat_paused" });
+    }
+
     const usage = await checkWhatsAppUsage(base44, practice);
     if (!usage.allowed) {
       waitUntil(

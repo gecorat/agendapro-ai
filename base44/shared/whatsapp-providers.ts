@@ -1,6 +1,13 @@
 // Envío de WhatsApp agnóstico al proveedor: cada profesional puede estar conectado por
 // Zernio (API oficial de Meta) o por WasenderAPI (QR, no oficial) — el resto del código
 // (el bot, los recordatorios) no necesita saber cuál es cuál, solo llama a esta función.
+// Formato único de teléfono para que las conversaciones agrupen bien: Zernio manda el
+// número con "+" ("+549..."), WasenderAPI lo manda sin él ("549...") — sin esto, la misma
+// persona aparecía como dos conversaciones separadas según qué proveedor haya usado.
+export function normalizePhone(phone) {
+  return (phone || "").replace(/[^\d]/g, "");
+}
+
 export async function sendWhatsAppMessage(base44, practice, phone, text) {
   if (practice?.whatsapp_connection_type === "qr") {
     return sendViaWasender(practice, phone, text);

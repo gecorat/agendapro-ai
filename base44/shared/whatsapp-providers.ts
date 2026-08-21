@@ -52,7 +52,15 @@ async function sendViaWasender(practice, phone, text) {
   const data = await res.json().catch(() => ({}));
   if (!res.ok || data?.success === false) {
     console.error(`[WasenderAPI] fallo al enviar a ${phone} — status ${res.status}:`, data?.message || JSON.stringify(data));
-    throw new Error(data?.message || `WasenderAPI send-message falló (${res.status})`);
+    const err = new Error(data?.message || `WasenderAPI send-message falló (${res.status})`);
+    // Confirmado en vivo: en el plan trial de WasenderAPI, un 429 trae retry_after (en
+    // segundos) indicando cuánto hay que esperar de verdad — lo exponemos en el error para
+    // que el que reintenta (orchestrateConversation) espere ese tiempo real en vez de un
+    // número fijo que no alcanza.
+    if (res.status === 429 && data?.retry_after) {
+      err.retryAfterMs = Number(data.retry_after) * 1000;
+    }
+    throw err;
   }
   return data;
 }

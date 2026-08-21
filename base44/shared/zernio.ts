@@ -293,24 +293,23 @@ REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno está "
   });
 
   // El envío por WhatsApp va AL FINAL, después de que todo lo importante (la cita, el
-  // registro de la conversación) ya está guardado de forma durable. Con 3 reintentos y
-  // espera creciente (1s, 3s, 6s) ante errores temporales/timeouts — se probó en vivo que
-  // mensajes muy seguidos (menos de 30s de diferencia) pueden chocar con algún límite de
-  // velocidad del proveedor. Si TODOS los intentos fallan, no lo escondemos: lo marcamos
-  // en el propio registro de la conversación para que se vea en la bandeja de Chats que
-  // ese mensaje puede no haber llegado.
+  // registro de la conversación) ya está guardado de forma durable.
   //
-  // OJO: WasenderAPI puede responder "200 in_progress" (parece exitoso) y después fallar
-  // la entrega real de forma asíncrona — confirmado en vivo. Por eso guardamos el msgId que
-  // devuelve el envío, y después el webhook "message.sent" (con success:false) puede
-  // marcar este mismo mensaje como fallido de verdad, aunque el envío inicial no haya
-  // tirado ningún error.
+  // Confirmado en vivo: el plan trial de WasenderAPI limita a 1 mensaje por minuto — el
+  // segundo mensaje de cualquier conversación rápida choca con un 429 que trae
+  // "retry_after" (en segundos). Reintentar rápido (1s/3s/6s) no servía de nada contra ese
+  // límite específico. Ahora, si el error trae retry_after, esperamos ESE tiempo real (con
+  // un tope de seguridad) en vez de un número fijo que no alcanza. Esto no reemplaza la
+  // necesidad de un plan pago para que el bot converse con fluidez, pero al menos garantiza
+  // que el mensaje termine llegando en vez de perderse.
   const { sendWhatsAppMessage } = await import("./whatsapp-providers.ts");
-  const delays = [1000, 3000, 6000];
+  const MAX_RETRY_WAIT_MS = 90000; // tope de seguridad por intento
+  const fallbackDelays = [1000, 3000, 6000];
+  const maxAttempts = 3;
   let sent = false;
   let lastError = null;
   let sendResult = null;
-  for (let attempt = 0; attempt <= delays.length; attempt++) {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
       sendResult = await sendWhatsAppMessage(base44, practice, fromPhone, finalReplyText);
       sent = true;
@@ -318,8 +317,12 @@ REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno está "
     } catch (e) {
       lastError = e;
       console.error(`sendWhatsAppMessage intento ${attempt + 1} falló:`, e?.message || e);
-      if (attempt < delays.length) {
-        await new Promise((r) => setTimeout(r, delays[attempt]));
+      if (attempt < maxAttempts - 1) {
+        const wait = e?.retryAfterMs
+          ? Math.min(e.retryAfterMs, MAX_RETRY_WAIT_MS)
+          : fallbackDelays[attempt];
+        console.error(`Esperando ${wait}ms antes del próximo intento (retry_after real: ${e?.retryAfterMs || "n/a"})`);
+        await new Promise((r) => setTimeout(r, wait));
       }
     }
   }

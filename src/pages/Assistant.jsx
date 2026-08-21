@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { MessageSquare, Send, Loader2, MessageCircle, ChevronLeft } from "lucide-react";
+import { MessageSquare, Send, Loader2, MessageCircle, ChevronLeft, Pause, Play, LogOut } from "lucide-react";
 import MessageBubble from "@/components/assistant/MessageBubble";
 import DemoChat from "@/components/assistant/DemoChat";
 import WhatsAppConnectCard from "@/components/WhatsAppConnectCard";
@@ -45,7 +45,7 @@ function UpgradeBlock({ plan }) {
   );
 }
 
-function FullAssistant({ settings }) {
+function FullAssistant({ settings, reloadSettings }) {
   const [user, setUser] = useState(null);
   const [allMsgs, setAllMsgs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -53,6 +53,9 @@ function FullAssistant({ settings }) {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [mobileShowChat, setMobileShowChat] = useState(false);
+  const [chatPaused, setChatPaused] = useState(false);
+  const [pauseLoading, setPauseLoading] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
   const messagesEndRef = useRef(null);
 
   // Antes esto exigía específicamente zernio_account_id, así que un profesional conectado
@@ -112,6 +115,41 @@ function FullAssistant({ settings }) {
 
   const activeConvo = conversations.find((c) => c.phone === activePhone) || null;
   const activeMessages = activeConvo?.messages || [];
+
+  // Cargamos el estado de pausa real de la conversación activa (antes esto no existía de
+  // verdad, el texto de abajo lo prometa sin ningún código detrás).
+  useEffect(() => {
+    if (!user || !activePhone) { setChatPaused(false); return; }
+    base44.entities.ChatPause.filter({ professional_id: user.id, phone: activePhone })
+      .then((rows) => setChatPaused(!!rows?.[0]?.paused))
+      .catch(() => setChatPaused(false));
+  }, [user, activePhone]);
+
+  const handleTogglePause = async () => {
+    if (!activePhone) return;
+    setPauseLoading(true);
+    try {
+      const res = await base44.functions.invoke("toggleChatPause", { phone: activePhone, paused: !chatPaused });
+      setChatPaused(!!res?.data?.paused);
+    } catch (e) {
+      console.error("Error al pausar/reanudar", e);
+    } finally {
+      setPauseLoading(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    if (!confirm("¿Desconectar WhatsApp? La asistente dejará de responder a tus pacientes hasta que reconectes.")) return;
+    setDisconnecting(true);
+    try {
+      await base44.functions.invoke("disconnectWhatsApp", {});
+      await reloadSettings?.();
+    } catch (e) {
+      console.error("Error al desconectar", e);
+    } finally {
+      setDisconnecting(false);
+    }
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -182,13 +220,18 @@ function FullAssistant({ settings }) {
   }
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] md:h-[calc(100vh-3.5rem)] border-t border-border">
+    <div className="flex flex-col h-[calc(100vh-3.5rem)] md:h-[calc(100vh-3.5rem)] border-t border-border">
+      <div className="flex items-center justify-between gap-2 px-4 h-11 border-b border-border bg-card shrink-0">
+        <p className="text-xs text-muted-foreground truncate">{settings?.whatsapp_phone_number || settings?.zernio_phone || "WhatsApp conectado"}</p>
+        <Button variant="outline" size="sm" onClick={handleDisconnect} disabled={disconnecting} className="h-7 px-2 gap-1.5 text-xs shrink-0">
+          {disconnecting ? <Loader2 className="w-3 h-3 animate-spin" /> : <LogOut className="w-3 h-3" />}
+          Desconectar
+        </Button>
+      </div>
+      <div className="flex flex-1 min-h-0">
       <div className={cn("w-full md:w-80 border-r border-border bg-card flex flex-col", mobileShowChat && "hidden md:flex")}>
         <div className="p-4 border-b border-border">
-          <div className="flex items-center justify-between">
-            <h2 className="font-heading font-semibold text-sm">Conversaciones</h2>
-          </div>
-          <p className="text-xs text-muted-foreground mt-1">{settings?.whatsapp_phone_number || settings?.zernio_phone || "WhatsApp conectado"}</p>
+          <h2 className="font-heading font-semibold text-sm">Conversaciones</h2>
         </div>
 
         <div className="flex-1 overflow-y-auto">

@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { waitUntil } from "base44:runtime";
 import { checkWhatsAppUsage } from "../../shared/whatsapp-usage.ts";
-import { sendWhatsAppMessage } from "../../shared/whatsapp-providers.ts";
+import { sendWhatsAppMessage, isChatPaused } from "../../shared/whatsapp-providers.ts";
 
 // Webhook de WasenderAPI (conexión por QR). A diferencia de Zernio, acá identificamos de
 // qué consultorio es cada mensaje por el ?practiceId= en la URL (que nosotros mismos
@@ -57,8 +57,7 @@ export default async function (req: Request): Promise<Response> {
     });
 
     const usage = await checkWhatsAppUsage(base44, practice);
-    if (!usage.allowed) {
-      waitUntil(
+    if (!usage.allowed) {      waitUntil(
         sendWhatsAppMessage(base44, practice, fromPhone, usage.autoReplyToPatient)
           .then(() =>
             base44.asServiceRole.entities.Conversation.create({

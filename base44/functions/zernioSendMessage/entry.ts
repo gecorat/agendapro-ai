@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
-import { getPlatformConfig, sendWhatsApp } from "../../shared/zernio.ts";
+import { sendWhatsAppMessage } from "../../shared/whatsapp-providers.ts";
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -16,21 +16,13 @@ export default async function(req: Request): Promise<Response> {
 
     const practices = await base44.asServiceRole.entities.PracticeSettings.filter({});
     const practice = practices.find((p) => p.created_by_id === user.id);
-    const accountId = practice?.zernio_account_id;
-
-    if (!accountId) {
-      return Response.json({ error: 'Tu cuenta no tiene un Account ID de Zernio configurado' }, { status: 400 });
+    if (!practice?.whatsapp_connected) {
+      return Response.json({ error: 'Tu WhatsApp no está conectado' }, { status: 400 });
     }
 
-    const plat = await getPlatformConfig(base44);
-
-    const result = await sendWhatsApp(base44, {
-      apiKey: plat?.zernio_api_key,
-      accountId,
-      conversationId,
-      phone,
-      message,
-    });
+    // Antes esto solo sabía mandar por Zernio — ahora usa la misma función genérica que el
+    // bot automático, que elige el proveedor correcto según whatsapp_connection_type.
+    const result = await sendWhatsAppMessage(base44, practice, phone, message);
 
     await base44.asServiceRole.entities.Conversation.create({
       phone,
@@ -38,7 +30,7 @@ export default async function(req: Request): Promise<Response> {
       role: "assistant",
       text: message,
       conversation_id: conversationId || "",
-      account_id: accountId,
+      account_id: practice.whatsapp_connection_type === 'qr' ? practice.wasender_session_id : practice.zernio_account_id,
     });
 
     return Response.json({ ok: true, result });

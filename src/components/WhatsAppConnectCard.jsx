@@ -1,20 +1,31 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import { base44 } from "@/api/base44Client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, CheckCircle2, XCircle, Loader2, LogOut } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { MessageCircle, CheckCircle2, XCircle, Loader2, LogOut, QrCode, ShieldCheck } from "lucide-react";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import { getPlanStatus } from "@/lib/plan-utils";
 import PlanGate from "@/components/PlanGate";
 
 export default function WhatsAppConnectCard() {
   const { settings, reload } = usePracticeSettings();
-  const [connecting, setConnecting] = useState(false);
+  const [connectingQR, setConnectingQR] = useState(false);
+  const [connectingOfficial, setConnectingOfficial] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
   const [error, setError] = useState("");
+  const [qrOpen, setQrOpen] = useState(false);
+  const [qrCode, setQrCode] = useState(null);
+  const [qrStatus, setQrStatus] = useState("");
+  const pollRef = useRef(null);
 
   const planStatus = getPlanStatus(settings);
-  const connected = settings?.whatsapp_connected && !!settings?.zernio_account_id;
+  const connected = !!settings?.whatsapp_connected;
+  const connectionType = settings?.whatsapp_connection_type;
+  const connectedPhone = settings?.whatsapp_phone_number || settings?.zernio_phone;
+
+  useEffect(() => () => clearInterval(pollRef.current), []);
 
   if (!settings) {
     return (
@@ -53,21 +64,59 @@ export default function WhatsAppConnectCard() {
     );
   }
 
-  const handleConnect = async () => {
+  const startPolling = () => {
+    clearInterval(pollRef.current);
+    pollRef.current = setInterval(async () => {
+      try {
+        const res = await base44.functions.invoke("getWhatsAppQRStatus", {});
+        const status = res?.data?.status;
+        setQrStatus(status || "");
+        if (res?.data?.connected) {
+          clearInterval(pollRef.current);
+          setQrOpen(false);
+          await reload();
+        }
+      } catch {
+        // seguimos intentando en el próximo tick
+      }
+    }, 2500);
+  };
+
+  const handleConnectQR = async () => {
     setError("");
-    setConnecting(true);
+    setConnectingQR(true);
+    try {
+      const res = await base44.functions.invoke("connectWhatsAppQR", {});
+      if (res?.data?.error) {
+        setError(res.data.message || res.data.error);
+        return;
+      }
+      setQrCode(res?.data?.qrCode || null);
+      setQrStatus("need_scan");
+      setQrOpen(true);
+      startPolling();
+    } catch (e) {
+      setError(e?.response?.data?.message || e?.response?.data?.error || "No se pudo iniciar la conexión por QR");
+    } finally {
+      setConnectingQR(false);
+    }
+  };
+
+  const handleConnectOfficial = async () => {
+    setError("");
+    setConnectingOfficial(true);
     try {
       const res = await base44.functions.invoke("connectWhatsAppStart", {});
       const authUrl = res.data?.authUrl;
       if (!authUrl) {
         setError(res.data?.error || "No se pudo iniciar la conexión");
-        setConnecting(false);
+        setConnectingOfficial(false);
         return;
       }
       window.location.href = authUrl;
     } catch (e) {
       setError(e?.response?.data?.error || e?.message || "No se pudo iniciar la conexión");
-      setConnecting(false);
+      setConnectingOfficial(false);
     }
   };
 
@@ -108,25 +157,64 @@ export default function WhatsAppConnectCard() {
 
       {connected ? (
         <div className="flex items-center justify-between rounded-lg bg-emerald-500/10 px-3 py-2.5">
-          <p className="text-sm font-medium text-emerald-700">{settings?.zernio_phone || "Número conectado"}</p>
+          <div>
+            <p className="text-sm font-medium text-emerald-700">{connectedPhone || "Número conectado"}</p>
+            <p className="text-xs text-emerald-600/80">{connectionType === "qr" ? "QR instantáneo" : "API oficial de Meta"}</p>
+          </div>
           <Button variant="outline" size="sm" onClick={handleDisconnect} disabled={disconnecting} className="gap-1.5">
             {disconnecting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LogOut className="w-3.5 h-3.5" />}
             Desconectar
           </Button>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           <p className="text-xs text-muted-foreground">
-            Conectá tu número de WhatsApp Business en un par de clics: se abre Meta, verificás tu número y la asistente empieza a atender a tus pacientes.
+            Escaneá un código QR con tu WhatsApp y la asistente empieza a atender a tus pacientes al instante.
           </p>
-          <Button onClick={handleConnect} disabled={connecting} className="w-full gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white">
-            {connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageCircle className="w-4 h-4" />}
-            Conectar WhatsApp
+          <Button onClick={handleConnectQR} disabled={connectingQR} className="w-full gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white">
+            {connectingQR ? <Loader2 className="w-4 h-4 animate-spin" /> : <QrCode className="w-4 h-4" />}
+            Conectar con QR (recomendado)
           </Button>
+          <button
+            type="button"
+            onClick={handleConnectOfficial}
+            disabled={connectingOfficial}
+            className="w-full text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 flex items-center justify-center gap-1"
+          >
+            {connectingOfficial ? <Loader2 className="w-3 h-3 animate-spin" /> : <ShieldCheck className="w-3 h-3" />}
+            Preferís usar la API oficial de Meta en vez del QR
+          </button>
         </div>
       )}
 
       {error && <p className="text-xs text-destructive">{error}</p>}
+
+      <Dialog open={qrOpen} onOpenChange={(open) => { setQrOpen(open); if (!open) clearInterval(pollRef.current); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Escaneá para conectar tu WhatsApp</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4 py-2">
+            {qrCode ? (
+              <div className="p-3 bg-white rounded-xl border border-border">
+                <QRCodeSVG value={qrCode} size={220} />
+              </div>
+            ) : (
+              <div className="w-[220px] h-[220px] flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+              </div>
+            )}
+            <div className="text-center space-y-1">
+              <p className="text-sm font-medium">
+                {qrStatus === "connected" ? "¡Conectado!" : "Esperando que escanees…"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                WhatsApp → Configuración → Dispositivos vinculados → Vincular un dispositivo
+              </p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

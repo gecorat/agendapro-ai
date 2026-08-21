@@ -6,7 +6,8 @@ import { normalizePhone, isChatPaused } from "../../shared/whatsapp-providers.ts
 
 export default async function(req: Request): Promise<Response> {
   try {
-    const rawBody = await req.text();    const payload = JSON.parse(rawBody);
+    const rawBody = await req.text();
+    const payload = JSON.parse(rawBody);
     const base44 = createClientFromRequest(req);
 
     // DEBUG TEMPORAL: guardamos el payload real de Zernio para poder verlo, ya que el

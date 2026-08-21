@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2, CreditCard, MessageCircle, Bot, Save, Eye, EyeOff, Copy, Check } from "lucide-react";
+import { Loader2, CreditCard, MessageCircle, Bot, Save, Eye, EyeOff, Copy, Check, QrCode } from "lucide-react";
 
 const MODELS = [
   { value: "automatic", label: "Automático (recomendado)" },
@@ -54,6 +54,7 @@ export default function AdminConnections() {
   const [zernioKey, setZernioKey] = useState("");
   const [zernioAccountId, setZernioAccountId] = useState("");
   const [webhookSecret, setWebhookSecret] = useState("");
+  const [wasenderPat, setWasenderPat] = useState("");
   const [previewLimit, setPreviewLimit] = useState(20);
 
   const [botConfig, setBotConfig] = useState(null);
@@ -65,6 +66,7 @@ export default function AdminConnections() {
   // acá se mostraba "{origin}/api/functions/zernioWebhook", que no es una ruta válida — si
   // alguien la había cargado en Zernio, los mensajes de WhatsApp nunca iban a llegar.
   const webhookUrl = "https://base44.app/api/apps/6a726ce53f9d0f63f3816283/functions/zernioWebhook";
+  const wasenderWebhookUrlHint = "https://base44.app/api/apps/6a726ce53f9d0f63f3816283/functions/wasenderWebhook?practiceId=<se completa solo por profesional>";
 
   const copyWebhookUrl = async () => {
     try {
@@ -88,6 +90,7 @@ export default function AdminConnections() {
       setZernioKey(p?.zernio_api_key || "");
       setZernioAccountId(p?.zernio_account_id || "");
       setWebhookSecret(p?.zernio_webhook_secret || "");
+      setWasenderPat(p?.wasender_personal_access_token || "");
 
       const b = botList?.[0] || null;
       setBotConfig(b);
@@ -110,6 +113,7 @@ export default function AdminConnections() {
         zernio_api_key: zernioKey,
         zernio_account_id: zernioAccountId,
         zernio_webhook_secret: webhookSecret,
+        wasender_personal_access_token: wasenderPat,
       };
       if (plat) {
         await base44.entities.PlatformConfig.update(plat.id, data);
@@ -198,6 +202,29 @@ export default function AdminConnections() {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-1">Configurá esta URL en Zernio → Webhooks con el evento <strong>message.received</strong>.</p>
+        </div>
+      </Card>
+
+      <Button onClick={savePlatform} disabled={saving}>
+        {saving && <Loader2 className="w-4 h-4 mr-1 animate-spin" />} <Save className="w-4 h-4 mr-1" /> Guardar conexiones
+      </Button>
+
+      {/* WasenderAPI (QR) */}
+      <Card className="p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <QrCode className="w-5 h-5 text-primary" />
+          <h2 className="font-heading font-semibold">Conexión rápida por QR (WasenderAPI)</h2>
+        </div>
+        <p className="text-sm text-muted-foreground">Alternativa sin verificación de Meta. Cada profesional que conecta por QR genera su propia sesión automáticamente; este token es único y global para toda la plataforma.</p>
+        <div className="space-y-1.5">
+          <Label htmlFor="wasenderpat">Personal Access Token</Label>
+          <SecretField id="wasenderpat" value={wasenderPat} onChange={(e) => setWasenderPat(e.target.value)} placeholder="Dashboard → Settings → Personal Access Token" />
+          <p className="text-xs text-muted-foreground">Sacalo de tu cuenta en wasenderapi.com → Settings → Personal Access Token. Habilita el botón "Conectar con QR" para todos los profesionales.</p>
+        </div>
+        <div className="space-y-1.5 rounded-lg bg-accent/50 p-3">
+          <Label>URL de webhook (se genera automáticamente por profesional)</Label>
+          <p className="text-xs text-muted-foreground break-all font-mono">{wasenderWebhookUrlHint}</p>
+          <p className="text-xs text-muted-foreground mt-1">No hace falta configurar nada manualmente en WasenderAPI — se arma solo al crear cada sesión.</p>
         </div>
       </Card>
 

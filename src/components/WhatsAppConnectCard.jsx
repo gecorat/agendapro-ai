@@ -91,6 +91,11 @@ export default function WhatsAppConnectCard() {
         setError(res.data.message || res.data.error);
         return;
       }
+      if (res?.data?.connected) {
+        // Ya estaba conectada de un intento anterior que el polling no había detectado.
+        await reload();
+        return;
+      }
       setQrCode(res?.data?.qrCode || null);
       setQrStatus("need_scan");
       setQrOpen(true);

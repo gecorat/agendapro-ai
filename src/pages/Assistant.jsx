@@ -180,6 +180,9 @@ function FullAssistant({ settings, reloadSettings }) {
         message: content,
         conversationId: activeConvo?.conversationId,
       });
+      // El backend pausa automáticamente el bot para esta conversación al responder a
+      // mano — reflejamos eso acá mismo sin esperar un refetch.
+      setChatPaused(true);
     } catch (e) {
       console.error("Error sending message", e);
       setAllMsgs((prev) => prev.filter((m) => m !== optimistic));
@@ -356,7 +359,7 @@ function FullAssistant({ settings, reloadSettings }) {
 }
 
 export default function Assistant() {
-  const { settings, loading } = usePracticeSettings();
+  const { settings, loading, reload } = usePracticeSettings();
   const planStatus = getPlanStatus(settings);
 
   if (loading || !settings) {
@@ -385,5 +388,5 @@ export default function Assistant() {
     );
   }
 
-  return <FullAssistant settings={settings} />;
+  return <FullAssistant settings={settings} reloadSettings={reload} />;
 }

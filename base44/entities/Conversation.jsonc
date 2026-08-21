@@ -29,6 +29,11 @@
     "account_id": {
       "type": "string",
       "title": "Account ID de Zernio"
+    },
+    "delivery_failed": {
+      "type": "boolean",
+      "title": "El env\u00edo por WhatsApp fall\u00f3 tras reintentos",
+      "default": false
     }
   },
   "required": [

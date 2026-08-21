@@ -2,7 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { waitUntil } from "base44:runtime";
 import { getPlatformConfig, findPracticeByAccount, hmacSha256, sendWhatsApp } from "../../shared/zernio.ts";
 import { checkWhatsAppUsage } from "../../shared/whatsapp-usage.ts";
-import { normalizePhone } from "../../shared/whatsapp-providers.ts";
+import { normalizePhone, isChatPaused } from "../../shared/whatsapp-providers.ts";
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -73,6 +73,10 @@ export default async function(req: Request): Promise<Response> {
       conversation_id: conversationId,
       account_id: accountId,
     });
+
+    if (await isChatPaused(base44, professionalId, fromPhone)) {
+      return Response.json({ ok: true, skipped: "chat_paused" });
+    }
 
     // Chequeo de plan + cupo mensual ANTES de gastar una llamada al LLM. Si no hay cupo
     // o el plan no habilita WhatsApp, le contestamos algo amable al paciente en vez de

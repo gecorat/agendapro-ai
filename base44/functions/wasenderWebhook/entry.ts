@@ -10,7 +10,8 @@ import { sendWhatsAppMessage, isChatPaused } from "../../shared/whatsapp-provide
 export default async function (req: Request): Promise<Response> {
   try {
     const url = new URL(req.url);
-    const practiceId = url.searchParams.get("practiceId");    if (!practiceId) return Response.json({ ok: true, skipped: "no_practice_id" });
+    const practiceId = url.searchParams.get("practiceId");
+    if (!practiceId) return Response.json({ ok: true, skipped: "no_practice_id" });
 
     const rawBody = await req.text();
     const payload = JSON.parse(rawBody);

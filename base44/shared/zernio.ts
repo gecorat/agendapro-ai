@@ -129,7 +129,7 @@ ${historyText || "(sin historial)"}
 === NUEVO MENSAJE DEL PACIENTE ===
 ${text}
 
-Instrucciones: Respondé al paciente. Si el paciente quiere agendar y tenés toda la información (servicio y fecha/hora${isClinic ? ", y ya se resolvió con qué profesional o que no tiene preferencia" : ""}), configurá action como "book" y completá appointment con service_name (exacto) y datetime (ISO 8601)${isClinic ? ", y professional_name si el paciente eligió a alguien" : ""}. Si falta información, pedila.
+Instrucciones: Respondé al paciente. Si el paciente quiere agendar y tenés toda la información (servicio y fecha/hora${isClinic ? ", y ya se resolvió con qué profesional o que no tiene preferencia" : ""}), configurá action como "book" y completá appointment con service_name (exacto) y datetime en formato ISO 8601 CON offset de zona horaria de Argentina, por ejemplo "2026-09-07T10:00:00-03:00" (nunca sin el "-03:00" al final)${isClinic ? ", y professional_name si el paciente eligió a alguien" : ""}. Si falta información, pedila.
 
 REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno está "confirmado", "agendado", "reservado" o "listo" salvo que en ESTE MISMO mensaje hayas configurado action="book" con service_name y datetime completos. Si action es "none", tu texto NO puede sonar a confirmación de nada nuevo — como mucho podés recordarle una cita que YA figura en "Próximas citas del consultorio" arriba (y solo si realmente está ahí, con esos datos exactos). Nunca dés por hecho que algo quedó agendado porque lo mencionaste antes en la conversación: la única fuente de verdad es la lista de "Próximas citas del consultorio". Si no estás seguro de si algo se agendó, preguntale al paciente qué necesita en vez de asumir.`;
 

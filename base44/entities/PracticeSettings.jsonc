@@ -131,6 +131,42 @@
       "title": "WhatsApp conectado",
       "default": false
     },
+    "whatsapp_connection_type": {
+      "type": "string",
+      "title": "Tipo de conexión de WhatsApp",
+      "enum": [
+        "qr",
+        "official"
+      ],
+      "description": "qr = WasenderAPI (rápido, no oficial). official = Zernio/Meta (API oficial)."
+    },
+    "whatsapp_status": {
+      "type": "string",
+      "title": "Estado detallado de la conexión",
+      "enum": [
+        "disconnected",
+        "connecting",
+        "need_scan",
+        "connected"
+      ],
+      "default": "disconnected"
+    },
+    "whatsapp_phone_number": {
+      "type": "string",
+      "title": "Número de WhatsApp conectado (genérico, cualquier tipo de conexión)"
+    },
+    "wasender_session_id": {
+      "type": "string",
+      "title": "WasenderAPI — ID de sesión"
+    },
+    "wasender_api_key": {
+      "type": "string",
+      "title": "WasenderAPI — API Key de la sesión (para enviar mensajes)"
+    },
+    "wasender_webhook_secret": {
+      "type": "string",
+      "title": "WasenderAPI — Webhook Secret de la sesión"
+    },
     "zernio_profile_id": {
       "type": "string",
       "title": "Zernio — Profile ID",

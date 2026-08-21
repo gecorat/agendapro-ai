@@ -18,22 +18,16 @@ export default async function (req: Request): Promise<Response> {
     const pat = cfg?.[0]?.wasender_personal_access_token;
     if (!pat) return Response.json({ error: 'not_configured' }, { status: 400 });
 
-    const statusRes = await fetch(`https://www.wasenderapi.com/api/whatsapp-sessions/${practice.wasender_session_id}/status`, {
+    // El endpoint "/status" que usábamos antes no existe (404 confirmado en vivo) — la
+    // documentación nunca dio esa URL literal, la inferíamos mal por patrón. El endpoint de
+    // detalle de sesión sí existe y ya trae status + teléfono juntos en una sola llamada.
+    const detailRes = await fetch(`https://www.wasenderapi.com/api/whatsapp-sessions/${practice.wasender_session_id}`, {
       headers: { Authorization: `Bearer ${pat}` },
     });
-    const statusData = await statusRes.json().catch(() => ({}));
-    const status = (statusData?.data?.status || statusData?.status || '').toLowerCase();
-
-    let phoneNumber = practice.whatsapp_phone_number;
+    const detailData = await detailRes.json().catch(() => ({}));
+    const status = (detailData?.data?.status || '').toLowerCase();
+    const phoneNumber = detailData?.data?.phone_number || practice.whatsapp_phone_number;
     const connected = status === 'connected';
-
-    if (connected && !phoneNumber) {
-      const detailRes = await fetch(`https://www.wasenderapi.com/api/whatsapp-sessions/${practice.wasender_session_id}`, {
-        headers: { Authorization: `Bearer ${pat}` },
-      });
-      const detailData = await detailRes.json().catch(() => ({}));
-      phoneNumber = detailData?.data?.phone_number || phoneNumber;
-    }
 
     await base44.asServiceRole.entities.PracticeSettings.update(practice.id, {
       whatsapp_status: status || practice.whatsapp_status,

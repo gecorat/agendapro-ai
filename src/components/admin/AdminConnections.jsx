@@ -205,10 +205,6 @@ export default function AdminConnections() {
         </div>
       </Card>
 
-      <Button onClick={savePlatform} disabled={saving}>
-        {saving && <Loader2 className="w-4 h-4 mr-1 animate-spin" />} <Save className="w-4 h-4 mr-1" /> Guardar conexiones
-      </Button>
-
       {/* WasenderAPI (QR) */}
       <Card className="p-4 space-y-3">
         <div className="flex items-center gap-2">

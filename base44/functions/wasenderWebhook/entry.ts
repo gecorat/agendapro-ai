@@ -57,7 +57,8 @@ export default async function (req: Request): Promise<Response> {
     });
 
     const usage = await checkWhatsAppUsage(base44, practice);
-    if (!usage.allowed) {      waitUntil(
+    if (!usage.allowed) {
+      waitUntil(
         sendWhatsAppMessage(base44, practice, fromPhone, usage.autoReplyToPatient)
           .then(() =>
             base44.asServiceRole.entities.Conversation.create({

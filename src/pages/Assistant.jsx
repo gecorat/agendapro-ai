@@ -55,7 +55,10 @@ function FullAssistant({ settings }) {
   const [mobileShowChat, setMobileShowChat] = useState(false);
   const messagesEndRef = useRef(null);
 
-  const connected = settings?.whatsapp_connected && !!settings?.zernio_account_id;
+  // Antes esto exigía específicamente zernio_account_id, así que un profesional conectado
+  // por QR (WasenderAPI) apareciera como "conectado" en la tarjeta de arriba pero la
+  // bandeja de chats lo trataba igual que si no hubiera conectado nada.
+  const connected = !!settings?.whatsapp_connected;
 
   useEffect(() => {
     base44.auth.me().then((u) => setUser(u)).catch(() => setUser(null));
@@ -185,7 +188,7 @@ function FullAssistant({ settings }) {
           <div className="flex items-center justify-between">
             <h2 className="font-heading font-semibold text-sm">Conversaciones</h2>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">{settings?.zernio_phone || "WhatsApp conectado"}</p>
+          <p className="text-xs text-muted-foreground mt-1">{settings?.whatsapp_phone_number || settings?.zernio_phone || "WhatsApp conectado"}</p>
         </div>
 
         <div className="flex-1 overflow-y-auto">

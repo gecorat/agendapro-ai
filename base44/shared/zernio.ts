@@ -156,18 +156,6 @@ REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno está "
 
   const reply = typeof llmRes === "string" ? JSON.parse(llmRes) : llmRes;
 
-  // DEBUG TEMPORAL: para confirmar si la IA está devolviendo action !== "book" pero con un
-  // texto que igual suena a confirmación (lo que explicaría el reporte de "alucina turnos"
-  // incluso con el chequeo de service_name ya blindado).
-  try {
-    const cfg = await base44.asServiceRole.entities.PlatformConfig.filter({});
-    if (cfg?.[0]) {
-      await base44.asServiceRole.entities.PlatformConfig.update(cfg[0].id, {
-        debug_last_webhook_payload: JSON.stringify({ userText: text, llmReply: reply }).slice(0, 4000),
-      });
-    }
-  } catch {}
-
   // A partir de acá, reply.reply puede quedar SOBRESCRITO según lo que realmente haya
   // pasado en la base de datos. Antes se mandaba el texto de la IA literal (que podía decir
   // "confirmado" sin haberse guardado nada) — ahora el mensaje final siempre refleja la

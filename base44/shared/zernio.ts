@@ -191,7 +191,16 @@ REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno está "
       const availableNames = myServices.map((s) => s.name).join(", ");
       finalReplyText = `Disculpá, no tengo cargado un servicio que coincida exactamente con "${reply.appointment.service_name}". Los servicios disponibles son: ${availableNames || "(ninguno cargado todavía)"}. ¿Cuál de estos te gustaría agendar?`;
     } else {
-      const start = new Date(reply.appointment.datetime);
+      // La IA suele devolver el datetime SIN offset de zona horaria (ej. "2026-09-07T10:00:00").
+      // Sin esto, JavaScript lo interpreta como UTC, no como hora Argentina — y un pedido
+      // para "las 10hs" terminaba guardándose como las 07:00 locales (probado en vivo, un
+      // desfase real de 3 horas). Si la IA no puso ningún offset explícito (ni "Z" ni
+      // "+HH:MM"/"-HH:MM"), asumimos que quiso decir hora Argentina y lo forzamos acá.
+      let rawDatetime = reply.appointment.datetime;
+      if (rawDatetime && !/(Z|[+-]\d{2}:\d{2})$/.test(rawDatetime)) {
+        rawDatetime = `${rawDatetime}-03:00`;
+      }
+      const start = new Date(rawDatetime);
       const end = new Date(start.getTime() + (service.duration_minutes || 30) * 60000);
 
       if (isNaN(start.getTime())) {

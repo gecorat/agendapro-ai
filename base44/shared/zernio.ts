@@ -283,7 +283,7 @@ REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno está "
     }
   }
 
-  await base44.asServiceRole.entities.Conversation.create({
+  const savedMsg = await base44.asServiceRole.entities.Conversation.create({
     phone: fromPhone,
     professional_id: professionalId,
     role: "assistant",
@@ -299,13 +299,20 @@ REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno está "
   // velocidad del proveedor. Si TODOS los intentos fallan, no lo escondemos: lo marcamos
   // en el propio registro de la conversación para que se vea en la bandeja de Chats que
   // ese mensaje puede no haber llegado.
+  //
+  // OJO: WasenderAPI puede responder "200 in_progress" (parece exitoso) y después fallar
+  // la entrega real de forma asíncrona — confirmado en vivo. Por eso guardamos el msgId que
+  // devuelve el envío, y después el webhook "message.sent" (con success:false) puede
+  // marcar este mismo mensaje como fallido de verdad, aunque el envío inicial no haya
+  // tirado ningún error.
   const { sendWhatsAppMessage } = await import("./whatsapp-providers.ts");
   const delays = [1000, 3000, 6000];
   let sent = false;
   let lastError = null;
+  let sendResult = null;
   for (let attempt = 0; attempt <= delays.length; attempt++) {
     try {
-      await sendWhatsAppMessage(base44, practice, fromPhone, finalReplyText);
+      sendResult = await sendWhatsAppMessage(base44, practice, fromPhone, finalReplyText);
       sent = true;
       break;
     } catch (e) {
@@ -315,6 +322,12 @@ REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno está "
         await new Promise((r) => setTimeout(r, delays[attempt]));
       }
     }
+  }
+  const wasenderMsgId = sendResult?.data?.msgId;
+  if (sent && wasenderMsgId) {
+    try {
+      await base44.asServiceRole.entities.Conversation.update(savedMsg.id, { wasender_msg_id: String(wasenderMsgId) });
+    } catch { /* no romper el flujo por esto */ }
   }
   if (!sent) {
     console.error("sendWhatsAppMessage: se agotaron los reintentos, el mensaje quedó sin enviar:", lastError?.message || lastError);

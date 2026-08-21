@@ -181,7 +181,7 @@ REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno está "
     reply.appointment?.datetime
   ) {
     const service = myServices.find(
-      (s) => s.name.toLowerCase() === reply.appointment.service_name.toLowerCase()
+      (s) => s.name.trim().toLowerCase() === reply.appointment.service_name.trim().toLowerCase()
     );
 
     if (!service) {

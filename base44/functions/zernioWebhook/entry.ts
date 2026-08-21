@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { waitUntil } from "base44:runtime";
 import { getPlatformConfig, findPracticeByAccount, hmacSha256, sendWhatsApp } from "../../shared/zernio.ts";
 import { checkWhatsAppUsage } from "../../shared/whatsapp-usage.ts";
+import { normalizePhone } from "../../shared/whatsapp-providers.ts";
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -44,7 +45,12 @@ export default async function(req: Request): Promise<Response> {
     // message.sender.phoneNumber, no en message.from como asumíamos antes — por eso
     // fromPhone quedaba vacío y el mensaje se descartaba en silencio ("no_text_or_phone"),
     // aunque el webhook respondiera 200 OK.
-    const fromPhone = msg.sender?.phoneNumber || msg.from || conv.participantUsername || conv.contact?.phone || conv.phone || msg.senderPhone || "";
+    const fromPhoneRaw = msg.sender?.phoneNumber || msg.from || conv.participantUsername || conv.contact?.phone || conv.phone || msg.senderPhone || "";
+    // Normalizado acá mismo (Zernio manda "+549...", WasenderAPI manda "549..." sin +) para
+    // que la misma persona no aparezca como dos conversaciones separadas según el proveedor
+    // que haya usado. Zernio enruta la respuesta por conversationId, no por este campo, así
+    // que normalizar acá no afecta el envío real.
+    const fromPhone = normalizePhone(fromPhoneRaw);
     const conversationId = conv.id || conv.conversationId || "";
     const accountId = account.id || account.accountId || "";
 

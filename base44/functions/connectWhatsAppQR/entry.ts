@@ -4,8 +4,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 // el string del QR para que el frontend lo renderice como imagen.
 export default async function (req: Request): Promise<Response> {
   try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
+    const base44 = createClientFromRequest(req);    const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const practices = await base44.asServiceRole.entities.PracticeSettings.filter({});

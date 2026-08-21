@@ -9,6 +9,7 @@ export default async function(req: Request): Promise<Response> {
 
     const body = await req.json();
     const { phone, message, conversationId } = body;
+
     if (!phone || !message) {
       return Response.json({ error: 'phone and message required' }, { status: 400 });
     }

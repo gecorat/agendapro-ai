@@ -4,7 +4,7 @@
   "properties": {
     "phone": {
       "type": "string",
-      "title": "Tel\u00e9fono del paciente"
+      "title": "Teléfono del paciente"
     },
     "professional_id": {
       "type": "string",
@@ -24,7 +24,7 @@
     },
     "conversation_id": {
       "type": "string",
-      "title": "ID de conversaci\u00f3n en Zernio"
+      "title": "ID de conversación en Zernio"
     },
     "account_id": {
       "type": "string",
@@ -32,8 +32,12 @@
     },
     "delivery_failed": {
       "type": "boolean",
-      "title": "El env\u00edo por WhatsApp fall\u00f3 tras reintentos",
+      "title": "El envío por WhatsApp falló tras reintentos",
       "default": false
+    },
+    "wasender_msg_id": {
+      "type": "string",
+      "title": "ID del mensaje en WasenderAPI (para cruzar con la confirmacion real de entrega)"
     }
   },
   "required": [

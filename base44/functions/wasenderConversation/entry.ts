@@ -7,8 +7,7 @@ import { orchestrateConversation } from "../../shared/zernio.ts";
 export default async function(req: Request): Promise<Response> {
   try {
     const base44 = createClientFromRequest(req);
-    const body = await req.json();
-    const { phone, text, conversationId, practiceId } = body;
+    const body = await req.json();    const { phone, text, conversationId, practiceId } = body;
 
     if (!phone || !text || !practiceId) {
       return Response.json({ error: 'phone, text y practiceId son requeridos' }, { status: 400 });

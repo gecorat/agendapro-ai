@@ -287,10 +287,21 @@ function FullAssistant({ settings, reloadSettings }) {
               <button onClick={() => setMobileShowChat(false)} className="p-1.5 rounded-lg hover:bg-accent">
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <span className="font-medium text-sm truncate">{fmtPhone(activeConvo.phone)}</span>
+              <span className="font-medium text-sm truncate flex-1">{fmtPhone(activeConvo.phone)}</span>
+              <Button variant={chatPaused ? "default" : "outline"} size="sm" onClick={handleTogglePause} disabled={pauseLoading} className="h-7 px-2 gap-1.5 text-xs shrink-0">
+                {pauseLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : chatPaused ? <Play className="w-3 h-3" /> : <Pause className="w-3 h-3" />}
+                {chatPaused ? "Reanudar" : "Pausar"}
+              </Button>
             </div>
             <div className="hidden md:flex items-center gap-2 px-4 h-12 border-b border-border bg-card">
-              <span className="font-medium text-sm truncate">{fmtPhone(activeConvo.phone)}</span>
+              <span className="font-medium text-sm truncate flex-1">{fmtPhone(activeConvo.phone)}</span>
+              {chatPaused && (
+                <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">IA en pausa</span>
+              )}
+              <Button variant={chatPaused ? "default" : "outline"} size="sm" onClick={handleTogglePause} disabled={pauseLoading} className="h-7 px-2.5 gap-1.5 text-xs shrink-0">
+                {pauseLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : chatPaused ? <Play className="w-3 h-3" /> : <Pause className="w-3 h-3" />}
+                {chatPaused ? "Reanudar IA" : "Pausar IA"}
+              </Button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -323,7 +334,9 @@ function FullAssistant({ settings, reloadSettings }) {
                 </Button>
               </div>
               <p className="text-[10px] text-muted-foreground/70 mt-1.5">
-                Si respondés, la IA pausa para esta conversación. Cuando el paciente vuelva a escribir, retoma sola.
+                {chatPaused
+                  ? "La IA está en pausa para esta conversación — no le va a responder al paciente hasta que apretés \"Reanudar IA\"."
+                  : "Si respondés, la IA se pausa automáticamente para esta conversación. Reanudala con el botón de arriba cuando quieras."}
               </p>
             </div>
           </>
@@ -336,6 +349,7 @@ function FullAssistant({ settings, reloadSettings }) {
             </p>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

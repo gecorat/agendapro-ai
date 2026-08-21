@@ -141,6 +141,27 @@ export default function UpgradePlan() {
           </p>
         </div>
       </Card>
+
+      <Dialog open={!!emailDialogPlan} onOpenChange={(open) => !open && setEmailDialogPlan(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>¿Con qué cuenta de Mercado Pago vas a pagar?</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 pt-1">
+            <p className="text-sm text-muted-foreground">
+              Mercado Pago exige que el email coincida exactamente con la cuenta que usás para pagar (aunque sea distinta a la que usaste para registrarte acá).
+            </p>
+            <div className="space-y-1.5">
+              <Label htmlFor="mp-email">Email de tu cuenta de Mercado Pago</Label>
+              <Input id="mp-email" type="email" value={mpEmail} onChange={(e) => setMpEmail(e.target.value)} placeholder="tu-email@mercadopago.com" />
+            </div>
+            <Button className="w-full" onClick={confirmPay} disabled={!mpEmail.includes("@") || paying === emailDialogPlan}>
+              {paying === emailDialogPlan ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <CreditCard className="w-4 h-4 mr-1" />}
+              Continuar a Mercado Pago
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

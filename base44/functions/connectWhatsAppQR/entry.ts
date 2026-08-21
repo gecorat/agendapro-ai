@@ -55,7 +55,7 @@ export default async function (req: Request): Promise<Response> {
           read_incoming_messages: false,
           webhook_url: webhookUrl,
           webhook_enabled: true,
-          webhook_events: ['messages.received', 'session.status'],
+          webhook_events: ['messages.received', 'session.status', 'message.sent'],
           ignore_groups: true,
           ignore_channels: true,
           ignore_broadcasts: true,

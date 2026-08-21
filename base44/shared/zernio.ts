@@ -165,6 +165,7 @@ Instrucciones: Respondé al paciente. Si el paciente quiere agendar y tenés tod
 
   const { sendWhatsAppMessage } = await import("./whatsapp-providers.ts");
   await sendWhatsAppMessage(base44, practice, fromPhone, reply.reply);
+
   if (
     reply.action === "book" &&
     reply.appointment?.service_name &&

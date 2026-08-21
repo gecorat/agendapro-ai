@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
-import { sendWhatsAppMessage } from "../../shared/whatsapp-providers.ts";
+import { sendWhatsAppMessage, normalizePhone } from "../../shared/whatsapp-providers.ts";
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -22,10 +22,13 @@ export default async function(req: Request): Promise<Response> {
 
     // Antes esto solo sabía mandar por Zernio — ahora usa la misma función genérica que el
     // bot automático, que elige el proveedor correcto según whatsapp_connection_type.
+    // OJO: mandamos con el "phone" tal cual vino (algunos proveedores como WasenderAPI
+    // requieren formato E.164 con "+"), pero guardamos normalizado para que agrupe bien
+    // con los mensajes que llegó el paciente.
     const result = await sendWhatsAppMessage(base44, practice, phone, message);
 
     await base44.asServiceRole.entities.Conversation.create({
-      phone,
+      phone: normalizePhone(phone),
       professional_id: user.id,
       role: "assistant",
       text: message,

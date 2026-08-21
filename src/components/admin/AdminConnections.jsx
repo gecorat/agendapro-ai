@@ -17,9 +17,13 @@ const MODELS = [
   { value: "claude_sonnet_4_6", label: "Claude Sonnet 4.6 — avanzado" },
 ];
 
-// Campo de texto sensible (tokens/claves): oculto por defecto, con ojito para mostrarlo.
+// Campo de texto sensible (tokens/claves): arranca VISIBLE (type="text") a propósito —
+// usar type="password" desde el principio causaba que el pegado no se registrara bien en
+// algunos navegadores con gestor de contraseñas activo (confirmado: el valor se veía en
+// pantalla pero nunca llegaba a guardarse en la base). Con "ojito" para ocultarlo después
+// si se quiere, pero el primer pegado siempre es sobre un input de texto normal.
 function SecretField({ id, value, onChange, placeholder }) {
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(true);
   return (
     <div className="relative">
       <Input

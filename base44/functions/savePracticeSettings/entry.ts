@@ -10,7 +10,8 @@ const EDITABLE_FIELDS = [
   'professional_type', 'practice_name', 'specialty', 'address', 'address_city', 'address_province', 'address_lat', 'address_lng', 'phone',
   'professional_email', 'instagram_url', 'facebook_url', 'website_url', 'handle', 'photo_url', 'cover_image_url',
   'photo_align', 'photo_frame', 'cover_align',
-  'page_color', 'theme_preset', 'description', 'published',
+  'page_color', 'page_color_secondary', 'theme_preset', 'heading_font_override', 'description', 'published',
+  'custom_bg_pattern', 'custom_bg_image_url', 'custom_bg_overlay_opacity', 'custom_border_radius', 'custom_card_opacity', 'custom_blur_enabled',
 ];
 
 export default async function (req: Request): Promise<Response> {

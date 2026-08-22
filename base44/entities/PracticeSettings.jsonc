@@ -125,25 +125,84 @@
       ],
       "default": "center"
     },
+    "custom_bg_pattern": {
+      "type": "string",
+      "title": "Patron de fondo (tema Personalizado)",
+      "enum": [
+        "none",
+        "nature",
+        "waves",
+        "mesh",
+        "gradient"
+      ],
+      "default": "none"
+    },
+    "custom_bg_image_url": {
+      "type": "string",
+      "title": "Imagen de fondo adaptativa (tema Personalizado)",
+      "format": "url"
+    },
+    "custom_bg_overlay_opacity": {
+      "type": "number",
+      "title": "Opacidad del overlay sobre el fondo",
+      "default": 40
+    },
+    "custom_border_radius": {
+      "type": "string",
+      "title": "Redondeado de tarjetas/botones",
+      "enum": [
+        "none",
+        "soft",
+        "full"
+      ],
+      "default": "soft"
+    },
+    "custom_card_opacity": {
+      "type": "number",
+      "title": "Opacidad de las tarjetas",
+      "default": 100
+    },
+    "custom_blur_enabled": {
+      "type": "boolean",
+      "title": "Efecto vidrio (blur) en tarjetas",
+      "default": false
+    },
     "page_color": {
       "type": "string",
       "title": "Color de la página pública",
       "default": "#0f172a"
     },
+    "page_color_secondary": {
+      "type": "string",
+      "title": "Color secundario",
+      "description": "Tarjetas secundarias, texto secundario, bordes."
+    },
     "theme_preset": {
       "type": "string",
       "title": "Tema visual de la página pública",
       "enum": [
-        "clean_dark",
-        "glassmorphism",
-        "minimal_light",
-        "neon_accent",
-        "sage_botanical",
         "luxury_gold",
-        "photo_backdrop"
+        "glassmorphism_premium",
+        "warm_botanical",
+        "clean_dark_tech",
+        "minimal_light",
+        "photo_focus",
+        "custom"
       ],
-      "default": "clean_dark",
+      "default": "clean_dark_tech",
       "description": "Preset visual de la pagina publica y del editor de personalizacion."
+    },
+    "heading_font_override": {
+      "type": "string",
+      "title": "Tipografia de encabezado (anula la del tema)",
+      "enum": [
+        "default",
+        "serif_elegant",
+        "modern_sans",
+        "geometric",
+        "editorial"
+      ],
+      "default": "default"
     },
     "description": {
       "type": "string",

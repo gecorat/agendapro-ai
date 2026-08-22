@@ -612,8 +612,8 @@ function FullAssistant({ settings, reloadSettings }) {
       </div>
       <div className="flex-1 overflow-y-auto p-4 space-y-5">
         <div className="text-center">
-          <div className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-lg mx-auto mb-2">
-            {contactName(activeConvo)[0]?.toUpperCase() || "?"}
+          <div className="mx-auto mb-2 w-14 h-14">
+            <ContactAvatar name={contactName(activeConvo)} url={avatarUrl} loading={avatarLoading} size="w-14 h-14" textSize="text-lg" />
           </div>
           <p className="font-semibold text-sm">{contactName(activeConvo)}</p>
         </div>

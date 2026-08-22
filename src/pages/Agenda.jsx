@@ -65,7 +65,11 @@ export default function Agenda() {
     setLoading(true);
     try {
       const { start, end } = getRange();
-      const all = await base44.entities.Appointment.filter({});
+      // Antes llamaba Appointment.filter({}) directo, que un profesional invitado no
+      // puede leer (las reglas de acceso comparan contra el DUEÑO de la cuenta, nunca
+      // contra su propio usuario). Esta función resuelve el alcance correcto.
+      const res = await base44.functions.invoke("getScopedAppointments", {});
+      const all = res?.data?.appointments || [];
       const filtered = (all || []).filter((a) => {
         const d = new Date(a.start_datetime);
         return d >= start && d <= end;

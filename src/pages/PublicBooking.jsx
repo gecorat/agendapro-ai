@@ -374,13 +374,14 @@ export default function PublicBooking() {
 
   const brand = theme.accent;
   const headingFontStyle = theme.headingFont ? { fontFamily: theme.headingFont } : {};
-  const isCustomTheme = settings?.theme_preset === "custom";
-  const customBgStyle = isCustomTheme
-    ? settings?.custom_bg_image_url
-      ? { background: `url(${settings.custom_bg_image_url}) center/cover` }
-      : getBackgroundPatternStyle(settings?.custom_bg_pattern, theme.accent, theme.secondary)
+  // El fondo personalizado (patrón o imagen) ahora es universal: se aplica arriba de
+  // CUALQUIER tema, no solo "Personalizado".
+  const customBgStyle = settings?.custom_bg_image_url
+    ? { background: `url(${settings.custom_bg_image_url}) center/cover` }
+    : settings?.custom_bg_pattern && settings.custom_bg_pattern !== "none"
+    ? getBackgroundPatternStyle(settings?.custom_bg_pattern, theme.accent, theme.secondary)
     : {};
-  const showCustomOverlay = isCustomTheme && settings?.custom_bg_image_url;
+  const showCustomOverlay = !!settings?.custom_bg_image_url;
   const igUrl = normalizeSocialUrl(settings?.instagram_url, "instagram");
   const fbUrl = normalizeSocialUrl(settings?.facebook_url, "facebook");
   const webUrl = normalizeSocialUrl(settings?.website_url, "website");
@@ -606,10 +607,8 @@ export default function PublicBooking() {
   return (
     // min-h-screen en el contenedor raíz asegura que el color de fondo del tema cubra
     // toda la pantalla en desktop, sin franja blanca abajo aunque el contenido sea corto.
-    // Photo Backdrop: si el tema lo pide y hay portada cargada, esa imagen cubre TODA la
-    // página (no solo el header) — si no hay portada, cae al fondo normal del tema (el
-    // degradé de siempre), sin romper nada para quien no suba portada.
-    <div className="min-h-screen w-full relative" style={{ background: theme.bg, ...(isCustomTheme ? customBgStyle : {}) }}>
+    // El fondo personalizado (patrón o imagen) se aplica arriba de cualquier tema.
+    <div className="min-h-screen w-full relative" style={{ background: theme.bg, ...customBgStyle }}>
       {showCustomOverlay && (
         <div className="absolute inset-0" style={{ background: "#000", opacity: (settings?.custom_bg_overlay_opacity ?? 40) / 100 }} />
       )}
@@ -620,7 +619,7 @@ export default function PublicBooking() {
           info de contacto. Columna de perfil con ancho fijo generoso para que la portada y
           la foto se vean bien, no aplastadas. ============ */}
       <div className="hidden lg:block max-w-6xl mx-auto px-8 py-10">
-        <div className="grid gap-8 items-start" style={{ gridTemplateColumns: "420px 1fr" }}>
+        <div className="grid gap-8 items-start" style={{ gridTemplateColumns: "55% 45%" }}>
           {/* Columna Perfil */}
           <div className="space-y-4 lg:sticky lg:top-8">
             <ProfileHeader settings={settings} theme={theme} brand={brand} frameClass={frameClass} cardClass={cardClass} glassStyle={glassStyle} align={settings?.photo_align} size={104} headingFontStyle={headingFontStyle} />

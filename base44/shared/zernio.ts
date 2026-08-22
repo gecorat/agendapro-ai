@@ -75,7 +75,10 @@ export async function orchestrateConversation(base44, ctx) {
   ]);
 
   const myServices = (services || []).filter((s) => s.created_by_id === professionalId);
-  const existingPatient = (patients || []).find((p) => p.phone === fromPhone);
+  const existingPatient = findPatientByCanonicalPhone(
+    (patients || []).filter((p) => p.professional_id === professionalId),
+    fromPhone
+  );
   const myUpcoming = (appts || [])
     .filter(
       (a) =>

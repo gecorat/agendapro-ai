@@ -815,8 +815,10 @@ function FullAssistant({ settings, reloadSettings }) {
 export default function Assistant() {
   const { settings, loading, reload } = usePracticeSettings();
   const planStatus = getPlanStatus(settings);
+  console.log("[DEBUG Assistant] render — loading:", loading, "settings:", !!settings, "canUseWhatsApp:", planStatus?.canUseWhatsApp);
 
   if (loading || !settings) {
+    console.log("[DEBUG Assistant] mostrando spinner de nivel superior (usePracticeSettings)");
     return (
       <div className="flex h-full items-center justify-center p-8">
         <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />

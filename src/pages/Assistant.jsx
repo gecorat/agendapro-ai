@@ -116,6 +116,7 @@ function FullAssistant({ settings, reloadSettings }) {
   const [avatarUrl, setAvatarUrl] = useState(null);
   const [avatarLoading, setAvatarLoading] = useState(false);
   const [cancellingApptId, setCancellingApptId] = useState(null);
+  const [selectedDuration, setSelectedDuration] = useState(null);
   const messagesEndRef = useRef(null);
 
   const connected = !!settings?.whatsapp_connected;
@@ -255,23 +256,45 @@ function FullAssistant({ settings, reloadSettings }) {
     }
   };
 
-  const handleTogglePause = async (durationMinutes) => {
+  const handleTogglePause = async () => {
     if (!activePhone) return;
     setPauseLoading(true);
     try {
-      const res = await base44.functions.invoke("toggleChatPause", { phone: activePhone, paused: !chatPaused, durationMinutes: durationMinutes || undefined });
-      setPauses((prev) => {
-        const idx = prev.findIndex((p) => p.phone === activePhone);
-        const next = { phone: activePhone, professional_id: user.id, paused: res?.data?.paused, paused_until: res?.data?.paused_until };
-        if (idx >= 0) { const copy = [...prev]; copy[idx] = next; return copy; }
-        return [...prev, next];
-      });
+      const res = await base44.functions.invoke("toggleChatPause", { phone: activePhone, paused: !chatPaused });
+      applyPauseResult(res);
     } catch (e) {
       console.error("Error al pausar/reanudar", e);
     } finally {
       setPauseLoading(false);
     }
   };
+
+  // Antes esto y el switch compartian la misma función, que siempre mandaba
+  // paused: !chatPaused — si ya estaba pausado y tocás "1 hora" para CAMBIAR la duración,
+  // en realidad se reactivaba el bot en vez de actualizar el tiempo. Ahora esto siempre
+  // fuerza paused:true con la duración elegida, sin importar el estado actual.
+  const handleSetDuration = async (minutes) => {
+    if (!activePhone) return;
+    setPauseLoading(true);
+    setSelectedDuration(minutes);
+    try {
+      const res = await base44.functions.invoke("toggleChatPause", { phone: activePhone, paused: true, durationMinutes: minutes || undefined });
+      applyPauseResult(res);
+    } catch (e) {
+      console.error("Error al fijar duración de pausa", e);
+    } finally {
+      setPauseLoading(false);
+    }
+  };
+
+  function applyPauseResult(res) {
+    setPauses((prev) => {
+      const idx = prev.findIndex((p) => p.phone === activePhone);
+      const next = { phone: activePhone, professional_id: user.id, paused: res?.data?.paused, paused_until: res?.data?.paused_until };
+      if (idx >= 0) { const copy = [...prev]; copy[idx] = next; return copy; }
+      return [...prev, next];
+    });
+  }
 
   const handleDisconnect = async () => {
     if (!confirm("¿Desconectar WhatsApp? La asistente dejará de responder a tus pacientes hasta que reconectes.")) return;

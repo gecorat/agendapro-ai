@@ -4,6 +4,7 @@ import { getPreset, getTypeLabel } from "@/lib/professional-presets";
 
 export function usePracticeSettings() {
   const [settings, setSettings] = useState(null);
+  const [professional, setProfessional] = useState(null); // no-null = soy un invitado, este es mi propio registro
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async (attempt = 1) => {
@@ -14,7 +15,27 @@ export function usePracticeSettings() {
         "-created_date",
         1
       );
-      setSettings(list?.[0] || null);
+      let resolved = list?.[0] || null;
+      let myProfessional = null;
+
+      // Si no soy dueño de ningún consultorio, puede ser que me hayan invitado a formar
+      // parte del equipo de otro (plan Clinic) — en ese caso mi propio Professional.user_id
+      // me asocia al consultorio del que soy invitado, y ESE es el que tengo que cargar.
+      if (!resolved) {
+        const profs = await base44.entities.Professional.filter({ user_id: me.id });
+        myProfessional = profs?.[0] || null;
+        if (myProfessional) {
+          const ownerList = await base44.entities.PracticeSettings.filter(
+            { created_by_id: myProfessional.practice_owner_id },
+            "-created_date",
+            1
+          );
+          resolved = ownerList?.[0] || null;
+        }
+      }
+
+      setSettings(resolved);
+      setProfessional(myProfessional);
       setLoading(false);
     } catch (e) {
       // Antes esto tragaba el error en silencio y dejaba "settings" en null para
@@ -60,11 +81,12 @@ export function usePracticeSettings() {
   async function save(data) {
     // PracticeSettings.update/create ya no se puede llamar directo desde el cliente (RLS
     // restringida a admins) — esta función de backend filtra qué campos se pueden tocar.
+    // Un profesional invitado no puede llamar esto (no es dueño del consultorio).
     const res = await base44.functions.invoke("savePracticeSettings", { data });
     const updated = res?.data?.settings;
     setSettings(updated);
     return updated;
   }
 
-  return { settings, loading, preset, typeLabel, reload: load, save };
+  return { settings, loading, preset, typeLabel, reload: load, save, professional, isInvitedProfessional: !!professional };
 }

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CalendarClock, Clock, ArrowRight, Check, Loader2, Calendar, MapPin, Mail, CalendarX, MessageCircle, Instagram, Facebook, Globe, ExternalLink, Navigation } from "lucide-react";
-import { resolveTheme, normalizeSocialUrl, whatsappUrl, googleMapsUrl, googleMapsEmbedSrc, PHOTO_FRAME_CLASS } from "@/lib/theme-presets";
+import { resolveTheme, normalizeSocialUrl, whatsappUrl, googleMapsUrl, googleMapsEmbedSrc, PHOTO_FRAME_CLASS, THEME_PRESETS, loadThemeFont } from "@/lib/theme-presets";
 
 function parseTimeToDate(date, time) {
   const [h, m] = time.split(":").map(Number);
@@ -239,9 +239,8 @@ export default function PublicBooking() {
   // Cada tema puede traer su propia tipografía de encabezado (Google Font) — se carga
   // solo la que hace falta, una vez que sabemos qué tema tiene el consultorio.
   useEffect(() => {
-    if (settings?.theme_preset) {
-      const preset = require("@/lib/theme-presets").THEME_PRESETS?.[settings.theme_preset];
-    }
+    const preset = THEME_PRESETS[settings?.theme_preset];
+    if (preset?.googleFont) loadThemeFont(preset.googleFont);
   }, [settings?.theme_preset]);
 
   useEffect(() => {

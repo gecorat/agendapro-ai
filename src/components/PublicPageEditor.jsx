@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import {
-  THEME_PRESETS, FONT_OPTIONS, BORDER_RADIUS_CLASS, resolveTheme, PHOTO_FRAME_CLASS,
+  THEME_PRESETS, FONT_OPTIONS, resolveTheme, PHOTO_FRAME_CLASS,
   loadThemeFont, getBackgroundPatternStyle,
 } from "@/lib/theme-presets";
 import { useToast } from "@/components/ui/use-toast";

@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
+import { syncSubscriptionStatus } from "../../shared/mercadopago.ts";
 
 // Webhook de Mercado Pago para las notificaciones de Suscripciones. IMPORTANTE: para el
 // tópico de suscripciones, MP no ofrece validación por header de firma (a diferencia de
@@ -50,40 +51,10 @@ export default async function(req: Request): Promise<Response> {
       return Response.json({ ok: true, skipped: `unhandled_type:${type}` });
     }
 
-    const res = await fetch(`https://api.mercadopago.com/preapproval/${resourceId}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    if (!res.ok) return Response.json({ ok: true, skipped: 'fetch_failed' });
-    const preapproval = await res.json();
+    const res = await syncSubscriptionStatus(base44, accessToken, resourceId);
+    if (!res.synced) return Response.json({ ok: true, skipped: res.reason });
 
-    let ref: { practice_id?: string; plan?: string } = {};
-    try {
-      ref = JSON.parse(preapproval.external_reference || '{}');
-    } catch { /* ignore */ }
-
-    const practices = ref.practice_id
-      ? await base44.asServiceRole.entities.PracticeSettings.filter({ id: ref.practice_id })
-      : await base44.asServiceRole.entities.PracticeSettings.filter({ mercadopago_subscription_id: resourceId });
-    const practice = practices?.[0];
-    if (!practice) return Response.json({ ok: true, skipped: 'no_matching_practice' });
-
-    // Estados posibles de una suscripción en Mercado Pago: "authorized" (activa y
-    // cobrando), "paused", "cancelled". Un "pending" inicial no cambia nada todavía.
-    if (preapproval.status === 'authorized') {
-      await base44.asServiceRole.entities.PracticeSettings.update(practice.id, {
-        plan: ref.plan || practice.plan,
-        suspended: false,
-        mercadopago_subscription_id: resourceId,
-      });
-    } else if (preapproval.status === 'cancelled' || preapproval.status === 'paused') {
-      // No tocamos el campo "plan" acá a propósito: preferimos que quede registrado qué
-      // plan tenía, y usar "suspended" para cortar el acceso. Así, si vuelve a pagar,
-      // MP manda authorized de nuevo y se reactiva con el mismo plan sin que un admin
-      // tenga que reconfigurar nada a mano.
-      await base44.asServiceRole.entities.PracticeSettings.update(practice.id, { suspended: true });
-    }
-
-    return Response.json({ ok: true });
+    return Response.json({ ok: true, changed: res.changed });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

@@ -34,7 +34,13 @@ function UpgradeBlock({ plan }) {
             Tu plan {PLAN_LABELS[plan] || "actual"} permite probar el bot en la app. Para que la asistente atienda a tus pacientes por WhatsApp de forma automática, pasate a Pro o Premium.
           </p>
           <div className="flex flex-col sm:flex-row gap-2 mt-3">
-            <Button size="sm" asChild className="gap-1.5">
+            <Button size="sm" asChild className="gap-1.5 bg-emerald-600 hover:bg-emerald-700">
+              <Link to="/bot">
+                <Sparkles className="w-3.5 h-3.5" />
+                Probar el bot ahora
+              </Link>
+            </Button>
+            <Button size="sm" variant="outline" asChild className="gap-1.5">
               <Link to="/upgrade-plan">
                 <Crown className="w-3.5 h-3.5" />
                 Pasar a Pro ({PLAN_PRICES.pro})
@@ -42,7 +48,6 @@ function UpgradeBlock({ plan }) {
             </Button>
             <Button size="sm" variant="outline" asChild className="gap-1.5">
               <Link to="/upgrade-plan">
-                <Sparkles className="w-3.5 h-3.5" />
                 Ver {PLAN_LABELS.clinic} ({PLAN_PRICES.clinic})
               </Link>
             </Button>

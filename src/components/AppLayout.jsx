@@ -21,6 +21,24 @@ export default function AppLayout() {
     base44.auth.me().then((u) => { setUser(u); setUserLoading(false); }).catch(() => setUserLoading(false));
   }, []);
 
+  // Definitivo: forzamos overflow:hidden directo en <body>, no solo en clases de
+  // contenedores React. Después de varios intentos (min-h-0 en <main>, overflow-hidden en
+  // el shell, maxHeight en la página) el usuario seguía viendo scroll con espacio en
+  // blanco al bajar — esto controla el nivel más alto posible (el documento en sí), fuera
+  // del árbol de React, sin depender de que ninguna cadena de herencia CSS esté perfecta.
+  // AppLayout SOLO se monta en pantallas autenticadas de la app, nunca en /u/:handle (la
+  // página pública), así que esto no le afecta a esa ruta.
+  useEffect(() => {
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevBodyOverflow;
+      document.documentElement.style.overflow = prevHtmlOverflow;
+    };
+  }, []);
+
   const handleLogout = async () => {
     await base44.auth.logout();
     navigate("/login");

@@ -68,6 +68,10 @@
         "type": "string"
       },
       "title": "Etiquetas"
+    },
+    "professional_ref_id": {
+      "type": "string",
+      "title": "Profesional del equipo asignado (vacio = del dueno de la cuenta)"
     }
   },
   "required": [

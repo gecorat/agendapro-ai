@@ -247,10 +247,13 @@ export default function PublicBooking() {
 
   // Cada tema puede traer su propia tipografía de encabezado (Google Font) — se carga
   // solo la que hace falta, una vez que sabemos qué tema tiene el consultorio.
+  const themeForFont = resolveTheme(settings?.theme_preset, settings?.page_color, {
+    secondaryColor: settings?.page_color_secondary,
+    fontOverride: settings?.heading_font_override,
+  });
   useEffect(() => {
-    const preset = THEME_PRESETS[settings?.theme_preset];
-    if (preset?.googleFont) loadThemeFont(preset.googleFont);
-  }, [settings?.theme_preset]);
+    if (themeForFont.googleFont) loadThemeFont(themeForFont.googleFont);
+  }, [themeForFont.googleFont]);
 
   useEffect(() => {
     (async () => {
@@ -339,7 +342,15 @@ export default function PublicBooking() {
     }
   }, [service, slot, form, professionalId]);
 
-  const theme = resolveTheme(settings?.theme_preset || "clean_dark", settings?.page_color);
+  const theme = resolveTheme(settings?.theme_preset || "clean_dark_tech", settings?.page_color, {
+    secondaryColor: settings?.page_color_secondary,
+    fontOverride: settings?.heading_font_override,
+    custom: {
+      borderRadius: settings?.custom_border_radius,
+      cardOpacity: settings?.custom_card_opacity,
+      blurEnabled: settings?.custom_blur_enabled,
+    },
+  });
 
   if (loading) {
     return (

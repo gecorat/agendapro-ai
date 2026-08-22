@@ -37,12 +37,16 @@ export default function Patients() {
   async function load() {
     setLoading(true);
     try {
-      const [pats, appts] = await Promise.all([
-        base44.entities.Patient.filter({}),
-        base44.entities.Appointment.filter({}),
+      // Antes esto llamaba Patient.filter({}) directo, que dependia de reglas de acceso
+      // que no contemplan a un profesional invitado (su professional_id guardado es el
+      // del DUEÑO, nunca coincide con su propio usuario) — le hubiera mostrado todo
+      // vacío. Esta función resuelve bien quién sos y te devuelve SOLO lo que te toca ver.
+      const [patsRes, apptsRes] = await Promise.all([
+        base44.functions.invoke("getScopedPatients", {}),
+        base44.functions.invoke("getScopedAppointments", {}),
       ]);
-      setPatients(pats || []);
-      setAppointments(appts || []);
+      setPatients(patsRes?.data?.patients || []);
+      setAppointments(apptsRes?.data?.appointments || []);
     } finally {
       setLoading(false);
     }

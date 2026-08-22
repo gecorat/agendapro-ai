@@ -462,26 +462,27 @@ function FullAssistant({ settings, reloadSettings }) {
 
   // ================= Columna 1: lista de chats =================
   const ChatListColumn = (
-    <div className={cn("w-full lg:w-[30%] lg:min-w-[280px] lg:max-w-[360px] border-r border-border bg-card flex flex-col shrink-0", mobileView !== "list" && "hidden lg:flex")}>
-      <div className="p-3 border-b border-border space-y-2.5 shrink-0">
+    <div className={cn("w-full lg:w-[30%] lg:min-w-[280px] lg:max-w-[360px] border-r flex flex-col shrink-0 bg-white", mobileView !== "list" && "hidden lg:flex")} style={{ borderColor: WA.border }}>
+      <div className="p-3 border-b space-y-2.5 shrink-0" style={{ borderColor: WA.border, background: WA.panelHeader }}>
         <h2 className="font-heading font-semibold text-sm px-1">Conversaciones</h2>
         <div className="relative">
           <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nombre o número..." className="pl-8 h-9 text-sm" />
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nombre o número..." className="pl-8 h-9 text-sm bg-white" />
         </div>
         <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5">
-          {FILTERS.map((f) => (
-            <button
-              key={f.value}
-              onClick={() => setFilter(f.value)}
-              className={cn(
-                "shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors whitespace-nowrap",
-                filter === f.value ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:bg-accent"
-              )}
-            >
-              {f.label}
-            </button>
-          ))}
+          {FILTERS.map((f) => {
+            const active = filter === f.value;
+            return (
+              <button
+                key={f.value}
+                onClick={() => setFilter(f.value)}
+                className="shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors whitespace-nowrap"
+                style={active ? { background: WA.accent, borderColor: WA.accent, color: "#fff" } : { borderColor: WA.border, color: "#54656F", background: "#fff" }}
+              >
+                {f.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -495,16 +496,18 @@ function FullAssistant({ settings, reloadSettings }) {
           </div>
         ) : (
           <div className="p-2 space-y-1">
-            {filteredConversations.map((convo) => (
+            {filteredConversations.map((convo) => {
+              const isActive = activePhone === convo.phone;
+              return (
               <button
                 key={convo.phone}
                 onClick={() => handleSelect(convo.phone)}
-                className={cn(
-                  "w-full text-left px-2.5 py-2.5 rounded-xl transition-colors flex items-start gap-2.5",
-                  activePhone === convo.phone ? "bg-accent" : "hover:bg-accent/60"
-                )}
+                className="w-full text-left px-2.5 py-2.5 rounded-xl transition-colors flex items-start gap-2.5"
+                style={isActive ? { background: WA.selected } : undefined}
+                onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = "#F5F6F6"; }}
+                onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = ""; }}
               >
-                <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-xs shrink-0">
+                <div className="w-9 h-9 rounded-full flex items-center justify-center font-semibold text-xs shrink-0" style={{ background: "#DFE5E7", color: WA.accentDark }}>
                   {contactName(convo)[0]?.toUpperCase() || "?"}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -513,7 +516,7 @@ function FullAssistant({ settings, reloadSettings }) {
                     <span className="text-[10px] text-muted-foreground shrink-0">{fmtShort(convo.lastDate)}</span>
                   </div>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full shrink-0">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full shrink-0" style={{ color: WA.accentDark, background: "#E7F8F3" }}>
                       <MessageCircle className="w-2.5 h-2.5" /> WhatsApp
                     </span>
                     {convo.isPaused && (
@@ -523,10 +526,11 @@ function FullAssistant({ settings, reloadSettings }) {
                   <p className="text-xs text-muted-foreground truncate mt-0.5">{convo.lastText}</p>
                 </div>
                 {convo.unread > 0 && (
-                  <span className="shrink-0 w-5 h-5 rounded-full bg-emerald-600 text-white text-[10px] font-bold flex items-center justify-center mt-0.5">{convo.unread}</span>
+                  <span className="shrink-0 w-5 h-5 rounded-full text-white text-[10px] font-bold flex items-center justify-center mt-0.5" style={{ background: WA.accent }}>{convo.unread}</span>
                 )}
               </button>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

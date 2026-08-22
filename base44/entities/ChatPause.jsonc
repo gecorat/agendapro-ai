@@ -1,7 +1,7 @@
 {
   "name": "ChatPause",
   "type": "object",
-  "description": "Estado de pausa del bot por conversaci\u00f3n individual (profesional + tel\u00e9fono del paciente). Cuando est\u00e1 pausado, el bot no responde autom\u00e1ticamente a esa persona \u2014 el profesional atiende a mano desde la bandeja de Chats.",
+  "description": "Estado de pausa del bot por conversación individual (profesional + teléfono del paciente). Cuando está pausado, el bot no responde automáticamente a esa persona — el profesional atiende a mano desde la bandeja de Chats.",
   "properties": {
     "professional_id": {
       "type": "string",
@@ -9,12 +9,17 @@
     },
     "phone": {
       "type": "string",
-      "title": "Tel\u00e9fono (normalizado, sin +)"
+      "title": "Teléfono (normalizado, sin +)"
     },
     "paused": {
       "type": "boolean",
       "title": "Pausado",
       "default": false
+    },
+    "paused_until": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Pausado hasta (vacio = indefinido)"
     }
   },
   "required": [

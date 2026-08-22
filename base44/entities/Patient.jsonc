@@ -12,7 +12,7 @@
     },
     "phone": {
       "type": "string",
-      "title": "Tel\u00e9fono (WhatsApp)"
+      "title": "Teléfono (WhatsApp)"
     },
     "email": {
       "type": "string",
@@ -51,16 +51,23 @@
     "next_follow_up_date": {
       "type": "string",
       "format": "date",
-      "title": "Pr\u00f3ximo seguimiento"
+      "title": "Próximo seguimiento"
     },
     "last_appointment_date": {
       "type": "string",
       "format": "date",
-      "title": "\u00daltima cita"
+      "title": "Última cita"
     },
     "professional_id": {
       "type": "string",
       "title": "Profesional titular"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "title": "Etiquetas"
     }
   },
   "required": [

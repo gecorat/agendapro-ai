@@ -38,6 +38,15 @@
     "wasender_msg_id": {
       "type": "string",
       "title": "ID del mensaje en WasenderAPI (para cruzar con la confirmacion real de entrega)"
+    },
+    "sent_by": {
+      "type": "string",
+      "title": "Quien mando este mensaje",
+      "enum": [
+        "bot",
+        "human"
+      ],
+      "default": "bot"
     }
   },
   "required": [

@@ -4,7 +4,8 @@
 // Ambos caminos hacen lo mismo: nunca confían en nada que no sea el estado real consultado
 // directo a la API de Mercado Pago.
 export async function syncSubscriptionStatus(base44, accessToken, resourceId) {
-  const res = await fetch(`https://api.mercadopago.com/preapproval/${resourceId}`, {    headers: { Authorization: `Bearer ${accessToken}` },
+  const res = await fetch(`https://api.mercadopago.com/preapproval/${resourceId}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
   });
   if (!res.ok) return { synced: false, reason: "fetch_failed" };
   const preapproval = await res.json();

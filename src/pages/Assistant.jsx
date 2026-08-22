@@ -127,25 +127,36 @@ function FullAssistant({ settings, reloadSettings }) {
 
   const load = useCallback(async () => {
     if (!user) return;
-    // Promise.allSettled en vez de Promise.all: si UNA sola de estas 4 consultas se cuelga
-    // o falla de forma inesperada, las demás igual terminan y la pantalla no se queda
-    // pegada en el spinner para siempre — cada una resuelve por su cuenta, con su propio
-    // valor de respaldo si falla.
-    const [msgsRes, patsRes, pausesRes, tmplRes] = await Promise.allSettled([
-      base44.entities.Conversation.filter({ professional_id: user.id }, "-created_date", 800),
-      base44.entities.Patient.filter({ professional_id: user.id }),
-      base44.entities.ChatPause.filter({ professional_id: user.id }),
-      base44.entities.MessageTemplate.filter({ professional_id: user.id }),
-    ]);
-    if (msgsRes.status === "rejected") console.error("Error cargando conversaciones", msgsRes.reason);
-    if (patsRes.status === "rejected") console.error("Error cargando pacientes", patsRes.reason);
-    if (pausesRes.status === "rejected") console.error("Error cargando pausas", pausesRes.reason);
-    if (tmplRes.status === "rejected") console.error("Error cargando plantillas", tmplRes.reason);
-    setAllMsgs(msgsRes.status === "fulfilled" ? (msgsRes.value || []) : []);
-    setPatients(patsRes.status === "fulfilled" ? (patsRes.value || []) : []);
-    setPauses(pausesRes.status === "fulfilled" ? (pausesRes.value || []) : []);
-    setTemplates(tmplRes.status === "fulfilled" ? (tmplRes.value || []) : []);
-    setLoading(false);
+    // safeFetch envuelve CADA llamada en su propia función anónima: si
+    // base44.entities.Patient.filter(...) revienta de forma SINCRÓNICA (no como promesa
+    // rechazada, sino literalmente al evaluarla — confirmado en vivo: las llamadas de
+    // Patient/ChatPause/MessageTemplate ni siquiera llegaban a dispararse en la pestaña
+    // Red), ese error queda atrapado ADENTRO de safeFetch y nunca corta la construcción
+    // del arreglo que le pasamos a Promise.all — así las otras 3 llamadas sí se disparan.
+    // El try/finally de afuera es una segunda red de seguridad: pase lo que pase,
+    // setLoading(false) siempre se ejecuta.
+    const safeFetch = async (fn, label) => {
+      try {
+        return await fn();
+      } catch (e) {
+        console.error(`Error cargando ${label}`, e);
+        return [];
+      }
+    };
+    try {
+      const [msgs, pats, pausesList, tmpl] = await Promise.all([
+        safeFetch(() => base44.entities.Conversation.filter({ professional_id: user.id }, "-created_date", 800), "conversaciones"),
+        safeFetch(() => base44.entities.Patient.filter({ professional_id: user.id }), "pacientes"),
+        safeFetch(() => base44.entities.ChatPause.filter({ professional_id: user.id }), "pausas"),
+        safeFetch(() => base44.entities.MessageTemplate.filter({ professional_id: user.id }), "plantillas"),
+      ]);
+      setAllMsgs(msgs || []);
+      setPatients(pats || []);
+      setPauses(pausesList || []);
+      setTemplates(tmpl || []);
+    } finally {
+      setLoading(false);
+    }
   }, [user]);
 
   useEffect(() => { load(); }, [load]);

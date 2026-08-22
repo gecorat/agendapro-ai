@@ -7,6 +7,7 @@ export default async function (req: Request): Promise<Response> {
     const body = await req.json().catch(() => ({}));
     const {
       professional_id,
+      professional_ref_id, // opcional: a que profesional puntual del equipo (plan Clinic) va esta cita
       service_id,
       start_datetime,
       first_name,
@@ -19,9 +20,6 @@ export default async function (req: Request): Promise<Response> {
       return Response.json({ error: 'Faltan datos requeridos.' }, { status: 400 });
     }
 
-    // asServiceRole: el visitante público (anónimo) no tiene permisos de lectura sobre
-    // Service/Patient/Appointment según las reglas RLS, así que validamos y escribimos
-    // con el rol de servicio, igual que hace getBookedSlots.
     const services = await base44.asServiceRole.entities.Service.filter({ id: service_id });
     const service = services?.[0];
     if (!service || service.created_by_id !== professional_id || service.active === false) {
@@ -34,10 +32,10 @@ export default async function (req: Request): Promise<Response> {
     }
     const end = new Date(start.getTime() + (service.duration_minutes || 30) * 60000);
 
-    // Re-chequeo server-side de solapamiento justo antes de crear. El frontend ya filtra
-    // horarios ocupados al mostrar la grilla, pero esa lista se carga una sola vez al abrir
-    // la página: si dos personas llegan a confirmar casi al mismo tiempo para el mismo
-    // horario, sin este chequeo ambas reservas se crearían igual (double booking).
+    // Re-chequeo server-side de solapamiento justo antes de crear. Si la reserva es para
+    // un profesional PUNTUAL del equipo (plan Clinic), el choque se chequea SOLO contra
+    // las citas de ESE profesional — dos personas del mismo equipo pueden tener citas a
+    // la misma hora sin problema, cada uno con su propia agenda.
     const dayStart = new Date(start); dayStart.setHours(0, 0, 0, 0);
     const dayEnd = new Date(start); dayEnd.setHours(23, 59, 59, 999);
     const existingAppts = await base44.asServiceRole.entities.Appointment.filter({
@@ -45,7 +43,10 @@ export default async function (req: Request): Promise<Response> {
       status: { $ne: 'cancelled' },
       start_datetime: { $gte: dayStart.toISOString(), $lte: dayEnd.toISOString() },
     });
-    const overlaps = (existingAppts || []).some((a) => {
+    const relevantAppts = professional_ref_id
+      ? (existingAppts || []).filter((a) => a.professional_ref_id === professional_ref_id)
+      : (existingAppts || []).filter((a) => !a.professional_ref_id);
+    const overlaps = relevantAppts.some((a) => {
       const aStart = new Date(a.start_datetime).getTime();
       const aEnd = new Date(a.end_datetime).getTime();
       return start.getTime() < aEnd && aStart < end.getTime();
@@ -57,12 +58,8 @@ export default async function (req: Request): Promise<Response> {
       );
     }
 
-    // Buscar paciente existente por teléfono usando asServiceRole: la regla RLS de Patient
-    // solo permite leer al dueño de la ficha o al profesional, así que un visitante anónimo
-    // nunca encontraba coincidencias acá y terminaba creando un paciente duplicado cada vez.
-    // Comparamos por teléfono CANÓNICO (últimos 10 dígitos), no texto exacto — confirmado en
-    // vivo que el mismo número llega escrito de formas distintas y antes generaba una ficha
-    // nueva por cada variante.
+    // Buscar paciente existente por teléfono, comparando por teléfono CANÓNICO (últimos
+    // 10 dígitos), no texto exacto.
     const allPatients = await base44.asServiceRole.entities.Patient.filter({ professional_id });
     let patient = findPatientByCanonicalPhone(allPatients, phone);
     if (!patient) {
@@ -74,16 +71,18 @@ export default async function (req: Request): Promise<Response> {
         contact_preference: 'whatsapp',
         consent_reminders: true,
         professional_id,
+        professional_ref_id: professional_ref_id || undefined,
       });
     } else {
-      // El teléfono ya existía, pero la persona puede haber escrito un nombre/email
-      // distinto (dato corregido, o el número es compartido). Sin esto, la reserva se
-      // guardaba igual con el nombre/email VIEJOS de la ficha encontrada, y la confirmación
-      // terminaba yendo al email de otra persona en vez del que se acababa de escribir.
       const updates = {};
       if (first_name && first_name !== patient.first_name) updates.first_name = first_name;
       if ((last_name || '') !== (patient.last_name || '')) updates.last_name = last_name || '';
       if (email && email !== patient.email) updates.email = email;
+      // Si esta reserva puntual es con un profesional del equipo, el paciente "pasa a
+      // ser" de ese profesional en la lista (el más reciente con quien reservó).
+      if (professional_ref_id && professional_ref_id !== patient.professional_ref_id) {
+        updates.professional_ref_id = professional_ref_id;
+      }
       if (Object.keys(updates).length) {
         patient = await base44.asServiceRole.entities.Patient.update(patient.id, updates);
       }
@@ -99,6 +98,7 @@ export default async function (req: Request): Promise<Response> {
       status: 'pending',
       origin: 'public_link',
       professional_id,
+      professional_ref_id: professional_ref_id || undefined,
     });
 
     return Response.json({ appointment, patient });

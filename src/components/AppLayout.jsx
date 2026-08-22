@@ -72,7 +72,7 @@ export default function AppLayout() {
         { label: "Agenda", path: "/agenda", icon: Calendar },
         { label: "Citas pasadas", path: "/appointment-history", icon: History },
         { label: preset.patientLabel, path: "/pacientes", icon: Users },
-        { label: "Enlace del consultorio", path: "/public-page-editor", icon: Palette },
+        { label: "Enlace del consultorio", path: "/enlace-consultorio", icon: Palette },
       ],
     },
   ] : [

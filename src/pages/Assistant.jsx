@@ -217,6 +217,19 @@ function FullAssistant({ settings, reloadSettings }) {
   const activePatient = activeConvo?.patient || null;
   const chatPaused = activeConvo?.isPaused || false;
 
+  // Reflejamos qué duración quedó activa (tildado visual) al abrir cada conversación:
+  // si hay una fecha de vencimiento, mostramos ese botón resaltado; sin vencimiento pero
+  // pausado, es "Indefinido"; sin pausa, ninguno.
+  useEffect(() => {
+    const p = pauseByPhone.get(activePhone);
+    if (!p?.paused) { setSelectedDuration(null); return; }
+    if (!p.paused_until) { setSelectedDuration(null); return; }
+    const remainingMin = (new Date(p.paused_until) - new Date()) / 60000;
+    const closest = PAUSE_OPTIONS.filter((o) => o.minutes).reduce((best, o) =>
+      Math.abs(o.minutes - remainingMin) < Math.abs((best?.minutes ?? Infinity) - remainingMin) ? o : best, null);
+    setSelectedDuration(closest?.minutes ?? null);
+  }, [activePhone, pauseByPhone]);
+
   useEffect(() => {
     if (!activePatient?.id) { setActiveAppointments([]); return; }
     base44.entities.Appointment.filter({ patient_id: activePatient.id })

@@ -179,7 +179,12 @@ export default function AppLayout() {
           <NotificationsBell user={user} />
         </header>
 
-        <main className="flex-1 overflow-y-auto">
+        {/* min-h-0 es la parte que faltaba: sin esto, un flex item no se achica por
+            debajo de la altura de SU CONTENIDO aunque tenga flex-1 + overflow-y-auto — con
+            contenido largo (como el panel de Página pública, que tiene muchas secciones),
+            <main> creca más allá de la pantalla en vez de scrollear puertas adentro, y eso
+            es lo que se veía como scroll fantasma en esa pantalla específica. */}
+        <main className="flex-1 min-h-0 overflow-y-auto">
           <TrialBanner />
           <Outlet />
         </main>

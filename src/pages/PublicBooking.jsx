@@ -374,7 +374,13 @@ export default function PublicBooking() {
 
   const brand = theme.accent;
   const headingFontStyle = theme.headingFont ? { fontFamily: theme.headingFont } : {};
-  const showFullPhotoBackdrop = theme.photoBackdrop && !!settings?.cover_image_url;
+  const isCustomTheme = settings?.theme_preset === "custom";
+  const customBgStyle = isCustomTheme
+    ? settings?.custom_bg_image_url
+      ? { background: `url(${settings.custom_bg_image_url}) center/cover` }
+      : getBackgroundPatternStyle(settings?.custom_bg_pattern, theme.accent, theme.secondary)
+    : {};
+  const showCustomOverlay = isCustomTheme && settings?.custom_bg_image_url;
   const igUrl = normalizeSocialUrl(settings?.instagram_url, "instagram");
   const fbUrl = normalizeSocialUrl(settings?.facebook_url, "facebook");
   const webUrl = normalizeSocialUrl(settings?.website_url, "website");
@@ -382,7 +388,7 @@ export default function PublicBooking() {
   const mapsUrl = googleMapsUrl(settings?.address, settings?.address_city, settings?.address_province);
   const frameClass = PHOTO_FRAME_CLASS[settings?.photo_frame] || PHOTO_FRAME_CLASS.circle;
   const glassStyle = theme.glass ? { backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)" } : {};
-  const cardClass = theme.cardClass || "";
+  const cardClass = `${theme.cardClass || ""} ${theme.radiusClass || "rounded-2xl"}`;
   const cardStyle = { background: theme.cardBg, borderColor: theme.cardBorder, color: theme.text, ...glassStyle };
 
   const primaryBtnStyle = {
@@ -603,12 +609,9 @@ export default function PublicBooking() {
     // Photo Backdrop: si el tema lo pide y hay portada cargada, esa imagen cubre TODA la
     // página (no solo el header) — si no hay portada, cae al fondo normal del tema (el
     // degradé de siempre), sin romper nada para quien no suba portada.
-    <div className="min-h-screen w-full relative" style={{ background: theme.bg }}>
-      {showFullPhotoBackdrop && (
-        <>
-          <div className="fixed inset-0" style={{ background: `url(${settings.cover_image_url}) center/cover`, filter: "brightness(0.55)" }} />
-          <div className="fixed inset-0 bg-black/20" />
-        </>
+    <div className="min-h-screen w-full relative" style={{ background: theme.bg, ...(isCustomTheme ? customBgStyle : {}) }}>
+      {showCustomOverlay && (
+        <div className="absolute inset-0" style={{ background: "#000", opacity: (settings?.custom_bg_overlay_opacity ?? 40) / 100 }} />
       )}
       <div className="relative">
       {/* ============ DESKTOP (>=1024px): 2 columnas asimétricas, todo visible junto.

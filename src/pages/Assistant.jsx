@@ -147,8 +147,6 @@ function FullAssistant({ settings, reloadSettings }) {
     setTemplates(tmplRes.status === "fulfilled" ? (tmplRes.value || []) : []);
     setLoading(false);
   }, [user]);
-    }
-  }, [user]);
 
   useEffect(() => { load(); }, [load]);
 

@@ -1,3 +1,5 @@
+import { findPatientByCanonicalPhone } from "./phone-utils.ts";
+
 export async function getPlatformConfig(base44) {
   const list = await base44.asServiceRole.entities.PlatformConfig.filter({});
   return list?.[0] || null;

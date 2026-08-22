@@ -49,10 +49,16 @@ export default function Dashboard() {
         weekEnd.setDate(weekStart.getDate() + 6);
         weekEnd.setHours(23, 59, 59, 999);
 
-        const [appts, pats] = await Promise.all([
-          base44.entities.Appointment.filter({}),
-          base44.entities.Patient.filter({}),
+        // Antes llamaba Appointment.filter({})/Patient.filter({}) directo, que un
+        // profesional invitado no puede leer (las reglas de acceso comparan contra el
+        // DUEÑO de la cuenta). Estas funciones resuelven el alcance correcto para
+        // cualquiera de los dos casos.
+        const [apptsRes, patsRes] = await Promise.all([
+          base44.functions.invoke("getScopedAppointments", {}),
+          base44.functions.invoke("getScopedPatients", {}),
         ]);
+        const appts = apptsRes?.data?.appointments || [];
+        const pats = patsRes?.data?.patients || [];
 
         const todayAppts = (appts || []).filter((a) => {
           const d = new Date(a.start_datetime);

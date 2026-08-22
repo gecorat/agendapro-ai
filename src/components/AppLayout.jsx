@@ -11,6 +11,7 @@ import NotificationsBell from "@/components/NotificationsBell";
 
 export default function AppLayout() {
   const location = useLocation();
+  console.log("[DEBUG AppLayout] render, path:", location.pathname);
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [userLoading, setUserLoading] = useState(true);

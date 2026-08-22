@@ -89,11 +89,41 @@
       "title": "Foto de perfil",
       "format": "url"
     },
+    "photo_align": {
+      "type": "string",
+      "title": "Alineacion de la foto de perfil",
+      "enum": [
+        "left",
+        "center",
+        "right"
+      ],
+      "default": "center"
+    },
+    "photo_frame": {
+      "type": "string",
+      "title": "Marco de la foto de perfil",
+      "enum": [
+        "circle",
+        "rounded",
+        "none"
+      ],
+      "default": "circle"
+    },
     "cover_image_url": {
       "type": "string",
       "title": "Imagen de portada",
       "format": "url",
       "description": "Banner de fondo en la página pública, detrás de la foto de perfil. Si no se carga, se usa el color/gradiente del tema."
+    },
+    "cover_align": {
+      "type": "string",
+      "title": "Alineacion de la imagen de portada",
+      "enum": [
+        "top",
+        "center",
+        "bottom"
+      ],
+      "default": "center"
     },
     "page_color": {
       "type": "string",
@@ -104,13 +134,13 @@
       "type": "string",
       "title": "Tema visual de la página pública",
       "enum": [
-        "minimal_dark",
-        "clean_light",
-        "pastel_soft",
-        "brand_accent"
+        "clean_dark",
+        "glassmorphism",
+        "minimal_light",
+        "neon_accent"
       ],
-      "default": "clean_light",
-      "description": "Preset de estilo para /u/tuusuario. brand_accent usa page_color como acento; los demas tienen paleta fija."
+      "default": "clean_dark",
+      "description": "Preset visual de la pagina publica y del editor de personalizacion."
     },
     "description": {
       "type": "string",

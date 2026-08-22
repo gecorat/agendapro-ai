@@ -290,6 +290,7 @@ REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno está "
     text: finalReplyText,
     conversation_id: conversationId,
     account_id: accountId,
+    sent_by: "bot",
   });
 
   // El envío por WhatsApp va AL FINAL, después de que todo lo importante (la cita, el

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -75,15 +75,14 @@ function LivePreview({ form, viewport }) {
   const half = size / 2;
   const headingFontStyle = theme.headingFont ? { fontFamily: theme.headingFont } : {};
 
-  const isCustom = form.theme_preset === "custom";
-  const customBgStyle = isCustom
-    ? form.custom_bg_image_url
-      ? { background: `url(${form.custom_bg_image_url}) center/cover` }
-      : getBackgroundPatternStyle(form.custom_bg_pattern, theme.accent, theme.secondary)
+  // El fondo personalizado (patrón o imagen) ahora es universal: se aplica arriba de
+  // CUALQUIER tema, no solo "Personalizado".
+  const bgOverrideStyle = form.custom_bg_image_url
+    ? { background: `url(${form.custom_bg_image_url}) center/cover` }
+    : form.custom_bg_pattern && form.custom_bg_pattern !== "none"
+    ? getBackgroundPatternStyle(form.custom_bg_pattern, theme.accent, theme.secondary)
     : {};
-  const showCustomOverlay = isCustom && form.custom_bg_image_url;
-
-  const showFullPhotoBackdrop = false; // photo_focus agranda el header, no cubre toda la página
+  const showBgOverlay = !!form.custom_bg_image_url;
 
   useEffect(() => {
     if (theme.googleFont) loadThemeFont(theme.googleFont);
@@ -91,8 +90,8 @@ function LivePreview({ form, viewport }) {
 
   return (
     <div className={`mx-auto rounded-2xl overflow-hidden border border-border shadow-sm transition-all duration-300 relative ${viewport === "mobile" ? "max-w-[300px]" : "max-w-full"}`}>
-      <div className="relative" style={{ background: theme.bg, ...(isCustom ? customBgStyle : {}) }}>
-        {showCustomOverlay && (
+      <div className="relative" style={{ background: theme.bg, ...bgOverrideStyle }}>
+        {showBgOverlay && (
           <div className="absolute inset-0" style={{ background: "#000", opacity: (form.custom_bg_overlay_opacity ?? 40) / 100 }} />
         )}
         <div className="relative">
@@ -184,10 +183,17 @@ export default function PublicPageEditor() {
 
   const cleanHandle = (form.handle || "").trim().replace(/^@/, "").replace(/\s+/g, "");
   const publicLink = cleanHandle ? (typeof window !== "undefined" ? window.location.origin : "") + `/u/${cleanHandle}` : "";
-  const isCustomTheme = form.theme_preset === "custom";
 
+  // Se sincroniza el form desde `settings` UNA SOLA VEZ (la primera vez que llegan datos
+  // reales). Antes se resincronizaba cada vez que `settings` cambiaba de referencia — y
+  // como el hook de settings se refresca solo al volver a la pestaña (útil en general,
+  // pero acá no), abrir el selector de archivos para subir una imagen (que le saca el foco
+  // a la ventana y se lo devuelve al cerrar) disparaba ese refresh y te pisaba el tema
+  // recién elegido sin guardar. Ahora un refresh de fondo nunca te borra ediciones en curso.
+  const didInitialSync = useRef(false);
   useEffect(() => {
-    if (settings) {
+    if (settings && !didInitialSync.current) {
+      didInitialSync.current = true;
       setForm({
         practice_name: settings.practice_name || "",
         specialty: settings.specialty || "",
@@ -273,9 +279,8 @@ export default function PublicPageEditor() {
 
   return (
     // Estructura de 2 columnas INDEPENDIENTES: el contenedor raíz no scrollea nunca
-    // (h-full, ya que el <main> del layout ya mide exactamente el viewport disponible —
-    // usar h-screen acá adentro competía con el scroll del layout y generaba el espacio en
-    // blanco fantasma reportado). Cada columna maneja su propio scroll por separado.
+    // (h-full). Cada columna maneja su propio scroll por separado. El scroll fantasma de
+    // toda la página (sidebar incluido) se resolvió aparte, en AppLayout.jsx.
     <div className="h-full overflow-hidden flex flex-col">
       <div className="shrink-0 border-b border-border px-4 md:px-6 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-background">
         <div>
@@ -312,7 +317,7 @@ export default function PublicPageEditor() {
               </div>
             </Section>
 
-            <Section title="Tema visual" description="6 estilos premium + uno totalmente personalizable.">
+            <Section title="Tema visual" description="6 estilos premium + uno totalmente personalizable como punto de partida.">
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {Object.entries(THEME_PRESETS).map(([key, preset]) => {
                   const theme = resolveTheme(key, form.page_color, { secondaryColor: form.page_color_secondary });
@@ -377,64 +382,65 @@ export default function PublicPageEditor() {
               </div>
             </Section>
 
-            {isCustomTheme && (
-              <Section title="Estudio personalizado" description="Solo disponible con el tema Personalizado.">
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Generador de fondos</Label>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {PATTERN_OPTIONS.map((p) => (
-                      <button key={p.value} type="button" onClick={() => set("custom_bg_pattern", p.value)} className={`text-xs py-2 rounded-lg border ${form.custom_bg_pattern === p.value && !form.custom_bg_image_url ? "border-primary bg-primary/5 font-medium" : "border-border text-muted-foreground"}`}>
-                        {p.label}
-                      </button>
-                    ))}
-                  </div>
+            {/* Antes esto solo aparecía con el tema "Personalizado". Ahora aplica a
+                CUALQUIERA de los 7 temas: redondeado, opacidad, blur y fondo son ajustes
+                universales que se montan arriba del tema elegido. */}
+            <Section title="Estilo y fondo" description="Redondeado, transparencia, blur y fondo — se aplican sobre cualquier tema.">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Redondeado de tarjetas y botones</Label>
+                <div className="flex gap-1.5">
+                  <SegButton active={form.custom_border_radius === "none"} onClick={() => set("custom_border_radius", "none")}><Square className="w-3.5 h-3.5" /> Recto</SegButton>
+                  <SegButton active={form.custom_border_radius === "soft"} onClick={() => set("custom_border_radius", "soft")}><Square className="w-3.5 h-3.5 rounded" /> Suave</SegButton>
+                  <SegButton active={form.custom_border_radius === "full"} onClick={() => set("custom_border_radius", "full")}><Circle className="w-3.5 h-3.5" /> Redondeado</SegButton>
                 </div>
-                <div className="flex items-center gap-3 pt-1">
-                  <div className="w-16 h-10 rounded-lg overflow-hidden border-2 border-border bg-accent flex items-center justify-center shrink-0">
-                    {form.custom_bg_image_url ? <img src={form.custom_bg_image_url} alt="fondo" className="w-full h-full object-cover" /> : <Upload className="w-4 h-4 text-muted-foreground" />}
-                  </div>
-                  <label className="cursor-pointer">
-                    <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md border border-input hover:bg-accent transition-colors">
-                      {uploadingCustomBg ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-                      {form.custom_bg_image_url ? "Cambiar imagen de fondo" : "O subir imagen de fondo"}
-                    </span>
-                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handleUpload(e, "custom_bg_image_url", setUploadingCustomBg)} disabled={uploadingCustomBg} />
-                  </label>
-                  {form.custom_bg_image_url && (
-                    <button type="button" onClick={() => set("custom_bg_image_url", "")} className="text-xs text-muted-foreground hover:text-destructive underline">Quitar</button>
-                  )}
+              </div>
+
+              <div className="space-y-1.5 pt-1">
+                <Label className="text-xs text-muted-foreground">Opacidad de las tarjetas ({form.custom_card_opacity}%)</Label>
+                <Slider value={[form.custom_card_opacity]} onValueChange={([v]) => set("custom_card_opacity", v)} max={100} step={5} />
+              </div>
+
+              <div className="flex items-center justify-between pt-2">
+                <div>
+                  <p className="text-sm font-medium">Efecto vidrio (blur) en tarjetas</p>
+                  <p className="text-xs text-muted-foreground">Desenfoca lo que hay detrás de cada tarjeta.</p>
                 </div>
+                <Switch checked={form.custom_blur_enabled} onCheckedChange={(v) => set("custom_blur_enabled", v)} />
+              </div>
+
+              <div className="space-y-1.5 pt-3 border-t border-border">
+                <Label className="text-xs text-muted-foreground">Fondo de página (opcional)</Label>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {PATTERN_OPTIONS.map((p) => (
+                    <button key={p.value} type="button" onClick={() => set("custom_bg_pattern", p.value)} className={`text-xs py-2 rounded-lg border ${form.custom_bg_pattern === p.value && !form.custom_bg_image_url ? "border-primary bg-primary/5 font-medium" : "border-border text-muted-foreground"}`}>
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-3 pt-1">
+                <div className="w-16 h-10 rounded-lg overflow-hidden border-2 border-border bg-accent flex items-center justify-center shrink-0">
+                  {form.custom_bg_image_url ? <img src={form.custom_bg_image_url} alt="fondo" className="w-full h-full object-cover" /> : <Upload className="w-4 h-4 text-muted-foreground" />}
+                </div>
+                <label className="cursor-pointer">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md border border-input hover:bg-accent transition-colors">
+                    {uploadingCustomBg ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                    {form.custom_bg_image_url ? "Cambiar imagen de fondo" : "O subir imagen de fondo"}
+                  </span>
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => handleUpload(e, "custom_bg_image_url", setUploadingCustomBg)} disabled={uploadingCustomBg} />
+                </label>
                 {form.custom_bg_image_url && (
-                  <div className="space-y-1.5 pt-1">
-                    <Label className="text-xs text-muted-foreground">Opacidad del overlay ({form.custom_bg_overlay_opacity}%)</Label>
-                    <Slider value={[form.custom_bg_overlay_opacity]} onValueChange={([v]) => set("custom_bg_overlay_opacity", v)} max={100} step={5} />
-                    <p className="text-xs text-muted-foreground">Más alto = fondo más oscurecido, mejor lectura del texto.</p>
-                  </div>
+                  <button type="button" onClick={() => set("custom_bg_image_url", "")} className="text-xs text-muted-foreground hover:text-destructive underline">Quitar</button>
                 )}
-
-                <div className="space-y-1.5 pt-2">
-                  <Label className="text-xs text-muted-foreground">Redondeado de tarjetas y botones</Label>
-                  <div className="flex gap-1.5">
-                    <SegButton active={form.custom_border_radius === "none"} onClick={() => set("custom_border_radius", "none")}><Square className="w-3.5 h-3.5" /> Recto</SegButton>
-                    <SegButton active={form.custom_border_radius === "soft"} onClick={() => set("custom_border_radius", "soft")}><Square className="w-3.5 h-3.5 rounded" /> Suave</SegButton>
-                    <SegButton active={form.custom_border_radius === "full"} onClick={() => set("custom_border_radius", "full")}><Circle className="w-3.5 h-3.5" /> Redondeado</SegButton>
-                  </div>
-                </div>
-
+              </div>
+              {form.custom_bg_image_url && (
                 <div className="space-y-1.5 pt-1">
-                  <Label className="text-xs text-muted-foreground">Opacidad de las tarjetas ({form.custom_card_opacity}%)</Label>
-                  <Slider value={[form.custom_card_opacity]} onValueChange={([v]) => set("custom_card_opacity", v)} max={100} step={5} />
+                  <Label className="text-xs text-muted-foreground">Opacidad del overlay ({form.custom_bg_overlay_opacity}%)</Label>
+                  <Slider value={[form.custom_bg_overlay_opacity]} onValueChange={([v]) => set("custom_bg_overlay_opacity", v)} max={100} step={5} />
+                  <p className="text-xs text-muted-foreground">Más alto = fondo más oscurecido, mejor lectura del texto.</p>
                 </div>
-
-                <div className="flex items-center justify-between pt-2">
-                  <div>
-                    <p className="text-sm font-medium">Efecto vidrio (blur) en tarjetas</p>
-                    <p className="text-xs text-muted-foreground">Desenfoca lo que hay detrás de cada tarjeta.</p>
-                  </div>
-                  <Switch checked={form.custom_blur_enabled} onCheckedChange={(v) => set("custom_blur_enabled", v)} />
-                </div>
-              </Section>
-            )}
+              )}
+            </Section>
 
             <Section title="Foto de perfil">
               <div className="flex items-center gap-3">

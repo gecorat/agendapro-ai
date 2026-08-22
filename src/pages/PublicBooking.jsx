@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CalendarClock, Clock, ArrowRight, Check, Loader2, Calendar, MapPin, Mail, CalendarX, MessageCircle, Instagram, Facebook, Globe, ExternalLink, Navigation } from "lucide-react";
-import { resolveTheme, normalizeSocialUrl, whatsappUrl, googleMapsUrl, googleMapsEmbedSrc, PHOTO_FRAME_CLASS, THEME_PRESETS, loadThemeFont } from "@/lib/theme-presets";
+import { resolveTheme, normalizeSocialUrl, whatsappUrl, googleMapsUrl, googleMapsEmbedSrc, PHOTO_FRAME_CLASS, getBackgroundPatternStyle, loadThemeFont } from "@/lib/theme-presets";
 
 function parseTimeToDate(date, time) {
   const [h, m] = time.split(":").map(Number);
@@ -109,19 +109,28 @@ function ProfileHeader({ settings, theme, brand, frameClass, cardClass, glassSty
   const alignClass = align === "left" ? "justify-start" : align === "right" ? "justify-end" : "justify-center";
   const textAlignClass = align === "left" ? "text-left items-start" : align === "right" ? "text-right items-end" : "text-center items-center";
   const half = size / 2;
+  // Photo Focus: header más grande, con degradé que se funde hacia el color de fondo del
+  // tema (en vez de un overlay oscuro parejo como los demás temas).
+  const coverHeight = theme.photoFocus ? "h-44" : "h-28";
+  const photoTopOffset = theme.photoFocus ? 176 : 112;
 
   return (
-    <div className={`rounded-3xl border overflow-hidden ${cardClass}`} style={{ background: theme.cardBg, borderColor: theme.cardBorder, ...glassStyle }}>
+    <div className={`border overflow-hidden ${cardClass}`} style={{ background: theme.cardBg, borderColor: theme.cardBorder, ...glassStyle }}>
       {/* Contenedor relativo con overflow visible: la foto puede sobresalir sin cortarse */}
       <div className="relative" style={{ overflow: "visible" }}>
         <div
-          className={`h-28 overflow-hidden ${rounded}`}
-          style={{ background: settings?.cover_image_url ? `url(${settings.cover_image_url}) center ${settings?.cover_align || "center"}/cover` : `linear-gradient(135deg, ${brand}, ${brand}55)` }}
+          className={`${coverHeight} overflow-hidden ${rounded}`}
+          style={{ background: settings?.cover_image_url ? `url(${settings.cover_image_url}) center ${settings?.cover_align || "center"}/cover` : `linear-gradient(135deg, ${brand}, ${theme.secondary || brand}55)` }}
         >
-          {settings?.cover_image_url && <div className="absolute inset-0 bg-black/25" />}
+          {settings?.cover_image_url && (
+            <div
+              className="absolute inset-0"
+              style={theme.photoFocus ? { background: `linear-gradient(to bottom, transparent 35%, ${theme.cardBg} 100%)` } : { background: "rgba(0,0,0,0.25)" }}
+            />
+          )}
         </div>
         {showPhoto && (
-          <div className={`absolute left-0 right-0 px-6 flex z-20 ${alignClass}`} style={{ top: `${112 - half}px` }}>
+          <div className={`absolute left-0 right-0 px-6 flex z-20 ${alignClass}`} style={{ top: `${photoTopOffset - half}px` }}>
             {settings?.photo_url ? (
               <img
                 src={settings.photo_url}

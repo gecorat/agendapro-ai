@@ -281,7 +281,12 @@ export default function PublicPageEditor() {
     // Estructura de 2 columnas INDEPENDIENTES: el contenedor raíz no scrollea nunca
     // (h-full). Cada columna maneja su propio scroll por separado. El scroll fantasma de
     // toda la página (sidebar incluido) se resolvió aparte, en AppLayout.jsx.
-    <div className="h-full overflow-hidden flex flex-col">
+    // Techo duro independiente de la cadena de ancestros: h-full/min-h-0 depende de que
+    // CADA nivel de arriba (incluido TrialBanner, que es hermano en flujo normal, no
+    // flex, dentro de <main>) esté perfectamente medido. maxHeight:100vh + overflow:hidden
+    // acá directamente en el estilo es un tope físico: pase lo que pase arriba, esta
+    // pantalla nunca puede superar un viewport de alto.
+    <div className="h-full overflow-hidden flex flex-col" style={{ maxHeight: "100vh" }}>
       <div className="shrink-0 border-b border-border px-4 md:px-6 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-background">
         <div>
           <h1 className="text-lg font-heading font-semibold">Página pública</h1>

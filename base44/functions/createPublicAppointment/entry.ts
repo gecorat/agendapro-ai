@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
+import { findPatientByCanonicalPhone } from '../../shared/phone-utils.ts';
 
 export default async function (req: Request): Promise<Response> {
   try {
@@ -59,8 +60,11 @@ export default async function (req: Request): Promise<Response> {
     // Buscar paciente existente por teléfono usando asServiceRole: la regla RLS de Patient
     // solo permite leer al dueño de la ficha o al profesional, así que un visitante anónimo
     // nunca encontraba coincidencias acá y terminaba creando un paciente duplicado cada vez.
-    const existingPatients = await base44.asServiceRole.entities.Patient.filter({ phone, professional_id });
-    let patient = existingPatients?.[0];
+    // Comparamos por teléfono CANÓNICO (últimos 10 dígitos), no texto exacto — confirmado en
+    // vivo que el mismo número llega escrito de formas distintas y antes generaba una ficha
+    // nueva por cada variante.
+    const allPatients = await base44.asServiceRole.entities.Patient.filter({ professional_id });
+    let patient = findPatientByCanonicalPhone(allPatients, phone);
     if (!patient) {
       patient = await base44.asServiceRole.entities.Patient.create({
         first_name,

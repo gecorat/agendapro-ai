@@ -1,0 +1,38 @@
+{
+  "name": "MessageTemplate",
+  "type": "object",
+  "description": "Respuestas r\u00e1pidas / plantillas preconfiguradas que el profesional puede insertar con un clic al responder manualmente en Chats.",
+  "properties": {
+    "professional_id": {
+      "type": "string",
+      "title": "Profesional"
+    },
+    "title": {
+      "type": "string",
+      "title": "T\u00edtulo corto (para el selector)"
+    },
+    "body": {
+      "type": "string",
+      "title": "Texto de la plantilla"
+    }
+  },
+  "required": [
+    "professional_id",
+    "title",
+    "body"
+  ],
+  "rls": {
+    "read": {
+      "professional_id": "{{user.id}}"
+    },
+    "create": {
+      "professional_id": "{{user.id}}"
+    },
+    "update": {
+      "professional_id": "{{user.id}}"
+    },
+    "delete": {
+      "professional_id": "{{user.id}}"
+    }
+  }
+}

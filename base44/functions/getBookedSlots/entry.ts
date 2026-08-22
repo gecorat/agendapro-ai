@@ -25,6 +25,7 @@ export default async function(req: Request): Promise<Response> {
       start_datetime: a.start_datetime,
       end_datetime: a.end_datetime,
       status: a.status,
+      professional_ref_id: a.professional_ref_id || null,
     }));
 
     return Response.json({ slots });

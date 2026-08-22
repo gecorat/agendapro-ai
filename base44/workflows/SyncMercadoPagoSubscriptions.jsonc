@@ -1,0 +1,44 @@
+{
+  "description": "Cada hora, revisa todas las suscripciones de Mercado Pago activas contra el estado real de la API (red de seguridad por si el webhook de MP no avisa \u2014 confirmado que puede pasar).",
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "sync_mercadopago_subscriptions",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "sync_subscriptions": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "syncMercadoPagoSubscriptions"
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Sincronizar suscripciones de Mercado Pago",
+            "description": "Revisa el estado real contra la API y corrige el plan si hace falta"
+          }
+        }
+      }
+    ]
+  },
+  "name": "Sincronizar suscripciones MP",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 * * * *",
+      "one_time_date": null,
+      "timezone": "America/Buenos_Aires",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  }
+}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Calendar, Users, LayoutDashboard, Settings, LogOut, Menu, Shield, MessageCircle, History, BarChart3, Star, BookOpen, UserCircle, CreditCard, Sparkles } from "lucide-react";
+import { Calendar, Users, LayoutDashboard, Settings, LogOut, Menu, Shield, MessageCircle, History, BarChart3, Star, BookOpen, UserCircle, CreditCard, Sparkles, Palette } from "lucide-react";
 import { LOGO_ICON } from "@/assets/logo";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import { getPlanStatus } from "@/lib/plan-utils";
@@ -68,6 +68,7 @@ export default function AppLayout() {
         ...(!hasFullAssistant ? [{ label: "Probar el bot", path: "/bot", icon: Sparkles }] : []),
         { label: "Guía", path: "/welcome-guide", icon: BookOpen },
         { label: "Mi perfil", path: "/profile-editor", icon: UserCircle },
+        { label: "Página pública", path: "/public-page-editor", icon: Palette },
         { label: "Planes", path: "/upgrade-plan", icon: CreditCard },
       ],
     },

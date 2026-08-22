@@ -236,6 +236,14 @@ export default function PublicBooking() {
 
   const professionalId = settings?.created_by_id || null;
 
+  // Cada tema puede traer su propia tipografía de encabezado (Google Font) — se carga
+  // solo la que hace falta, una vez que sabemos qué tema tiene el consultorio.
+  useEffect(() => {
+    if (settings?.theme_preset) {
+      const preset = require("@/lib/theme-presets").THEME_PRESETS?.[settings.theme_preset];
+    }
+  }, [settings?.theme_preset]);
+
   useEffect(() => {
     (async () => {
       try {

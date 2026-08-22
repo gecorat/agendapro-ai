@@ -8,8 +8,7 @@ import { syncSubscriptionStatus } from '../../shared/mercadopago.ts';
 // actualizado indefinidamente, sin que nadie se entere.
 export default async function (req: Request): Promise<Response> {
   try {
-    const base44 = createClientFromRequest(req);
-    const cfg = await base44.asServiceRole.entities.PlatformConfig.filter({});
+    const base44 = createClientFromRequest(req);    const cfg = await base44.asServiceRole.entities.PlatformConfig.filter({});
     const accessToken = cfg?.[0]?.mercadopago_access_token;
     if (!accessToken) return Response.json({ ok: true, skipped: 'not_configured' });
 

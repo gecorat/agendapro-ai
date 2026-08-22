@@ -172,7 +172,8 @@ export default function Agenda() {
               <button
                 key={v.value}
                 onClick={() => setView(v.value)}
-                className={`px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm rounded-md font-medium transition-all ${view === v.value ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                className={`px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm rounded-md font-medium transition-all ${view === v.value ? "shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                style={view === v.value ? { background: "#1C2541", color: "#fff" } : undefined}
               >
                 {v.label}
               </button>

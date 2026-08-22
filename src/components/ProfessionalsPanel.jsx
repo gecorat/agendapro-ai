@@ -6,14 +6,16 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
-import { Plus, Pencil, Trash2, Loader2, Users, Lock } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Users, Mail, Copy, Check, Clock, UserCheck } from "lucide-react";
 import { CLINIC_MAX_PROFESSIONALS } from "@/lib/plan-utils";
 
 const EMPTY = { first_name: "", last_name: "", specialty: "", color: "#3b82f6", active: true };
+const ADDON_PRICE = 10000;
 
-// Gestión del equipo del plan Clinic. Cada Professional creado acá queda disponible
-// para asignarle servicios/horarios propios y para que el bot de WhatsApp lo ofrezca
-// como opción al paciente.
+// Gestión del equipo del plan Clinic. "Invitar" crea un enlace único: el profesional lo
+// abre, crea SU PROPIA cuenta, y queda asociado a este consultorio con acceso acotado
+// (su agenda, sus pacientes). "Agregar manual" sigue existiendo para quien preferís
+// cargar vos mismo sin que tenga login propio (solo aparece como opción para el bot).
 export default function ProfessionalsPanel() {
   const { toast } = useToast();
   const [list, setList] = useState([]);
@@ -22,6 +24,9 @@ export default function ProfessionalsPanel() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
+  const [inviting, setInviting] = useState(false);
+  const [inviteLink, setInviteLink] = useState(null);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -33,6 +38,39 @@ export default function ProfessionalsPanel() {
   };
   useEffect(() => { load(); }, []);
 
+  const wouldBeAddon = list.length >= CLINIC_MAX_PROFESSIONALS;
+
+  const confirmAddonIfNeeded = () => {
+    if (!wouldBeAddon) return true;
+    return confirm(
+      `Ya tenés ${CLINIC_MAX_PROFESSIONALS} profesionales incluidos en tu plan Clinic. Sumar uno más agrega $${ADDON_PRICE.toLocaleString("es-AR")}/mes a tu suscripción, cobrados automáticamente. ¿Confirmás?`
+    );
+  };
+
+  const handleInvite = async () => {
+    if (!confirmAddonIfNeeded()) return;
+    setInviting(true);
+    setInviteLink(null);
+    try {
+      const res = await base44.functions.invoke("inviteProfessional", { origin: window.location.origin });
+      setInviteLink(res?.data?.link);
+      load();
+    } catch (err) {
+      toast({ title: "Error al generar la invitación", description: err.message, variant: "destructive" });
+    } finally {
+      setInviting(false);
+    }
+  };
+
+  const copyInviteLink = async () => {
+    if (!inviteLink) return;
+    try {
+      await navigator.clipboard.writeText(inviteLink);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch { /* noop */ }
+  };
+
   const openNew = () => { setEditing(null); setForm(EMPTY); setOpen(true); };
   const openEdit = (p) => { setEditing(p); setForm({ ...p }); setOpen(true); };
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
@@ -40,19 +78,14 @@ export default function ProfessionalsPanel() {
   const save = async (e) => {
     e.preventDefault();
     if (!form.first_name) return;
-    // Defensa por si el diálogo quedó abierto de antes de llegar al tope (ej. dos
-    // pestañas abiertas) — el botón "Nuevo" ya debería estar bloqueado antes de esto.
-    if (!editing && list.length >= CLINIC_MAX_PROFESSIONALS) {
-      toast({ title: "Llegaste al límite de tu plan", description: `Tu plan incluye hasta ${CLINIC_MAX_PROFESSIONALS} profesionales. Escribinos para sumar más.`, variant: "destructive" });
-      return;
-    }
+    if (!editing && !confirmAddonIfNeeded()) return;
     setSaving(true);
     try {
       if (editing) {
         await base44.entities.Professional.update(editing.id, form);
       } else {
         const me = await base44.auth.me();
-        await base44.entities.Professional.create({ ...form, practice_owner_id: me.id });
+        await base44.entities.Professional.create({ ...form, practice_owner_id: me.id, is_paid_addon: wouldBeAddon });
       }
       toast({ title: editing ? "Profesional actualizado" : "Profesional agregado" });
       setOpen(false);
@@ -65,9 +98,12 @@ export default function ProfessionalsPanel() {
   };
 
   const remove = async (p) => {
-    if (!confirm(`¿Eliminar a ${p.first_name} ${p.last_name || ""}? Sus turnos y servicios ya cargados no se borran, quedan sin profesional asignado.`)) return;
+    const warn = p.is_paid_addon
+      ? `¿Eliminar a ${p.first_name || "este profesional"}? Se va a dar de baja el cobro extra de $${ADDON_PRICE.toLocaleString("es-AR")}/mes automáticamente. Sus turnos y servicios ya cargados no se borran.`
+      : `¿Eliminar a ${p.first_name || "este profesional"}? Sus turnos y servicios ya cargados no se borran, quedan sin profesional asignado.`;
+    if (!confirm(warn)) return;
     try {
-      await base44.entities.Professional.delete(p.id);
+      await base44.functions.invoke("removeProfessional", { professionalId: p.id });
       toast({ title: "Profesional eliminado" });
       load();
     } catch (err) {
@@ -75,26 +111,41 @@ export default function ProfessionalsPanel() {
     }
   };
 
-  const atLimit = list.length >= CLINIC_MAX_PROFESSIONALS;
-
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h2 className="font-heading font-semibold">Profesionales</h2>
-          <p className="text-sm text-muted-foreground">Tu equipo. El bot de WhatsApp les pregunta a los pacientes con quién quieren agendar.</p>
+          <p className="text-sm text-muted-foreground">Invitá a alguien para que tenga su propia cuenta y agenda, o cargá un perfil simple vos mismo.</p>
         </div>
-        <Button onClick={openNew} className="shadow-sm shrink-0" disabled={atLimit} title={atLimit ? `Tu plan incluye hasta ${CLINIC_MAX_PROFESSIONALS} profesionales` : undefined}>
-          <Plus className="w-4 h-4 mr-1" /> Nuevo
-        </Button>
+        <div className="flex gap-2 shrink-0">
+          <Button variant="outline" onClick={openNew} className="shadow-sm">
+            <Plus className="w-4 h-4 mr-1" /> Agregar manual
+          </Button>
+          <Button onClick={handleInvite} disabled={inviting} className="shadow-sm">
+            {inviting ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Mail className="w-4 h-4 mr-1" />} Invitar
+          </Button>
+        </div>
       </div>
 
-      {atLimit && (
+      {wouldBeAddon && (
         <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3">
-          <Lock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
           <p className="text-sm text-amber-800">
-            Llegaste al límite de <strong>{CLINIC_MAX_PROFESSIONALS} profesionales</strong> incluidos en tu plan Clinic. Escribinos si necesitás sumar más.
+            Ya usaste los <strong>{CLINIC_MAX_PROFESSIONALS} profesionales incluidos</strong> en tu plan Clinic. El próximo que sumes agrega <strong>${ADDON_PRICE.toLocaleString("es-AR")}/mes</strong> a tu suscripción, cobrados automáticamente.
           </p>
+        </div>
+      )}
+
+      {inviteLink && (
+        <div className="rounded-xl border border-primary/30 bg-primary/5 px-3.5 py-3 space-y-2">
+          <p className="text-sm font-medium">Enlace de invitación generado</p>
+          <div className="flex items-center gap-2">
+            <Input value={inviteLink} readOnly className="text-xs font-mono bg-background" />
+            <Button size="icon" variant="outline" onClick={copyInviteLink} className="shrink-0">
+              {linkCopied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">Mandaselo por WhatsApp, email o como prefieras. Al abrirlo, esa persona crea su cuenta y queda asociada a tu equipo.</p>
         </div>
       )}
 
@@ -109,28 +160,45 @@ export default function ProfessionalsPanel() {
         </div>
       ) : (
         <div className="space-y-2.5">
-          {list.map((p) => (
-            <div key={p.id} className="bg-card rounded-2xl border border-border p-4 flex items-center gap-3">
-              <div className="w-1.5 self-stretch rounded-full shrink-0" style={{ background: p.color || "#3b82f6" }} />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <p className="font-heading font-medium">{p.first_name} {p.last_name}</p>
-                  {!p.active && <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">Inactivo</span>}
+          {list.map((p) => {
+            const isPending = p.invite_status === "pending";
+            return (
+              <div key={p.id} className="bg-card rounded-2xl border border-border p-4 flex items-center gap-3">
+                <div className="w-1.5 self-stretch rounded-full shrink-0" style={{ background: p.color || "#3b82f6" }} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="font-heading font-medium">{isPending ? "Invitación pendiente" : `${p.first_name} ${p.last_name || ""}`}</p>
+                    {isPending && (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700"><Clock className="w-3 h-3" /> Esperando que acepte</span>
+                    )}
+                    {p.invite_status === "accepted" && (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700"><UserCheck className="w-3 h-3" /> Cuenta propia activa</span>
+                    )}
+                    {p.is_paid_addon && (
+                      <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">+${ADDON_PRICE.toLocaleString("es-AR")}/mes</span>
+                    )}
+                    {!p.active && !isPending && <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">Inactivo</span>}
+                  </div>
+                  {p.specialty && <p className="text-sm text-muted-foreground mt-0.5">{p.specialty}</p>}
                 </div>
-                {p.specialty && <p className="text-sm text-muted-foreground mt-0.5">{p.specialty}</p>}
+                <div className="flex gap-0.5 shrink-0">
+                  {!isPending && (
+                    <Button size="icon" variant="ghost" className="rounded-lg" onClick={() => openEdit(p)}><Pencil className="w-4 h-4" /></Button>
+                  )}
+                  <Button size="icon" variant="ghost" className="rounded-lg" onClick={() => remove(p)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                </div>
               </div>
-              <div className="flex gap-0.5 shrink-0">
-                <Button size="icon" variant="ghost" className="rounded-lg" onClick={() => openEdit(p)}><Pencil className="w-4 h-4" /></Button>
-                <Button size="icon" variant="ghost" className="rounded-lg" onClick={() => remove(p)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md">
-          <DialogHeader><DialogTitle>{editing ? "Editar profesional" : "Nuevo profesional"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editing ? "Editar profesional" : "Agregar profesional manual"}</DialogTitle></DialogHeader>
+          {!editing && (
+            <p className="text-xs text-muted-foreground -mt-2">Esta persona no va a tener su propia cuenta ni login — solo aparece como opción al agendar. Para que tenga su propia agenda, usá "Invitar" en vez de esto.</p>
+          )}
           <form onSubmit={save} className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">

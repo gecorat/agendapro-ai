@@ -96,6 +96,7 @@ function ContactAvatar({ name, url, loading, size = "w-9 h-9", textSize = "text-
 }
 
 function FullAssistant({ settings, reloadSettings }) {
+  console.log("[DEBUG FullAssistant] MONTÓ, whatsapp_connected:", settings?.whatsapp_connected);
   const [user, setUser] = useState(null);
   const [allMsgs, setAllMsgs] = useState([]);
   const [patients, setPatients] = useState([]);

@@ -735,22 +735,32 @@ function FullAssistant({ settings, reloadSettings }) {
                 {chatPaused ? "Pausada — atendés vos" : "Activa — responde sola"}
               </p>
             </div>
-            <Switch checked={!chatPaused} onCheckedChange={() => handleTogglePause(null)} disabled={pauseLoading} />
+            <Switch checked={!chatPaused} onCheckedChange={handleTogglePause} disabled={pauseLoading} />
           </div>
-          <p className="text-[11px] text-muted-foreground">
-            {chatPaused ? "Cambiá la duración, o activá el switch de arriba para reanudar ya." : "Pausar por un rato en vez del switch:"}
-          </p>
-          <div className="grid grid-cols-3 gap-1.5">
-            {PAUSE_OPTIONS.map((opt) => (
-              <button
-                key={opt.label}
-                onClick={() => handleTogglePause(opt.minutes)}
-                className="text-[10px] font-medium py-1.5 rounded-lg border border-border hover:bg-accent transition-colors"
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
+          {chatPaused && (
+            <>
+              <p className="text-[11px] text-muted-foreground">Cambiá la duración de la pausa:</p>
+              <div className="grid grid-cols-3 gap-1.5">
+                {PAUSE_OPTIONS.map((opt) => {
+                  const isSelected = selectedDuration === opt.minutes;
+                  return (
+                    <button
+                      key={opt.label}
+                      onClick={() => handleSetDuration(opt.minutes)}
+                      disabled={pauseLoading}
+                      className={cn(
+                        "flex items-center justify-center gap-1 text-[10px] font-medium py-1.5 rounded-lg border transition-colors",
+                        isSelected ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-accent"
+                      )}
+                    >
+                      {isSelected && <Check className="w-2.5 h-2.5" />}
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </div>
 
         {activePatient && (

@@ -127,7 +127,8 @@ function FullAssistant({ settings, reloadSettings }) {
   }, []);
 
   const load = useCallback(async () => {
-    if (!user) return;
+    console.log("[DEBUG load] arrancó, user:", user?.id);
+    if (!user) { console.log("[DEBUG load] sin user, corta acá"); return; }
     // safeFetch envuelve CADA llamada en su propia función anónima: si
     // base44.entities.Patient.filter(...) revienta de forma SINCRÓNICA (no como promesa
     // rechazada, sino literalmente al evaluarla — confirmado en vivo: las llamadas de
@@ -155,8 +156,10 @@ function FullAssistant({ settings, reloadSettings }) {
       setPatients(pats || []);
       setPauses(pausesList || []);
       setTemplates(tmpl || []);
+      console.log("[DEBUG load] terminó OK — msgs:", msgs?.length, "pats:", pats?.length, "pauses:", pausesList?.length, "tmpl:", tmpl?.length);
     } finally {
       setLoading(false);
+      console.log("[DEBUG load] setLoading(false) ejecutado");
     }
   }, [user]);
 

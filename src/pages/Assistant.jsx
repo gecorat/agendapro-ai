@@ -127,21 +127,26 @@ function FullAssistant({ settings, reloadSettings }) {
 
   const load = useCallback(async () => {
     if (!user) return;
-    try {
-      const [msgs, pats, pausesList, tmpl] = await Promise.all([
-        base44.entities.Conversation.filter({ professional_id: user.id }, "-created_date", 800),
-        base44.entities.Patient.filter({ professional_id: user.id }),
-        base44.entities.ChatPause.filter({ professional_id: user.id }),
-        base44.entities.MessageTemplate.filter({ professional_id: user.id }).catch(() => []),
-      ]);
-      setAllMsgs(msgs || []);
-      setPatients(pats || []);
-      setPauses(pausesList || []);
-      setTemplates(tmpl || []);
-    } catch (e) {
-      console.error("Error loading conversations", e);
-    } finally {
-      setLoading(false);
+    // Promise.allSettled en vez de Promise.all: si UNA sola de estas 4 consultas se cuelga
+    // o falla de forma inesperada, las demás igual terminan y la pantalla no se queda
+    // pegada en el spinner para siempre — cada una resuelve por su cuenta, con su propio
+    // valor de respaldo si falla.
+    const [msgsRes, patsRes, pausesRes, tmplRes] = await Promise.allSettled([
+      base44.entities.Conversation.filter({ professional_id: user.id }, "-created_date", 800),
+      base44.entities.Patient.filter({ professional_id: user.id }),
+      base44.entities.ChatPause.filter({ professional_id: user.id }),
+      base44.entities.MessageTemplate.filter({ professional_id: user.id }),
+    ]);
+    if (msgsRes.status === "rejected") console.error("Error cargando conversaciones", msgsRes.reason);
+    if (patsRes.status === "rejected") console.error("Error cargando pacientes", patsRes.reason);
+    if (pausesRes.status === "rejected") console.error("Error cargando pausas", pausesRes.reason);
+    if (tmplRes.status === "rejected") console.error("Error cargando plantillas", tmplRes.reason);
+    setAllMsgs(msgsRes.status === "fulfilled" ? (msgsRes.value || []) : []);
+    setPatients(patsRes.status === "fulfilled" ? (patsRes.value || []) : []);
+    setPauses(pausesRes.status === "fulfilled" ? (pausesRes.value || []) : []);
+    setTemplates(tmplRes.status === "fulfilled" ? (tmplRes.value || []) : []);
+    setLoading(false);
+  }, [user]);
     }
   }, [user]);
 

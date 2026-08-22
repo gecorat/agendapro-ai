@@ -14,10 +14,11 @@ export const THEME_PRESETS = {
     chipBg: "rgba(255,255,255,0.08)",
     glass: false,
     neon: false,
+    cardClass: "shadow-lg shadow-black/20",
   },
   glassmorphism: {
     label: "Glassmorphism",
-    description: "Vidrio esmerilado sobre fondo oscuro, muy moderno.",
+    description: "Vidrio esmerilado real (backdrop-blur), bordes translucidos.",
     bg: "#0B132B",
     cardBg: "rgba(255,255,255,0.06)",
     cardBorder: "rgba(255,255,255,0.15)",
@@ -26,10 +27,11 @@ export const THEME_PRESETS = {
     chipBg: "rgba(255,255,255,0.10)",
     glass: true,
     neon: false,
+    cardClass: "backdrop-blur-md border-white/10 shadow-xl shadow-black/30",
   },
   minimal_light: {
     label: "Minimal Light",
-    description: "Blanco y gris claro, limpio y neutro.",
+    description: "Blanco impoluto, tipografia oscura de alto contraste.",
     bg: "#F8FAFC",
     cardBg: "#FFFFFF",
     cardBorder: "#E2E8F0",
@@ -38,10 +40,11 @@ export const THEME_PRESETS = {
     chipBg: "#0F172A0D",
     glass: false,
     neon: false,
+    cardClass: "shadow-sm",
   },
   neon_accent: {
     label: "Neon Accent",
-    description: "Fondo casi negro, brillo sutil en el color de marca.",
+    description: "Oscuro profundo, brillos neon en botones y tarjeta activa.",
     bg: "#0B0F1A",
     cardBg: "#141B2E",
     cardBorder: "rgba(255,255,255,0.08)",
@@ -50,6 +53,7 @@ export const THEME_PRESETS = {
     chipBg: "rgba(255,255,255,0.06)",
     glass: false,
     neon: true,
+    cardClass: "",
   },
 };
 

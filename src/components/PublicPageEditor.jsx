@@ -42,63 +42,70 @@ function SegButton({ active, onClick, children, title }) {
 }
 
 // Simulador de la página pública en tiempo real: se recalcula en cada render a partir del
-// form actual, así nunca puede quedar "pegado" mostrando un estado viejo.
+// form actual, así nunca puede quedar "pegado" mostrando un estado viejo. La foto va con
+// position:absolute + z-index alto sobre un contenedor con overflow visible (no se corta
+// contra los bordes redondeados de la tarjeta), y si photo_frame === "none" el <img> NO
+// se renderiza en absoluto (no solo se oculta con CSS).
 function LivePreview({ form, viewport }) {
   const theme = resolveTheme(form.theme_preset, form.page_color);
   const frameClass = PHOTO_FRAME_CLASS[form.photo_frame] || PHOTO_FRAME_CLASS.circle;
+  const showPhoto = form.photo_frame !== "none";
   const photoJustify = form.photo_align === "left" ? "justify-start" : form.photo_align === "right" ? "justify-end" : "justify-center";
   const glassStyle = theme.glass ? { backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)" } : {};
+  const cardClass = theme.cardClass || "";
+  const size = 64;
+  const half = size / 2;
 
   return (
-    <div
-      className={`mx-auto rounded-2xl overflow-hidden border border-border shadow-sm transition-all duration-300 ${viewport === "mobile" ? "max-w-[300px]" : "max-w-full"}`}
-    >
+    <div className={`mx-auto rounded-2xl overflow-hidden border border-border shadow-sm transition-all duration-300 ${viewport === "mobile" ? "max-w-[300px]" : "max-w-full"}`}>
       <div style={{ background: theme.bg }}>
-        <div
-          className="h-24 relative overflow-hidden"
-          style={{
-            background: form.cover_image_url
-              ? `url(${form.cover_image_url}) center ${form.cover_align || "center"}/cover`
-              : `linear-gradient(135deg, ${theme.accent}, ${theme.accent}66)`,
-          }}
-        >
-          {form.cover_image_url && <div className="absolute inset-0 bg-black/25" />}
-        </div>
-        <div className="px-5 pb-5">
-          <div className={`flex ${photoJustify} -mt-9`}>
-            {form.photo_url ? (
-              <img
-                src={form.photo_url}
-                alt=""
-                className={`w-16 h-16 object-cover ${frameClass} block`}
-                style={{ boxShadow: `0 0 0 3px ${theme.bg}`, ...(theme.neon ? { boxShadow: `0 0 0 3px ${theme.bg}, 0 0 14px ${theme.accent}80` } : {}) }}
-              />
-            ) : (
-              <div
-                className={`w-16 h-16 flex items-center justify-center font-heading font-bold ${frameClass}`}
-                style={{ background: theme.accent, color: theme.accentText, boxShadow: `0 0 0 3px ${theme.bg}` }}
-              >
-                {(form.practice_name || "?")[0]?.toUpperCase()}
-              </div>
-            )}
+        <div className="relative" style={{ overflow: "visible" }}>
+          <div
+            className="h-24 overflow-hidden"
+            style={{
+              background: form.cover_image_url
+                ? `url(${form.cover_image_url}) center ${form.cover_align || "center"}/cover`
+                : `linear-gradient(135deg, ${theme.accent}, ${theme.accent}66)`,
+            }}
+          >
+            {form.cover_image_url && <div className="absolute inset-0 bg-black/25" />}
           </div>
-          <div className={`mt-2 ${form.photo_align === "left" ? "text-left" : form.photo_align === "right" ? "text-right" : "text-center"}`}>
-            <p className="text-sm font-heading font-semibold" style={{ color: theme.text }}>{form.practice_name || "Tu consultorio"}</p>
+          {showPhoto && (
+            <div className={`absolute left-0 right-0 px-5 flex z-20 ${photoJustify}`} style={{ top: `${96 - half}px` }}>
+              {form.photo_url ? (
+                <img
+                  src={form.photo_url}
+                  alt=""
+                  className={`object-cover block ${frameClass}`}
+                  style={{ width: size, height: size, boxShadow: theme.neon ? `0 0 0 3px ${theme.bg}, 0 0 14px ${theme.accent}80` : `0 0 0 3px ${theme.bg}` }}
+                />
+              ) : (
+                <div
+                  className={`flex items-center justify-center font-heading font-bold ${frameClass}`}
+                  style={{ width: size, height: size, background: theme.accent, color: theme.accentText, boxShadow: `0 0 0 3px ${theme.bg}` }}
+                >
+                  {(form.practice_name || "?")[0]?.toUpperCase()}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        <div className="px-5 pb-5" style={{ paddingTop: showPhoto ? `${half + 8}px` : "16px" }}>
+          <div className={`${form.photo_align === "left" ? "text-left" : form.photo_align === "right" ? "text-right" : "text-center"}`}>
+            <p className="text-base font-heading font-bold" style={{ color: theme.text }}>{form.practice_name || "Tu consultorio"}</p>
             {form.specialty && <p className="text-xs mt-0.5" style={{ color: theme.muted }}>{form.specialty}</p>}
           </div>
-          <div className="flex items-center justify-center mt-3">
-            <div className="inline-flex items-center gap-1 p-1 rounded-full" style={{ background: theme.chipBg }}>
-              <span className="px-3 py-1 rounded-full text-xs font-medium" style={{ background: theme.accent, color: theme.accentText }}>Agendar</span>
-              <span className="px-3 py-1 rounded-full text-xs font-medium" style={{ color: theme.muted }}>Información</span>
-            </div>
+          <div className="flex items-center justify-center gap-1.5 mt-3">
+            <span className="px-3 py-1 rounded-full text-xs font-semibold" style={{ background: theme.accent, color: theme.accentText, boxShadow: theme.neon ? theme.neonGlow : undefined }}>Agendar cita</span>
+            <span className="px-3 py-1 rounded-full text-xs font-medium border" style={{ color: theme.muted, borderColor: theme.cardBorder }}>Información</span>
           </div>
 
           <div className="mt-4 space-y-2">
-            <div className="rounded-xl border p-3" style={{ background: theme.cardBg, borderColor: theme.cardBorder, ...glassStyle }}>
+            <div className={`rounded-xl border p-3 ${cardClass}`} style={{ background: theme.cardBg, borderColor: theme.cardBorder, ...glassStyle }}>
               <p className="text-xs font-medium" style={{ color: theme.text }}>Consulta</p>
               <p className="text-[10px] mt-0.5" style={{ color: theme.muted }}>30 min · $50.000</p>
             </div>
-            <div className="rounded-xl border p-3" style={{ background: theme.cardBg, borderColor: theme.cardBorder, ...glassStyle }}>
+            <div className={`rounded-xl border p-3 ${cardClass}`} style={{ background: theme.cardBg, borderColor: theme.cardBorder, ...glassStyle }}>
               <p className="text-xs font-medium" style={{ color: theme.text }}>Primera consulta</p>
               <p className="text-[10px] mt-0.5" style={{ color: theme.muted }}>45 min</p>
             </div>
@@ -256,9 +263,10 @@ export default function PublicPageEditor() {
                     type="button"
                     onClick={() => set("theme_preset", key)}
                     className={`text-left rounded-xl border-2 overflow-hidden transition-all ${selected ? "border-primary shadow-sm" : "border-border hover:border-primary/40"}`}
+                    style={selected && theme.neon ? { boxShadow: theme.neonGlow } : undefined}
                   >
-                    <div className="h-12 flex items-center justify-center gap-1.5" style={{ background: theme.bg }}>
-                      <div className="w-4 h-4 rounded-full" style={{ background: theme.accent }} />
+                    <div className={`h-12 flex items-center justify-center gap-1.5 ${theme.cardClass || ""}`} style={{ background: theme.bg }}>
+                      <div className="w-4 h-4 rounded-full" style={{ background: theme.accent, boxShadow: theme.neon ? `0 0 8px ${theme.accent}` : undefined }} />
                       <div className="w-6 h-2 rounded-full" style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}` }} />
                     </div>
                     <div className="px-2 py-1.5 bg-card flex items-center gap-1">
@@ -281,8 +289,8 @@ export default function PublicPageEditor() {
 
           <Section title="Foto de perfil">
             <div className="flex items-center gap-3">
-              <div className={`w-14 h-14 overflow-hidden border-2 border-border bg-accent flex items-center justify-center shrink-0 ${PHOTO_FRAME_CLASS[form.photo_frame]}`}>
-                {form.photo_url ? <img src={form.photo_url} alt="perfil" className="w-full h-full object-cover" /> : <Upload className="w-4 h-4 text-muted-foreground" />}
+              <div className={`w-14 h-14 overflow-hidden border-2 border-border bg-accent flex items-center justify-center shrink-0 ${form.photo_frame === "none" ? "rounded-xl opacity-40" : PHOTO_FRAME_CLASS[form.photo_frame]}`}>
+                {form.photo_frame !== "none" && form.photo_url ? <img src={form.photo_url} alt="perfil" className="w-full h-full object-cover" /> : <Upload className="w-4 h-4 text-muted-foreground" />}
               </div>
               <label className="cursor-pointer">
                 <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md border border-input hover:bg-accent transition-colors">
@@ -306,10 +314,13 @@ export default function PublicPageEditor() {
                 <div className="flex gap-1.5">
                   <SegButton active={form.photo_frame === "circle"} onClick={() => set("photo_frame", "circle")} title="Círculo"><Circle className="w-3.5 h-3.5" /></SegButton>
                   <SegButton active={form.photo_frame === "rounded"} onClick={() => set("photo_frame", "rounded")} title="Cuadrado redondeado"><Square className="w-3.5 h-3.5" /></SegButton>
-                  <SegButton active={form.photo_frame === "none"} onClick={() => set("photo_frame", "none")} title="Sin marco"><Ban className="w-3.5 h-3.5" /></SegButton>
+                  <SegButton active={form.photo_frame === "none"} onClick={() => set("photo_frame", "none")} title="Ocultar foto (no se muestra ninguna imagen)"><Ban className="w-3.5 h-3.5" /></SegButton>
                 </div>
               </div>
             </div>
+            {form.photo_frame === "none" && (
+              <p className="text-xs text-amber-600">No se va a mostrar ninguna foto ni inicial en tu página pública.</p>
+            )}
           </Section>
 
           <Section title="Portada" description="Fondo del header. Si no cargás una, se usa el degradé del tema.">

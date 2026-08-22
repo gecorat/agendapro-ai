@@ -65,6 +65,21 @@ const FILTERS = [
   { value: "manual", label: "Manual / Intervenido" },
 ];
 
+// Paleta inspirada en WhatsApp Web, para que la bandeja se sienta familiar de un vistazo:
+// verde de marca, burbujas verde claro para lo que mandás vos/la IA, blanco para lo que
+// manda el paciente, y un fondo cálido en el área de mensajes (como el "papel tapiz" de
+// WhatsApp real) en vez de los grises genéricos que tenía antes.
+const WA = {
+  accent: "#00A884",
+  accentDark: "#008069",
+  panelHeader: "#F0F2F5",
+  chatBg: "#EFEAE2",
+  outgoing: "#D9FDD3",
+  incoming: "#FFFFFF",
+  selected: "#F0F2F5",
+  border: "#E9EDEF",
+};
+
 const PAUSE_OPTIONS = [
   { label: "1 hora", minutes: 60 },
   { label: "24 horas", minutes: 1440 },

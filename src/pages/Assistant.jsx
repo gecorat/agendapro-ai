@@ -540,10 +540,10 @@ function FullAssistant({ settings, reloadSettings }) {
   // ================= Columna 2: chat activo =================
   let lastDateLabel = null;
   const ChatColumn = (
-    <div className={cn("flex-1 flex flex-col bg-background min-w-0", mobileView !== "chat" && "hidden lg:flex")}>
+    <div className={cn("flex-1 flex flex-col min-w-0", mobileView !== "chat" && "hidden lg:flex")} style={{ background: WA.chatBg }}>
       {activeConvo ? (
         <>
-          <div className="flex items-center gap-3 px-4 h-16 border-b border-border bg-card shrink-0">
+          <div className="flex items-center gap-3 px-4 h-16 border-b shrink-0" style={{ background: WA.panelHeader, borderColor: WA.border }}>
             <button onClick={() => setMobileView("list")} className="lg:hidden p-1.5 -ml-1.5 rounded-lg hover:bg-accent shrink-0">
               <ChevronLeft className="w-5 h-5" />
             </button>

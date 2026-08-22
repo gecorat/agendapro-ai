@@ -473,9 +473,7 @@ function FullAssistant({ settings, reloadSettings }) {
             <button onClick={() => setMobileView("list")} className="lg:hidden p-1.5 -ml-1.5 rounded-lg hover:bg-accent shrink-0">
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <div className="w-9 h-9 shrink-0">
-              <ContactAvatar name={contactName(activeConvo)} url={avatarUrl} loading={avatarLoading} />
-            </div>
+            <ContactAvatar name={contactName(activeConvo)} url={avatarUrl} loading={avatarLoading} />
             <div className="min-w-0 flex-1">
               <p className="font-semibold text-sm truncate">{contactName(activeConvo)}</p>
               <p className="text-xs text-muted-foreground truncate">{fmtPhone(activeConvo.phone)}</p>

@@ -821,6 +821,11 @@ export default function Assistant() {
   const planStatus = getPlanStatus(settings);
   console.log("[DEBUG Assistant] render — loading:", loading, "settings:", !!settings, "canUseWhatsApp:", planStatus?.canUseWhatsApp);
 
+  useEffect(() => {
+    console.log("[DEBUG Assistant] MONTADO");
+    return () => console.log("[DEBUG Assistant] DESMONTADO");
+  }, []);
+
   if (loading || !settings) {
     console.log("[DEBUG Assistant] mostrando spinner de nivel superior (usePracticeSettings)");
     return (

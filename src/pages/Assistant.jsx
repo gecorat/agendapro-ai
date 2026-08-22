@@ -5,6 +5,7 @@ import {
   MessageSquare, Send, Loader2, MessageCircle, ChevronLeft, LogOut, Search,
   Bot, User, Plus, X, Calendar, Phone, Mail, Tag, StickyNote, Clock,
   Smile, Paperclip, ListPlus, ChevronDown, Lock, Sparkles, Crown, Check,
+  Pencil, XCircle,
 } from "lucide-react";
 import DemoChat from "@/components/assistant/DemoChat";
 import WhatsAppConnectCard from "@/components/WhatsAppConnectCard";
@@ -101,6 +102,9 @@ function FullAssistant({ settings, reloadSettings }) {
   const [activeAppointments, setActiveAppointments] = useState([]);
   const [newTag, setNewTag] = useState("");
   const [savingNotes, setSavingNotes] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState(null);
+  const [avatarLoading, setAvatarLoading] = useState(false);
+  const [cancellingApptId, setCancellingApptId] = useState(null);
   const messagesEndRef = useRef(null);
 
   const connected = !!settings?.whatsapp_connected;
@@ -213,6 +217,32 @@ function FullAssistant({ settings, reloadSettings }) {
       })
       .catch(() => setActiveAppointments([]));
   }, [activePatient?.id]);
+
+  // Foto real de WhatsApp del contacto (confirmado que WasenderAPI la expone). La URL
+  // vence, así que se pide fresca cada vez que cambia la conversación activa — no se
+  // guarda en la base para no terminar con fotos rotas al rato.
+  useEffect(() => {
+    if (!activePhone) { setAvatarUrl(null); return; }
+    setAvatarUrl(null);
+    setAvatarLoading(true);
+    base44.functions.invoke("getContactAvatar", { phone: activePhone })
+      .then((res) => setAvatarUrl(res?.data?.imgUrl || null))
+      .catch(() => setAvatarUrl(null))
+      .finally(() => setAvatarLoading(false));
+  }, [activePhone]);
+
+  const handleCancelAppointment = async (apptId) => {
+    if (!confirm("¿Cancelar este turno?")) return;
+    setCancellingApptId(apptId);
+    try {
+      await base44.entities.Appointment.update(apptId, { status: "cancelled" });
+      setActiveAppointments((prev) => prev.filter((a) => a.id !== apptId));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setCancellingApptId(null);
+    }
+  };
 
   const handleTogglePause = async (durationMinutes) => {
     if (!activePhone) return;

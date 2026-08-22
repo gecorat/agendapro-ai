@@ -391,8 +391,11 @@ export default function PublicPageEditor() {
           </Button>
         </div>
 
-        {/* Live preview */}
-        <div className="order-1 lg:order-2 lg:sticky lg:top-4 space-y-2">
+        {/* Live preview: sin "sticky" a propósito — combinado con el <main overflow-y-auto>
+            del layout, el sticky generaba un espacio en blanco fantasma abajo de la
+            página (reportado y confirmado). Se pierde que la vista previa te siga
+            mientras scrolleas, pero elimina el bug de raiz. */}
+        <div className="order-1 lg:order-2 space-y-2">
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium text-muted-foreground">Vista previa en vivo</p>
             <div className="flex items-center gap-1 p-0.5 rounded-lg bg-accent">

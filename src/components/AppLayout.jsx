@@ -143,7 +143,12 @@ export default function AppLayout() {
   );
 
   return (
-    <div className="flex h-screen bg-background">
+    // overflow-hidden acá (no en html/body global, que rompería el scroll normal de la
+    // página pública /u/:handle) fuerza a que TODO el scroll de las pantallas de la app
+    // pase por adentro (el <main> de abajo, o los paneles internos de cada pantalla) — el
+    // documento en sí nunca puede scrollear solo, que era la causa real del espacio en
+    // blanco fantasma reportado varias veces.
+    <div className="flex h-screen bg-background overflow-hidden">
       {/* Desktop sidebar */}
       <aside className="hidden md:flex w-64 shrink-0">{SidebarContent}</aside>
 

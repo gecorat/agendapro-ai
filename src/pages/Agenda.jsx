@@ -30,7 +30,7 @@ export default function Agenda() {
   })();
   const initialStatus = ["confirmed", "pending", "cancelled", "completed", "no_show"].includes(searchParams.get("status")) ? searchParams.get("status") : null;
 
-  const [view, setView] = useState("day");
+  const [view, setView] = useState("month");
   const [currentDate, setCurrentDate] = useState(initialDate);
   const [statusFilter, setStatusFilter] = useState(initialStatus);
   const [appointments, setAppointments] = useState([]);
@@ -249,6 +249,7 @@ export default function Agenda() {
         onClose={() => setDaySheetDate(null)}
         onNew={(d) => { openNew(d); }}
         onEdit={(a) => { openEdit(a); }}
+        onChanged={loadAppointments}
       />
     </div>
   );

@@ -663,9 +663,24 @@ function FullAssistant({ settings, reloadSettings }) {
                 <div key={a.id} className="text-xs bg-muted/60 rounded-lg p-2">
                   <p className="font-medium">{a.service_name}</p>
                   <p className="text-muted-foreground">{new Date(a.start_datetime).toLocaleString("es-AR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</p>
-                  <span className={cn("inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium", a.status === "confirmed" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700")}>
-                    {a.status === "confirmed" ? "Confirmado" : "Pendiente"}
-                  </span>
+                  <div className="flex items-center justify-between mt-1.5">
+                    <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-medium", a.status === "confirmed" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700")}>
+                      {a.status === "confirmed" ? "Confirmado" : "Pendiente"}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <Link to={`/agenda?edit=${a.id}`} className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground" title="Editar / reagendar">
+                        <Pencil className="w-3 h-3" />
+                      </Link>
+                      <button
+                        onClick={() => handleCancelAppointment(a.id)}
+                        disabled={cancellingApptId === a.id}
+                        className="p-1 rounded hover:bg-rose-50 text-muted-foreground hover:text-rose-600"
+                        title="Cancelar turno"
+                      >
+                        {cancellingApptId === a.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <XCircle className="w-3 h-3" />}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>

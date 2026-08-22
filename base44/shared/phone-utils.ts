@@ -9,8 +9,7 @@
 // importar cómo se haya escrito el código de país o el "9" de celular. Esto es específico
 // para Argentina, pero es donde opera la app hoy.
 export function canonicalPhone(phone) {
-  const digits = (phone || "").replace(/\D/g, "");
-  if (digits.length <= 10) return digits;
+  const digits = (phone || "").replace(/\D/g, "");  if (digits.length <= 10) return digits;
   return digits.slice(-10);
 }
 

@@ -104,7 +104,7 @@ const STEPS = [
 // visible en el contenedor, así queda SIEMPRE integrada sobre la portada sin cortes,
 // sin importar bordes redondeados del contenedor de la tarjeta. Si photo_frame === "none"
 // (el usuario desactivó la foto), el <img>/fallback NO se renderiza en absoluto.
-function ProfileHeader({ settings, theme, brand, frameClass, cardClass, glassStyle, align, size = 96, rounded = "rounded-t-3xl" }) {
+function ProfileHeader({ settings, theme, brand, frameClass, cardClass, glassStyle, align, size = 96, rounded = "rounded-t-3xl", headingFontStyle }) {
   const showPhoto = settings?.photo_frame !== "none";
   const alignClass = align === "left" ? "justify-start" : align === "right" ? "justify-end" : "justify-center";
   const textAlignClass = align === "left" ? "text-left items-start" : align === "right" ? "text-right items-end" : "text-center items-center";
@@ -141,7 +141,7 @@ function ProfileHeader({ settings, theme, brand, frameClass, cardClass, glassSty
         )}
       </div>
       <div className={`px-6 pb-6 flex flex-col ${textAlignClass}`} style={{ paddingTop: showPhoto ? `${half + 12}px` : "24px" }}>
-        <h1 className="text-2xl font-bold font-heading leading-tight" style={{ color: theme.text }}>{settings?.practice_name || "Reservá tu turno"}</h1>
+        <h1 className="text-2xl font-bold font-heading leading-tight" style={{ color: theme.text, ...headingFontStyle }}>{settings?.practice_name || "Reservá tu turno"}</h1>
         {settings?.specialty && <p className="text-sm mt-1" style={{ color: theme.muted }}>{settings.specialty}</p>}
       </div>
     </div>

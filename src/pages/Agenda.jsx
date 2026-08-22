@@ -155,6 +155,25 @@ export default function Agenda() {
     setFormOpen(true);
   }
 
+  // Si llega ?edit=<id> en la URL (ej. desde "Editar" en la ficha de un contacto en
+  // Chats), buscamos ESE turno puntual y lo abrimos directo, sin depender de que esté
+  // dentro del rango de fechas visible actualmente.
+  useEffect(() => {
+    const editId = searchParams.get("edit");
+    if (!editId) return;
+    base44.entities.Appointment.filter({ id: editId }).then((rows) => {
+      const appt = rows?.[0];
+      if (appt) {
+        setCurrentDate(new Date(appt.start_datetime));
+        openEdit(appt);
+      }
+      const next = new URLSearchParams(searchParams);
+      next.delete("edit");
+      setSearchParams(next, { replace: true });
+    }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function handleSaved() {
     await loadAppointments();
   }

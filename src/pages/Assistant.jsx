@@ -635,7 +635,7 @@ function FullAssistant({ settings, reloadSettings }) {
                 placeholder="Escribí tu respuesta…"
                 disabled={sending}
                 rows={1}
-                className="flex-1 min-h-[38px] max-h-28 resize-none py-2"
+                className="flex-1 min-h-[38px] max-h-28 resize-none py-2 bg-white"
               />
               <div className="flex items-center gap-1 shrink-0">
                 <button type="button" title="Adjuntar (próximamente)" disabled className="p-2 rounded-lg text-muted-foreground/50 cursor-not-allowed">

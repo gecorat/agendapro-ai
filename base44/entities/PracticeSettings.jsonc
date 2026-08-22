@@ -137,7 +137,10 @@
         "clean_dark",
         "glassmorphism",
         "minimal_light",
-        "neon_accent"
+        "neon_accent",
+        "sage_botanical",
+        "luxury_gold",
+        "photo_backdrop"
       ],
       "default": "clean_dark",
       "description": "Preset visual de la pagina publica y del editor de personalizacion."

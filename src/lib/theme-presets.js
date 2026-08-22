@@ -1,7 +1,8 @@
 // Presets de tema visual para la página pública de reservas (/u/:handle) y el editor de
-// personalización. El color de marca (page_color) ahora es un acento UNIVERSAL: se aplica
-// arriba de cualquiera de los 4 temas (antes, el color solo se usaba en un tema específico
-// llamado "brand_accent" — ahora todo tema respeta tu color elegido).
+// personalización. El color de marca (page_color) es un acento UNIVERSAL: se aplica arriba
+// de cualquiera de los temas — esa es la "variedad de tono" dentro de cada estilo. Cada
+// tema además trae su propia tipografía de encabezado (headingFont) para que se sientan
+// realmente distintos entre sí, no solo un cambio de color.
 export const THEME_PRESETS = {
   clean_dark: {
     label: "Clean Dark",
@@ -15,10 +16,12 @@ export const THEME_PRESETS = {
     glass: false,
     neon: false,
     cardClass: "shadow-lg shadow-black/20",
+    headingFont: null, // tipografía por defecto de la app
+    googleFont: null,
   },
   glassmorphism: {
     label: "Glassmorphism",
-    description: "Vidrio esmerilado real (backdrop-blur), bordes translucidos.",
+    description: "Vidrio esmerilado real (backdrop-blur), tipografía geométrica moderna.",
     bg: "#0B132B",
     cardBg: "rgba(255,255,255,0.06)",
     cardBorder: "rgba(255,255,255,0.15)",
@@ -28,10 +31,12 @@ export const THEME_PRESETS = {
     glass: true,
     neon: false,
     cardClass: "backdrop-blur-md border-white/10 shadow-xl shadow-black/30",
+    headingFont: "'Outfit', sans-serif",
+    googleFont: "Outfit:wght@600;700",
   },
   minimal_light: {
     label: "Minimal Light",
-    description: "Blanco impoluto, tipografia oscura de alto contraste.",
+    description: "Blanco impoluto, tipografía oscura de alto contraste.",
     bg: "#F8FAFC",
     cardBg: "#FFFFFF",
     cardBorder: "#E2E8F0",
@@ -41,10 +46,12 @@ export const THEME_PRESETS = {
     glass: false,
     neon: false,
     cardClass: "shadow-sm",
+    headingFont: null,
+    googleFont: null,
   },
   neon_accent: {
     label: "Neon Accent",
-    description: "Oscuro profundo, brillos neon en botones y tarjeta activa.",
+    description: "Oscuro profundo, brillos neón y tipografía técnica.",
     bg: "#0B0F1A",
     cardBg: "#141B2E",
     cardBorder: "rgba(255,255,255,0.08)",
@@ -54,6 +61,54 @@ export const THEME_PRESETS = {
     glass: false,
     neon: true,
     cardClass: "",
+    headingFont: "'Space Grotesk', sans-serif",
+    googleFont: "Space+Grotesk:wght@600;700",
+  },
+  sage_botanical: {
+    label: "Sage Botanical",
+    description: "Verde salvia y crema, cálido y orgánico. Serif suave en el nombre.",
+    bg: "#EEF1E7",
+    cardBg: "#FFFFFF",
+    cardBorder: "#DCE3D3",
+    text: "#33402E",
+    muted: "#748268",
+    chipBg: "#8FA77C1a",
+    glass: false,
+    neon: false,
+    cardClass: "shadow-sm",
+    headingFont: "'Fraunces', serif",
+    googleFont: "Fraunces:opsz,wght@9..144,500;9..144,600",
+  },
+  luxury_gold: {
+    label: "Luxury Gold",
+    description: "Negro y dorado, elegante. Serif editorial en el nombre.",
+    bg: "#0E0E0E",
+    cardBg: "#1A1712",
+    cardBorder: "rgba(212,175,55,0.25)",
+    text: "#F5EFE0",
+    muted: "#B8A98A",
+    chipBg: "rgba(212,175,55,0.08)",
+    glass: false,
+    neon: false,
+    cardClass: "shadow-lg shadow-black/40",
+    headingFont: "'Playfair Display', serif",
+    googleFont: "Playfair+Display:wght@600;700",
+  },
+  photo_backdrop: {
+    label: "Photo Backdrop",
+    description: "Tu portada como fondo de toda la página, panel de vidrio encima.",
+    bg: "#111318",
+    cardBg: "rgba(17,19,24,0.55)",
+    cardBorder: "rgba(255,255,255,0.18)",
+    text: "#FFFFFF",
+    muted: "#E2E4EA",
+    chipBg: "rgba(255,255,255,0.12)",
+    glass: true,
+    neon: false,
+    photoBackdrop: true, // si hay portada cargada, cubre TODA la página (no solo el header)
+    cardClass: "backdrop-blur-lg border-white/15 shadow-2xl shadow-black/50",
+    headingFont: "'Cormorant Garamond', serif",
+    googleFont: "Cormorant+Garamond:wght@600;700",
   },
 };
 
@@ -77,6 +132,18 @@ export function resolveTheme(presetKey, pageColor) {
     // Sombra de brillo real para Neon Accent (botones primarios y tarjeta seleccionada).
     neonGlow: preset.neon ? `0 0 0 1px ${accent}55, 0 0 18px ${accent}80, 0 0 40px ${accent}30` : undefined,
   };
+}
+
+// Carga dinámicamente la fuente de Google que necesite el tema activo (una sola vez por
+// fuente). Evita cargar las 7 fuentes siempre — solo la que realmente se está usando.
+const loadedFonts = new Set();
+export function loadThemeFont(googleFont) {
+  if (!googleFont || typeof document === "undefined" || loadedFonts.has(googleFont)) return;
+  loadedFonts.add(googleFont);
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = `https://fonts.googleapis.com/css2?family=${googleFont}&display=swap`;
+  document.head.appendChild(link);
 }
 
 // Datos como "Gecorat" (sin protocolo, cargados como handle suelto) son comunes porque el

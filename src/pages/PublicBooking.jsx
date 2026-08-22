@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CalendarClock, Clock, ArrowRight, Check, Loader2, Calendar, MapPin, Mail, CalendarX, MessageCircle, Instagram, Facebook, Globe, ExternalLink, Navigation } from "lucide-react";
+import { CalendarClock, Clock, ArrowRight, Check, Loader2, Calendar, MapPin, Mail, CalendarX, MessageCircle, Instagram, Facebook, Globe, ExternalLink, Navigation, User } from "lucide-react";
 import { resolveTheme, normalizeSocialUrl, whatsappUrl, googleMapsUrl, googleMapsEmbedSrc, PHOTO_FRAME_CLASS, getBackgroundPatternStyle, loadThemeFont } from "@/lib/theme-presets";
 
 function parseTimeToDate(date, time) {
@@ -30,30 +30,41 @@ function isBlockedDate(availability, date) {
   return availability.some((a) => (a.type === "holiday" || a.type === "block") && a.date === dateStr);
 }
 
-function getWorkRanges(availability, dayOfWeek) {
-  const work = availability.filter((a) => a.type === "work" && a.day_of_week === dayOfWeek);
+// professionalRefId: null = horario del dueño de la cuenta (o de un consultorio sin
+// equipo). Con un profesional puntual elegido, se usa SOLO el horario que él mismo
+// cargó al aceptar su invitación — cada uno con su propia agenda real.
+function getWorkRanges(availability, dayOfWeek, professionalRefId) {
+  const scoped = availability.filter((a) => (a.professional_ref_id || null) === (professionalRefId || null));
+  const work = scoped.filter((a) => a.type === "work" && a.day_of_week === dayOfWeek);
   if (work.length) return work.map((w) => ({ start: w.start_time, end: w.end_time })).sort((a, b) => a.start.localeCompare(b.start));
-  const hasAnyWorkConfigured = availability.some((a) => a.type === "work");
-  if (!hasAnyWorkConfigured && dayOfWeek >= 1 && dayOfWeek <= 5) return [{ start: "09:00", end: "18:00" }];
+  const hasAnyWorkConfigured = scoped.some((a) => a.type === "work");
+  if (!hasAnyWorkConfigured && !professionalRefId && dayOfWeek >= 1 && dayOfWeek <= 5) return [{ start: "09:00", end: "18:00" }];
   return [];
 }
 
-function getBreakRanges(availability, dayOfWeek) {
-  return availability.filter((a) => a.type === "break" && a.day_of_week === dayOfWeek).map((b) => ({ start: b.start_time, end: b.end_time }));
+function getBreakRanges(availability, dayOfWeek, professionalRefId) {
+  return availability
+    .filter((a) => (a.professional_ref_id || null) === (professionalRefId || null))
+    .filter((a) => a.type === "break" && a.day_of_week === dayOfWeek)
+    .map((b) => ({ start: b.start_time, end: b.end_time }));
 }
 
-function generateSlots(date, service, availability, appointments) {
+function generateSlots(date, service, availability, appointments, professionalRefId) {
   if (!service) return [];
   if (isBlockedDate(availability, date)) return [];
   const dayOfWeek = date.getDay();
-  const workRanges = getWorkRanges(availability, dayOfWeek);
-  const breakRanges = getBreakRanges(availability, dayOfWeek);
+  const workRanges = getWorkRanges(availability, dayOfWeek, professionalRefId);
+  const breakRanges = getBreakRanges(availability, dayOfWeek, professionalRefId);
   if (!workRanges.length) return [];
 
   const dayStart = new Date(date); dayStart.setHours(0, 0, 0, 0);
   const dayEnd = new Date(date); dayEnd.setHours(23, 59, 59, 999);
+  // Los choques de horario se chequean SOLO contra las citas de ESE profesional puntual
+  // (o, sin preferencia, contra las del dueño) — dos personas del equipo pueden tener
+  // turnos a la misma hora sin pisarse.
   const booked = appointments.filter((a) => {
     if (a.status === "cancelled") return false;
+    if ((a.professional_ref_id || null) !== (professionalRefId || null)) return false;
     const s = new Date(a.start_datetime);
     return s >= dayStart && s <= dayEnd;
   });
@@ -91,13 +102,6 @@ function buildWaMessage(service, date, slot, form) {
   return `Hola, quiero agendar una cita de ${service?.name} para el ${date ? formatLongDate(date) : ""} a las ${slot ? formatSlot(slot) : ""}. Mi nombre es ${form.first_name} ${form.last_name}. Te escribo por acá para confirmar el turno lo antes posible, ¡gracias!`;
 }
 
-const STEPS = [
-  { num: 1, label: "Servicio" },
-  { num: 2, label: "Fecha y hora" },
-  { num: 3, label: "Tus datos" },
-  { num: 4, label: "Confirmar" },
-];
-
 // --- Sub-componentes de presentación (reutilizados en el layout desktop y mobile) -------
 
 // Header con foto/portada: la foto va con position:absolute + z-index alto + overflow
@@ -109,14 +113,11 @@ function ProfileHeader({ settings, theme, brand, frameClass, cardClass, glassSty
   const alignClass = align === "left" ? "justify-start" : align === "right" ? "justify-end" : "justify-center";
   const textAlignClass = align === "left" ? "text-left items-start" : align === "right" ? "text-right items-end" : "text-center items-center";
   const half = size / 2;
-  // Photo Focus: header más grande, con degradé que se funde hacia el color de fondo del
-  // tema (en vez de un overlay oscuro parejo como los demás temas).
   const coverHeight = theme.photoFocus ? "h-44" : "h-28";
   const photoTopOffset = theme.photoFocus ? 176 : 112;
 
   return (
     <div className={`border overflow-hidden ${cardClass}`} style={{ background: theme.cardBg, borderColor: theme.cardBorder, ...glassStyle }}>
-      {/* Contenedor relativo con overflow visible: la foto puede sobresalir sin cortarse */}
       <div className="relative" style={{ overflow: "visible" }}>
         <div
           className={`${coverHeight} overflow-hidden ${rounded}`}
@@ -228,6 +229,7 @@ export default function PublicBooking() {
   const cleanHandle = (handle || "").replace(/^@/, "");
   const [settings, setSettings] = useState(null);
   const [services, setServices] = useState([]);
+  const [professionals, setProfessionals] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [availability, setAvailability] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -236,6 +238,7 @@ export default function PublicBooking() {
 
   const [step, setStep] = useState(1);
   const [service, setService] = useState(null);
+  const [selectedPro, setSelectedPro] = useState(null); // null = sin preferencia / dueño de la cuenta
   const [date, setDate] = useState(null);
   const [slot, setSlot] = useState(null);
   const [form, setForm] = useState({ first_name: "", last_name: "", phone: "", email: "" });
@@ -244,9 +247,19 @@ export default function PublicBooking() {
   const [bookingError, setBookingError] = useState(null);
 
   const professionalId = settings?.created_by_id || null;
+  const hasProfessionals = professionals.length > 0;
 
-  // Cada tema puede traer su propia tipografía de encabezado (Google Font) — se carga
-  // solo la que hace falta, una vez que sabemos qué tema tiene el consultorio.
+  // Numeración de pasos dinámica: si hay equipo, "Elegí profesional" se inserta después
+  // del servicio y todo lo demás se corre un lugar.
+  const STEPS = hasProfessionals
+    ? [{ num: 1, label: "Servicio" }, { num: 2, label: "Profesional" }, { num: 3, label: "Fecha y hora" }, { num: 4, label: "Tus datos" }, { num: 5, label: "Confirmar" }]
+    : [{ num: 1, label: "Servicio" }, { num: 2, label: "Fecha y hora" }, { num: 3, label: "Tus datos" }, { num: 4, label: "Confirmar" }];
+  const PRO_STEP = hasProfessionals ? 2 : null;
+  const DATE_STEP = hasProfessionals ? 3 : 2;
+  const DATA_STEP = hasProfessionals ? 4 : 3;
+  const CONFIRM_STEP = hasProfessionals ? 5 : 4;
+  const SUCCESS_STEP = hasProfessionals ? 6 : 5;
+
   const themeForFont = resolveTheme(settings?.theme_preset, settings?.page_color, {
     secondaryColor: settings?.page_color_secondary,
     fontOverride: settings?.heading_font_override,
@@ -263,12 +276,14 @@ export default function PublicBooking() {
         if (!s || s.published === false) { setNotFound(true); return; }
         setSettings(s);
         const pid = s.created_by_id;
-        const [servs, avail] = await Promise.all([
+        const [servs, avail, profs] = await Promise.all([
           base44.entities.Service.filter({ created_by_id: pid, active: true }),
           base44.entities.Availability.filter({ created_by_id: pid }),
+          s.plan === "clinic" ? base44.entities.Professional.filter({ practice_owner_id: pid, active: true }) : Promise.resolve([]),
         ]);
         setServices(servs || []);
         setAvailability(avail || []);
+        setProfessionals((profs || []).filter((p) => p.invite_status !== "pending" && p.first_name));
         try {
           const now = new Date(); now.setHours(0, 0, 0, 0);
           const toDate = new Date(now.getTime() + 21 * 86400000);
@@ -292,17 +307,18 @@ export default function PublicBooking() {
   const upcomingDays = useMemo(() => {
     const days = [];
     const base = new Date(); base.setHours(0, 0, 0, 0);
+    const proId = selectedPro?.id || null;
     for (let i = 0; i < 21; i++) {
       const d = new Date(base.getTime() + i * 86400000);
-      if (getWorkRanges(availability, d.getDay()).length && !isBlockedDate(availability, d)) days.push(d);
+      if (getWorkRanges(availability, d.getDay(), proId).length && !isBlockedDate(availability, d)) days.push(d);
     }
     return days;
-  }, [availability]);
+  }, [availability, selectedPro]);
 
   const slots = useMemo(() => {
     if (!date || !service) return [];
-    return generateSlots(date, service, availability, appointments);
-  }, [date, service, availability, appointments]);
+    return generateSlots(date, service, availability, appointments, selectedPro?.id || null);
+  }, [date, service, availability, appointments, selectedPro]);
 
   const handleConfirm = useCallback(async () => {
     if (!service || !slot || !form.first_name || !form.last_name || !form.phone || !form.email || !professionalId) return;
@@ -311,6 +327,7 @@ export default function PublicBooking() {
     try {
       const res = await base44.functions.invoke("createPublicAppointment", {
         professional_id: professionalId,
+        professional_ref_id: selectedPro?.id || undefined,
         service_id: service.id,
         start_datetime: slot.toISOString(),
         first_name: form.first_name,
@@ -319,12 +336,12 @@ export default function PublicBooking() {
         email: form.email,
       });
       setCreated({ appointment: res.data.appointment, patient: res.data.patient });
-      setStep(5);
+      setStep(SUCCESS_STEP);
     } catch (err) {
       const message = err?.response?.data?.message || err?.response?.data?.error || "No se pudo confirmar el turno. Probá de nuevo.";
       setBookingError(message);
       setSlot(null);
-      setStep(2);
+      setStep(DATE_STEP);
       try {
         const now = new Date(); now.setHours(0, 0, 0, 0);
         const toDate = new Date(now.getTime() + 21 * 86400000);
@@ -340,7 +357,7 @@ export default function PublicBooking() {
     } finally {
       setSaving(false);
     }
-  }, [service, slot, form, professionalId]);
+  }, [service, slot, form, professionalId, selectedPro, DATE_STEP, SUCCESS_STEP]);
 
   const theme = resolveTheme(settings?.theme_preset || "clean_dark_tech", settings?.page_color, {
     secondaryColor: settings?.page_color_secondary,
@@ -374,8 +391,6 @@ export default function PublicBooking() {
 
   const brand = theme.accent;
   const headingFontStyle = theme.headingFont ? { fontFamily: theme.headingFont } : {};
-  // El fondo personalizado (patrón o imagen) ahora es universal: se aplica arriba de
-  // CUALQUIER tema, no solo "Personalizado".
   const customBgStyle = settings?.custom_bg_image_url
     ? { background: `url(${settings.custom_bg_image_url}) center/cover` }
     : settings?.custom_bg_pattern && settings.custom_bg_pattern !== "none"
@@ -398,10 +413,9 @@ export default function PublicBooking() {
     boxShadow: theme.neon ? theme.neonGlow : undefined,
   };
 
-  // ---- Contenido de reserva (pasos), reutilizado en mobile (bajo tab) y desktop (columna fija) ----
   const BookingSteps = (
     <>
-      {step < 4 && (
+      {step < CONFIRM_STEP && (
         <div className="flex items-start justify-center gap-1 mb-6">
           {STEPS.map((s, i) => (
             <React.Fragment key={s.num}>
@@ -440,7 +454,7 @@ export default function PublicBooking() {
               {services.map((s) => (
                 <button
                   key={s.id}
-                  onClick={() => { setService(s); setStep(2); }}
+                  onClick={() => { setService(s); setStep(hasProfessionals ? PRO_STEP : DATE_STEP); }}
                   className={`group w-full text-left p-4 rounded-xl border-2 hover:shadow-md transition-all cursor-pointer flex items-center justify-between ${cardClass}`}
                   style={{ ...cardStyle, borderColor: theme.cardBorder }}
                 >
@@ -467,11 +481,46 @@ export default function PublicBooking() {
         </div>
       )}
 
-      {step === 2 && (
+      {hasProfessionals && step === PRO_STEP && (
+        <div className={`rounded-2xl border p-5 space-y-3 ${cardClass}`} style={cardStyle}>
+          <div className="flex items-center justify-between">
+            <h2 className="font-heading font-semibold" style={{ color: theme.text }}>Elegí con quién agendar</h2>
+            <button className="text-sm hover:underline" style={{ color: theme.muted }} onClick={() => setStep(1)}>Cambiar servicio</button>
+          </div>
+          <div className="space-y-2">
+            {professionals.map((p) => (
+              <button
+                key={p.id}
+                onClick={() => { setSelectedPro(p); setDate(null); setSlot(null); setStep(DATE_STEP); }}
+                className="w-full text-left p-3.5 rounded-xl border-2 flex items-center gap-3 transition-all hover:shadow-sm"
+                style={{ ...cardStyle, borderColor: theme.cardBorder }}
+              >
+                <div className="w-9 h-9 rounded-full flex items-center justify-center font-semibold text-sm shrink-0" style={{ background: `${brand}20`, color: brand }}>
+                  {p.first_name?.[0]?.toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <p className="font-medium truncate" style={{ color: theme.text }}>{p.first_name} {p.last_name}</p>
+                  {p.specialty && <p className="text-xs truncate" style={{ color: theme.muted }}>{p.specialty}</p>}
+                </div>
+              </button>
+            ))}
+            <button
+              onClick={() => { setSelectedPro(null); setDate(null); setSlot(null); setStep(DATE_STEP); }}
+              className="w-full text-left p-3.5 rounded-xl border-2 border-dashed flex items-center gap-3 transition-all"
+              style={{ borderColor: theme.cardBorder, color: theme.muted }}
+            >
+              <User className="w-5 h-5 shrink-0" />
+              <p className="text-sm font-medium">No tengo preferencia</p>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step === DATE_STEP && (
         <div className={`rounded-2xl border p-5 space-y-4 ${cardClass}`} style={cardStyle}>
           <div className="flex items-center justify-between">
             <h2 className="font-heading font-semibold" style={{ color: theme.text }}>Elegí fecha y hora</h2>
-            <button className="text-sm hover:underline" style={{ color: theme.muted }} onClick={() => setStep(1)}>Cambiar servicio</button>
+            <button className="text-sm hover:underline" style={{ color: theme.muted }} onClick={() => setStep(hasProfessionals ? PRO_STEP : 1)}>Atrás</button>
           </div>
           {bookingError && (
             <div className="rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm p-3">
@@ -479,7 +528,9 @@ export default function PublicBooking() {
             </div>
           )}
           <div>
-            <p className="text-xs mb-2 flex items-center gap-1" style={{ color: theme.muted }}><Calendar className="w-3.5 h-3.5" /> {service?.name}</p>
+            <p className="text-xs mb-2 flex items-center gap-1" style={{ color: theme.muted }}>
+              <Calendar className="w-3.5 h-3.5" /> {service?.name}{selectedPro ? ` · ${selectedPro.first_name}` : ""}
+            </p>
             <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
               {upcomingDays.map((d) => {
                 const selected = date && d.toDateString() === date.toDateString();
@@ -506,18 +557,18 @@ export default function PublicBooking() {
               )}
             </div>
           )}
-          <Button className="w-full font-semibold" style={primaryBtnStyle} disabled={!slot} onClick={() => setStep(3)}>Continuar</Button>
+          <Button className="w-full font-semibold" style={primaryBtnStyle} disabled={!slot} onClick={() => setStep(DATA_STEP)}>Continuar</Button>
         </div>
       )}
 
-      {step === 3 && (
+      {step === DATA_STEP && (
         <div className={`rounded-2xl border p-5 space-y-4 ${cardClass}`} style={cardStyle}>
           <div className="flex items-center justify-between">
             <h2 className="font-heading font-semibold" style={{ color: theme.text }}>Tus datos</h2>
-            <button className="text-sm hover:underline" style={{ color: theme.muted }} onClick={() => setStep(2)}>Atrás</button>
+            <button className="text-sm hover:underline" style={{ color: theme.muted }} onClick={() => setStep(DATE_STEP)}>Atrás</button>
           </div>
           <div className="rounded-lg p-3 text-sm" style={{ background: theme.chipBg || "#f8fafc", color: theme.text }}>
-            <p className="font-medium">{service?.name}</p>
+            <p className="font-medium">{service?.name}{selectedPro ? ` con ${selectedPro.first_name}` : ""}</p>
             <p className="capitalize" style={{ color: theme.muted }}>{date && formatLongDate(date)} · {slot && formatSlot(slot)}</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -526,26 +577,27 @@ export default function PublicBooking() {
           </div>
           <div className="space-y-2"><Label htmlFor="phone">Teléfono (WhatsApp) *</Label><Input id="phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+54 9 11 1234 5678" required /></div>
           <div className="space-y-2"><Label htmlFor="email">Email *</Label><Input id="email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></div>
-          <Button className="w-full font-semibold" style={primaryBtnStyle} disabled={!form.first_name || !form.last_name || !form.phone || !form.email} onClick={() => setStep(4)}>
+          <Button className="w-full font-semibold" style={primaryBtnStyle} disabled={!form.first_name || !form.last_name || !form.phone || !form.email} onClick={() => setStep(CONFIRM_STEP)}>
             Continuar
           </Button>
         </div>
       )}
 
-      {step === 4 && (
+      {step === CONFIRM_STEP && (
         <div className={`rounded-2xl border p-5 space-y-4 ${cardClass}`} style={cardStyle}>
           <div className="flex items-center justify-between">
             <h2 className="font-heading font-semibold" style={{ color: theme.text }}>Revisá tu reserva</h2>
-            <button className="text-sm hover:underline" style={{ color: theme.muted }} onClick={() => setStep(3)}>Atrás</button>
+            <button className="text-sm hover:underline" style={{ color: theme.muted }} onClick={() => setStep(DATA_STEP)}>Atrás</button>
           </div>
           <div className="rounded-lg p-4 space-y-2 text-sm" style={{ background: theme.chipBg || "#f8fafc" }}>
             <div className="flex justify-between gap-2"><span style={{ color: theme.muted }}>Servicio</span><span className="font-medium text-right" style={{ color: theme.text }}>{service?.name}</span></div>
+            {selectedPro && <div className="flex justify-between gap-2"><span style={{ color: theme.muted }}>Con</span><span className="font-medium text-right" style={{ color: theme.text }}>{selectedPro.first_name} {selectedPro.last_name}</span></div>}
             <div className="flex justify-between gap-2"><span style={{ color: theme.muted }}>Fecha</span><span className="font-medium capitalize" style={{ color: theme.text }}>{date && formatLongDate(date)}</span></div>
             <div className="flex justify-between gap-2"><span style={{ color: theme.muted }}>Hora</span><span className="font-medium" style={{ color: theme.text }}>{slot && formatSlot(slot)}</span></div>
             <div className="flex justify-between gap-2"><span style={{ color: theme.muted }}>A nombre de</span><span className="font-medium text-right" style={{ color: theme.text }}>{form.first_name} {form.last_name}</span></div>
           </div>
           <div className="flex flex-col gap-2">
-            <Button variant="outline" className="w-full" onClick={() => setStep(2)}>
+            <Button variant="outline" className="w-full" onClick={() => setStep(DATE_STEP)}>
               ← Cambiar fecha u hora
             </Button>
             <Button className="w-full font-semibold" style={primaryBtnStyle} disabled={saving} onClick={handleConfirm}>
@@ -555,7 +607,7 @@ export default function PublicBooking() {
         </div>
       )}
 
-      {step === 5 && created && (() => {
+      {step === SUCCESS_STEP && created && (() => {
         const waNumber = (settings?.zernio_phone || settings?.phone || "").replace(/\D/g, "");
         const waMsg = buildWaMessage(service, date, slot, form);
         const confirmWaUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(waMsg)}`;
@@ -563,7 +615,7 @@ export default function PublicBooking() {
           <div className={`rounded-2xl border p-6 text-center space-y-3 ${cardClass}`} style={cardStyle}>
             <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center mx-auto"><Check className="w-7 h-7 text-emerald-600" /></div>
             <h2 className="font-heading font-semibold text-lg" style={{ color: theme.text }}>¡Solicitud registrada!</h2>
-            <p className="text-sm" style={{ color: theme.muted }}>{service?.name}</p>
+            <p className="text-sm" style={{ color: theme.muted }}>{service?.name}{selectedPro ? ` con ${selectedPro.first_name}` : ""}</p>
             <p className="font-medium capitalize" style={{ color: theme.text }}>{date && formatLongDate(date)} · {slot && formatSlot(slot)}</p>
             <p className="text-sm" style={{ color: theme.muted }}>{settings?.practice_name || "Consultorio"}{settings?.address ? ` · ${settings.address}` : ""}</p>
             {waNumber ? (
@@ -576,15 +628,13 @@ export default function PublicBooking() {
             ) : (
               <p className="text-sm pt-1" style={{ color: theme.muted }}>El profesional confirmará tu turno. Guardá esta referencia: <span className="font-mono">{created.appointment.id.slice(-8)}</span></p>
             )}
-            <Button variant="outline" className="mt-2" onClick={() => { setStep(1); setService(null); setDate(null); setSlot(null); setForm({ first_name: "", last_name: "", phone: "", email: "" }); setCreated(null); }}>Reservar otro turno</Button>
+            <Button variant="outline" className="mt-2" onClick={() => { setStep(1); setService(null); setSelectedPro(null); setDate(null); setSlot(null); setForm({ first_name: "", last_name: "", phone: "", email: "" }); setCreated(null); }}>Reservar otro turno</Button>
           </div>
         );
       })()}
     </>
   );
 
-  // Botones Agendar/Información con jerarquía visual distinta: Agendar = relleno con el
-  // color de marca (acción principal); Información = outline/fantasma (secundaria).
   const NavButtons = ({ className = "" }) => (
     <div className={`flex items-center gap-2 ${className}`}>
       <button
@@ -605,34 +655,22 @@ export default function PublicBooking() {
   );
 
   return (
-    // min-h-screen en el contenedor raíz asegura que el color de fondo del tema cubra
-    // toda la pantalla en desktop, sin franja blanca abajo aunque el contenido sea corto.
-    // El fondo personalizado (patrón o imagen) se aplica arriba de cualquier tema.
     <div className="min-h-screen w-full relative" style={{ background: theme.bg, ...customBgStyle }}>
       {showCustomOverlay && (
         <div className="absolute inset-0" style={{ background: "#000", opacity: (settings?.custom_bg_overlay_opacity ?? 40) / 100 }} />
       )}
       <div className="relative">
-      {/* ============ DESKTOP (>=1024px): 2 columnas asimétricas, todo visible junto.
-          La agenda de la derecha SIEMPRE se ve, incluso mirando "Información" — así nunca
-          se pierde el foco de que esta página es para reservar, ni aunque estés leyendo la
-          info de contacto. Columna de perfil con ancho fijo generoso para que la portada y
-          la foto se vean bien, no aplastadas. ============ */}
       <div className="hidden lg:block max-w-6xl mx-auto px-8 py-10">
         <div className="grid gap-8 items-start" style={{ gridTemplateColumns: "55% 45%" }}>
-          {/* Columna Perfil */}
           <div className="space-y-4 lg:sticky lg:top-8">
             <ProfileHeader settings={settings} theme={theme} brand={brand} frameClass={frameClass} cardClass={cardClass} glassStyle={glassStyle} align={settings?.photo_align} size={104} headingFontStyle={headingFontStyle} />
             <NavButtons />
             {tab === "info" && <InfoBlock theme={theme} settings={settings} igUrl={igUrl} fbUrl={fbUrl} webUrl={webUrl} waUrl={waUrl} mapsUrl={mapsUrl} cardClass={cardClass} glassStyle={glassStyle} />}
           </div>
-
-          {/* Columna Reserva: siempre presente */}
           <div>{BookingSteps}</div>
         </div>
       </div>
 
-      {/* ============ MOBILE (<1024px): 1 columna ============ */}
       <div className="lg:hidden max-w-md mx-auto px-4 py-5 space-y-4">
         <ProfileHeader settings={settings} theme={theme} brand={brand} frameClass={frameClass} cardClass={cardClass} glassStyle={glassStyle} align={settings?.photo_align} size={88} headingFontStyle={headingFontStyle} />
         <NavButtons />

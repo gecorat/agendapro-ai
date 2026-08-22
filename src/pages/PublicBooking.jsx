@@ -618,6 +618,7 @@ export default function PublicBooking() {
           <InfoBlock theme={theme} settings={settings} igUrl={igUrl} fbUrl={fbUrl} webUrl={webUrl} waUrl={waUrl} mapsUrl={mapsUrl} cardClass={cardClass} glassStyle={glassStyle} />
         ) : BookingSteps}
       </div>
+      </div>
     </div>
   );
 }

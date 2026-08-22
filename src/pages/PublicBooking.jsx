@@ -346,6 +346,8 @@ export default function PublicBooking() {
   }
 
   const brand = theme.accent;
+  const headingFontStyle = theme.headingFont ? { fontFamily: theme.headingFont } : {};
+  const showFullPhotoBackdrop = theme.photoBackdrop && !!settings?.cover_image_url;
   const igUrl = normalizeSocialUrl(settings?.instagram_url, "instagram");
   const fbUrl = normalizeSocialUrl(settings?.facebook_url, "facebook");
   const webUrl = normalizeSocialUrl(settings?.website_url, "website");

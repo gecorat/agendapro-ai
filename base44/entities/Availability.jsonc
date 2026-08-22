@@ -4,7 +4,7 @@
   "properties": {
     "day_of_week": {
       "type": "number",
-      "title": "D\u00eda de la semana (0=domingo, 6=s\u00e1bado)"
+      "title": "Día de la semana (0=domingo, 6=sábado)"
     },
     "start_time": {
       "type": "string",
@@ -28,7 +28,7 @@
     "date": {
       "type": "string",
       "format": "date",
-      "title": "Fecha espec\u00edfica (para feriados/bloqueos)"
+      "title": "Fecha específica (para feriados/bloqueos)"
     },
     "label": {
       "type": "string",
@@ -36,8 +36,7 @@
     },
     "professional_ref_id": {
       "type": "string",
-      "title": "Profesional (plan Clinic)",
-      "description": "ID de Professional al que pertenece este horario. Vac\u00edo = horario del due\u00f1o de la cuenta."
+      "title": "Profesional (vacio = horario del dueno de la cuenta)"
     }
   },
   "required": [

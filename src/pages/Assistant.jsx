@@ -518,7 +518,7 @@ function FullAssistant({ settings, reloadSettings }) {
               <span className={cn("text-xs font-medium hidden sm:inline", chatPaused ? "text-amber-600" : "text-emerald-600")}>
                 {chatPaused ? "Control Manual" : "IA Activa"}
               </span>
-              <Switch checked={!chatPaused} onCheckedChange={() => handleTogglePause(null)} disabled={pauseLoading} />
+              <Switch checked={!chatPaused} onCheckedChange={handleTogglePause} disabled={pauseLoading} />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="p-1 rounded hover:bg-accent" title="Pausar por tiempo">
@@ -527,7 +527,7 @@ function FullAssistant({ settings, reloadSettings }) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   {PAUSE_OPTIONS.map((opt) => (
-                    <DropdownMenuItem key={opt.label} onClick={() => handleTogglePause(opt.minutes)}>
+                    <DropdownMenuItem key={opt.label} onClick={() => handleSetDuration(opt.minutes)}>
                       Pausar IA · {opt.label}
                     </DropdownMenuItem>
                   ))}

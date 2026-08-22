@@ -147,7 +147,7 @@ function PlanSection() {
         </div>
       </div>
       <div className="bg-muted/50 rounded-2xl p-4">
-        <p className="text-sm text-muted-foreground">Para activar o cambiar tu plan, contactanos. La recurrencia automática con Mercado Pago se habilita próximamente.</p>
+        <p className="text-sm text-muted-foreground">Suscripción con cobro automático mensual por Mercado Pago. Para cambiar de plan, andá a "Ver planes y suscribirme" arriba.</p>
       </div>
     </div>
   );

@@ -6,7 +6,7 @@ export function usePracticeSettings() {
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (attempt = 1) => {
     try {
       const me = await base44.auth.me();
       const list = await base44.entities.PracticeSettings.filter(
@@ -15,10 +15,22 @@ export function usePracticeSettings() {
         1
       );
       setSettings(list?.[0] || null);
-    } catch (e) {
-      setSettings(null);
-    } finally {
       setLoading(false);
+    } catch (e) {
+      // Antes esto tragaba el error en silencio y dejaba "settings" en null para
+      // siempre, sin loguear nada — confirmado en vivo con dos llamados independientes a
+      // este mismo hook en la misma sesión (uno en AppLayout, otro en la página): uno
+      // resolvió bien y el otro quedó pegado sin ninguna pista de por qué. Ahora se ve el
+      // error real en consola, y se reintenta automáticamente una vez (con una pequeña
+      // espera) antes de rendirse — cubre fallas transitorias de red/timing sin dejar a
+      // nadie mirando una pantalla en blanco para siempre.
+      console.error(`[usePracticeSettings] intento ${attempt} falló:`, e);
+      if (attempt < 2) {
+        setTimeout(() => load(attempt + 1), 1000);
+      } else {
+        setSettings(null);
+        setLoading(false);
+      }
     }
   }, []);
 

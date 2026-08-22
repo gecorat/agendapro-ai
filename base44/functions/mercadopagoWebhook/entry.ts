@@ -53,7 +53,6 @@ export default async function(req: Request): Promise<Response> {
 
     const res = await syncSubscriptionStatus(base44, accessToken, resourceId);
     if (!res.synced) return Response.json({ ok: true, skipped: res.reason });
-
     return Response.json({ ok: true, changed: res.changed });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

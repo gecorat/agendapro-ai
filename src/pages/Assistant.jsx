@@ -587,23 +587,28 @@ function FullAssistant({ settings, reloadSettings }) {
                 <React.Fragment key={idx}>
                   {showSeparator && (
                     <div className="flex items-center justify-center py-2">
-                      <span className="text-[11px] font-medium text-muted-foreground bg-muted px-2.5 py-1 rounded-full">{label}</span>
+                      <span className="text-[11px] font-medium px-2.5 py-1 rounded-lg shadow-sm" style={{ background: "#FFFFFF", color: "#54656F" }}>{label}</span>
                     </div>
                   )}
                   <div className={cn("flex", isPatient ? "justify-start" : "justify-end")}>
-                    <div className={cn("max-w-[75%] rounded-2xl px-3.5 py-2.5", isPatient ? "bg-muted text-foreground rounded-bl-md" : "bg-primary text-primary-foreground rounded-br-md")}>
+                    <div
+                      className="max-w-[75%] rounded-lg px-2.5 py-1.5 shadow-sm"
+                      style={isPatient
+                        ? { background: WA.incoming, color: "#111B21", borderTopLeftRadius: 4 }
+                        : { background: WA.outgoing, color: "#111B21", borderTopRightRadius: 4 }}
+                    >
                       <p className="text-sm whitespace-pre-wrap break-words">{msg.text}</p>
                       <div className={cn("flex items-center gap-1 mt-1", isPatient ? "justify-start" : "justify-end")}>
                         {!isPatient && (
-                          <span className={cn("inline-flex items-center gap-0.5 text-[10px] opacity-80")}>
+                          <span className="inline-flex items-center gap-0.5 text-[10px]" style={{ color: "#667781" }}>
                             {msg.sent_by === "human" ? <User className="w-2.5 h-2.5" /> : <Bot className="w-2.5 h-2.5" />}
                             {msg.sent_by === "human" ? "Vos" : "IA"}
                           </span>
                         )}
-                        <span className="text-[10px] opacity-60">{new Date(msg.created_date).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}</span>
+                        <span className="text-[10px]" style={{ color: "#667781" }}>{new Date(msg.created_date).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}</span>
                       </div>
                       {msg.delivery_failed && (
-                        <p className="text-[10px] text-amber-300 mt-0.5">⚠ Puede no haber llegado al WhatsApp del paciente</p>
+                        <p className="text-[10px] text-amber-600 mt-0.5">⚠ Puede no haber llegado al WhatsApp del paciente</p>
                       )}
                     </div>
                   </div>
@@ -612,16 +617,16 @@ function FullAssistant({ settings, reloadSettings }) {
             })}
             {sending && (
               <div className="flex justify-end">
-                <div className="rounded-2xl rounded-br-md bg-primary/60 px-4 py-3 flex items-center gap-2">
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-primary-foreground" />
-                  <span className="text-sm text-primary-foreground">Enviando…</span>
+                <div className="rounded-lg px-4 py-3 flex items-center gap-2 shadow-sm" style={{ background: WA.outgoing }}>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "#111B21" }} />
+                  <span className="text-sm" style={{ color: "#111B21" }}>Enviando…</span>
                 </div>
               </div>
             )}
             <div ref={messagesEndRef} />
           </div>
 
-          <div className="border-t border-border bg-card p-3 shrink-0">
+          <div className="border-t p-3 shrink-0" style={{ borderColor: WA.border, background: WA.panelHeader }}>
             <div className="flex items-end gap-2">
               <Textarea
                 value={input}

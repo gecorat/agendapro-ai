@@ -117,7 +117,6 @@ export function googleMapsEmbedSrc({ address, city, province, lat, lng }) {
 export const PHOTO_FRAME_CLASS = {
   circle: "rounded-full",
   rounded: "rounded-2xl",
-  none: "rounded-none",
 };
 
 export const PHOTO_ALIGN_CLASS = {

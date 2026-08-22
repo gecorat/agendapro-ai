@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import {
   MessageSquare, Send, Loader2, MessageCircle, ChevronLeft, LogOut, Search,
   Bot, User, Plus, X, Calendar, Phone, Mail, Tag, StickyNote, Clock,
-  Smile, Paperclip, ListPlus, ChevronDown, Lock, Sparkles, Crown, Check,
+  Smile, Paperclip, ListPlus, ChevronDown, Lock, Sparkles, Crown,
   Pencil, XCircle,
 } from "lucide-react";
 import DemoChat from "@/components/assistant/DemoChat";

@@ -572,22 +572,22 @@ export default function PublicBooking() {
     // min-h-screen en el contenedor raíz asegura que el color de fondo del tema cubra
     // toda la pantalla en desktop, sin franja blanca abajo aunque el contenido sea corto.
     <div className="min-h-screen w-full" style={{ background: theme.bg }}>
-      {/* ============ DESKTOP (>=1024px): 2 columnas asimétricas, todo visible junto ============ */}
+      {/* ============ DESKTOP (>=1024px): 2 columnas asimétricas, todo visible junto.
+          La agenda de la derecha SIEMPRE se ve, incluso mirando "Información" — así nunca
+          se pierde el foco de que esta página es para reservar, ni aunque estés leyendo la
+          info de contacto. Columna de perfil con ancho fijo generoso para que la portada y
+          la foto se vean bien, no aplastadas. ============ */}
       <div className="hidden lg:block max-w-6xl mx-auto px-8 py-10">
-        <div className="grid grid-cols-[2fr_3fr] gap-8 items-start">
-          {/* Columna Perfil (~40%) */}
+        <div className="grid gap-8 items-start" style={{ gridTemplateColumns: "420px 1fr" }}>
+          {/* Columna Perfil */}
           <div className="space-y-4 lg:sticky lg:top-8">
-            <ProfileHeader settings={settings} theme={theme} brand={brand} frameClass={frameClass} cardClass={cardClass} glassStyle={glassStyle} align={settings?.photo_align} size={96} />
+            <ProfileHeader settings={settings} theme={theme} brand={brand} frameClass={frameClass} cardClass={cardClass} glassStyle={glassStyle} align={settings?.photo_align} size={104} />
             <NavButtons />
             {tab === "info" && <InfoBlock theme={theme} settings={settings} igUrl={igUrl} fbUrl={fbUrl} webUrl={webUrl} waUrl={waUrl} mapsUrl={mapsUrl} cardClass={cardClass} glassStyle={glassStyle} />}
           </div>
 
-          {/* Columna Reserva (~60%) */}
-          <div>{tab === "agendar" ? BookingSteps : (
-            <div className="rounded-2xl border p-8 text-center" style={cardStyle}>
-              <p className="text-sm" style={{ color: theme.muted }}>Elegí "Agendar cita" para reservar tu turno.</p>
-            </div>
-          )}</div>
+          {/* Columna Reserva: siempre presente */}
+          <div>{BookingSteps}</div>
         </div>
       </div>
 

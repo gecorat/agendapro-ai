@@ -84,6 +84,17 @@ function dateSeparatorLabel(dateStr) {
   return d.toLocaleDateString("es-AR", { day: "numeric", month: "long", year: d.getFullYear() !== now.getFullYear() ? "numeric" : undefined });
 }
 
+function ContactAvatar({ name, url, loading, size = "w-9 h-9", textSize = "text-xs" }) {
+  if (url) {
+    return <img src={url} alt={name} className={`${size} rounded-full object-cover shrink-0`} />;
+  }
+  return (
+    <div className={`${size} rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold ${textSize} shrink-0`}>
+      {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : name?.[0]?.toUpperCase() || "?"}
+    </div>
+  );
+}
+
 function FullAssistant({ settings, reloadSettings }) {
   const [user, setUser] = useState(null);
   const [allMsgs, setAllMsgs] = useState([]);

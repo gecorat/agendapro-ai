@@ -10,7 +10,7 @@ import {
   AlignLeft, AlignCenter, AlignRight, Circle, Square, Ban,
 } from "lucide-react";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
-import { THEME_PRESETS, resolveTheme, PHOTO_FRAME_CLASS } from "@/lib/theme-presets";
+import { THEME_PRESETS, resolveTheme, PHOTO_FRAME_CLASS, loadThemeFont } from "@/lib/theme-presets";
 import { useToast } from "@/components/ui/use-toast";
 import AddressAutocompleteInput from "@/components/AddressAutocompleteInput";
 
@@ -55,20 +55,31 @@ function LivePreview({ form, viewport }) {
   const cardClass = theme.cardClass || "";
   const size = 64;
   const half = size / 2;
+  const headingFontStyle = theme.headingFont ? { fontFamily: theme.headingFont } : {};
+  const showFullPhotoBackdrop = theme.photoBackdrop && !!form.cover_image_url;
+
+  useEffect(() => {
+    if (theme.googleFont) loadThemeFont(theme.googleFont);
+  }, [theme.googleFont]);
 
   return (
-    <div className={`mx-auto rounded-2xl overflow-hidden border border-border shadow-sm transition-all duration-300 ${viewport === "mobile" ? "max-w-[300px]" : "max-w-full"}`}>
-      <div style={{ background: theme.bg }}>
+    <div className={`mx-auto rounded-2xl overflow-hidden border border-border shadow-sm transition-all duration-300 relative ${viewport === "mobile" ? "max-w-[300px]" : "max-w-full"}`}>
+      {showFullPhotoBackdrop && (
+        <div className="absolute inset-0" style={{ background: `url(${form.cover_image_url}) center/cover`, filter: "brightness(0.55)" }} />
+      )}
+      <div className="relative" style={{ background: showFullPhotoBackdrop ? "transparent" : theme.bg }}>
         <div className="relative" style={{ overflow: "visible" }}>
           <div
             className="h-24 overflow-hidden"
             style={{
-              background: form.cover_image_url
+              background: showFullPhotoBackdrop
+                ? "transparent"
+                : form.cover_image_url
                 ? `url(${form.cover_image_url}) center ${form.cover_align || "center"}/cover`
                 : `linear-gradient(135deg, ${theme.accent}, ${theme.accent}66)`,
             }}
           >
-            {form.cover_image_url && <div className="absolute inset-0 bg-black/25" />}
+            {form.cover_image_url && !showFullPhotoBackdrop && <div className="absolute inset-0 bg-black/25" />}
           </div>
           {showPhoto && (
             <div className={`absolute left-0 right-0 px-5 flex z-20 ${photoJustify}`} style={{ top: `${96 - half}px` }}>
@@ -92,7 +103,7 @@ function LivePreview({ form, viewport }) {
         </div>
         <div className="px-5 pb-5" style={{ paddingTop: showPhoto ? `${half + 8}px` : "16px" }}>
           <div className={`${form.photo_align === "left" ? "text-left" : form.photo_align === "right" ? "text-right" : "text-center"}`}>
-            <p className="text-base font-heading font-bold" style={{ color: theme.text }}>{form.practice_name || "Tu consultorio"}</p>
+            <p className="text-base font-heading font-bold" style={{ color: theme.text, ...headingFontStyle }}>{form.practice_name || "Tu consultorio"}</p>
             {form.specialty && <p className="text-xs mt-0.5" style={{ color: theme.muted }}>{form.specialty}</p>}
           </div>
           <div className="flex items-center justify-center gap-1.5 mt-3">
@@ -253,7 +264,7 @@ export default function PublicPageEditor() {
           </Section>
 
           <Section title="Tema visual">
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-3 gap-2">
               {Object.entries(THEME_PRESETS).map(([key, preset]) => {
                 const theme = resolveTheme(key, form.page_color);
                 const selected = form.theme_preset === key;

@@ -129,8 +129,10 @@ function isLightColor(hex) {
 }
 
 // Resuelve el tema final: mezcla el preset elegido con color primario/secundario
-// universales, la tipografía elegida (o la default del tema), y — si es "custom" — todos
-// los controles del Generador de Fondos / tarjetas.
+// universales, la tipografía elegida (o la default del tema), y los controles de
+// redondeado/opacidad/blur — estos últimos son UNIVERSALES: se aplican arriba de
+// CUALQUIERA de los 7 temas, no solo "Personalizado" (antes sí estaban atados a ese
+// tema específico).
 export function resolveTheme(presetKey, pageColor, options = {}) {
   const { secondaryColor, fontOverride, custom = {} } = options;
   const preset = THEME_PRESETS[presetKey] || THEME_PRESETS.clean_dark_tech;
@@ -141,17 +143,20 @@ export function resolveTheme(presetKey, pageColor, options = {}) {
   const font = FONT_OPTIONS[fontKey];
 
   let cardBg = preset.cardBg;
-  let cardBorder = preset.cardBorder;
-  let radiusClass = preset.forceRadius || null;
+  const cardBorder = preset.cardBorder;
+  let radiusClass = preset.forceRadius || BORDER_RADIUS_CLASS.soft;
   let cardClass = preset.cardClass || "";
   let glass = preset.glass;
 
-  if (presetKey === "custom") {
-    radiusClass = BORDER_RADIUS_CLASS[custom.borderRadius || "soft"];
-    glass = !!custom.blurEnabled;
-    const opacity = custom.cardOpacity ?? 100;
-    cardBg = hexToRgba(preset.cardBg, opacity / 100);
-    cardClass = glass ? "backdrop-blur-md border-white/10 shadow-lg" : "shadow-md";
+  if (custom.borderRadius) {
+    radiusClass = BORDER_RADIUS_CLASS[custom.borderRadius] || radiusClass;
+  }
+  if (custom.cardOpacity !== undefined && custom.cardOpacity !== null && custom.cardOpacity !== 100) {
+    cardBg = hexToRgba(preset.cardBg, custom.cardOpacity / 100);
+  }
+  if (custom.blurEnabled) {
+    glass = true;
+    cardClass = `${cardClass} backdrop-blur-md`.trim();
   }
 
   return {

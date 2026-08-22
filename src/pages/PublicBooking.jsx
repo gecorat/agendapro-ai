@@ -580,7 +580,17 @@ export default function PublicBooking() {
   return (
     // min-h-screen en el contenedor raíz asegura que el color de fondo del tema cubra
     // toda la pantalla en desktop, sin franja blanca abajo aunque el contenido sea corto.
-    <div className="min-h-screen w-full" style={{ background: theme.bg }}>
+    // Photo Backdrop: si el tema lo pide y hay portada cargada, esa imagen cubre TODA la
+    // página (no solo el header) — si no hay portada, cae al fondo normal del tema (el
+    // degradé de siempre), sin romper nada para quien no suba portada.
+    <div className="min-h-screen w-full relative" style={{ background: theme.bg }}>
+      {showFullPhotoBackdrop && (
+        <>
+          <div className="fixed inset-0" style={{ background: `url(${settings.cover_image_url}) center/cover`, filter: "brightness(0.55)" }} />
+          <div className="fixed inset-0 bg-black/20" />
+        </>
+      )}
+      <div className="relative">
       {/* ============ DESKTOP (>=1024px): 2 columnas asimétricas, todo visible junto.
           La agenda de la derecha SIEMPRE se ve, incluso mirando "Información" — así nunca
           se pierde el foco de que esta página es para reservar, ni aunque estés leyendo la
@@ -590,7 +600,7 @@ export default function PublicBooking() {
         <div className="grid gap-8 items-start" style={{ gridTemplateColumns: "420px 1fr" }}>
           {/* Columna Perfil */}
           <div className="space-y-4 lg:sticky lg:top-8">
-            <ProfileHeader settings={settings} theme={theme} brand={brand} frameClass={frameClass} cardClass={cardClass} glassStyle={glassStyle} align={settings?.photo_align} size={104} />
+            <ProfileHeader settings={settings} theme={theme} brand={brand} frameClass={frameClass} cardClass={cardClass} glassStyle={glassStyle} align={settings?.photo_align} size={104} headingFontStyle={headingFontStyle} />
             <NavButtons />
             {tab === "info" && <InfoBlock theme={theme} settings={settings} igUrl={igUrl} fbUrl={fbUrl} webUrl={webUrl} waUrl={waUrl} mapsUrl={mapsUrl} cardClass={cardClass} glassStyle={glassStyle} />}
           </div>
@@ -602,7 +612,7 @@ export default function PublicBooking() {
 
       {/* ============ MOBILE (<1024px): 1 columna ============ */}
       <div className="lg:hidden max-w-md mx-auto px-4 py-5 space-y-4">
-        <ProfileHeader settings={settings} theme={theme} brand={brand} frameClass={frameClass} cardClass={cardClass} glassStyle={glassStyle} align={settings?.photo_align} size={88} />
+        <ProfileHeader settings={settings} theme={theme} brand={brand} frameClass={frameClass} cardClass={cardClass} glassStyle={glassStyle} align={settings?.photo_align} size={88} headingFontStyle={headingFontStyle} />
         <NavButtons />
         {tab === "info" ? (
           <InfoBlock theme={theme} settings={settings} igUrl={igUrl} fbUrl={fbUrl} webUrl={webUrl} waUrl={waUrl} mapsUrl={mapsUrl} cardClass={cardClass} glassStyle={glassStyle} />

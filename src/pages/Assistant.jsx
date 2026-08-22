@@ -101,7 +101,6 @@ function ContactAvatar({ name, url, loading, size = "w-9 h-9", textSize = "text-
 }
 
 function FullAssistant({ settings, reloadSettings }) {
-  console.log("[DEBUG FullAssistant] MONTÓ, whatsapp_connected:", settings?.whatsapp_connected);
   const [user, setUser] = useState(null);
   const [allMsgs, setAllMsgs] = useState([]);
   const [patients, setPatients] = useState([]);
@@ -132,8 +131,7 @@ function FullAssistant({ settings, reloadSettings }) {
   }, []);
 
   const load = useCallback(async () => {
-    console.log("[DEBUG load] arrancó, user:", user?.id);
-    if (!user) { console.log("[DEBUG load] sin user, corta acá"); return; }
+    if (!user) return;
     // safeFetch envuelve CADA llamada en su propia función anónima: si
     // base44.entities.Patient.filter(...) revienta de forma SINCRÓNICA (no como promesa
     // rechazada, sino literalmente al evaluarla — confirmado en vivo: las llamadas de
@@ -161,10 +159,8 @@ function FullAssistant({ settings, reloadSettings }) {
       setPatients(pats || []);
       setPauses(pausesList || []);
       setTemplates(tmpl || []);
-      console.log("[DEBUG load] terminó OK — msgs:", msgs?.length, "pats:", pats?.length, "pauses:", pausesList?.length, "tmpl:", tmpl?.length);
     } finally {
       setLoading(false);
-      console.log("[DEBUG load] setLoading(false) ejecutado");
     }
   }, [user]);
 

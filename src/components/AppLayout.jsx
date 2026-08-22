@@ -19,6 +19,11 @@ export default function AppLayout() {
   const { settings, loading: loadingSettings, preset, reload } = usePracticeSettings();
 
   useEffect(() => {
+    console.log("[DEBUG AppLayout] MONTADO (efecto con [] corrió)");
+    return () => console.log("[DEBUG AppLayout] DESMONTADO (cleanup corrió)");
+  }, []);
+
+  useEffect(() => {
     base44.auth.me().then((u) => { setUser(u); setUserLoading(false); }).catch(() => setUserLoading(false));
   }, []);
 

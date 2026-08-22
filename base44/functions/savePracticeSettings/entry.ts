@@ -9,6 +9,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 const EDITABLE_FIELDS = [
   'professional_type', 'practice_name', 'specialty', 'address', 'address_city', 'address_province', 'address_lat', 'address_lng', 'phone',
   'professional_email', 'instagram_url', 'facebook_url', 'website_url', 'handle', 'photo_url', 'cover_image_url',
+  'photo_align', 'photo_frame', 'cover_align',
   'page_color', 'theme_preset', 'description', 'published',
 ];
 

@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CalendarClock, Clock, ArrowRight, Check, Loader2, Calendar, MapPin, Phone, Mail, CalendarX, MessageCircle, Instagram, Facebook, Globe, ExternalLink } from "lucide-react";
+import { CalendarClock, Clock, ArrowRight, Check, Loader2, Calendar, MapPin, Phone, Mail, CalendarX, MessageCircle, Instagram, Facebook, Globe, ExternalLink, Navigation } from "lucide-react";
 import { resolveTheme, normalizeSocialUrl, whatsappUrl, googleMapsUrl, googleMapsEmbedSrc, PHOTO_FRAME_CLASS } from "@/lib/theme-presets";
 
 function parseTimeToDate(date, time) {
@@ -100,62 +100,100 @@ const STEPS = [
 
 // --- Sub-componentes de presentación (reutilizados en el layout desktop y mobile) -------
 
-function SocialIcons({ theme, igUrl, waUrl, webUrl, size = "w-9 h-9" }) {
-  if (!igUrl && !waUrl && !webUrl) return null;
+// Header con foto/portada: la foto va con position:absolute + z-index alto + overflow
+// visible en el contenedor, así queda SIEMPRE integrada sobre la portada sin cortes,
+// sin importar bordes redondeados del contenedor de la tarjeta. Si photo_frame === "none"
+// (el usuario desactivó la foto), el <img>/fallback NO se renderiza en absoluto.
+function ProfileHeader({ settings, theme, brand, frameClass, cardClass, glassStyle, align, size = 96, rounded = "rounded-t-3xl" }) {
+  const showPhoto = settings?.photo_frame !== "none";
+  const alignClass = align === "left" ? "justify-start" : align === "right" ? "justify-end" : "justify-center";
+  const textAlignClass = align === "left" ? "text-left items-start" : align === "right" ? "text-right items-end" : "text-center items-center";
+  const half = size / 2;
+
   return (
-    <div className="flex items-center justify-center gap-2">
-      {igUrl && (
-        <a href={igUrl} target="_blank" rel="noopener noreferrer" className={`${size} rounded-full flex items-center justify-center transition-transform hover:scale-105`} style={{ background: theme.chipBg, color: theme.text }}>
-          <Instagram className="w-4 h-4" />
-        </a>
-      )}
-      {waUrl && (
-        <a href={waUrl} target="_blank" rel="noopener noreferrer" className={`${size} rounded-full flex items-center justify-center transition-transform hover:scale-105`} style={{ background: theme.chipBg, color: theme.text }}>
-          <MessageCircle className="w-4 h-4" />
-        </a>
-      )}
-      {webUrl && (
-        <a href={webUrl} target="_blank" rel="noopener noreferrer" className={`${size} rounded-full flex items-center justify-center transition-transform hover:scale-105`} style={{ background: theme.chipBg, color: theme.text }}>
-          <Globe className="w-4 h-4" />
-        </a>
-      )}
+    <div className={`rounded-3xl border overflow-hidden ${cardClass}`} style={{ background: theme.cardBg, borderColor: theme.cardBorder, ...glassStyle }}>
+      {/* Contenedor relativo con overflow visible: la foto puede sobresalir sin cortarse */}
+      <div className="relative" style={{ overflow: "visible" }}>
+        <div
+          className={`h-28 overflow-hidden ${rounded}`}
+          style={{ background: settings?.cover_image_url ? `url(${settings.cover_image_url}) center ${settings?.cover_align || "center"}/cover` : `linear-gradient(135deg, ${brand}, ${brand}55)` }}
+        >
+          {settings?.cover_image_url && <div className="absolute inset-0 bg-black/25" />}
+        </div>
+        {showPhoto && (
+          <div className={`absolute left-0 right-0 px-6 flex z-20 ${alignClass}`} style={{ top: `${112 - half}px` }}>
+            {settings?.photo_url ? (
+              <img
+                src={settings.photo_url}
+                alt={settings.practice_name}
+                className={`object-cover block ${frameClass}`}
+                style={{ width: size, height: size, boxShadow: `0 0 0 4px ${theme.cardBg}${theme.neon ? `, 0 0 24px ${brand}66` : ""}` }}
+              />
+            ) : (
+              <div
+                className={`flex items-center justify-center text-2xl font-heading font-bold ${frameClass}`}
+                style={{ width: size, height: size, background: brand, color: theme.accentText, boxShadow: `0 0 0 4px ${theme.cardBg}` }}
+              >
+                {(settings?.practice_name || "?")[0]?.toUpperCase()}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+      <div className={`px-6 pb-6 flex flex-col ${textAlignClass}`} style={{ paddingTop: showPhoto ? `${half + 12}px` : "24px" }}>
+        <h1 className="text-2xl font-bold font-heading leading-tight" style={{ color: theme.text }}>{settings?.practice_name || "Reservá tu turno"}</h1>
+        {settings?.specialty && <p className="text-sm mt-1" style={{ color: theme.muted }}>{settings.specialty}</p>}
+      </div>
     </div>
   );
 }
 
-function InfoBlock({ theme, settings, fbUrl, mapsUrl }) {
-  const hasAny = settings?.description || settings?.address || settings?.phone || settings?.professional_email || fbUrl;
+function InfoBlock({ theme, settings, igUrl, fbUrl, webUrl, waUrl, mapsUrl, cardClass, glassStyle }) {
+  const hasAny = settings?.description || settings?.address || settings?.phone || settings?.professional_email || fbUrl || igUrl || webUrl;
+  const rowStyle = { borderBottom: `1px solid ${theme.cardBorder}` };
   return (
     <div className="space-y-3">
       {settings?.description && (
-        <div className="rounded-2xl border p-4" style={{ background: theme.cardBg, borderColor: theme.cardBorder, ...(theme.glass ? { backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)" } : {}) }}>
+        <div className={`rounded-2xl border p-4 ${cardClass}`} style={{ background: theme.cardBg, borderColor: theme.cardBorder, ...glassStyle }}>
           <p className="text-sm leading-relaxed" style={{ color: theme.text }}>{settings.description}</p>
         </div>
       )}
-      {(settings?.phone || settings?.professional_email || fbUrl) && (
-        <div className="rounded-2xl border overflow-hidden" style={{ background: theme.cardBg, borderColor: theme.cardBorder, ...(theme.glass ? { backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)" } : {}) }}>
-          {settings?.phone && (
-            <a href={`tel:${settings.phone}`} className="flex items-center gap-3 px-4 py-3.5 hover:opacity-80 transition-opacity" style={{ borderBottom: `1px solid ${theme.cardBorder}` }}>
-              <Phone className="w-4 h-4 shrink-0" style={{ color: theme.muted }} />
-              <p className="text-sm" style={{ color: theme.text }}>{settings.phone}</p>
+      {(settings?.phone || settings?.professional_email || fbUrl || igUrl || webUrl) && (
+        <div className={`rounded-2xl border overflow-hidden ${cardClass}`} style={{ background: theme.cardBg, borderColor: theme.cardBorder, ...glassStyle }}>
+          {waUrl && (
+            <a href={waUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-3.5 hover:opacity-80 transition-opacity" style={rowStyle}>
+              <MessageCircle className="w-4 h-4 shrink-0" style={{ color: theme.muted }} />
+              <p className="text-sm" style={{ color: theme.text }}>{settings.phone} · WhatsApp</p>
             </a>
           )}
           {settings?.professional_email && (
-            <a href={`mailto:${settings.professional_email}`} className="flex items-center gap-3 px-4 py-3.5 hover:opacity-80 transition-opacity" style={{ borderBottom: fbUrl ? `1px solid ${theme.cardBorder}` : "none" }}>
+            <a href={`mailto:${settings.professional_email}`} className="flex items-center gap-3 px-4 py-3.5 hover:opacity-80 transition-opacity" style={rowStyle}>
               <Mail className="w-4 h-4 shrink-0" style={{ color: theme.muted }} />
               <p className="text-sm truncate" style={{ color: theme.text }}>{settings.professional_email}</p>
             </a>
           )}
+          {igUrl && (
+            <a href={igUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-3.5 hover:opacity-80 transition-opacity" style={rowStyle}>
+              <Instagram className="w-4 h-4 shrink-0" style={{ color: theme.muted }} />
+              <p className="text-sm" style={{ color: theme.text }}>Instagram</p>
+            </a>
+          )}
           {fbUrl && (
-            <a href={fbUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-3.5 hover:opacity-80 transition-opacity">
+            <a href={fbUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-3.5 hover:opacity-80 transition-opacity" style={rowStyle}>
               <Facebook className="w-4 h-4 shrink-0" style={{ color: theme.muted }} />
               <p className="text-sm" style={{ color: theme.text }}>Facebook</p>
+            </a>
+          )}
+          {webUrl && (
+            <a href={webUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-3.5 hover:opacity-80 transition-opacity">
+              <Globe className="w-4 h-4 shrink-0" style={{ color: theme.muted }} />
+              <p className="text-sm truncate" style={{ color: theme.text }}>Sitio web</p>
             </a>
           )}
         </div>
       )}
       {settings?.address && (
-        <div className="rounded-2xl border overflow-hidden" style={{ background: theme.cardBg, borderColor: theme.cardBorder, ...(theme.glass ? { backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)" } : {}) }}>
+        <div className={`rounded-2xl border overflow-hidden ${cardClass}`} style={{ background: theme.cardBg, borderColor: theme.cardBorder, ...glassStyle }}>
           <div className="px-4 py-3.5 flex items-start gap-3">
             <MapPin className="w-4 h-4 shrink-0 mt-0.5" style={{ color: theme.muted }} />
             <p className="text-sm" style={{ color: theme.text }}>{[settings.address, settings.address_city, settings.address_province].filter(Boolean).join(", ")}</p>
@@ -166,8 +204,8 @@ function InfoBlock({ theme, settings, fbUrl, mapsUrl }) {
             loading="lazy"
             src={googleMapsEmbedSrc({ address: settings.address, city: settings.address_city, province: settings.address_province, lat: settings.address_lat, lng: settings.address_lng })}
           />
-          <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 px-4 py-3 text-sm font-medium hover:opacity-80 transition-opacity" style={{ borderTop: `1px solid ${theme.cardBorder}`, color: theme.accent }}>
-            Abrir en Google Maps <ExternalLink className="w-3.5 h-3.5" />
+          <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 px-4 py-3 text-sm font-semibold hover:opacity-80 transition-opacity" style={{ borderTop: `1px solid ${theme.cardBorder}`, color: theme.accent }}>
+            <Navigation className="w-3.5 h-3.5" /> Cómo llegar <ExternalLink className="w-3.5 h-3.5" />
           </a>
         </div>
       )}
@@ -314,23 +352,15 @@ export default function PublicBooking() {
   const waUrl = whatsappUrl(settings?.phone);
   const mapsUrl = googleMapsUrl(settings?.address, settings?.address_city, settings?.address_province);
   const frameClass = PHOTO_FRAME_CLASS[settings?.photo_frame] || PHOTO_FRAME_CLASS.circle;
-  const glassCard = theme.glass ? { backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)" } : {};
-  const cardStyle = { background: theme.cardBg, borderColor: theme.cardBorder, color: theme.text, ...glassCard };
+  const glassStyle = theme.glass ? { backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)" } : {};
+  const cardClass = theme.cardClass || "";
+  const cardStyle = { background: theme.cardBg, borderColor: theme.cardBorder, color: theme.text, ...glassStyle };
 
-  const Avatar = ({ size }) => (
-    settings?.photo_url ? (
-      <img
-        src={settings.photo_url}
-        alt={settings.practice_name}
-        className={`${size} object-cover block ${frameClass}`}
-        style={{ boxShadow: `0 0 0 4px ${theme.bg}${theme.neon ? `, 0 0 24px ${brand}66` : ""}` }}
-      />
-    ) : (
-      <div className={`${size} flex items-center justify-center text-2xl font-heading font-bold ${frameClass}`} style={{ background: brand, color: theme.accentText, boxShadow: `0 0 0 4px ${theme.bg}` }}>
-        {(settings?.practice_name || "?")[0]?.toUpperCase()}
-      </div>
-    )
-  );
+  const primaryBtnStyle = {
+    backgroundColor: brand,
+    color: theme.accentText,
+    boxShadow: theme.neon ? theme.neonGlow : undefined,
+  };
 
   // ---- Contenido de reserva (pasos), reutilizado en mobile (bajo tab) y desktop (columna fija) ----
   const BookingSteps = (
@@ -362,7 +392,7 @@ export default function PublicBooking() {
         <div className="space-y-3">
           <h2 className="font-heading font-semibold text-lg" style={{ color: theme.text }}>Elegí el servicio</h2>
           {services.length === 0 ? (
-            <div className="p-8 text-center space-y-3 rounded-2xl border border-dashed" style={cardStyle}>
+            <div className={`p-8 text-center space-y-3 rounded-2xl border border-dashed ${cardClass}`} style={cardStyle}>
               <CalendarX className="w-12 h-12 mx-auto opacity-40" style={{ color: theme.muted }} />
               <div>
                 <p className="font-medium" style={{ color: theme.text }}>Todavía no hay servicios disponibles</p>
@@ -375,7 +405,7 @@ export default function PublicBooking() {
                 <button
                   key={s.id}
                   onClick={() => { setService(s); setStep(2); }}
-                  className="group w-full text-left p-4 rounded-xl border-2 hover:shadow-md transition-all cursor-pointer flex items-center justify-between"
+                  className={`group w-full text-left p-4 rounded-xl border-2 hover:shadow-md transition-all cursor-pointer flex items-center justify-between ${cardClass}`}
                   style={{ ...cardStyle, borderColor: theme.cardBorder }}
                 >
                   <div className="flex items-center gap-3 min-w-0">
@@ -402,7 +432,7 @@ export default function PublicBooking() {
       )}
 
       {step === 2 && (
-        <div className="rounded-2xl border p-5 space-y-4" style={cardStyle}>
+        <div className={`rounded-2xl border p-5 space-y-4 ${cardClass}`} style={cardStyle}>
           <div className="flex items-center justify-between">
             <h2 className="font-heading font-semibold" style={{ color: theme.text }}>Elegí fecha y hora</h2>
             <button className="text-sm hover:underline" style={{ color: theme.muted }} onClick={() => setStep(1)}>Cambiar servicio</button>
@@ -440,12 +470,12 @@ export default function PublicBooking() {
               )}
             </div>
           )}
-          <Button className="w-full" style={{ backgroundColor: brand, color: theme.accentText }} disabled={!slot} onClick={() => setStep(3)}>Continuar</Button>
+          <Button className="w-full font-semibold" style={primaryBtnStyle} disabled={!slot} onClick={() => setStep(3)}>Continuar</Button>
         </div>
       )}
 
       {step === 3 && (
-        <div className="rounded-2xl border p-5 space-y-4" style={cardStyle}>
+        <div className={`rounded-2xl border p-5 space-y-4 ${cardClass}`} style={cardStyle}>
           <div className="flex items-center justify-between">
             <h2 className="font-heading font-semibold" style={{ color: theme.text }}>Tus datos</h2>
             <button className="text-sm hover:underline" style={{ color: theme.muted }} onClick={() => setStep(2)}>Atrás</button>
@@ -460,14 +490,14 @@ export default function PublicBooking() {
           </div>
           <div className="space-y-2"><Label htmlFor="phone">Teléfono (WhatsApp) *</Label><Input id="phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+54 9 11 1234 5678" required /></div>
           <div className="space-y-2"><Label htmlFor="email">Email *</Label><Input id="email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></div>
-          <Button className="w-full" style={{ backgroundColor: brand, color: theme.accentText }} disabled={!form.first_name || !form.last_name || !form.phone || !form.email} onClick={() => setStep(4)}>
+          <Button className="w-full font-semibold" style={primaryBtnStyle} disabled={!form.first_name || !form.last_name || !form.phone || !form.email} onClick={() => setStep(4)}>
             Continuar
           </Button>
         </div>
       )}
 
       {step === 4 && (
-        <div className="rounded-2xl border p-5 space-y-4" style={cardStyle}>
+        <div className={`rounded-2xl border p-5 space-y-4 ${cardClass}`} style={cardStyle}>
           <div className="flex items-center justify-between">
             <h2 className="font-heading font-semibold" style={{ color: theme.text }}>Revisá tu reserva</h2>
             <button className="text-sm hover:underline" style={{ color: theme.muted }} onClick={() => setStep(3)}>Atrás</button>
@@ -482,7 +512,7 @@ export default function PublicBooking() {
             <Button variant="outline" className="w-full" onClick={() => setStep(2)}>
               ← Cambiar fecha u hora
             </Button>
-            <Button className="w-full" style={{ backgroundColor: brand, color: theme.accentText }} disabled={saving} onClick={handleConfirm}>
+            <Button className="w-full font-semibold" style={primaryBtnStyle} disabled={saving} onClick={handleConfirm}>
               {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Confirmar
             </Button>
           </div>
@@ -494,7 +524,7 @@ export default function PublicBooking() {
         const waMsg = buildWaMessage(service, date, slot, form);
         const confirmWaUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(waMsg)}`;
         return (
-          <div className="rounded-2xl border p-6 text-center space-y-3" style={cardStyle}>
+          <div className={`rounded-2xl border p-6 text-center space-y-3 ${cardClass}`} style={cardStyle}>
             <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center mx-auto"><Check className="w-7 h-7 text-emerald-600" /></div>
             <h2 className="font-heading font-semibold text-lg" style={{ color: theme.text }}>¡Solicitud registrada!</h2>
             <p className="text-sm" style={{ color: theme.muted }}>{service?.name}</p>
@@ -517,70 +547,57 @@ export default function PublicBooking() {
     </>
   );
 
+  // Botones Agendar/Información con jerarquía visual distinta: Agendar = relleno con el
+  // color de marca (acción principal); Información = outline/fantasma (secundaria).
+  const NavButtons = ({ className = "" }) => (
+    <div className={`flex items-center gap-2 ${className}`}>
+      <button
+        onClick={() => setTab("agendar")}
+        className="flex-1 px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+        style={tab === "agendar" ? { backgroundColor: brand, color: theme.accentText, boxShadow: theme.neon ? theme.neonGlow : "0 2px 8px rgba(0,0,0,0.15)" } : { background: "transparent", color: theme.muted, border: `1px solid ${theme.cardBorder}` }}
+      >
+        Agendar cita
+      </button>
+      <button
+        onClick={() => setTab("info")}
+        className="flex-1 px-4 py-2 rounded-xl text-sm font-medium transition-all border"
+        style={tab === "info" ? { borderColor: brand, color: brand, background: `${brand}10` } : { borderColor: theme.cardBorder, color: theme.muted, background: "transparent" }}
+      >
+        Información
+      </button>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen" style={{ background: theme.bg }}>
+    // min-h-screen en el contenedor raíz asegura que el color de fondo del tema cubra
+    // toda la pantalla en desktop, sin franja blanca abajo aunque el contenido sea corto.
+    <div className="min-h-screen w-full" style={{ background: theme.bg }}>
       {/* ============ DESKTOP (>=1024px): 2 columnas asimétricas, todo visible junto ============ */}
       <div className="hidden lg:block max-w-6xl mx-auto px-8 py-10">
         <div className="grid grid-cols-[2fr_3fr] gap-8 items-start">
           {/* Columna Perfil (~40%) */}
           <div className="space-y-4 lg:sticky lg:top-8">
-            <div
-              className="rounded-3xl border overflow-hidden"
-              style={{ background: theme.cardBg, borderColor: theme.cardBorder, ...glassCard }}
-            >
-              <div
-                className="h-28 relative overflow-hidden"
-                style={{ background: settings?.cover_image_url ? `url(${settings.cover_image_url}) center ${settings?.cover_align || "center"}/cover` : `linear-gradient(135deg, ${brand}, ${brand}55)` }}
-              >
-                {settings?.cover_image_url && <div className="absolute inset-0 bg-black/25" />}
-              </div>
-              <div className="px-6 pb-6">
-                <div className={`flex -mt-10 ${settings?.photo_align === "left" ? "justify-start" : settings?.photo_align === "right" ? "justify-end" : "justify-center"}`}>
-                  <Avatar size="w-24 h-24" />
-                </div>
-                <div className={`mt-3 ${settings?.photo_align === "left" ? "text-left" : settings?.photo_align === "right" ? "text-right" : "text-center"}`}>
-                  <h1 className="text-xl font-heading font-bold" style={{ color: theme.text }}>{settings?.practice_name || "Reservá tu turno"}</h1>
-                  {settings?.specialty && <p className="text-sm mt-0.5" style={{ color: theme.muted }}>{settings.specialty}</p>}
-                </div>
-                <div className="mt-4"><SocialIcons theme={theme} igUrl={igUrl} waUrl={waUrl} webUrl={webUrl} /></div>
-              </div>
-            </div>
-            <InfoBlock theme={theme} settings={settings} fbUrl={fbUrl} mapsUrl={mapsUrl} />
+            <ProfileHeader settings={settings} theme={theme} brand={brand} frameClass={frameClass} cardClass={cardClass} glassStyle={glassStyle} align={settings?.photo_align} size={96} />
+            <NavButtons />
+            {tab === "info" && <InfoBlock theme={theme} settings={settings} igUrl={igUrl} fbUrl={fbUrl} webUrl={webUrl} waUrl={waUrl} mapsUrl={mapsUrl} cardClass={cardClass} glassStyle={glassStyle} />}
           </div>
 
           {/* Columna Reserva (~60%) */}
-          <div>{BookingSteps}</div>
+          <div>{tab === "agendar" ? BookingSteps : (
+            <div className="rounded-2xl border p-8 text-center" style={cardStyle}>
+              <p className="text-sm" style={{ color: theme.muted }}>Elegí "Agendar cita" para reservar tu turno.</p>
+            </div>
+          )}</div>
         </div>
       </div>
 
-      {/* ============ MOBILE (<1024px): 1 columna, con tabs Agendar/Información ============ */}
-      <div className="lg:hidden max-w-md mx-auto">
-        <div
-          className="h-28 relative overflow-hidden"
-          style={{ background: settings?.cover_image_url ? `url(${settings.cover_image_url}) center ${settings?.cover_align || "center"}/cover` : `linear-gradient(135deg, ${brand}, ${brand}99)` }}
-        >
-          {settings?.cover_image_url && <div className="absolute inset-0 bg-black/25" />}
-        </div>
-        <div className={`relative z-10 px-5 -mt-10 pb-2 flex flex-col ${settings?.photo_align === "left" ? "items-start text-left" : settings?.photo_align === "right" ? "items-end text-right" : "items-center text-center"}`}>
-          <Avatar size="w-24 h-24" />
-          <h1 className="text-xl font-heading font-bold mt-3 leading-tight" style={{ color: theme.text }}>{settings?.practice_name || "Reservá tu turno"}</h1>
-          {settings?.specialty && <p className="text-sm mt-0.5" style={{ color: theme.muted }}>{settings.specialty}</p>}
-
-          <div className="mt-3 w-full"><SocialIcons theme={theme} igUrl={igUrl} waUrl={waUrl} webUrl={webUrl} /></div>
-
-          <div className="inline-flex items-center gap-1 mt-4 p-1 rounded-full mx-auto" style={{ background: theme.chipBg || `${theme.text}0d` }}>
-            <button onClick={() => setTab("agendar")} className="px-4 py-1.5 rounded-full text-sm font-medium transition-colors" style={tab === "agendar" ? { background: brand, color: theme.accentText } : { color: theme.muted }}>
-              Agendar
-            </button>
-            <button onClick={() => setTab("info")} className="px-4 py-1.5 rounded-full text-sm font-medium transition-colors" style={tab === "info" ? { background: brand, color: theme.accentText } : { color: theme.muted }}>
-              Información
-            </button>
-          </div>
-        </div>
-
-        <div className="px-4 py-5">
-          {tab === "info" ? <InfoBlock theme={theme} settings={settings} fbUrl={fbUrl} mapsUrl={mapsUrl} /> : BookingSteps}
-        </div>
+      {/* ============ MOBILE (<1024px): 1 columna ============ */}
+      <div className="lg:hidden max-w-md mx-auto px-4 py-5 space-y-4">
+        <ProfileHeader settings={settings} theme={theme} brand={brand} frameClass={frameClass} cardClass={cardClass} glassStyle={glassStyle} align={settings?.photo_align} size={88} />
+        <NavButtons />
+        {tab === "info" ? (
+          <InfoBlock theme={theme} settings={settings} igUrl={igUrl} fbUrl={fbUrl} webUrl={webUrl} waUrl={waUrl} mapsUrl={mapsUrl} cardClass={cardClass} glassStyle={glassStyle} />
+        ) : BookingSteps}
       </div>
     </div>
   );

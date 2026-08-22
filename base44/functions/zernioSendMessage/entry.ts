@@ -46,6 +46,7 @@ export default async function(req: Request): Promise<Response> {
       text: message,
       conversation_id: conversationId || "",
       account_id: practice.whatsapp_connection_type === 'qr' ? practice.wasender_session_id : practice.zernio_account_id,
+      sent_by: "human",
     });
 
     return Response.json({ ok: true, result });

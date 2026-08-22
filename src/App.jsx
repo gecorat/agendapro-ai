@@ -27,6 +27,7 @@ import Analytics from "@/pages/Analytics";
 import WelcomeGuide from "@/pages/WelcomeGuide";
 import ProfileEditor from "@/pages/ProfileEditor";
 import PublicPageEditorPage from "@/pages/PublicPageEditor";
+import TeamPublicLink from "@/pages/TeamPublicLink";
 import UpgradePlan from "@/pages/UpgradePlan";
 import AppointmentHistory from "@/pages/AppointmentHistory";
 import ReviewsManager from "@/pages/ReviewsManager";
@@ -78,6 +79,7 @@ const AuthenticatedApp = () => {
         <Route path="/welcome-guide" element={<WelcomeGuide />} />
         <Route path="/profile-editor" element={<ProfileEditor />} />
         <Route path="/public-page-editor" element={<PublicPageEditorPage />} />
+        <Route path="/enlace-consultorio" element={<TeamPublicLink />} />
         <Route path="/upgrade-plan" element={<UpgradePlan />} />
         <Route path="/appointment-history" element={<AppointmentHistory />} />
         <Route path="/reviews-manager" element={<ReviewsManager />} />

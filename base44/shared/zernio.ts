@@ -107,12 +107,16 @@ export async function orchestrateConversation(base44, ctx) {
 
   // Consultorios con plan Clinic tienen varios profesionales bajo el mismo WhatsApp: el
   // bot le pregunta al paciente con quién/qué especialidad quiere agendar antes de
-  // confirmar, salvo que ya lo haya dicho en el historial.
+  // confirmar, salvo que ya lo haya dicho en el historial. OJO: esto depende de que
+  // realmente HAYA profesionales cargados, no solo del plan — confirmado en vivo que un
+  // consultorio en plan Clinic pero sin nadie cargado igual preguntaba "¿con qué
+  // profesional preferis?" sin sentido, ya que no hay ninguno entre quien elegir.
+  const hasProfessionals = isClinic && (professionals || []).length > 0;
   const professionalsText = (professionals || [])
     .map((p) => `- ${p.first_name} ${p.last_name || ""}${p.specialty ? ` (${p.specialty})` : ""}`.trim())
     .join("\n");
-  const professionalsBlock = isClinic
-    ? `\n=== PROFESIONALES DISPONIBLES ===\n${professionalsText || "(sin profesionales cargados aún)"}\nEste consultorio tiene varios profesionales. Si el paciente todavía no dijo con quién o qué especialidad prefiere, PREGUNTASELO antes de agendar. Si dice que no tiene preferencia, se lo asigna automáticamente. Cuando agendes, completá appointment.professional_name con el nombre elegido (o dejalo vacío si no tiene preferencia).\n`
+  const professionalsBlock = hasProfessionals
+    ? `\n=== PROFESIONALES DISPONIBLES ===\n${professionalsText}\nEste consultorio tiene varios profesionales. Si el paciente todavía no dijo con quién o qué especialidad prefiere, PREGUNTASELO antes de agendar. Si dice que no tiene preferencia, se lo asigna automáticamente. Cuando agendes, completá appointment.professional_name con el nombre elegido (o dejalo vacío si no tiene preferencia).\n`
     : "";
 
   const contextPrompt = `${systemPrompt}

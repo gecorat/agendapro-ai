@@ -15,7 +15,7 @@ export default function AppLayout() {
   const [user, setUser] = useState(null);
   const [userLoading, setUserLoading] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { settings, loading: loadingSettings, preset, reload } = usePracticeSettings();
+  const { settings, loading: loadingSettings, preset, reload, isInvitedProfessional, professional } = usePracticeSettings();
 
   useEffect(() => {
     base44.auth.me().then((u) => { setUser(u); setUserLoading(false); }).catch(() => setUserLoading(false));
@@ -61,7 +61,21 @@ export default function AppLayout() {
   const planStatus = getPlanStatus(settings);
   const hasFullAssistant = planStatus.canUseWhatsApp;
 
-  const navGroups = [
+  // Un profesional invitado por una cuenta Clinic tiene acceso MUY acotado: su agenda,
+  // sus pacientes, y el enlace público del consultorio para compartir — nada de Ajustes,
+  // Chats, Reportes ni Admin, que son cosas del dueño de la cuenta.
+  const navGroups = isInvitedProfessional ? [
+    {
+      title: "Principal",
+      items: [
+        { label: "Panel", path: "/", icon: LayoutDashboard },
+        { label: "Agenda", path: "/agenda", icon: Calendar },
+        { label: "Citas pasadas", path: "/appointment-history", icon: History },
+        { label: preset.patientLabel, path: "/pacientes", icon: Users },
+        { label: "Enlace del consultorio", path: "/public-page-editor", icon: Palette },
+      ],
+    },
+  ] : [
     {
       title: "Principal",
       items: [

@@ -10,11 +10,21 @@ export function normalizePhone(phone) {
 
 // Consultado por los webhooks antes de invocar al bot. Si el profesional pausó esta
 // conversación puntual (a mano, o automáticamente al responder él mismo), el bot no debe
-// contestarle a ese paciente hasta que se reanude explícitamente.
+// contestarle a ese paciente hasta que se reanude explícitamente — o hasta que venza el
+// plazo (1h/24h) si la pausa se puso con duración definida.
 export async function isChatPaused(base44, professionalId, phone) {
   try {
     const rows = await base44.asServiceRole.entities.ChatPause.filter({ professional_id: professionalId, phone: normalizePhone(phone) });
-    return !!rows?.[0]?.paused;
+    const row = rows?.[0];
+    if (!row?.paused) return false;
+    if (row.paused_until && new Date(row.paused_until) <= new Date()) {
+      // Venció el plazo: se reanuda sola, sin que nadie tenga que tocar nada.
+      try {
+        await base44.asServiceRole.entities.ChatPause.update(row.id, { paused: false, paused_until: null });
+      } catch { /* no bloquear por esto */ }
+      return false;
+    }
+    return true;
   } catch {
     return false;
   }

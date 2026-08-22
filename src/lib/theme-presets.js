@@ -73,7 +73,9 @@ export function resolveTheme(presetKey, pageColor) {
     ...preset,
     accent,
     accentText: isLightColor(accent) ? "#0F172A" : "#FFFFFF",
-    cardBorderNeon: preset.neon ? `${accent}40` : preset.cardBorder,
+    cardBorderNeon: preset.neon ? `${accent}55` : preset.cardBorder,
+    // Sombra de brillo real para Neon Accent (botones primarios y tarjeta seleccionada).
+    neonGlow: preset.neon ? `0 0 0 1px ${accent}55, 0 0 18px ${accent}80, 0 0 40px ${accent}30` : undefined,
   };
 }
 

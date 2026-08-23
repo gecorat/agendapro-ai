@@ -37,6 +37,7 @@ export default function AdminUsers() {
   const [loading, setLoading] = useState(true);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteName, setInviteName] = useState("");
   const [inviting, setInviting] = useState(false);
   const [cancellingId, setCancellingId] = useState(null);
   const [creatingOwnPlan, setCreatingOwnPlan] = useState(false);
@@ -261,6 +262,7 @@ export default function AdminUsers() {
                 <p className="text-sm font-medium flex items-center gap-1.5"><Mail className="w-3.5 h-3.5" /> Invitación personalizada por email</p>
                 <p className="text-xs text-muted-foreground">Le llega un correo a esa persona puntual con un enlace de registro.</p>
                 <div className="flex items-center gap-2">
+                  <Input value={inviteName} onChange={(e) => setInviteName(e.target.value)} placeholder="Nombre (opcional)" className="w-32 shrink-0" />
                   <Input type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="profesional@email.com" />
                   <Button onClick={inviteUser} disabled={inviting || !inviteEmail.trim()} className="shrink-0">
                     {inviting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Enviar"}

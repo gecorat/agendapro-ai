@@ -6,8 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
-import { Plus, Pencil, Trash2, Loader2, Users, Mail, Copy, Check, Clock, UserCheck } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Users, Mail, Copy, Check, Clock, UserCheck, ShieldCheck } from "lucide-react";
 import { CLINIC_MAX_PROFESSIONALS } from "@/lib/plan-utils";
+import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 
 const EMPTY = { first_name: "", last_name: "", specialty: "", color: "#3b82f6", active: true };
 const ADDON_PRICE = 10000;
@@ -16,8 +17,11 @@ const ADDON_PRICE = 10000;
 // abre, crea SU PROPIA cuenta, y queda asociado a este consultorio con acceso acotado
 // (su agenda, sus pacientes). "Agregar manual" sigue existiendo para quien preferís
 // cargar vos mismo sin que tenga login propio (solo aparece como opción para el bot).
+// El dueño real puede además promover a cualquier profesional invitado a "co-admin":
+// ve y gestiona todo el consultorio como el dueño, menos facturación/plan.
 export default function ProfessionalsPanel() {
   const { toast } = useToast();
+  const { isOwner } = usePracticeSettings();
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -27,6 +31,7 @@ export default function ProfessionalsPanel() {
   const [inviting, setInviting] = useState(false);
   const [inviteLink, setInviteLink] = useState(null);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [togglingAdminId, setTogglingAdminId] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -111,6 +116,24 @@ export default function ProfessionalsPanel() {
     }
   };
 
+  const toggleAdmin = async (p) => {
+    const next = !p.is_team_admin;
+    const warn = next
+      ? `¿Convertir a ${p.first_name} en co-admin? Va a poder ver y gestionar todo el consultorio (invitar gente, editar perfil/servicios/horarios, ver todos los pacientes) — todo menos facturación y el plan.`
+      : `¿Sacarle el rol de co-admin a ${p.first_name}? Vuelve a ver solo su propia agenda y pacientes.`;
+    if (!confirm(warn)) return;
+    setTogglingAdminId(p.id);
+    try {
+      await base44.functions.invoke("setTeamAdmin", { professionalId: p.id, isTeamAdmin: next });
+      toast({ title: next ? `${p.first_name} ahora es co-admin` : `${p.first_name} ya no es co-admin` });
+      load();
+    } catch (err) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setTogglingAdminId(null);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -162,6 +185,7 @@ export default function ProfessionalsPanel() {
         <div className="space-y-2.5">
           {list.map((p) => {
             const isPending = p.invite_status === "pending";
+            const hasOwnAccount = p.invite_status === "accepted";
             return (
               <div key={p.id} className="bg-card rounded-2xl border border-border p-4 flex items-center gap-3">
                 <div className="w-1.5 self-stretch rounded-full shrink-0" style={{ background: p.color || "#3b82f6" }} />
@@ -171,8 +195,11 @@ export default function ProfessionalsPanel() {
                     {isPending && (
                       <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700"><Clock className="w-3 h-3" /> Esperando que acepte</span>
                     )}
-                    {p.invite_status === "accepted" && (
+                    {hasOwnAccount && (
                       <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700"><UserCheck className="w-3 h-3" /> Cuenta propia activa</span>
+                    )}
+                    {p.is_team_admin && (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary"><ShieldCheck className="w-3 h-3" /> Co-admin</span>
                     )}
                     {p.is_paid_addon && (
                       <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">+${ADDON_PRICE.toLocaleString("es-AR")}/mes</span>
@@ -181,7 +208,21 @@ export default function ProfessionalsPanel() {
                   </div>
                   {p.specialty && <p className="text-sm text-muted-foreground mt-0.5">{p.specialty}</p>}
                 </div>
-                <div className="flex gap-0.5 shrink-0">
+                <div className="flex items-center gap-1 shrink-0">
+                  {/* Promover/degradar a co-admin: exclusivo del dueño real, y solo tiene
+                      sentido una vez que la persona ya tiene su propia cuenta activa. */}
+                  {isOwner && hasOwnAccount && (
+                    <Button
+                      size="sm"
+                      variant={p.is_team_admin ? "outline" : "ghost"}
+                      className="text-xs gap-1"
+                      onClick={() => toggleAdmin(p)}
+                      disabled={togglingAdminId === p.id}
+                    >
+                      {togglingAdminId === p.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5" />}
+                      {p.is_team_admin ? "Sacar admin" : "Hacer admin"}
+                    </Button>
+                  )}
                   {!isPending && (
                     <Button size="icon" variant="ghost" className="rounded-lg" onClick={() => openEdit(p)}><Pencil className="w-4 h-4" /></Button>
                   )}

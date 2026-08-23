@@ -37,6 +37,10 @@
     "professional_ref_id": {
       "type": "string",
       "title": "Profesional (vacio = horario del dueno de la cuenta)"
+    },
+    "practice_owner_id": {
+      "type": "string",
+      "title": "Consultorio al que pertenece este horario"
     }
   },
   "required": [

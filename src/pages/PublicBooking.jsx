@@ -278,7 +278,7 @@ export default function PublicBooking() {
         const pid = s.created_by_id;
         const [servs, avail, profs] = await Promise.all([
           base44.entities.Service.filter({ created_by_id: pid, active: true }),
-          base44.entities.Availability.filter({ created_by_id: pid }),
+          base44.entities.Availability.filter({ practice_owner_id: pid }),
           s.plan === "clinic" ? base44.entities.Professional.filter({ practice_owner_id: pid, active: true }) : Promise.resolve([]),
         ]);
         setServices(servs || []);

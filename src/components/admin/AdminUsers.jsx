@@ -36,9 +36,6 @@ export default function AdminUsers() {
   const [settingsByUser, setSettingsByUser] = useState({});
   const [loading, setLoading] = useState(true);
   const [inviteOpen, setInviteOpen] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteName, setInviteName] = useState("");
-  const [inviting, setInviting] = useState(false);
   const [cancellingId, setCancellingId] = useState(null);
   const [creatingOwnPlan, setCreatingOwnPlan] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
@@ -51,27 +48,6 @@ export default function AdminUsers() {
       setLinkCopied(true);
       setTimeout(() => setLinkCopied(false), 2000);
     } catch { /* noop */ }
-  };
-
-  // Antes esto usaba base44.users.inviteUser, que manda el email NATIVO de Base44: en
-  // inglés, sin marca, confuso para alguien que nunca escuchó hablar de Base44. Ahora
-  // manda un email propio, en español, con la marca de Kame Agenda (la misma plantilla
-  // que ya usamos para confirmar turnos), directo a /register.
-  const inviteUser = async () => {
-    const email = inviteEmail.trim();
-    if (!email) return;
-    setInviting(true);
-    try {
-      await base44.functions.invoke("sendInviteEmail", { email, name: inviteName.trim() });
-      toast({ title: "Invitación enviada", description: `${email} recibió un correo con la marca de Kame Agenda para probar la app.` });
-      setInviteEmail("");
-      setInviteName("");
-      setInviteOpen(false);
-    } catch (err) {
-      toast({ title: "Error al invitar", description: err?.response?.data?.error || err.message, variant: "destructive" });
-    } finally {
-      setInviting(false);
-    }
   };
 
   const load = async () => {

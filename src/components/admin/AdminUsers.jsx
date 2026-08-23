@@ -13,7 +13,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2, Clock, UserPlus, Trash2, Ban, ShieldCheck, Crown } from "lucide-react";
+import { Loader2, Clock, UserPlus, Trash2, Ban, ShieldCheck, Crown, Copy, Check, Mail, XCircle } from "lucide-react";
 import { PLAN_LABELS } from "@/lib/plan-utils";
 
 function statusFor(settings) {
@@ -41,7 +41,22 @@ export default function AdminUsers() {
   const [inviting, setInviting] = useState(false);
   const [cancellingId, setCancellingId] = useState(null);
   const [creatingOwnPlan, setCreatingOwnPlan] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
+  const registerLink = (typeof window !== "undefined" ? window.location.origin : "") + "/register";
+
+  const copyRegisterLink = async () => {
+    try {
+      await navigator.clipboard.writeText(registerLink);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch { /* noop */ }
+  };
+
+  // Base44 no devuelve un enlace aparte para copiar — inviteUser manda un email con un
+  // link de registro embebido, sin exponerlo por separado. Por eso el "enlace para
+  // compartir" es directo a /register (cualquiera puede entrar solo, sin invitación) y
+  // el email personalizado es la vía de Base44 nativa, con seguimiento propio.
   const inviteUser = async () => {
     const email = inviteEmail.trim();
     if (!email) return;
@@ -95,11 +110,6 @@ export default function AdminUsers() {
     }
   };
 
-  // Cambiar de plan y suspender son acciones INDEPENDIENTES — antes, cambiar el plan
-  // forzaba suspended:false siempre, así que si alguien estaba suspendido y el admin
-  // tocaba el selector (aunque fuera sin querer, o para revisar algo), quedaba
-  // reactivado sin que nadie se diera cuenta. Confirmado en vivo que pasó exactamente
-  // eso. Ahora el plan no toca el estado de suspensión para nada.
   const setPlan = async (settings, plan) => {
     try {
       const data = { plan, plan_granted_by_admin: true };
@@ -115,10 +125,15 @@ export default function AdminUsers() {
     }
   };
 
+  // "Quitar override" = dejar de proteger esta cuenta del chequeo automático de
+  // Mercado Pago. Mientras tiene el override, VOS controlás el plan a mano y el chequeo
+  // de cada hora nunca la toca. Al sacarlo, vuelve a mandar Mercado Pago: si tiene una
+  // suscripción real activa, el chequeo puede volver a cambiarle el plan o reactivarla.
   const clearAdminOverride = async (settings) => {
+    if (!confirm("¿Dejar de controlar el plan de esta cuenta a mano? A partir de ahora, el chequeo automático de Mercado Pago (cada hora) va a poder cambiarle el plan según su suscripción real, sin que vos intervengas.")) return;
     try {
       await base44.entities.PracticeSettings.update(settings.id, { plan_granted_by_admin: false });
-      toast({ title: "Vuelve a depender del cobro automático" });
+      toast({ title: "Ahora depende del cobro automático de Mercado Pago de nuevo" });
       load();
     } catch (err) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -136,11 +151,6 @@ export default function AdminUsers() {
     }
   };
 
-  // "Suspender" bloquea el acceso a la app YA MISMO, sin tocar la suscripción real de
-  // Mercado Pago (para eso está el botón separado "Suspender pago"). Marca la cuenta
-  // como override de admin: así, si la suscripción real sigue activa de fondo, el
-  // chequeo automático de cada hora NUNCA la reactiva solo — confirmado en vivo que
-  // antes SÍ pasaba, exactamente el bug reportado.
   const toggleSuspend = async (settings, suspend) => {
     try {
       await base44.entities.PracticeSettings.update(settings.id, {
@@ -154,8 +164,10 @@ export default function AdminUsers() {
     }
   };
 
-  // "Suspender pago": cancela la suscripción REAL en Mercado Pago (no solo una bandera
-  // local). Es lo que realmente detiene el cobro del mes que viene.
+  // "Suspender pago": cancela la suscripción REAL en Mercado Pago. Antes no había
+  // ninguna señal visual de que había funcionado más allá del toast (que desaparece) —
+  // ahora, una vez cancelada, el botón cambia a un estado fijo "Pago cancelado" en vez
+  // de seguir mostrando la misma acción disponible.
   const cancelRealPayment = async (settings) => {
     if (!confirm("¿Cancelar la suscripción REAL de esta cuenta en Mercado Pago? No se le va a cobrar más. Esta acción es sobre el dinero real, no solo sobre el acceso a la app.")) return;
     setCancellingId(settings.id);
@@ -170,9 +182,6 @@ export default function AdminUsers() {
     }
   };
 
-  // El admin de la plataforma puede darse a sí mismo cualquier plan, gratis, para
-  // probar cosas — como nunca tiene mercadopago_subscription_id, el chequeo automático
-  // jamás la toca (no hay nada real que sincronizar).
   const grantOwnPlan = async (plan) => {
     setCreatingOwnPlan(true);
     try {
@@ -236,20 +245,32 @@ export default function AdminUsers() {
         <Dialog open={inviteOpen} onOpenChange={(o) => setInviteOpen(o)}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Invitar profesional</DialogTitle>
+              <DialogTitle>Invitar a probar Kame Agenda</DialogTitle>
             </DialogHeader>
-            <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">El invitado recibirá un correo para registrarse. Una vez que complete el onboarding, podrás asignarle un plan (incluido Clinic) desde esta misma lista.</p>
+            <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="invite-email">Email</Label>
-                <Input id="invite-email" type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="profesional@email.com" />
+                <p className="text-sm font-medium flex items-center gap-1.5"><Copy className="w-3.5 h-3.5" /> Enlace para compartir</p>
+                <p className="text-xs text-muted-foreground">Cualquiera que lo abra puede registrarse solo, sin que haga falta invitarlo uno por uno.</p>
+                <div className="flex items-center gap-2">
+                  <Input value={registerLink} readOnly className="text-xs font-mono" />
+                  <Button size="icon" variant="outline" onClick={copyRegisterLink} className="shrink-0">
+                    {linkCopied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                  </Button>
+                </div>
+              </div>
+              <div className="border-t pt-4 space-y-2">
+                <p className="text-sm font-medium flex items-center gap-1.5"><Mail className="w-3.5 h-3.5" /> Invitación personalizada por email</p>
+                <p className="text-xs text-muted-foreground">Le llega un correo a esa persona puntual con un enlace de registro.</p>
+                <div className="flex items-center gap-2">
+                  <Input type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="profesional@email.com" />
+                  <Button onClick={inviteUser} disabled={inviting || !inviteEmail.trim()} className="shrink-0">
+                    {inviting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Enviar"}
+                  </Button>
+                </div>
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setInviteOpen(false)}>Cancelar</Button>
-              <Button onClick={inviteUser} disabled={inviting || !inviteEmail.trim()}>
-                {inviting && <Loader2 className="w-4 h-4 mr-1 animate-spin" />} Enviar invitación
-              </Button>
+              <Button variant="outline" onClick={() => setInviteOpen(false)}>Cerrar</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -269,9 +290,12 @@ export default function AdminUsers() {
                       <span> · hasta {new Date(s.trial_ends_at).toLocaleDateString("es-AR")}</span>
                     )}
                     {s?.plan_granted_by_admin && (
-                      <span className="text-primary font-medium"> · Override de admin</span>
+                      <span className="text-primary font-medium"> · Vos controlás el plan a mano</span>
                     )}
-                    {s?.mercadopago_subscription_id && (
+                    {s?.mp_cancelled_by_admin && (
+                      <span className="text-muted-foreground font-medium"> · Pago cancelado</span>
+                    )}
+                    {s?.mercadopago_subscription_id && !s?.mp_cancelled_by_admin && (
                       <span> · con suscripción real de MP</span>
                     )}
                   </p>
@@ -294,11 +318,15 @@ export default function AdminUsers() {
                         </Button>
                       )}
                       {s.plan_granted_by_admin && (
-                        <Button size="sm" variant="outline" onClick={() => clearAdminOverride(s)} title="Volver a que dependa del cobro automático de Mercado Pago">
-                          Quitar override
+                        <Button size="sm" variant="outline" onClick={() => clearAdminOverride(s)} title="Dejar de controlar el plan a mano — vuelve a depender del cobro automático de Mercado Pago">
+                          Volver a automático
                         </Button>
                       )}
-                      {s.mercadopago_subscription_id && (
+                      {s.mp_cancelled_by_admin ? (
+                        <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md border border-border text-muted-foreground">
+                          <XCircle className="w-3.5 h-3.5" /> Pago cancelado
+                        </span>
+                      ) : s.mercadopago_subscription_id && (
                         <Button size="sm" variant="outline" className="gap-1 text-destructive hover:text-destructive" onClick={() => cancelRealPayment(s)} disabled={cancellingId === s.id} title="Cancela la suscripción real en Mercado Pago">
                           {cancellingId === s.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Ban className="w-4 h-4" />} Suspender pago
                         </Button>

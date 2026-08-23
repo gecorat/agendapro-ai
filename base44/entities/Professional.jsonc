@@ -1,7 +1,7 @@
 {
   "name": "Professional",
   "type": "object",
-  "description": "Un profesional dentro de un consultorio con plan Clinic (hasta 3, con opci\u00f3n de sumar m\u00e1s). El due\u00f1o de la cuenta (PracticeSettings.created_by_id) es siempre el primer profesional impl\u00edcito; los dem\u00e1s se agregan ac\u00e1.",
+  "description": "Un profesional dentro de un consultorio con plan Clinic (hasta 3, con opción de sumar más). El dueño de la cuenta (PracticeSettings.created_by_id) es siempre el primer profesional implícito; los demás se agregan acá.",
   "properties": {
     "practice_owner_id": {
       "type": "string",
@@ -19,7 +19,7 @@
     "specialty": {
       "type": "string",
       "title": "Especialidad / rol",
-      "description": "Lo que el paciente ve al elegir con qui\u00e9n quiere agendar por WhatsApp o en la p\u00e1gina p\u00fablica."
+      "description": "Lo que el paciente ve al elegir con quién quiere agendar por WhatsApp o en la página pública."
     },
     "photo_url": {
       "type": "string",
@@ -34,13 +34,13 @@
     "active": {
       "type": "boolean",
       "title": "Activo",
-      "description": "Si est\u00e1 inactivo, no se ofrece como opci\u00f3n para agendar (ej. de licencia).",
+      "description": "Si está inactivo, no se ofrece como opción para agendar (ej. de licencia).",
       "default": true
     },
     "is_owner": {
       "type": "boolean",
-      "title": "Es el due\u00f1o de la cuenta",
-      "description": "true para el registro que representa al propio profesional due\u00f1o del PracticeSettings (se crea autom\u00e1ticamente al pasar a plan Clinic).",
+      "title": "Es el dueño de la cuenta",
+      "description": "true para el registro que representa al propio profesional dueño del PracticeSettings (se crea automáticamente al pasar a plan Clinic).",
       "default": false
     },
     "email": {
@@ -69,6 +69,11 @@
     "is_paid_addon": {
       "type": "boolean",
       "title": "Cuenta como profesional extra pago (mas alla de los 3 incluidos)",
+      "default": false
+    },
+    "is_team_admin": {
+      "type": "boolean",
+      "title": "Co-admin del consultorio (todo menos facturacion/plan)",
       "default": false
     }
   },

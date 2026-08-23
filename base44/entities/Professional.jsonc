@@ -75,6 +75,24 @@
       "type": "boolean",
       "title": "Co-admin del consultorio (todo menos facturacion/plan)",
       "default": false
+    },
+    "google_calendar_connected": {
+      "type": "boolean",
+      "title": "Google Calendar conectado",
+      "default": false
+    },
+    "google_refresh_token": {
+      "type": "string",
+      "title": "Refresh token de Google (privado)"
+    },
+    "google_calendar_email": {
+      "type": "string",
+      "title": "Email de la cuenta de Google conectada (solo para mostrar)"
+    },
+    "google_sync_enabled": {
+      "type": "boolean",
+      "title": "Sincronizacion activa",
+      "default": true
     }
   },
   "required": [

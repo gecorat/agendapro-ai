@@ -365,6 +365,19 @@
       "type": "boolean",
       "title": "Suscripcion cancelada por un admin (marca visual)",
       "default": false
+    },
+    "google_refresh_token": {
+      "type": "string",
+      "title": "Refresh token de Google (privado)"
+    },
+    "google_calendar_email": {
+      "type": "string",
+      "title": "Email de la cuenta de Google conectada (solo para mostrar)"
+    },
+    "google_sync_enabled": {
+      "type": "boolean",
+      "title": "Sincronizacion activa",
+      "default": true
     }
   },
   "required": [

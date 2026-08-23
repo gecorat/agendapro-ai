@@ -136,7 +136,15 @@ export default function UpgradePlan() {
     setPaying(plan);
     try {
       const res = await base44.functions.invoke("createMpPreference", { plan, origin: window.location.origin, payer_email: mpEmail });
-      if (res?.data?.init_point) {
+      if (res?.data?.applied_immediately) {
+        // Ya tenía una suscripción activa: se actualizó el monto en el momento, sin
+        // pasar por el checkout de nuevo.
+        toast({ title: `Listo, ya estás en el plan ${PLAN_LABELS[plan]}`, description: "Se actualizó tu suscripción existente, sin generar un cobro duplicado." });
+        setEmailDialogPlan(null);
+        await reload();
+        const subRes = await base44.functions.invoke("getSubscriptionDetails", {});
+        setSubscription(subRes?.data?.subscription || null);
+      } else if (res?.data?.init_point) {
         window.location.href = res.data.init_point;
       } else {
         throw new Error(res?.data?.error || "No se pudo iniciar el pago");
@@ -145,7 +153,6 @@ export default function UpgradePlan() {
       toast({ title: "No se pudo iniciar el pago", description: err.message, variant: "destructive" });
     } finally {
       setPaying(null);
-      setEmailDialogPlan(null);
     }
   };
 

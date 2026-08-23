@@ -36,13 +36,14 @@ import CancelAppointment from "@/pages/CancelAppointment";
 import RescheduleAppointment from "@/pages/RescheduleAppointment";
 import WhatsAppCallback from "@/pages/WhatsAppCallback";
 import InviteAccept from "@/pages/InviteAccept";
+import GoogleCalendarCallback from "@/pages/GoogleCalendarCallback";
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated } = useAuth();
   const location = useLocation();
 
   const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/reset-password"];
-  if (location.pathname.startsWith("/u/") || location.pathname.startsWith("/r/") || location.pathname.startsWith("/c/") || location.pathname.startsWith("/x/") || location.pathname.startsWith("/reschedule/") || location.pathname.startsWith("/whatsapp/callback") || location.pathname.startsWith("/invitacion/") || location.pathname === "/landing-preview" || PUBLIC_PATHS.includes(location.pathname)) return null;
+  if (location.pathname.startsWith("/u/") || location.pathname.startsWith("/r/") || location.pathname.startsWith("/c/") || location.pathname.startsWith("/x/") || location.pathname.startsWith("/reschedule/") || location.pathname.startsWith("/whatsapp/callback") || location.pathname.startsWith("/invitacion/") || location.pathname === "/google-calendar-callback" || location.pathname === "/landing-preview" || PUBLIC_PATHS.includes(location.pathname)) return null;
 
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
@@ -106,6 +107,7 @@ function App() {
             <Route path="/reschedule/:token" element={<RescheduleAppointment />} />
             <Route path="/whatsapp/callback" element={<WhatsAppCallback />} />
             <Route path="/invitacion/:token" element={<InviteAccept />} />
+            <Route path="/google-calendar-callback" element={<GoogleCalendarCallback />} />
             <Route path="/landing-preview" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />

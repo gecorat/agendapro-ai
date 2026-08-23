@@ -52,22 +52,22 @@ export default function AdminUsers() {
     } catch { /* noop */ }
   };
 
-  // Base44 no devuelve un enlace aparte para copiar — inviteUser manda un email con un
-  // link de registro embebido, sin exponerlo por separado. Por eso el "enlace para
-  // compartir" es directo a /register (cualquiera puede entrar solo, sin invitación) y
-  // el email personalizado es la vía de Base44 nativa, con seguimiento propio.
+  // Antes esto usaba base44.users.inviteUser, que manda el email NATIVO de Base44: en
+  // inglés, sin marca, confuso para alguien que nunca escuchó hablar de Base44. Ahora
+  // manda un email propio, en español, con la marca de Kame Agenda (la misma plantilla
+  // que ya usamos para confirmar turnos), directo a /register.
   const inviteUser = async () => {
     const email = inviteEmail.trim();
     if (!email) return;
     setInviting(true);
     try {
-      await base44.users.inviteUser(email, "user");
-      toast({ title: "Invitación enviada", description: `${email} recibirá un correo para registrarse.` });
+      await base44.functions.invoke("sendInviteEmail", { email, name: inviteName.trim() });
+      toast({ title: "Invitación enviada", description: `${email} recibió un correo con la marca de Kame Agenda para probar la app.` });
       setInviteEmail("");
+      setInviteName("");
       setInviteOpen(false);
-      load();
     } catch (err) {
-      toast({ title: "Error al invitar", description: err.message, variant: "destructive" });
+      toast({ title: "Error al invitar", description: err?.response?.data?.error || err.message, variant: "destructive" });
     } finally {
       setInviting(false);
     }

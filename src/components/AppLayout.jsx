@@ -114,7 +114,7 @@ export default function AppLayout() {
   // nombre, su rol (Administrador para el dueño o un co-admin; Usuario para un invitado
   // normal del plan Clinic), y su propia foto de perfil si la cargó (si no, el logo de
   // siempre).
-  const myPhoto = isOwner ? settings?.photo_url : professional?.photo_url;
+  const myPhoto = isOwner ? settings?.avatar_url : professional?.photo_url;
   const myName = isOwner
     ? (settings?.practice_name || user?.full_name || "Mi cuenta")
     : (`${professional?.first_name || ""} ${professional?.last_name || ""}`.trim() || user?.full_name || "Usuario");

@@ -1,9 +1,14 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { PLAN_PRICES, PLAN_LABELS } from '../../shared/plan.ts';
 
-// Crea una SUSCRIPCIÓN recurrente (Preapproval de Mercado Pago), no un cobro único: MP
-// cobra automáticamente cada mes y avisa por webhook (ver mercadopagoWebhook) si el pago
-// falla, se pausa o se cancela.
+// Antes, CADA cambio de plan (incluso pasar de Pro a Clinic) creaba una suscripción
+// NUEVA en Mercado Pago y pisaba el mercadopago_subscription_id guardado — la
+// suscripción VIEJA quedaba huérfana, nadie la cancelaba, y seguía cobrando para
+// siempre en paralelo. Ahora: si ya hay una suscripción activa (authorized), en vez de
+// crear una nueva, actualizamos el MONTO de la misma al toque — sin checkout, sin que
+// el profesional tenga que volver a autorizar nada, porque el medio de pago ya está
+// cargado de antes. Solo se crea una suscripción nueva de cero cuando no hay ninguna
+// activa (primera vez, o una que ya estaba cancelada).
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
@@ -13,11 +18,6 @@ export default async function(req) {
     const body = await req.json();
     const plan = body?.plan;
     const origin = body?.origin || 'https://agendate.base44.app';
-    // Antes se usaba user.email (el login de la app) como payer_email — pero Mercado Pago
-    // exige que coincida EXACTO con la cuenta de MP que realmente paga, y no tienen por qué
-    // ser el mismo email. Confirmado en vivo: si no coinciden, MP rechaza el pago con "tu
-    // email no coincide con el de la suscripción". Ahora se lo pedimos al profesional en
-    // el momento de pagar, en vez de asumirlo.
     const payerEmail = body?.payer_email || user.email;
     if (!plan || !PLAN_PRICES[plan]) {
       return Response.json({ error: 'Plan inválido' }, { status: 400 });
@@ -33,6 +33,37 @@ export default async function(req) {
     const practice = practices?.[0];
     if (!practice) return Response.json({ error: 'No hay configuración de consultorio' }, { status: 400 });
 
+    // ¿Ya tiene una suscripción activa de verdad? Si es así, actualizamos en vez de crear.
+    if (practice.mercadopago_subscription_id) {
+      const checkRes = await fetch(`https://api.mercadopago.com/preapproval/${practice.mercadopago_subscription_id}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (checkRes.ok) {
+        const existing = await checkRes.json();
+        if (existing.status === 'authorized') {
+          const updateRes = await fetch(`https://api.mercadopago.com/preapproval/${practice.mercadopago_subscription_id}`, {
+            method: 'PUT',
+            headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              reason: `Kame Agenda — Plan ${PLAN_LABELS[plan]}`,
+              auto_recurring: { transaction_amount: PLAN_PRICES[plan], currency_id: 'ARS' },
+            }),
+          });
+          if (!updateRes.ok) {
+            const errText = await updateRes.text();
+            return Response.json({ error: `Mercado Pago rechazó el cambio: ${errText}` }, { status: 502 });
+          }
+          await base44.asServiceRole.entities.PracticeSettings.update(practice.id, {
+            plan,
+            suspended: false,
+            plan_granted_by_admin: false,
+          });
+          return Response.json({ applied_immediately: true, plan });
+        }
+      }
+      // si no está authorized (cancelada, pausada, etc.), seguimos abajo y creamos una nueva
+    }
+
     const preapprovalBody = {
       reason: `Kame Agenda — Plan ${PLAN_LABELS[plan]}`,
       auto_recurring: {
@@ -43,13 +74,7 @@ export default async function(req) {
       },
       back_url: `${origin}/upgrade-plan?status=success`,
       payer_email: payerEmail,
-      // Mandamos la URL de notificaciones explícita en vez de depender de que quede
-      // configurada aparte en el panel de Mercado Pago — así el webhook funciona apenas
-      // se carga el Access Token, sin pasos manuales extra.
       notification_url: 'https://base44.app/api/apps/6a726ce53f9d0f63f3816283/functions/mercadopagoWebhook',
-      // Guardamos acá el plan y el id del consultorio para poder identificar todo esto
-      // cuando llegue la notificación del webhook (no confiamos solo en el id guardado
-      // en nuestra base, por si el usuario reintenta el pago y genera otra suscripción).
       external_reference: JSON.stringify({ practice_id: practice.id, plan }),
     };
 

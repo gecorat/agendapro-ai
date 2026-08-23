@@ -15,7 +15,7 @@ export default function AppLayout() {
   const [user, setUser] = useState(null);
   const [userLoading, setUserLoading] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { settings, loading: loadingSettings, preset, reload, isInvitedProfessional, hasFullAccess, canManageBilling } = usePracticeSettings();
+  const { settings, loading: loadingSettings, preset, reload, hasFullAccess, canManageBilling } = usePracticeSettings();
 
   useEffect(() => {
     base44.auth.me().then((u) => { setUser(u); setUserLoading(false); }).catch(() => setUserLoading(false));
@@ -62,9 +62,10 @@ export default function AppLayout() {
   const hasFullAssistant = planStatus.canUseWhatsApp;
 
   // Un profesional invitado por una cuenta Clinic tiene acceso MUY acotado: su agenda,
-  // sus pacientes, y el enlace público del consultorio para compartir — nada de Ajustes,
-  // Chats, Reportes ni Admin, que son cosas del dueño de la cuenta.
-  const navGroups = isInvitedProfessional ? [
+  // sus pacientes, y el enlace público del consultorio para compartir. Si fue promovido a
+  // co-admin (hasFullAccess), ve TODO como el dueño excepto Planes/facturación, que queda
+  // exclusivo del dueño real (canManageBilling).
+  const navGroups = !hasFullAccess ? [
     {
       title: "Principal",
       items: [
@@ -101,7 +102,7 @@ export default function AppLayout() {
         { label: "Guía", path: "/welcome-guide", icon: BookOpen },
         { label: "Mi perfil", path: "/profile-editor", icon: UserCircle },
         { label: "Página pública", path: "/public-page-editor", icon: Palette },
-        { label: "Planes", path: "/upgrade-plan", icon: CreditCard },
+        ...(canManageBilling ? [{ label: "Planes", path: "/upgrade-plan", icon: CreditCard }] : []),
       ],
     },
   ];

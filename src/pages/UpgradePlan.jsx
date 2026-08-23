@@ -5,24 +5,101 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
-import { getPlanStatus, PLAN_PRICES, PLAN_LABELS } from "@/lib/plan-utils";
-import { Check, Loader2, Sparkles, CreditCard, Lock } from "lucide-react";
+import { getPlanStatus, getWhatsAppUsage, PLAN_PRICES, PLAN_LABELS, CLINIC_MAX_PROFESSIONALS } from "@/lib/plan-utils";
+import { Check, Loader2, Sparkles, CreditCard, Lock, MessageCircle, Users, Calendar, XCircle, ShieldCheck } from "lucide-react";
 
 const BASIC_FEATURES = ["Página pública de reservas", "Agenda manual + calendario", "Gestión de pacientes", "Confirmaciones por email", "Envío manual por WhatsApp"];
 const PRO_FEATURES = ["Bot de WhatsApp con IA 24/7", "Conexión de tu propio número", "Recordatorios automáticos por WhatsApp", "Hasta 300 conversaciones mensuales"];
 const CLINIC_FEATURES = ["Hasta 3 profesionales con agendas independientes", "Un WhatsApp centralizado que reparte turnos", "Hasta 1.000 conversaciones mensuales", "Reportes por profesional"];
 
+function CurrentPlanCard({ settings, status, subscription, loadingSub, onCancel, cancelling, professionalCount }) {
+  const usage = getWhatsAppUsage(settings);
+  const hasWhatsAppLimit = status.plan === "pro" || status.plan === "clinic";
+
+  return (
+    <Card className="p-5 space-y-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-sm text-muted-foreground">Plan actual</p>
+          <p className="font-heading font-bold text-2xl">{PLAN_LABELS[status.plan] || "—"}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {settings?.plan_granted_by_admin && (
+            <Badge className="bg-primary/10 text-primary gap-1"><ShieldCheck className="w-3 h-3" /> Asignado por admin</Badge>
+          )}
+          {status.isTrial && (
+            <Badge className={status.trialExpired ? "bg-destructive/10 text-destructive" : "bg-amber-100 text-amber-700"}>
+              {status.trialExpired ? "Prueba expirada" : `${status.daysLeft} días de prueba`}
+            </Badge>
+          )}
+          {status.suspended && <Badge className="bg-destructive/10 text-destructive">Suspendido</Badge>}
+        </div>
+      </div>
+
+      {hasWhatsAppLimit && (
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between text-sm">
+            <span className="flex items-center gap-1.5 text-muted-foreground"><MessageCircle className="w-3.5 h-3.5" /> Conversaciones de WhatsApp este mes</span>
+            <span className="font-medium">{usage.used} / {usage.total}</span>
+          </div>
+          <div className="h-2 rounded-full bg-muted overflow-hidden">
+            <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${Math.min(100, usage.ratio * 100)}%` }} />
+          </div>
+        </div>
+      )}
+
+      {status.plan === "clinic" && (
+        <div className="flex items-center justify-between text-sm">
+          <span className="flex items-center gap-1.5 text-muted-foreground"><Users className="w-3.5 h-3.5" /> Profesionales en el equipo</span>
+          <span className="font-medium">{professionalCount} {professionalCount > CLINIC_MAX_PROFESSIONALS ? `(${professionalCount - CLINIC_MAX_PROFESSIONALS} con costo adicional)` : `/ ${CLINIC_MAX_PROFESSIONALS} incluidos`}</span>
+        </div>
+      )}
+
+      {!settings?.plan_granted_by_admin && (
+        <div className="rounded-xl bg-muted/50 p-3 text-sm">
+          {loadingSub ? (
+            <span className="text-muted-foreground flex items-center gap-1.5"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Consultando tu suscripción en Mercado Pago...</span>
+          ) : subscription ? (
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <span className="flex items-center gap-1.5 text-muted-foreground">
+                <Calendar className="w-3.5 h-3.5" />
+                {subscription.status === "authorized"
+                  ? `Próximo cobro: ${subscription.next_payment_date ? new Date(subscription.next_payment_date).toLocaleDateString("es-AR") : "—"} · $${(subscription.amount || 0).toLocaleString("es-AR")}`
+                  : `Estado en Mercado Pago: ${subscription.status}`}
+              </span>
+              {subscription.status === "authorized" && (
+                <Button size="sm" variant="outline" className="gap-1.5 text-destructive hover:text-destructive" onClick={onCancel} disabled={cancelling}>
+                  {cancelling ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5" />} Cancelar suscripción
+                </Button>
+              )}
+            </div>
+          ) : status.hasPaidPlan ? (
+            <span className="text-muted-foreground">No encontramos una suscripción de Mercado Pago activa para esta cuenta.</span>
+          ) : (
+            <span className="text-muted-foreground">Todavía no tenés una suscripción paga.</span>
+          )}
+        </div>
+      )}
+    </Card>
+  );
+}
+
 export default function UpgradePlan() {
   const { toast } = useToast();
-  const { settings } = usePracticeSettings();
+  const { settings, reload } = usePracticeSettings();
   const status = getPlanStatus(settings);
   const [paying, setPaying] = useState(null);
   const [mpStatus, setMpStatus] = useState(null);
   const [emailDialogPlan, setEmailDialogPlan] = useState(null);
   const [mpEmail, setMpEmail] = useState("");
+  const [subscription, setSubscription] = useState(null);
+  const [loadingSub, setLoadingSub] = useState(true);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  const [professionalCount, setProfessionalCount] = useState(0);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -34,6 +111,19 @@ export default function UpgradePlan() {
       }
     }
   }, [toast]);
+
+  useEffect(() => {
+    if (!settings) return;
+    setLoadingSub(true);
+    base44.functions.invoke("getSubscriptionDetails", {})
+      .then((res) => setSubscription(res?.data?.subscription || null))
+      .catch(() => setSubscription(null))
+      .finally(() => setLoadingSub(false));
+    if (status.plan === "clinic") {
+      base44.entities.Professional.list().then((rows) => setProfessionalCount((rows || []).length)).catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings?.id, settings?.plan]);
 
   const handlePay = async (plan) => {
     setMpEmail(settings?.professional_email || "");
@@ -59,11 +149,26 @@ export default function UpgradePlan() {
     }
   };
 
+  const handleCancel = async () => {
+    setCancelling(true);
+    try {
+      await base44.functions.invoke("cancelSubscription", {});
+      toast({ title: "Suscripción cancelada", description: "Se canceló en Mercado Pago y tu cuenta quedó suspendida." });
+      setCancelConfirmOpen(false);
+      await reload();
+      setSubscription((prev) => prev ? { ...prev, status: "cancelled" } : prev);
+    } catch (err) {
+      toast({ title: "No se pudo cancelar", description: err?.response?.data?.error || err.message, variant: "destructive" });
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-6">
       <div>
         <h1 className="text-xl font-heading font-semibold">Centro de planes</h1>
-        <p className="text-sm text-muted-foreground">Elegí tu plan y desbloqueá las funciones premium</p>
+        <p className="text-sm text-muted-foreground">Tu plan actual, uso, y opciones para subir de nivel</p>
       </div>
 
       {mpStatus === "success" && (
@@ -73,64 +178,64 @@ export default function UpgradePlan() {
         </Card>
       )}
 
-      <Card className="p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground">Plan actual</p>
-            <p className="font-heading font-semibold text-lg">{PLAN_LABELS[status.plan] || "—"}</p>
-          </div>
-          {status.isTrial && (
-            <Badge className={status.trialExpired ? "bg-destructive/10 text-destructive" : "bg-amber-100 text-amber-700"}>
-              {status.trialExpired ? "Prueba expirada" : `${status.daysLeft} días de prueba`}
-            </Badge>
-          )}
+      <CurrentPlanCard
+        settings={settings}
+        status={status}
+        subscription={subscription}
+        loadingSub={loadingSub}
+        onCancel={() => setCancelConfirmOpen(true)}
+        cancelling={cancelling}
+        professionalCount={professionalCount}
+      />
+
+      <div>
+        <h2 className="font-heading font-semibold mb-3">Cambiar de plan</h2>
+        <div className="grid md:grid-cols-3 gap-4">
+          <Card className={`p-6 flex flex-col ${status.plan === "basic" ? "border-2 border-primary" : ""}`}>
+            <span className="font-heading font-semibold text-lg">Básico</span>
+            <p className="text-3xl font-heading font-bold mt-2">{PLAN_PRICES.basic}<span className="text-sm font-normal text-muted-foreground"> ARS/mes</span></p>
+            <ul className="mt-4 space-y-2.5 flex-1">
+              {BASIC_FEATURES.map((f) => <li key={f} className="flex items-start gap-2 text-sm"><Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" /> {f}</li>)}
+            </ul>
+            <Button className="mt-6" onClick={() => handlePay("basic")} disabled={paying === "basic" || status.plan === "basic"}>
+              {paying === "basic" ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <CreditCard className="w-4 h-4 mr-1" />}
+              {status.plan === "basic" ? "Plan actual" : "Suscribirme"}
+            </Button>
+          </Card>
+
+          <Card className={`p-6 flex flex-col ${status.plan === "pro" ? "border-2 border-primary" : ""}`}>
+            <div className="flex items-center gap-2">
+              <span className="font-heading font-semibold text-lg">Pro</span>
+              <span className="text-xs rounded-full bg-primary/10 text-primary px-2 py-0.5 font-medium">Popular</span>
+            </div>
+            <p className="text-3xl font-heading font-bold mt-2">{PLAN_PRICES.pro}<span className="text-sm font-normal text-muted-foreground"> ARS/mes</span></p>
+            <ul className="mt-4 space-y-2.5 flex-1">
+              <li className="text-xs font-medium text-muted-foreground uppercase tracking-wide pb-1">Todo lo del Básico +</li>
+              {PRO_FEATURES.map((f) => <li key={f} className="flex items-start gap-2 text-sm"><Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" /> {f}</li>)}
+            </ul>
+            <Button className="mt-6" onClick={() => handlePay("pro")} disabled={paying === "pro" || status.plan === "pro"}>
+              {paying === "pro" ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <CreditCard className="w-4 h-4 mr-1" />}
+              {status.plan === "pro" ? "Plan actual" : "Suscribirme"}
+            </Button>
+          </Card>
+
+          <Card className={`p-6 flex flex-col ${status.plan === "clinic" ? "border-2 border-primary" : ""}`}>
+            <div className="flex items-center gap-2">
+              <span className="font-heading font-semibold text-lg">{PLAN_LABELS.clinic}</span>
+              <Sparkles className="w-4 h-4 text-amber-500" />
+            </div>
+            <p className="text-3xl font-heading font-bold mt-2">{PLAN_PRICES.clinic}<span className="text-sm font-normal text-muted-foreground"> ARS/mes</span></p>
+            <ul className="mt-4 space-y-2.5 flex-1">
+              <li className="text-xs font-medium text-muted-foreground uppercase tracking-wide pb-1">Todo lo del Pro +</li>
+              {CLINIC_FEATURES.map((f) => <li key={f} className="flex items-start gap-2 text-sm"><Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" /> {f}</li>)}
+            </ul>
+            <p className="text-xs text-muted-foreground mt-2">+$10.000/mes por cada profesional que sumes más allá de los {CLINIC_MAX_PROFESSIONALS} incluidos.</p>
+            <Button className="mt-4" onClick={() => handlePay("clinic")} disabled={paying === "clinic" || status.plan === "clinic"}>
+              {paying === "clinic" ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <CreditCard className="w-4 h-4 mr-1" />}
+              {status.plan === "clinic" ? "Plan actual" : "Suscribirme"}
+            </Button>
+          </Card>
         </div>
-      </Card>
-
-      <div className="grid md:grid-cols-3 gap-4">
-        <Card className={`p-6 flex flex-col ${status.plan === "basic" ? "border-2 border-primary" : ""}`}>
-          <span className="font-heading font-semibold text-lg">Básico</span>
-          <p className="text-3xl font-heading font-bold mt-2">{PLAN_PRICES.basic}<span className="text-sm font-normal text-muted-foreground"> ARS/mes</span></p>
-          <ul className="mt-4 space-y-2.5 flex-1">
-            {BASIC_FEATURES.map((f) => <li key={f} className="flex items-start gap-2 text-sm"><Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" /> {f}</li>)}
-          </ul>
-          <Button className="mt-6" onClick={() => handlePay("basic")} disabled={paying === "basic" || status.plan === "basic"}>
-            {paying === "basic" ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <CreditCard className="w-4 h-4 mr-1" />}
-            {status.plan === "basic" ? "Plan actual" : "Suscribirme"}
-          </Button>
-        </Card>
-
-        <Card className={`p-6 flex flex-col ${status.plan === "pro" ? "border-2 border-primary" : ""}`}>
-          <div className="flex items-center gap-2">
-            <span className="font-heading font-semibold text-lg">Pro</span>
-            <span className="text-xs rounded-full bg-primary/10 text-primary px-2 py-0.5 font-medium">Popular</span>
-          </div>
-          <p className="text-3xl font-heading font-bold mt-2">{PLAN_PRICES.pro}<span className="text-sm font-normal text-muted-foreground"> ARS/mes</span></p>
-          <ul className="mt-4 space-y-2.5 flex-1">
-            <li className="text-xs font-medium text-muted-foreground uppercase tracking-wide pb-1">Todo lo del Básico +</li>
-            {PRO_FEATURES.map((f) => <li key={f} className="flex items-start gap-2 text-sm"><Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" /> {f}</li>)}
-          </ul>
-          <Button className="mt-6" onClick={() => handlePay("pro")} disabled={paying === "pro" || status.plan === "pro"}>
-            {paying === "pro" ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <CreditCard className="w-4 h-4 mr-1" />}
-            {status.plan === "pro" ? "Plan actual" : "Suscribirme"}
-          </Button>
-        </Card>
-
-        <Card className={`p-6 flex flex-col ${status.plan === "clinic" ? "border-2 border-primary" : ""}`}>
-          <div className="flex items-center gap-2">
-            <span className="font-heading font-semibold text-lg">{PLAN_LABELS.clinic}</span>
-            <Sparkles className="w-4 h-4 text-amber-500" />
-          </div>
-          <p className="text-3xl font-heading font-bold mt-2">{PLAN_PRICES.clinic}<span className="text-sm font-normal text-muted-foreground"> ARS/mes</span></p>
-          <ul className="mt-4 space-y-2.5 flex-1">
-            <li className="text-xs font-medium text-muted-foreground uppercase tracking-wide pb-1">Todo lo del Pro +</li>
-            {CLINIC_FEATURES.map((f) => <li key={f} className="flex items-start gap-2 text-sm"><Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" /> {f}</li>)}
-          </ul>
-          <Button className="mt-6" onClick={() => handlePay("clinic")} disabled={paying === "clinic" || status.plan === "clinic"}>
-            {paying === "clinic" ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <CreditCard className="w-4 h-4 mr-1" />}
-            {status.plan === "clinic" ? "Plan actual" : "Suscribirme"}
-          </Button>
-        </Card>
       </div>
 
       <Card className="p-4 bg-accent/40">
@@ -160,6 +265,25 @@ export default function UpgradePlan() {
               Continuar a Mercado Pago
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={cancelConfirmOpen} onOpenChange={setCancelConfirmOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>¿Cancelar tu suscripción?</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 pt-1">
+            <p className="text-sm text-muted-foreground">
+              Se cancela de inmediato en Mercado Pago y tu cuenta pasa a estar suspendida al toque — no se te va a cobrar de nuevo, pero perdés el acceso a las funciones pagas ahora mismo, no al final del período.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCancelConfirmOpen(false)}>Volver</Button>
+            <Button variant="destructive" onClick={handleCancel} disabled={cancelling}>
+              {cancelling && <Loader2 className="w-4 h-4 mr-1 animate-spin" />} Sí, cancelar
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

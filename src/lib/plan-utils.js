@@ -26,8 +26,9 @@ export const ADDON_PACKS = {
   pack_250: { conversations: 250, price: 30000, label: "+250 conversaciones" },
 };
 
-// Tope de profesionales incluidos en plan Clinic. No hay cobro automático por adicional
-// todavía — al llegar al tope se le pide al usuario que contacte para sumar más a mano.
+// Tope de profesionales incluidos en plan Clinic. Más allá de este número se cobra un
+// addon fijo mensual (ver PROFESSIONAL_ADDON_PRICE en base44/shared/professional-billing.ts)
+// que se aplica automáticamente al monto real de la suscripción en Mercado Pago.
 export const CLINIC_MAX_PROFESSIONALS = 3;
 
 export function getPlanStatus(settings) {

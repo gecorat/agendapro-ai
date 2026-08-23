@@ -21,6 +21,14 @@ export async function syncSubscriptionStatus(base44, accessToken, resourceId) {
   const practice = practices?.[0];
   if (!practice) return { synced: false, reason: "no_matching_practice" };
 
+  // Si un admin le asigno el plan a mano (por ejemplo, para probar sin cobrarse a si
+  // mismo), el sync automatico NUNCA debe pisarlo — sin esto, una suscripcion vieja de
+  // prueba enganchada a la cuenta podia revertir la decision manual del admin sin que
+  // nadie se diera cuenta.
+  if (practice.plan_granted_by_admin) {
+    return { synced: true, changed: false, status: preapproval.status, practice_id: practice.id, reason: "admin_override" };
+  }
+
   if (preapproval.status === "authorized") {
     const targetPlan = ref.plan || practice.plan;
     if (practice.plan !== targetPlan || practice.suspended) {

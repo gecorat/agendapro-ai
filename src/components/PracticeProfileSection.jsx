@@ -3,11 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, KeyRound, ExternalLink } from "lucide-react";
+import { Loader2, KeyRound, ExternalLink, Upload } from "lucide-react";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import { PROFESSIONAL_TYPES, getTypeLabel } from "@/lib/professional-presets";
 import { useToast } from "@/components/ui/use-toast";
 import { base44 } from "@/api/base44Client";
+import { convertImageToWebP } from "@/lib/image-utils";
 
 function Section({ title, description, children }) {
   return (
@@ -22,9 +23,11 @@ function Section({ title, description, children }) {
 }
 
 // "Mi perfil" es exclusivamente cuenta/identidad del profesional (nombre, contacto,
-// contraseña, rubro del negocio). Todo lo que tiene que ver con CÓMO se ve tu página
-// pública (foto, portada, tema, colores, enlace, dirección mostrada, redes) se movió a
-// "Página pública" — antes vivía todo mezclado acá mismo.
+// foto personal, contraseña, rubro del negocio). Todo lo que tiene que ver con CÓMO se ve
+// tu página pública (portada, tema, colores, enlace, dirección mostrada, redes) se movió a
+// "Página pública". La foto de acá (avatar_url) es DISTINTA de la de Página pública
+// (photo_url) — esta es solo para el menú lateral mientras usás la app, no para tus
+// pacientes.
 export default function PracticeProfileSection() {
   const { settings, save, reload } = usePracticeSettings();
   const { toast } = useToast();
@@ -34,8 +37,10 @@ export default function PracticeProfileSection() {
     practice_name: "",
     phone: "",
     professional_email: "",
+    avatar_url: "",
   });
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -48,6 +53,7 @@ export default function PracticeProfileSection() {
         practice_name: settings.practice_name || "",
         phone: settings.phone || "",
         professional_email: settings.professional_email || "",
+        avatar_url: settings.avatar_url || "",
       });
     }
   }, [settings]);
@@ -66,12 +72,44 @@ export default function PracticeProfileSection() {
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
+  async function handleAvatarUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingAvatar(true);
+    try {
+      // Se convierte a WebP y se achica a 512px del lado del navegador antes de subir —
+      // no hace falta más resolución para un avatar, y pesa bastante menos así.
+      const optimized = await convertImageToWebP(file, { maxDimension: 512 });
+      const { file_url } = await base44.integrations.Core.UploadFile({ file: optimized });
+      set("avatar_url", file_url);
+    } catch (err) {
+      toast({ title: "Error al subir la foto", description: err.message, variant: "destructive" });
+    } finally {
+      setUploadingAvatar(false);
+    }
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div>
         <h2 className="font-heading font-semibold">Mi perfil</h2>
         <p className="text-sm text-muted-foreground">Tus datos personales y de cuenta. Para la estética de tu página de reservas, andá a "Página pública" en el menú.</p>
       </div>
+
+      <Section title="Foto de perfil" description="Se muestra en el menú lateral mientras usás la app — no en tu página pública de reservas.">
+        <div className="flex items-center gap-3">
+          <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-border bg-accent flex items-center justify-center shrink-0">
+            {form.avatar_url ? <img src={form.avatar_url} alt="Mi perfil" className="w-full h-full object-cover" /> : <Upload className="w-5 h-5 text-muted-foreground" />}
+          </div>
+          <label className="cursor-pointer">
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md border border-input hover:bg-accent transition-colors">
+              {uploadingAvatar ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+              {form.avatar_url ? "Cambiar" : "Subir foto"}
+            </span>
+            <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={uploadingAvatar} />
+          </label>
+        </div>
+      </Section>
 
       <Section title="Identidad">
         <div className="space-y-1.5">

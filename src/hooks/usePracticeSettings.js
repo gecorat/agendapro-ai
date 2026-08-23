@@ -95,5 +95,14 @@ export function usePracticeSettings() {
     return updated;
   }
 
-  return { settings, loading, preset, typeLabel, reload: load, save, professional, isInvitedProfessional: !!professional };
+  return {
+    settings, loading, preset, typeLabel, reload: load, save, professional,
+    isInvitedProfessional: !!professional,
+    isTeamAdmin,
+    isOwner,
+    canManageBilling,
+    // Un profesional invitado ve el menu restringido SALVO que sea co-admin, en cuyo
+    // caso ve todo como el dueno (menos Plan/facturacion).
+    hasFullAccess: isOwner || isTeamAdmin,
+  };
 }

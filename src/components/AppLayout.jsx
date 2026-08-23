@@ -123,14 +123,16 @@ export default function AppLayout() {
   const SidebarContent = (
     <div className="flex h-full flex-col bg-gradient-to-b from-[#0B1130] via-[#141E4D] to-[#1B2A66] text-white">
       <div className="flex items-center gap-2 px-6 py-5 border-b border-white/10">
-        <div className="w-9 h-9 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center overflow-hidden">
-          <img src={LOGO_ICON} alt="Kame Agenda" className="w-6 h-6 object-contain" />
+        <div className="w-9 h-9 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center overflow-hidden shrink-0">
+          {myPhoto ? (
+            <img src={myPhoto} alt={myName} className="w-full h-full object-cover" />
+          ) : (
+            <img src={LOGO_ICON} alt="Kame Agenda" className="w-6 h-6 object-contain" />
+          )}
         </div>
         <div className="min-w-0">
-          <p className="font-heading font-semibold text-sm leading-tight text-white">Kame Agenda</p>
-          <p className="text-xs text-blue-200/60 truncate">
-            {settings?.practice_name || "Recepcionista virtual"}
-          </p>
+          <p className="font-heading font-semibold text-sm leading-tight text-white truncate">{myName}</p>
+          <p className="text-xs text-blue-200/60 truncate">{myRole}</p>
         </div>
       </div>
 

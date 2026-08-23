@@ -208,6 +208,11 @@ export default function AdminUsers() {
                         <Clock className="w-4 h-4" /> Extender
                       </Button>
                     )}
+                    {s.plan_granted_by_admin && (
+                      <Button size="sm" variant="outline" onClick={() => clearAdminOverride(s)} title="Volver a que dependa del cobro automático de Mercado Pago">
+                        Quitar override
+                      </Button>
+                    )}
                     <Button size="sm" variant={s.suspended ? "outline" : "destructive"} onClick={() => toggleSuspend(s, !s.suspended)}>
                       {s.suspended ? "Activar" : "Suspender"}
                     </Button>

@@ -11,9 +11,13 @@ import { getPlanStatus } from "@/lib/plan-utils";
 const DAYS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 const OWNER_VALUE = "";
 
+// Cada franja horaria ahora se etiqueta con practice_owner_id (a qué consultorio
+// pertenece) — antes no existía ese dato y la pantalla mezclaba horarios de TODA la app,
+// confirmado en vivo. Se carga vía getScopedAvailability, y cada creación acá adentro
+// arrastra ese mismo valor.
 export default function AvailabilityEditor() {
   const { toast } = useToast();
-  const { settings } = usePracticeSettings();
+  const { settings, professional, isOwner } = usePracticeSettings();
   const status = getPlanStatus(settings);
   const isClinic = status.canUseMultiProfessional;
 
@@ -24,18 +28,25 @@ export default function AvailabilityEditor() {
   const [deleting, setDeleting] = useState(null);
   const [openDay, setOpenDay] = useState(1);
   const [proFilter, setProFilter] = useState(OWNER_VALUE);
+  const [practiceOwnerId, setPracticeOwnerId] = useState(null);
 
   useEffect(() => { load(); }, [isClinic]);
 
   async function load() {
     setLoading(true);
     try {
-      const [list, pros] = await Promise.all([
-        base44.entities.Availability.filter({}),
+      const me = await base44.auth.me();
+      const ownerId = isOwner ? me.id : (professional?.practice_owner_id || null);
+      setPracticeOwnerId(ownerId);
+
+      const [res, pros] = await Promise.all([
+        base44.functions.invoke("getScopedAvailability", {}),
         isClinic ? base44.entities.Professional.filter({ active: true }) : Promise.resolve([]),
       ]);
       setProfessionals(pros || []);
-      if ((list || []).length === 0) {
+      const list = res?.data?.availability || [];
+
+      if (list.length === 0 && ownerId) {
         // Horario estándar por defecto (solo la primera vez, para el dueño de la cuenta):
         // Lunes a Viernes, mañana + almuerzo + tarde.
         await base44.entities.Availability.bulkCreate(
@@ -45,10 +56,11 @@ export default function AvailabilityEditor() {
             end_time: "18:00",
             type: "work",
             label: "",
+            practice_owner_id: ownerId,
           }))
         );
-        const seeded = await base44.entities.Availability.filter({});
-        setItems(seeded || []);
+        const seededRes = await base44.functions.invoke("getScopedAvailability", {});
+        setItems(seededRes?.data?.availability || []);
       } else {
         setItems(list);
       }
@@ -70,7 +82,7 @@ export default function AvailabilityEditor() {
     const def = type === "break" ? { start_time: "13:00", end_time: "14:00", label: "Pausa" } : { start_time: "09:00", end_time: "18:00", label: "" };
     const dup = scopedItems.some((it) => it.day_of_week === day && it.type === type && it.start_time === def.start_time && it.end_time === def.end_time);
     if (dup) return;
-    await base44.entities.Availability.create({ day_of_week: day, ...def, type, professional_ref_id: proFilter || undefined });
+    await base44.entities.Availability.create({ day_of_week: day, ...def, type, professional_ref_id: proFilter || undefined, practice_owner_id: practiceOwnerId });
     load();
   }
 
@@ -110,6 +122,7 @@ export default function AvailabilityEditor() {
           type: "work",
           label: "",
           professional_ref_id: proFilter || undefined,
+          practice_owner_id: practiceOwnerId,
         }))
       );
       await load();
@@ -124,7 +137,7 @@ export default function AvailabilityEditor() {
   async function addHoliday() {
     const now = new Date();
     const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-    await base44.entities.Availability.create({ day_of_week: 0, start_time: "00:00", end_time: "23:59", type: "holiday", date: today, label: "Feriado", professional_ref_id: proFilter || undefined });
+    await base44.entities.Availability.create({ day_of_week: 0, start_time: "00:00", end_time: "23:59", type: "holiday", date: today, label: "Feriado", professional_ref_id: proFilter || undefined, practice_owner_id: practiceOwnerId });
     load();
   }
 

@@ -13,7 +13,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2, Clock, UserPlus, Trash2 } from "lucide-react";
+import { Loader2, Clock, UserPlus, Trash2, Ban, ShieldCheck, Crown } from "lucide-react";
 import { PLAN_LABELS } from "@/lib/plan-utils";
 
 function statusFor(settings) {
@@ -32,12 +32,15 @@ function statusFor(settings) {
 
 export default function AdminUsers() {
   const { toast } = useToast();
+  const [me, setMe] = useState(null);
   const [users, setUsers] = useState([]);
   const [settingsByUser, setSettingsByUser] = useState({});
   const [loading, setLoading] = useState(true);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviting, setInviting] = useState(false);
+  const [cancellingId, setCancellingId] = useState(null);
+  const [creatingOwnPlan, setCreatingOwnPlan] = useState(false);
 
   const inviteUser = async () => {
     const email = inviteEmail.trim();
@@ -59,10 +62,12 @@ export default function AdminUsers() {
   const load = async () => {
     setLoading(true);
     try {
-      const [u, allSettings] = await Promise.all([
+      const [meRes, u, allSettings] = await Promise.all([
+        base44.auth.me(),
         base44.entities.User.list(),
         base44.entities.PracticeSettings.list(),
       ]);
+      setMe(meRes);
       setUsers(u || []);
       const map = {};
       (allSettings || []).forEach((s) => {
@@ -90,12 +95,14 @@ export default function AdminUsers() {
     }
   };
 
-  // Asignar un plan a mano marca la cuenta como "override de admin" — así el sync
-  // automático de Mercado Pago (corre cada hora) nunca la toca, ni siquiera si tiene una
-  // suscripción vieja de alguna prueba enganchada.
+  // Cambiar de plan y suspender son acciones INDEPENDIENTES — antes, cambiar el plan
+  // forzaba suspended:false siempre, así que si alguien estaba suspendido y el admin
+  // tocaba el selector (aunque fuera sin querer, o para revisar algo), quedaba
+  // reactivado sin que nadie se diera cuenta. Confirmado en vivo que pasó exactamente
+  // eso. Ahora el plan no toca el estado de suspensión para nada.
   const setPlan = async (settings, plan) => {
     try {
-      const data = { plan, suspended: false, plan_granted_by_admin: true };
+      const data = { plan, plan_granted_by_admin: true };
       if (plan === "trial") {
         const end = new Date(); end.setDate(end.getDate() + 14);
         data.trial_ends_at = end.toISOString();
@@ -121,7 +128,7 @@ export default function AdminUsers() {
   const extendTrial = async (settings) => {
     try {
       const end = new Date(); end.setDate(end.getDate() + 14);
-      await base44.entities.PracticeSettings.update(settings.id, { trial_ends_at: end.toISOString(), plan: "trial", suspended: false });
+      await base44.entities.PracticeSettings.update(settings.id, { trial_ends_at: end.toISOString(), plan: "trial" });
       toast({ title: "Trial extendido 14 días" });
       load();
     } catch (err) {
@@ -129,9 +136,17 @@ export default function AdminUsers() {
     }
   };
 
+  // "Suspender" bloquea el acceso a la app YA MISMO, sin tocar la suscripción real de
+  // Mercado Pago (para eso está el botón separado "Suspender pago"). Marca la cuenta
+  // como override de admin: así, si la suscripción real sigue activa de fondo, el
+  // chequeo automático de cada hora NUNCA la reactiva solo — confirmado en vivo que
+  // antes SÍ pasaba, exactamente el bug reportado.
   const toggleSuspend = async (settings, suspend) => {
     try {
-      await base44.entities.PracticeSettings.update(settings.id, { suspended: suspend });
+      await base44.entities.PracticeSettings.update(settings.id, {
+        suspended: suspend,
+        ...(suspend ? { plan_granted_by_admin: true } : {}),
+      });
       toast({ title: suspend ? "Cuenta suspendida" : "Cuenta reactivada" });
       load();
     } catch (err) {
@@ -139,96 +154,172 @@ export default function AdminUsers() {
     }
   };
 
+  // "Suspender pago": cancela la suscripción REAL en Mercado Pago (no solo una bandera
+  // local). Es lo que realmente detiene el cobro del mes que viene.
+  const cancelRealPayment = async (settings) => {
+    if (!confirm("¿Cancelar la suscripción REAL de esta cuenta en Mercado Pago? No se le va a cobrar más. Esta acción es sobre el dinero real, no solo sobre el acceso a la app.")) return;
+    setCancellingId(settings.id);
+    try {
+      await base44.functions.invoke("adminCancelSubscription", { practiceSettingsId: settings.id });
+      toast({ title: "Suscripción cancelada en Mercado Pago" });
+      load();
+    } catch (err) {
+      toast({ title: "No se pudo cancelar", description: err?.response?.data?.error || err.message, variant: "destructive" });
+    } finally {
+      setCancellingId(null);
+    }
+  };
+
+  // El admin de la plataforma puede darse a sí mismo cualquier plan, gratis, para
+  // probar cosas — como nunca tiene mercadopago_subscription_id, el chequeo automático
+  // jamás la toca (no hay nada real que sincronizar).
+  const grantOwnPlan = async (plan) => {
+    setCreatingOwnPlan(true);
+    try {
+      const existing = settingsByUser[me.id];
+      const data = { plan, plan_granted_by_admin: true, suspended: false };
+      if (existing) {
+        await base44.entities.PracticeSettings.update(existing.id, data);
+      } else {
+        await base44.entities.PracticeSettings.create({
+          ...data,
+          practice_name: me.full_name || "Cuenta de administrador",
+          professional_email: me.email,
+        });
+      }
+      toast({ title: `Tu cuenta ahora tiene el plan ${PLAN_LABELS[plan]}, gratis` });
+      load();
+    } catch (err) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setCreatingOwnPlan(false);
+    }
+  };
+
   if (loading) {
     return <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
   }
 
+  const myOwnSettings = me ? settingsByUser[me.id] : null;
+
   return (
-    <Card className="p-4">
-      <div className="flex items-center justify-between mb-3 gap-2">
-        <h2 className="font-heading font-semibold">Profesionales ({users.filter(u => u.role !== "admin").length})</h2>
-        <Button size="sm" onClick={() => setInviteOpen(true)}>
-          <UserPlus className="w-4 h-4 mr-1" /> Invitar
-        </Button>
-      </div>
-      <Dialog open={inviteOpen} onOpenChange={(o) => setInviteOpen(o)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Invitar profesional</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">El invitado recibirá un correo para registrarse. Una vez que complete el onboarding, podrás asignarle un plan (incluido Clinic) desde esta misma lista.</p>
-            <div className="space-y-2">
-              <Label htmlFor="invite-email">Email</Label>
-              <Input id="invite-email" type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="profesional@email.com" />
-            </div>
+    <div className="space-y-4">
+      <Card className="p-4 border-primary/30 bg-primary/5">
+        <div className="flex items-center gap-2 mb-2">
+          <Crown className="w-4 h-4 text-primary" />
+          <h2 className="font-heading font-semibold">Tu cuenta de administrador</h2>
+        </div>
+        <p className="text-sm text-muted-foreground mb-3">
+          Asignate cualquier plan a vos mismo, gratis — sin suscripción real de Mercado Pago detrás, así que nunca hay cobro ni conflicto con el chequeo automático.
+        </p>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm">
+            Plan actual: <strong>{myOwnSettings ? PLAN_LABELS[myOwnSettings.plan] || myOwnSettings.plan : "Sin configurar"}</strong>
+          </span>
+          <div className="flex gap-1.5 ml-auto">
+            {["trial", "basic", "pro", "clinic"].map((p) => (
+              <Button key={p} size="sm" variant={myOwnSettings?.plan === p ? "default" : "outline"} disabled={creatingOwnPlan} onClick={() => grantOwnPlan(p)}>
+                {PLAN_LABELS[p]}
+              </Button>
+            ))}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setInviteOpen(false)}>Cancelar</Button>
-            <Button onClick={inviteUser} disabled={inviting || !inviteEmail.trim()}>
-              {inviting && <Loader2 className="w-4 h-4 mr-1 animate-spin" />} Enviar invitación
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      <div className="space-y-2">
-        {users.filter(u => u.role !== "admin").map((u) => {
-          const s = settingsByUser[u.id];
-          const st = statusFor(s);
-          return (
-            <div key={u.id} className="p-3 rounded-lg border border-border flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-              <div className="min-w-0 flex-1">
-                <p className="font-medium truncate">{u.full_name || u.email}</p>
-                {u.full_name && <p className="text-xs text-muted-foreground truncate">{u.email}</p>}
-                <p className="text-xs text-muted-foreground truncate">
-                  {s ? `Origen: ${s.trial_origin || "landing"}` : "Sin onboarding"}{" · "}
-                  <span className={st.color}>{st.label}</span>
-                  {s?.trial_ends_at && s.plan === "trial" && (
-                    <span> · hasta {new Date(s.trial_ends_at).toLocaleDateString("es-AR")}</span>
-                  )}
-                  {s?.plan_granted_by_admin && (
-                    <span className="text-primary font-medium"> · Asignado por admin (sin cobro)</span>
-                  )}
-                </p>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                {s ? (
-                  <>
-                    <Select value={s.plan || "trial"} onValueChange={(v) => setPlan(s, v)}>
-                      <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="trial">Trial</SelectItem>
-                        <SelectItem value="basic">Básico</SelectItem>
-                        <SelectItem value="pro">Pro</SelectItem>
-                        <SelectItem value="clinic">Clinic</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {s.plan === "trial" && (
-                      <Button size="sm" variant="outline" onClick={() => extendTrial(s)} title="Extender trial 14 días" className="gap-1">
-                        <Clock className="w-4 h-4" /> Extender
-                      </Button>
-                    )}
-                    {s.plan_granted_by_admin && (
-                      <Button size="sm" variant="outline" onClick={() => clearAdminOverride(s)} title="Volver a que dependa del cobro automático de Mercado Pago">
-                        Quitar override
-                      </Button>
-                    )}
-                    <Button size="sm" variant={s.suspended ? "outline" : "destructive"} onClick={() => toggleSuspend(s, !s.suspended)}>
-                      {s.suspended ? "Activar" : "Suspender"}
-                    </Button>
-                  </>
-                ) : null}
-                <Button size="sm" variant="destructive" onClick={() => deleteUser(u, s)} title="Eliminar profesional">
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+        </div>
+      </Card>
+
+      <Card className="p-4">
+        <div className="flex items-center justify-between mb-3 gap-2">
+          <h2 className="font-heading font-semibold">Profesionales ({users.filter((u) => u.role !== "admin").length})</h2>
+          <Button size="sm" onClick={() => setInviteOpen(true)}>
+            <UserPlus className="w-4 h-4 mr-1" /> Invitar
+          </Button>
+        </div>
+        <Dialog open={inviteOpen} onOpenChange={(o) => setInviteOpen(o)}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Invitar profesional</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">El invitado recibirá un correo para registrarse. Una vez que complete el onboarding, podrás asignarle un plan (incluido Clinic) desde esta misma lista.</p>
+              <div className="space-y-2">
+                <Label htmlFor="invite-email">Email</Label>
+                <Input id="invite-email" type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="profesional@email.com" />
               </div>
             </div>
-          );
-        })}
-        {users.filter(u => u.role !== "admin").length === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-6">Aún no hay profesionales registrados.</p>
-        )}
-      </div>
-    </Card>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setInviteOpen(false)}>Cancelar</Button>
+              <Button onClick={inviteUser} disabled={inviting || !inviteEmail.trim()}>
+                {inviting && <Loader2 className="w-4 h-4 mr-1 animate-spin" />} Enviar invitación
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        <div className="space-y-2">
+          {users.filter((u) => u.role !== "admin").map((u) => {
+            const s = settingsByUser[u.id];
+            const st = statusFor(s);
+            return (
+              <div key={u.id} className="p-3 rounded-lg border border-border flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium truncate">{u.full_name || u.email}</p>
+                  {u.full_name && <p className="text-xs text-muted-foreground truncate">{u.email}</p>}
+                  <p className="text-xs text-muted-foreground truncate">
+                    {s ? `Origen: ${s.trial_origin || "landing"}` : "Sin onboarding"}{" · "}
+                    <span className={st.color}>{st.label}</span>
+                    {s?.trial_ends_at && s.plan === "trial" && (
+                      <span> · hasta {new Date(s.trial_ends_at).toLocaleDateString("es-AR")}</span>
+                    )}
+                    {s?.plan_granted_by_admin && (
+                      <span className="text-primary font-medium"> · Override de admin</span>
+                    )}
+                    {s?.mercadopago_subscription_id && (
+                      <span> · con suscripción real de MP</span>
+                    )}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                  {s ? (
+                    <>
+                      <Select value={s.plan || "trial"} onValueChange={(v) => setPlan(s, v)}>
+                        <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="trial">Trial</SelectItem>
+                          <SelectItem value="basic">Básico</SelectItem>
+                          <SelectItem value="pro">Pro</SelectItem>
+                          <SelectItem value="clinic">Clinic</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {s.plan === "trial" && (
+                        <Button size="sm" variant="outline" onClick={() => extendTrial(s)} title="Extender trial 14 días" className="gap-1">
+                          <Clock className="w-4 h-4" /> Extender
+                        </Button>
+                      )}
+                      {s.plan_granted_by_admin && (
+                        <Button size="sm" variant="outline" onClick={() => clearAdminOverride(s)} title="Volver a que dependa del cobro automático de Mercado Pago">
+                          Quitar override
+                        </Button>
+                      )}
+                      {s.mercadopago_subscription_id && (
+                        <Button size="sm" variant="outline" className="gap-1 text-destructive hover:text-destructive" onClick={() => cancelRealPayment(s)} disabled={cancellingId === s.id} title="Cancela la suscripción real en Mercado Pago">
+                          {cancellingId === s.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Ban className="w-4 h-4" />} Suspender pago
+                        </Button>
+                      )}
+                      <Button size="sm" variant={s.suspended ? "outline" : "destructive"} className="gap-1" onClick={() => toggleSuspend(s, !s.suspended)}>
+                        <ShieldCheck className="w-4 h-4" /> {s.suspended ? "Activar" : "Suspender"}
+                      </Button>
+                    </>
+                  ) : null}
+                  <Button size="sm" variant="destructive" onClick={() => deleteUser(u, s)} title="Eliminar profesional">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+          {users.filter((u) => u.role !== "admin").length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-6">Aún no hay profesionales registrados.</p>
+          )}
+        </div>
+      </Card>
+    </div>
   );
 }

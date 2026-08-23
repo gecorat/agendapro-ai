@@ -13,11 +13,11 @@ export default async function (req: Request): Promise<Response> {
     if (!scope) return Response.json({ patients: [] });
 
     const all = await base44.asServiceRole.entities.Patient.filter({ professional_id: scope.practiceOwnerId });
-    const patients = scope.isOwner
+    const patients = scope.isOwnerLike
       ? all
       : (all || []).filter((p) => p.professional_ref_id === scope.professionalRefId);
 
-    return Response.json({ patients, isOwner: scope.isOwner });
+    return Response.json({ patients, isOwner: scope.isOwnerLike });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

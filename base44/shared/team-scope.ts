@@ -14,7 +14,7 @@ export async function resolveScope(base44, user) {
   const practices = await base44.asServiceRole.entities.PracticeSettings.filter({});
   const ownPractice = practices.find((p) => p.created_by_id === user.id);
   if (ownPractice) {
-    return { practiceOwnerId: user.id, professionalRefId: null, isOwner: true, isTeamAdmin: false, canManageTeam: true, canManageBilling: true };
+    return { practiceOwnerId: user.id, professionalRefId: null, isOwner: true, isTeamAdmin: false, canManageTeam: true, canManageBilling: true, isOwnerLike: true };
   }
 
   const profs = await base44.asServiceRole.entities.Professional.filter({ user_id: user.id });

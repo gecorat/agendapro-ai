@@ -44,6 +44,7 @@ export default async function (req: Request): Promise<Response> {
     for (const day of days) {
       await base44.asServiceRole.entities.Availability.create({
         professional_ref_id: professional.id,
+        practice_owner_id: professional.practice_owner_id,
         type: 'work',
         day_of_week: day,
         start_time: start,
@@ -52,6 +53,7 @@ export default async function (req: Request): Promise<Response> {
       if (break_start && break_end) {
         await base44.asServiceRole.entities.Availability.create({
           professional_ref_id: professional.id,
+          practice_owner_id: professional.practice_owner_id,
           type: 'break',
           day_of_week: day,
           start_time: break_start,

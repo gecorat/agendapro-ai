@@ -110,6 +110,16 @@ export default function AppLayout() {
     navGroups.push({ title: "Sistema", items: [{ label: "Administración", path: "/admin", icon: Shield }] });
   }
 
+  // Encabezado del menú: en vez de la marca genérica, muestra a QUIÉN está logueado — su
+  // nombre, su rol (Administrador para el dueño o un co-admin; Usuario para un invitado
+  // normal del plan Clinic), y su propia foto de perfil si la cargó (si no, el logo de
+  // siempre).
+  const myPhoto = isOwner ? settings?.photo_url : professional?.photo_url;
+  const myName = isOwner
+    ? (settings?.practice_name || user?.full_name || "Mi cuenta")
+    : (`${professional?.first_name || ""} ${professional?.last_name || ""}`.trim() || user?.full_name || "Usuario");
+  const myRole = hasFullAccess ? "Administrador" : "Usuario";
+
   const SidebarContent = (
     <div className="flex h-full flex-col bg-gradient-to-b from-[#0B1130] via-[#141E4D] to-[#1B2A66] text-white">
       <div className="flex items-center gap-2 px-6 py-5 border-b border-white/10">

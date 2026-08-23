@@ -31,8 +31,15 @@ export default async function (req: Request): Promise<Response> {
       }
     }
 
-    const existing = await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: user.id });
+    const scope = await resolveScope(base44, user);
+    const existing = scope
+      ? await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: scope.practiceOwnerId })
+      : [];
     const current = existing?.[0];
+
+    if (scope && !scope.canManageTeam) {
+      return Response.json({ error: "No tenes permiso para editar la configuracion del consultorio" }, { status: 403 });
+    }
 
     if (current) {
       const updated = await base44.asServiceRole.entities.PracticeSettings.update(current.id, safeData);

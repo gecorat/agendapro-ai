@@ -60,6 +60,11 @@ export default function TeamPublicLink() {
           </div>
         </div>
       )}
+
+      <div className="pt-2">
+        <h2 className="font-heading font-semibold text-sm mb-2">Tu calendario personal</h2>
+        <GoogleCalendarConnectCard />
+      </div>
     </div>
   );
 }

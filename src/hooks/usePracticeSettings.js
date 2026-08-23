@@ -78,6 +78,13 @@ export function usePracticeSettings() {
   const preset = settings ? getPreset(settings.professional_type) : getPreset("other");
   const typeLabel = settings ? getTypeLabel(settings.professional_type) : "";
 
+  // isTeamAdmin: profesional invitado promovido a co-admin, ve y gestiona todo el
+  // consultorio como el dueno, pero nunca toca facturacion/plan (eso es exclusivo del
+  // dueno real, sin excepciones).
+  const isTeamAdmin = !!professional?.is_team_admin;
+  const isOwner = !professional;
+  const canManageBilling = isOwner;
+
   async function save(data) {
     // PracticeSettings.update/create ya no se puede llamar directo desde el cliente (RLS
     // restringida a admins) — esta función de backend filtra qué campos se pueden tocar.

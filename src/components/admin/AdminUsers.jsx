@@ -221,7 +221,7 @@ export default function AdminUsers() {
         <Dialog open={inviteOpen} onOpenChange={(o) => setInviteOpen(o)}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Invitar a probar Kame Agenda</DialogTitle>
+              <DialogTitle>Enlace rápido de registro</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
@@ -234,16 +234,11 @@ export default function AdminUsers() {
                   </Button>
                 </div>
               </div>
-              <div className="border-t pt-4 space-y-2">
-                <p className="text-sm font-medium flex items-center gap-1.5"><Mail className="w-3.5 h-3.5" /> Invitación personalizada por email</p>
-                <p className="text-xs text-muted-foreground">Le llega un correo a esa persona puntual con un enlace de registro.</p>
-                <div className="flex items-center gap-2">
-                  <Input value={inviteName} onChange={(e) => setInviteName(e.target.value)} placeholder="Nombre (opcional)" className="w-32 shrink-0" />
-                  <Input type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="profesional@email.com" />
-                  <Button onClick={inviteUser} disabled={inviting || !inviteEmail.trim()} className="shrink-0">
-                    {inviting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Enviar"}
-                  </Button>
-                </div>
+              <div className="border-t pt-4">
+                <p className="text-sm text-muted-foreground flex items-start gap-1.5">
+                  <Mail className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                  Para mandar una invitación personalizada por email (con la marca de Kame Agenda) y poder ver si ya se registró, andá a la pestaña <strong>Invitaciones</strong>, arriba.
+                </p>
               </div>
             </div>
             <DialogFooter>

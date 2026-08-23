@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { useToast } from "@/components/ui/use-toast";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import { getPlanStatus, getWhatsAppUsage, PLAN_PRICES, PLAN_LABELS, CLINIC_MAX_PROFESSIONALS } from "@/lib/plan-utils";
-import { Check, Loader2, Sparkles, CreditCard, Lock, MessageCircle, Users, Calendar, XCircle, ShieldCheck } from "lucide-react";
+import { Check, Loader2, Sparkles, CreditCard, Lock, MessageCircle, Users, Calendar, XCircle, ShieldCheck, ArrowRightLeft } from "lucide-react";
 
 const BASIC_FEATURES = ["Página pública de reservas", "Agenda manual + calendario", "Gestión de pacientes", "Confirmaciones por email", "Envío manual por WhatsApp"];
 const PRO_FEATURES = ["Bot de WhatsApp con IA 24/7", "Conexión de tu propio número", "Recordatorios automáticos por WhatsApp", "Hasta 300 conversaciones mensuales"];
@@ -100,6 +100,7 @@ export default function UpgradePlan() {
   const [cancelling, setCancelling] = useState(false);
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [professionalCount, setProfessionalCount] = useState(0);
+  const [switchConfirmPlan, setSwitchConfirmPlan] = useState(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -112,22 +113,54 @@ export default function UpgradePlan() {
     }
   }, [toast]);
 
+  const refreshSubscription = async () => {
+    const subRes = await base44.functions.invoke("getSubscriptionDetails", {});
+    setSubscription(subRes?.data?.subscription || null);
+  };
+
   useEffect(() => {
     if (!settings) return;
     setLoadingSub(true);
-    base44.functions.invoke("getSubscriptionDetails", {})
-      .then((res) => setSubscription(res?.data?.subscription || null))
-      .catch(() => setSubscription(null))
-      .finally(() => setLoadingSub(false));
+    refreshSubscription().finally(() => setLoadingSub(false));
     if (status.plan === "clinic") {
       base44.entities.Professional.list().then((rows) => setProfessionalCount((rows || []).length)).catch(() => {});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings?.id, settings?.plan]);
 
-  const handlePay = async (plan) => {
+  // Si ya hay una suscripción activa, cambiar de plan actualiza el monto de la MISMA
+  // suscripción en Mercado Pago al instante — no hace falta pasar por el checkout de
+  // nuevo (el medio de pago ya está cargado), y así nunca queda una suscripción vieja
+  // huérfana cobrando en paralelo.
+  const handlePay = (plan) => {
+    if (subscription?.status === "authorized") {
+      setSwitchConfirmPlan(plan);
+      return;
+    }
     setMpEmail(settings?.professional_email || "");
     setEmailDialogPlan(plan);
+  };
+
+  const confirmSwitchPlan = async () => {
+    const plan = switchConfirmPlan;
+    setPaying(plan);
+    try {
+      const res = await base44.functions.invoke("createMpPreference", { plan, origin: window.location.origin });
+      if (res?.data?.applied_immediately) {
+        toast({ title: `Listo, ya estás en el plan ${PLAN_LABELS[plan]}`, description: "Se actualizó tu suscripción existente, sin generar un cobro duplicado." });
+        await reload();
+        await refreshSubscription();
+      } else if (res?.data?.init_point) {
+        window.location.href = res.data.init_point;
+      } else {
+        throw new Error(res?.data?.error || "No se pudo cambiar el plan");
+      }
+    } catch (err) {
+      toast({ title: "No se pudo cambiar el plan", description: err.message, variant: "destructive" });
+    } finally {
+      setPaying(null);
+      setSwitchConfirmPlan(null);
+    }
   };
 
   const confirmPay = async () => {
@@ -137,13 +170,10 @@ export default function UpgradePlan() {
     try {
       const res = await base44.functions.invoke("createMpPreference", { plan, origin: window.location.origin, payer_email: mpEmail });
       if (res?.data?.applied_immediately) {
-        // Ya tenía una suscripción activa: se actualizó el monto en el momento, sin
-        // pasar por el checkout de nuevo.
         toast({ title: `Listo, ya estás en el plan ${PLAN_LABELS[plan]}`, description: "Se actualizó tu suscripción existente, sin generar un cobro duplicado." });
         setEmailDialogPlan(null);
         await reload();
-        const subRes = await base44.functions.invoke("getSubscriptionDetails", {});
-        setSubscription(subRes?.data?.subscription || null);
+        await refreshSubscription();
       } else if (res?.data?.init_point) {
         window.location.href = res.data.init_point;
       } else {
@@ -272,6 +302,25 @@ export default function UpgradePlan() {
               Continuar a Mercado Pago
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!switchConfirmPlan} onOpenChange={(open) => !open && setSwitchConfirmPlan(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><ArrowRightLeft className="w-4 h-4" /> Cambiar a plan {switchConfirmPlan && PLAN_LABELS[switchConfirmPlan]}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 pt-1">
+            <p className="text-sm text-muted-foreground">
+              Ya tenés una suscripción activa — se actualiza el monto de la misma suscripción, sin crear una nueva ni cobrarte dos veces. El cambio aplica de inmediato.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSwitchConfirmPlan(null)}>Cancelar</Button>
+            <Button onClick={confirmSwitchPlan} disabled={paying === switchConfirmPlan}>
+              {paying === switchConfirmPlan && <Loader2 className="w-4 h-4 mr-1 animate-spin" />} Confirmar cambio
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

@@ -90,15 +90,28 @@ export default function AdminUsers() {
     }
   };
 
+  // Asignar un plan a mano marca la cuenta como "override de admin" — así el sync
+  // automático de Mercado Pago (corre cada hora) nunca la toca, ni siquiera si tiene una
+  // suscripción vieja de alguna prueba enganchada.
   const setPlan = async (settings, plan) => {
     try {
-      const data = { plan, suspended: false };
+      const data = { plan, suspended: false, plan_granted_by_admin: true };
       if (plan === "trial") {
         const end = new Date(); end.setDate(end.getDate() + 14);
         data.trial_ends_at = end.toISOString();
       }
       await base44.entities.PracticeSettings.update(settings.id, data);
-      toast({ title: `Plan actualizado a ${PLAN_LABELS[plan]}` });
+      toast({ title: `Plan actualizado a ${PLAN_LABELS[plan]}`, description: "Marcado como asignado por admin — el cobro automático no lo va a tocar." });
+      load();
+    } catch (err) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const clearAdminOverride = async (settings) => {
+    try {
+      await base44.entities.PracticeSettings.update(settings.id, { plan_granted_by_admin: false });
+      toast({ title: "Vuelve a depender del cobro automático" });
       load();
     } catch (err) {
       toast({ title: "Error", description: err.message, variant: "destructive" });

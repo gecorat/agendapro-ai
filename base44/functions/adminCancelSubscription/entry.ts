@@ -35,7 +35,7 @@ export default async function (req: Request): Promise<Response> {
       return Response.json({ error: `Mercado Pago rechazo la cancelacion: ${errText}` }, { status: 502 });
     }
 
-    await base44.asServiceRole.entities.PracticeSettings.update(practice.id, { suspended: true });
+    await base44.asServiceRole.entities.PracticeSettings.update(practice.id, { suspended: true, mp_cancelled_by_admin: true });
     return Response.json({ ok: true });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

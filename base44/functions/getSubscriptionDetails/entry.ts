@@ -1,0 +1,40 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
+
+// Trae el estado REAL de la suscripción directo de Mercado Pago (próximo cobro, monto,
+// estado) para mostrarlo en /upgrade-plan — nunca confiamos en datos guardados que
+// puedan estar desactualizados.
+export default async function (req: Request): Promise<Response> {
+  try {
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const practices = await base44.asServiceRole.entities.PracticeSettings.filter({});
+    const practice = practices.find((p) => p.created_by_id === user.id);
+    if (!practice?.mercadopago_subscription_id) {
+      return Response.json({ subscription: null });
+    }
+
+    const cfg = await base44.asServiceRole.entities.PlatformConfig.filter({});
+    const accessToken = cfg?.[0]?.mercadopago_access_token;
+    if (!accessToken) return Response.json({ subscription: null });
+
+    const res = await fetch(`https://api.mercadopago.com/preapproval/${practice.mercadopago_subscription_id}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) return Response.json({ subscription: null });
+    const data = await res.json();
+
+    return Response.json({
+      subscription: {
+        status: data.status,
+        amount: data.auto_recurring?.transaction_amount,
+        next_payment_date: data.next_payment_date,
+        last_charged_amount: data.summarized?.last_charged_amount,
+        last_charged_date: data.summarized?.last_charged_date,
+      },
+    });
+  } catch (error) {
+    return Response.json({ subscription: null, error: error.message }, { status: 200 });
+  }
+}

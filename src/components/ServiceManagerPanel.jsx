@@ -37,11 +37,13 @@ export default function ServiceManagerPanel({ showHeader = true }) {
   const load = async () => {
     setLoading(true);
     try {
-      const [svcs, pros] = await Promise.all([
-        base44.entities.Service.list("-created_date"),
+      // Antes Service.list() traía servicios de TODAS las cuentas mezclados — confirmado
+      // en vivo, y era la causa de que a veces no se pudiera borrar (no eran tuyos).
+      const [svcsRes, pros] = await Promise.all([
+        base44.functions.invoke("getScopedServices", {}),
         isClinic ? base44.entities.Professional.filter({ active: true }) : Promise.resolve([]),
       ]);
-      setServices(svcs || []);
+      setServices(svcsRes?.data?.services || []);
       setProfessionals(pros || []);
     } finally {
       setLoading(false);

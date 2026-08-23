@@ -93,7 +93,8 @@ export default function ProfessionalsPanel() {
         await base44.entities.Professional.update(editing.id, form);
       } else {
         const me = await base44.auth.me();
-        await base44.entities.Professional.create({ ...form, practice_owner_id: me.id, is_paid_addon: wouldBeAddon });
+        const ownerId = isOwner ? me.id : (myProfessional?.practice_owner_id || me.id);
+        await base44.entities.Professional.create({ ...form, practice_owner_id: ownerId, is_paid_addon: wouldBeAddon });
       }
       toast({ title: editing ? "Profesional actualizado" : "Profesional agregado" });
       setOpen(false);

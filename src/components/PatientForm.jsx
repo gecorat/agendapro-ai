@@ -77,7 +77,10 @@ export default function PatientForm({ open, onClose, onSaved, patient }) {
         await base44.entities.Patient.update(patient.id, form);
         saved = { ...patient, ...form };
       } else {
-        saved = await base44.entities.Patient.create(form);
+        const me = await base44.auth.me();
+        const practiceOwnerId = isOwner ? me.id : (myProfessional?.practice_owner_id || me.id);
+        saved = await base44.entities.Patient.create({ ...form, professional_id: practiceOwnerId });
+      }
       if (onSaved) await onSaved(saved);
       onClose();
     } catch (err) {

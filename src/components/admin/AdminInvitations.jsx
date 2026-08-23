@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2, Copy, Check, Plus, Mail, Trash2 } from "lucide-react";
+import { Loader2, Copy, Check, Plus, Mail, Trash2, UserCheck, Clock, Send } from "lucide-react";
 
 function randomCode() {
   return Math.random().toString(36).slice(2, 8).toUpperCase() + Date.now().toString(36).slice(-4).toUpperCase();
@@ -17,8 +17,11 @@ export default function AdminInvitations() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
   const [label, setLabel] = useState("");
+  const [sendEmailToo, setSendEmailToo] = useState(true);
   const [copied, setCopied] = useState(null);
+  const [sendingId, setSendingId] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -31,6 +34,10 @@ export default function AdminInvitations() {
 
   useEffect(() => { load(); }, []);
 
+  // Al crear, si hay email cargado y está tildado "mandar por email", se manda de una el
+  // correo con la marca de Kame Agenda usando el código recién generado — así queda
+  // vinculado desde el arranque y su estado pasa solo de "Pendiente" a "Registrado"
+  // cuando esa persona complete el registro (ya lo hace completeOnboarding).
   const handleCreate = async (e) => {
     e.preventDefault();
     setCreating(true);
@@ -42,14 +49,37 @@ export default function AdminInvitations() {
         label: label || (email ? email : "Invitación"),
         status: "pending",
       });
-      setEmail("");
-      setLabel("");
-      toast({ title: "Invitación creada" });
+      if (email && sendEmailToo) {
+        try {
+          await base44.functions.invoke("sendInviteEmail", { email, name: name.trim(), code });
+          toast({ title: "Invitación creada y email enviado" });
+        } catch (err) {
+          toast({ title: "Invitación creada, pero el email falló", description: err?.response?.data?.error || err.message, variant: "destructive" });
+        }
+      } else {
+        toast({ title: "Invitación creada" });
+      }
+      setEmail(""); setName(""); setLabel("");
       load();
     } catch (err) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
       setCreating(false);
+    }
+  };
+
+  // Reenviar el email para una invitación que ya existe (ej. si al crearla no se mandó,
+  // o si querés insistir con alguien que no la abrió).
+  const handleSendEmail = async (inv) => {
+    if (!inv.email) return;
+    setSendingId(inv.id);
+    try {
+      await base44.functions.invoke("sendInviteEmail", { email: inv.email, name: "", code: inv.code });
+      toast({ title: "Email enviado" });
+    } catch (err) {
+      toast({ title: "No se pudo enviar", description: err?.response?.data?.error || err.message, variant: "destructive" });
+    } finally {
+      setSendingId(null);
     }
   };
 
@@ -80,9 +110,13 @@ export default function AdminInvitations() {
       <Card className="p-4">
         <h2 className="font-heading font-semibold mb-3 flex items-center gap-2"><Plus className="w-4 h-4" /> Generar invitación</h2>
         <form onSubmit={handleCreate} className="space-y-3">
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid sm:grid-cols-3 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="iemail">Email del invitado (opcional)</Label>
+              <Label htmlFor="iname">Nombre (opcional)</Label>
+              <Input id="iname" value={name} onChange={(e) => setName(e.target.value)} placeholder="Juan Pérez" />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="iemail">Email del invitado</Label>
               <Input id="iemail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="prospecto@email.com" />
             </div>
             <div className="space-y-1.5">
@@ -90,8 +124,14 @@ export default function AdminInvitations() {
               <Input id="ilabel" value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Ej. Clínica Norte" />
             </div>
           </div>
+          {email && (
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={sendEmailToo} onChange={(e) => setSendEmailToo(e.target.checked)} />
+              Mandar por email ahora, con la marca de Kame Agenda
+            </label>
+          )}
           <Button type="submit" disabled={creating}>
-            {creating && <Loader2 className="w-4 h-4 mr-1 animate-spin" />} Generar enlace
+            {creating && <Loader2 className="w-4 h-4 mr-1 animate-spin" />} {email && sendEmailToo ? "Generar y enviar" : "Generar enlace"}
           </Button>
         </form>
       </Card>
@@ -105,7 +145,7 @@ export default function AdminInvitations() {
         ) : (
           <div className="space-y-2">
             {invitations.map((inv) => (
-              <div key={inv.id} className="p-3 rounded-lg border border-border flex items-center justify-between gap-3">
+              <div key={inv.id} className="p-3 rounded-lg border border-border flex items-center justify-between gap-3 flex-wrap">
                 <div className="min-w-0">
                   <p className="font-medium text-sm truncate">
                     {inv.email ? <><Mail className="w-3.5 h-3.5 inline mr-1" />{inv.email}</> : inv.label || "Invitación"}
@@ -113,10 +153,15 @@ export default function AdminInvitations() {
                   <p className="text-xs text-muted-foreground font-mono">Código: {inv.code}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${inv.status === "used" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
-                    {inv.status === "used" ? "Usada" : "Pendiente"}
+                  <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${inv.status === "used" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+                    {inv.status === "used" ? <><UserCheck className="w-3 h-3" /> Registrado</> : <><Clock className="w-3 h-3" /> Pendiente</>}
                   </span>
-                  <Button size="sm" variant="outline" onClick={() => copyLink(inv.code)}>
+                  {inv.email && inv.status !== "used" && (
+                    <Button size="sm" variant="outline" onClick={() => handleSendEmail(inv)} disabled={sendingId === inv.id} title="Mandar / reenviar el email de invitación">
+                      {sendingId === inv.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    </Button>
+                  )}
+                  <Button size="sm" variant="outline" onClick={() => copyLink(inv.code)} title="Copiar enlace">
                     {copied === inv.code ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   </Button>
                   <Button size="sm" variant="destructive" onClick={() => handleDelete(inv)} title="Eliminar invitación">

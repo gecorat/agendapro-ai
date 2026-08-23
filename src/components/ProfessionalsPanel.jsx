@@ -21,7 +21,7 @@ const ADDON_PRICE = 10000;
 // ve y gestiona todo el consultorio como el dueño, menos facturación/plan.
 export default function ProfessionalsPanel() {
   const { toast } = useToast();
-  const { isOwner } = usePracticeSettings();
+  const { isOwner, professional: myProfessional } = usePracticeSettings();
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);

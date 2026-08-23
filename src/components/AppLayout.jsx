@@ -15,7 +15,7 @@ export default function AppLayout() {
   const [user, setUser] = useState(null);
   const [userLoading, setUserLoading] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { settings, loading: loadingSettings, preset, reload, hasFullAccess, canManageBilling } = usePracticeSettings();
+  const { settings, loading: loadingSettings, preset, reload, hasFullAccess, canManageBilling, professional, isOwner } = usePracticeSettings();
 
   useEffect(() => {
     base44.auth.me().then((u) => { setUser(u); setUserLoading(false); }).catch(() => setUserLoading(false));

@@ -355,6 +355,11 @@
       "type": "boolean",
       "title": "Plan asignado manualmente por un admin (el sync automatico de Mercado Pago no lo toca)",
       "default": false
+    },
+    "mp_cancelled_by_admin": {
+      "type": "boolean",
+      "title": "Suscripcion cancelada por un admin (marca visual)",
+      "default": false
     }
   },
   "required": [

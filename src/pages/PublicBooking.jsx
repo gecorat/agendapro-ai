@@ -49,7 +49,7 @@ function getBreakRanges(availability, dayOfWeek, professionalRefId) {
     .map((b) => ({ start: b.start_time, end: b.end_time }));
 }
 
-function generateSlots(date, service, availability, appointments, professionalRefId) {
+function generateSlots(date, service, availability, appointments, professionalRefId, googleBusy) {
   if (!service) return [];
   if (isBlockedDate(availability, date)) return [];
   const dayOfWeek = date.getDay();
@@ -68,6 +68,7 @@ function generateSlots(date, service, availability, appointments, professionalRe
     const s = new Date(a.start_datetime);
     return s >= dayStart && s <= dayEnd;
   });
+  const busyRanges = (googleBusy || []).map((b) => ({ start: new Date(b.start), end: new Date(b.end) }));
 
   const duration = service.duration_minutes || 30;
   const margin = service.margin_minutes || 0;
@@ -82,8 +83,9 @@ function generateSlots(date, service, availability, appointments, professionalRe
       const slotEnd = new Date(cursor.getTime() + duration * 60000);
       const overlapsBreak = breakRanges.some((br) => rangesOverlap(slotStart, slotEnd, parseTimeToDate(date, br.start), parseTimeToDate(date, br.end)));
       const overlapsBooked = booked.some((a) => rangesOverlap(slotStart, slotEnd, new Date(a.start_datetime), new Date(a.end_datetime)));
+      const overlapsGoogle = busyRanges.some((b) => rangesOverlap(slotStart, slotEnd, b.start, b.end));
       const inPast = slotStart.getTime() < Date.now();
-      if (!overlapsBreak && !overlapsBooked && !inPast) slots.push(slotStart);
+      if (!overlapsBreak && !overlapsBooked && !overlapsGoogle && !inPast) slots.push(slotStart);
       cursor = new Date(cursor.getTime() + step * 60000);
     }
   }

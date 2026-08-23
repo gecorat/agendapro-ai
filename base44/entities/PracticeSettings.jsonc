@@ -350,6 +350,11 @@
       "type": "string",
       "title": "Mercado Pago — ID de suscripción",
       "description": "preapproval_id devuelto por Mercado Pago al crear la suscripción recurrente. Lo usa el webhook para identificar a qué consultorio corresponde cada notificación de pago."
+    },
+    "plan_granted_by_admin": {
+      "type": "boolean",
+      "title": "Plan asignado manualmente por un admin (el sync automatico de Mercado Pago no lo toca)",
+      "default": false
     }
   },
   "required": [

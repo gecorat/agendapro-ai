@@ -320,8 +320,27 @@ export default function PublicBooking() {
 
   const slots = useMemo(() => {
     if (!date || !service) return [];
-    return generateSlots(date, service, availability, appointments, selectedPro?.id || null);
-  }, [date, service, availability, appointments, selectedPro]);
+    return generateSlots(date, service, availability, appointments, selectedPro?.id || null, googleBusy);
+  }, [date, service, availability, appointments, selectedPro, googleBusy]);
+
+  useEffect(() => {
+    if (!professionalId) return;
+    (async () => {
+      try {
+        const now = new Date(); now.setHours(0, 0, 0, 0);
+        const toDate = new Date(now.getTime() + 21 * 86400000);
+        const res = await base44.functions.invoke('getGoogleBusySlots', {
+          professional_id: professionalId,
+          professional_ref_id: selectedPro?.id || undefined,
+          date_from: now.toISOString(),
+          date_to: toDate.toISOString(),
+        });
+        setGoogleBusy(res?.data?.busy || []);
+      } catch {
+        setGoogleBusy([]);
+      }
+    })();
+  }, [professionalId, selectedPro]);
 
   const handleConfirm = useCallback(async () => {
     if (!service || !slot || !form.first_name || !form.last_name || !form.phone || !form.email || !professionalId) return;

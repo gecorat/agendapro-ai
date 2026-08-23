@@ -52,7 +52,7 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [patientFormOpen, setPatientFormOpen] = useState(false);
-  const { settings } = usePracticeSettings();
+  const { settings, isOwner, professional: myProfessional } = usePracticeSettings();
   const isClinic = getPlanStatus(settings).canUseMultiProfessional;
 
   const [recurring, setRecurring] = useState(false);
@@ -100,13 +100,13 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
   async function loadData() {
     setLoading(true);
     try {
-      const [pats, servs, pros] = await Promise.all([
-        base44.entities.Patient.filter({}),
-        base44.entities.Service.filter({ active: true }),
+      const [patsRes, servsRes, pros] = await Promise.all([
+        base44.functions.invoke("getScopedPatients", {}),
+        base44.functions.invoke("getScopedServices", {}),
         isClinic ? base44.entities.Professional.filter({ active: true }) : Promise.resolve([]),
       ]);
-      setPatients(pats || []);
-      setServices(servs || []);
+      setPatients(patsRes?.data?.patients || []);
+      setServices((servsRes?.data?.services || []).filter((s) => s.active !== false));
       setProfessionals(pros || []);
     } finally {
       setLoading(false);
@@ -130,6 +130,14 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
       const service = services.find((s) => s.id === form.service_id);
       const end = calcEnd(form.start_datetime, service.duration_minutes);
 
+      // professional_id identifica a QUÉ CONSULTORIO pertenece la cita (no quién la
+      // atiende dentro del equipo, eso es professional_ref_id). Antes este campo nunca
+      // se mandaba al crear una cita manual -- confirmado en vivo: la cita se guardaba
+      // igual, pero quedaba invisible para siempre en cualquier pantalla que filtre por
+      // consultorio (Agenda, Panel, etc.), porque ese campo simplemente no estaba.
+      const me = await base44.auth.me();
+      const practiceOwnerId = isOwner ? me.id : (myProfessional?.practice_owner_id || me.id);
+
       const payload = {
         patient_id: form.patient_id,
         patient_name: `${patient.first_name} ${patient.last_name || ""}`.trim(),
@@ -140,15 +148,17 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
         status: form.status,
         notes: form.notes,
         origin: "manual",
+        professional_id: practiceOwnerId,
         professional_ref_id: form.professional_ref_id || "",
       };
 
       let apptId = appointment?.id;
+      let savedAppt;
       if (appointment) {
-        await base44.entities.Appointment.update(appointment.id, payload);
+        savedAppt = await base44.entities.Appointment.update(appointment.id, payload);
       } else {
-        const created = await base44.entities.Appointment.create(payload);
-        apptId = created.id;
+        savedAppt = await base44.entities.Appointment.create(payload);
+        apptId = savedAppt.id;
 
         if (recurring) {
           const startDate = new Date(form.start_datetime);
@@ -164,6 +174,13 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
           await base44.entities.Appointment.update(apptId, { recurring_rule_id: rule.id });
         }
       }
+
+      // Sincroniza con Google Calendar (si la persona que atiende esta cita lo tiene
+      // conectado) -- crea/actualiza el evento, o lo borra si quedó cancelada. Si falla
+      // por lo que sea, no bloquea el guardado de la cita en sí.
+      try {
+        await base44.functions.invoke("syncAppointmentGoogle", { appointmentId: apptId });
+      } catch { /* no romper el flujo si Google falla */ }
 
       // If editing a recurring appointment with "future" scope, update all future instances
       if (appointment && appointment.recurring_rule_id && editScope === "future") {

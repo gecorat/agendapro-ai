@@ -7,6 +7,7 @@ import PublicLinkCard from "@/components/PublicLinkCard";
 import PracticeProfileSection from "@/components/PracticeProfileSection";
 import AvailabilityEditor from "@/components/AvailabilityEditor";
 import WhatsAppConnectCard from "@/components/WhatsAppConnectCard";
+import GoogleCalendarConnectCard from "@/components/GoogleCalendarConnectCard";
 import WhatsAppUsageCard from "@/components/WhatsAppUsageCard";
 import ServiceManagerPanel from "@/components/ServiceManagerPanel";
 import ProfessionalsPanel from "@/components/ProfessionalsPanel";
@@ -68,7 +69,7 @@ export default function Settings() {
 
           <PublicLinkSection />
 
-          <IntegrationCard icon={Calendar} name="Google Calendar" description="Sincronización bidireccional de citas" state="soon" />
+          <GoogleCalendarConnectCard />
           <WhatsAppConnectCard />
           <WhatsAppUsageCard />
           <IntegrationCard icon={Mail} name="Email" description="Recordatorios y confirmaciones automáticas a tus pacientes" state="connected" />

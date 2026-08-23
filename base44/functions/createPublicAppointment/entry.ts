@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { findPatientByCanonicalPhone } from '../../shared/phone-utils.ts';
+import { pushAppointmentToGoogle } from '../../shared/google-calendar.ts';
 
 export default async function (req: Request): Promise<Response> {
   try {
@@ -100,6 +101,14 @@ export default async function (req: Request): Promise<Response> {
       professional_id,
       professional_ref_id: professional_ref_id || undefined,
     });
+
+    // Empuja el evento a Google Calendar de quien atiende esta cita, si tiene la
+    // sincronización conectada. Si falla o no está conectado, no rompe la reserva.
+    const googleEventId = await pushAppointmentToGoogle(base44, appointment, professional_id);
+    if (googleEventId) {
+      await base44.asServiceRole.entities.Appointment.update(appointment.id, { google_event_id: googleEventId });
+      appointment.google_event_id = googleEventId;
+    }
 
     return Response.json({ appointment, patient });
   } catch (error) {

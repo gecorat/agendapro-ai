@@ -89,6 +89,11 @@
       "title": "Foto de perfil",
       "format": "url"
     },
+    "avatar_url": {
+      "type": "string",
+      "title": "Foto de perfil personal (uso interno de la app, distinta de la de Pagina publica)",
+      "format": "url"
+    },
     "photo_align": {
       "type": "string",
       "title": "Alineacion de la foto de perfil",

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import { Button } from "@/components/ui/button";
 import { Copy, Share2, ExternalLink, Check, Link as LinkIcon } from "lucide-react";
+import GoogleCalendarConnectCard from "@/components/GoogleCalendarConnectCard";
 
 // Vista de SOLO lectura del enlace de reservas del consultorio, para profesionales
 // invitados (plan Clinic). No editan nada acá — la personalización de la página es del

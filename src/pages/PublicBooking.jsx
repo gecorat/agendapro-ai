@@ -233,6 +233,7 @@ export default function PublicBooking() {
   const [services, setServices] = useState([]);
   const [professionals, setProfessionals] = useState([]);
   const [appointments, setAppointments] = useState([]);
+  const [googleBusy, setGoogleBusy] = useState([]);
   const [availability, setAvailability] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);

@@ -16,6 +16,8 @@ import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import { getPlanStatus, PLAN_PRICES, PLAN_LABELS } from "@/lib/plan-utils";
 
 export default function Settings() {
+  const { canManageBilling } = usePracticeSettings();
+
   return (
     <div className="px-3 py-3 md:p-6 max-w-4xl mx-auto space-y-4">
       <div>
@@ -24,14 +26,16 @@ export default function Settings() {
       </div>
 
       <Tabs defaultValue="services">
-        <TabsList className="grid grid-cols-7 w-full bg-muted/60 rounded-xl p-1 h-auto">
+        <TabsList className={`grid w-full bg-muted/60 rounded-xl p-1 h-auto ${canManageBilling ? "grid-cols-7" : "grid-cols-6"}`}>
           <TabsTrigger value="profile" className="rounded-lg text-xs sm:text-sm py-1.5">Perfil</TabsTrigger>
           <TabsTrigger value="services" className="rounded-lg text-xs sm:text-sm py-1.5">Servicios</TabsTrigger>
           <TabsTrigger value="team" className="rounded-lg text-xs sm:text-sm py-1.5">Equipo</TabsTrigger>
           <TabsTrigger value="hours" className="rounded-lg text-xs sm:text-sm py-1.5">Horarios</TabsTrigger>
           <TabsTrigger value="templates" className="rounded-lg text-xs sm:text-sm py-1.5">Plantillas</TabsTrigger>
           <TabsTrigger value="integrations" className="rounded-lg text-xs sm:text-sm py-1.5">Integraciones</TabsTrigger>
-          <TabsTrigger value="plan" className="rounded-lg text-xs sm:text-sm py-1.5">Plan</TabsTrigger>
+          {/* La pestaña Plan es exclusiva del dueño real de la cuenta — un co-admin ve y
+              gestiona todo lo demás, pero nunca facturación. */}
+          {canManageBilling && <TabsTrigger value="plan" className="rounded-lg text-xs sm:text-sm py-1.5">Plan</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="profile" className="mt-4">
@@ -70,9 +74,11 @@ export default function Settings() {
           <IntegrationCard icon={Mail} name="Email" description="Recordatorios y confirmaciones automáticas a tus pacientes" state="connected" />
         </TabsContent>
 
-        <TabsContent value="plan" className="mt-4">
-          <PlanSection />
-        </TabsContent>
+        {canManageBilling && (
+          <TabsContent value="plan" className="mt-4">
+            <PlanSection />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

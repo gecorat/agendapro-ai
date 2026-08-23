@@ -24,6 +24,7 @@ import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 
 export default function PatientForm({ open, onClose, onSaved, patient }) {
   const { toast } = useToast();
+  const { isOwner, professional: myProfessional } = usePracticeSettings();
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     first_name: "",

@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 
 export default function PatientForm({ open, onClose, onSaved, patient }) {
   const { toast } = useToast();

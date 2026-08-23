@@ -186,6 +186,9 @@ export default function AdminUsers() {
                   {s?.trial_ends_at && s.plan === "trial" && (
                     <span> · hasta {new Date(s.trial_ends_at).toLocaleDateString("es-AR")}</span>
                   )}
+                  {s?.plan_granted_by_admin && (
+                    <span className="text-primary font-medium"> · Asignado por admin (sin cobro)</span>
+                  )}
                 </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">

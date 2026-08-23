@@ -36,7 +36,10 @@ export default function ProfessionalsPanel() {
   const load = async () => {
     setLoading(true);
     try {
-      setList((await base44.entities.Professional.list("-created_date")) || []);
+      // Antes llamaba Professional.list() directo, sin filtrar por consultorio — mostraba
+      // profesionales de OTRAS cuentas mezclados con los propios. Confirmado en vivo.
+      const res = await base44.functions.invoke("getScopedProfessionals", {});
+      setList(res?.data?.professionals || []);
     } finally {
       setLoading(false);
     }

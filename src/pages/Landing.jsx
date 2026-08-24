@@ -7,6 +7,7 @@ import {
   ArrowRight, Star, ShieldCheck, Zap, Clock, Phone, Stethoscope,
 } from "lucide-react";
 import { PLAN_PRICES } from "@/lib/plan-utils";
+import { THEME_PRESETS, resolveTheme } from "@/lib/theme-presets";
 
 const BENEFITS = [
   { icon: MessageCircle, title: "Responde por WhatsApp 24/7", desc: "El bot atiende, agenda y confirma turnos mientras vos estás consultando o descansando." },

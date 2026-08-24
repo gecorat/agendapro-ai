@@ -218,6 +218,14 @@
       "type": "string",
       "title": "Tema visual de la p\u00e1gina p\u00fablica",
       "enum": [
+        "botanical_wave",
+        "oled_obsidian",
+        "editorial_luxe",
+        "warm_terracotta",
+        "corporate_glass",
+        "minimal_high_fashion",
+        "nordic_slate",
+        "executive_gold",
         "luxury_gold",
         "glassmorphism_premium",
         "warm_botanical",
@@ -226,8 +234,8 @@
         "photo_focus",
         "custom"
       ],
-      "default": "clean_dark_tech",
-      "description": "Preset visual de la pagina publica y del editor de personalizacion."
+      "default": "nordic_slate",
+      "description": "8 presets full-width (rediseno). Los ultimos 7 valores del enum son claves del sistema de temas anterior, mantenidas solo por compatibilidad con paginas ya guardadas."
     },
     "heading_font_override": {
       "type": "string",

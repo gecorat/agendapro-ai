@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   CalendarClock, MessageCircle, Bell, Calendar, Users, Check, Sparkles,
-  ArrowRight, Star, ShieldCheck, Zap, Clock, Phone, Stethoscope,
+  ArrowRight, Star, ShieldCheck, Zap, Phone, Stethoscope,
 } from "lucide-react";
 import { PLAN_PRICES } from "@/lib/plan-utils";
 import { THEME_PRESETS, resolveTheme } from "@/lib/theme-presets";

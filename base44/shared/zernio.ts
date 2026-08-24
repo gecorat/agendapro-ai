@@ -354,39 +354,60 @@ REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno quedó 
         finalReplyText = "No pude entender bien la fecha y hora. ¿Podés indicarme el día y horario de otra forma? Por ejemplo: 'mañana a las 15hs'.";
       } else {
         // Chequeo real de disponibilidad ANTES de confirmar nada: la IA puede
-        // equivocarse o alucinar que un horario está libre. Esto es la verdad de la base
-        // de datos, no lo que dijo el modelo.
-        const overlapping = (appts || []).filter((a) => {
-          if (a.status === "cancelled") return false;
-          if (a.created_by_id !== professionalId) return false;
-          const aStart = new Date(a.start_datetime);
-          const aEnd = new Date(a.end_datetime);
-          return aStart < end && start < aEnd;
-        });
-
+        // equivocarse o alucinar que un horario está libre. Ahora esto valida contra el
+        // horario de atención real, los descansos, los días bloqueados, las citas ya
+        // tomadas Y el Google Calendar personal del profesional (antes NO chequeaba
+        // horario de atención ni Google Calendar, solo otras citas de Kame — el bot podía
+        // agendar fuera de horario sin que nadie lo notara). Solo se acepta un horário que
+        // coincida EXACTO con uno de los slots reales calculados (la misma grilla que usa
+        // la reserva pública), así todo queda alineado.
         let assignedProfessionalRefId;
-        let conflict = false;
         if (isClinic && professionals?.length) {
           const chosenName = (reply.appointment.professional_name || "").toLowerCase().trim();
-          let candidate = chosenName
+          const candidate = chosenName
             ? professionals.find((p) => `${p.first_name} ${p.last_name || ""}`.toLowerCase().includes(chosenName))
             : null;
-          if (!candidate) {
-            candidate = professionals.find(
-              (p) => !overlapping.some((a) => a.professional_ref_id === p.id)
-            );
-          } else if (overlapping.some((a) => a.professional_ref_id === candidate.id)) {
-            conflict = true;
+          assignedProfessionalRefId = candidate ? candidate.id : null; // null = sin preferencia, probamos con todos
+        }
+        const candidateProfessionalIds = isClinic && professionals?.length
+          ? (assignedProfessionalRefId ? [assignedProfessionalRefId] : professionals.map((p) => p.id))
+          : [null]; // null = el dueño de la cuenta (planes sin equipo)
+
+        const dayStart = new Date(start); dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(start); dayEnd.setHours(23, 59, 59, 999);
+
+        let matched = null;
+        let referenceSlots = [];
+        for (const profRefId of candidateProfessionalIds) {
+          let googleBusy = [];
+          try {
+            googleBusy = await getGoogleBusyRanges(base44, professionalId, profRefId || undefined, dayStart.toISOString(), dayEnd.toISOString());
+          } catch { /* si Google falla, seguimos sin ese dato en vez de bloquear todo el chequeo */ }
+          const slots = generateSlotsForDay(start, service, availability, appts, profRefId || null, googleBusy);
+          if (!referenceSlots.length) referenceSlots = slots;
+          if (slots.some((s) => s.getTime() === start.getTime())) {
+            matched = { professionalRefId: profRefId || undefined };
+            break;
           }
-          assignedProfessionalRefId = candidate?.id;
-          if (!candidate && !conflict) conflict = true; // sin nadie libre en ese horario
-        } else if (overlapping.length > 0) {
-          conflict = true;
         }
 
-        if (conflict) {
-          finalReplyText = `Che, disculpá — ese horario ya no está disponible (se ocupó justo antes). ¿Querés que te proponga otro horario cercano, o preferis decirme vos otra opción?`;
+        if (!matched) {
+          // No había ningún profesional con ESE horario exacto libre. En vez de un "no
+          // disponible" genérico, ofrecemos alternativas REALES (nunca inventadas): las 3
+          // más cercanas a lo que pidió, del mismo día si había algo libre, o del próximo
+          // día real con lugar si ese día está completo o bloqueado.
+          let offerSlots = referenceSlots;
+          if (!offerSlots.length) {
+            const refProfId = candidateProfessionalIds[0];
+            const found = findNextAvailableDaySlots(start, service, availability, appts, refProfId || null, []);
+            offerSlots = found.slots;
+          }
+          const options = pickClosestSlots(offerSlots, start, 3);
+          finalReplyText = options.length
+            ? `Che, disculpá — ese horario exacto no está disponible. Te propongo estas opciones:\n${formatSlotList(options)}\n\n¿Te sirve alguna?`
+            : `Che, disculpá — no encontré horarios disponibles cerca de esa fecha. ¿Podés decirme otro día que te venga bien?`;
         } else {
+          assignedProfessionalRefId = matched.professionalRefId;
           let patientId = existingPatient?.id;
           let patientName = existingPatient
             ? `${existingPatient.first_name} ${existingPatient.last_name || ""}`.trim()
@@ -427,15 +448,16 @@ REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno quedó 
               console.error("syncAppointmentGoogle invoke error:", e?.message || e);
             }
 
-            // El texto de confirmación lo armamos NOSOTROS con los datos reales que se
-            // guardaron, no confiamos en la redacción libre de la IA para los detalles
-            // (día, hora, servicio) — así el paciente nunca lee algo distinto de lo que
-            // efectivamente quedó en la agenda.
-            const dateStr = start.toLocaleString("es-AR", {
-              weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit",
-              timeZone: "America/Argentina/Buenos_Aires",
-            });
-            finalReplyText = `¡Listo! Tu turno de ${service.name} quedó confirmado para el ${dateStr}. Te esperamos.`;
+            // El mensaje de confirmación lo armamos NOSOTROS con los datos reales que se
+            // guardaron (nunca dejamos que la IA redacte los detalles), con el formato
+            // enriquecido (negrita + emojis) definido en buildConfirmationMessage.
+            const professionalName = assignedProfessionalRefId
+              ? (() => {
+                  const p = professionals.find((pr) => pr.id === assignedProfessionalRefId);
+                  return p ? `${p.first_name} ${p.last_name || ""}`.trim() : undefined;
+                })()
+              : undefined;
+            finalReplyText = buildConfirmationMessage({ practice, service, start, professionalName });
 
             try {
               await base44.asServiceRole.functions.invoke("sendAppointmentConfirmation", { appointment_id: newAppt.id });

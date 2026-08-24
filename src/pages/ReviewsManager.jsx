@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
-import { Loader2, Star, Send, Plus, MessageCircle, Mail, Ban, RotateCcw } from "lucide-react";
+import { Loader2, Star, Send, Plus, MessageCircle, Mail, Ban, RotateCcw, ExternalLink } from "lucide-react";
 
 const STATUS_CONFIG = {
   pending: { label: "Pendiente", bgSoft: "bg-slate-100", text: "text-slate-600" },
@@ -21,7 +21,7 @@ function defaultMessage(firstName) {
 
 export default function ReviewsManager() {
   const { toast } = useToast();
-  const { preset } = usePracticeSettings();
+  const { preset, settings, save } = usePracticeSettings();
   const [reviews, setReviews] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [patients, setPatients] = useState([]);
@@ -29,6 +29,27 @@ export default function ReviewsManager() {
   const [open, setOpen] = useState(false);
   const [selectedAppt, setSelectedAppt] = useState("");
   const [sending, setSending] = useState(false);
+  const [googleLink, setGoogleLink] = useState("");
+  const [savingLink, setSavingLink] = useState(false);
+  const [linkSaved, setLinkSaved] = useState(false);
+
+  useEffect(() => {
+    setGoogleLink(settings?.google_review_link || "");
+  }, [settings?.google_review_link]);
+
+  const saveGoogleLink = async () => {
+    if (googleLink === (settings?.google_review_link || "")) return;
+    setSavingLink(true);
+    try {
+      await save({ google_review_link: googleLink.trim() });
+      setLinkSaved(true);
+      setTimeout(() => setLinkSaved(false), 2000);
+    } catch (err) {
+      toast({ title: "No se pudo guardar el link", description: err.message, variant: "destructive" });
+    } finally {
+      setSavingLink(false);
+    }
+  };
 
   const load = async () => {
     setLoading(true);

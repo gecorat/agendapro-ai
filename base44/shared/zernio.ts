@@ -629,72 +629,83 @@ REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno quedó 
     }
   }
 
-  const savedMsg = await base44.asServiceRole.entities.Conversation.create({
-    phone: fromPhone,
-    professional_id: professionalId,
-    role: "assistant",
-    text: finalReplyText,
-    conversation_id: conversationId,
-    account_id: accountId,
-    sent_by: "bot",
-  });
-
-  // El envío por WhatsApp va AL FINAL, después de que todo lo importante (la cita, el
-  // registro de la conversación) ya está guardado de forma durable.
+  // Envía y guarda UN mensaje del bot: registra la Conversation, intenta mandarlo por
+  // WhatsApp con reintentos, y marca cómo terminó (wasender_msg_id o delivery_failed).
+  // Se usa una vez para el mensaje único normal, o dos veces (con una demora entre medio)
+  // cuando hay un mensaje corto de confirmación + los datos completos de la cita.
   //
-  // Demora configurable antes de mandar la respuesta (practice.bot_response_delay_seconds,
-  // 5/15/30/60s) — para que la conversación no se sienta instantánea/robotizada. Va ANTES
-  // del envío, no antes de guardar: así la Agenda y la bandeja de chats ya reflejan la
-  // cita/respuesta en el momento, aunque el mensaje al paciente tarde un poco más.
-  if (responseDelaySeconds > 0) {
-    await new Promise((r) => setTimeout(r, responseDelaySeconds * 1000));
-  }
-
   // Confirmado en vivo: el plan trial de WasenderAPI limita a 1 mensaje por minuto — el
   // segundo mensaje de cualquier conversación rápida choca con un 429 que trae
   // "retry_after" (en segundos). Reintentar rápido (1s/3s/6s) no servía de nada contra ese
   // límite específico. Ahora, si el error trae retry_after, esperamos ESE tiempo real (con
-  // un tope de seguridad) en vez de un número fijo que no alcanza. Esto no reemplaza la
-  // necesidad de un plan pago para que el bot converse con fluidez, pero al menos garantiza
-  // que el mensaje termine llegando en vez de perderse.
+  // un tope de seguridad) en vez de un número fijo que no alcanza.
   const { sendWhatsAppMessage } = await import("./whatsapp-providers.ts");
-  const MAX_RETRY_WAIT_MS = 90000; // tope de seguridad por intento
-  const fallbackDelays = [1000, 3000, 6000];
-  const maxAttempts = 3;
-  let sent = false;
-  let lastError = null;
-  let sendResult = null;
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    try {
-      sendResult = await sendWhatsAppMessage(base44, practice, fromPhone, finalReplyText);
-      sent = true;
-      break;
-    } catch (e) {
-      lastError = e;
-      console.error(`sendWhatsAppMessage intento ${attempt + 1} falló:`, e?.message || e);
-      if (attempt < maxAttempts - 1) {
-        const wait = e?.retryAfterMs
-          ? Math.min(e.retryAfterMs, MAX_RETRY_WAIT_MS)
-          : fallbackDelays[attempt];
-        console.error(`Esperando ${wait}ms antes del próximo intento (retry_after real: ${e?.retryAfterMs || "n/a"})`);
-        await new Promise((r) => setTimeout(r, wait));
+  async function sendAndSaveBotMessage(text) {
+    const savedMsg = await base44.asServiceRole.entities.Conversation.create({
+      phone: fromPhone,
+      professional_id: professionalId,
+      role: "assistant",
+      text,
+      conversation_id: conversationId,
+      account_id: accountId,
+      sent_by: "bot",
+    });
+
+    const MAX_RETRY_WAIT_MS = 90000; // tope de seguridad por intento
+    const fallbackDelays = [1000, 3000, 6000];
+    const maxAttempts = 3;
+    let sent = false;
+    let lastError = null;
+    let sendResult = null;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        sendResult = await sendWhatsAppMessage(base44, practice, fromPhone, text);
+        sent = true;
+        break;
+      } catch (e) {
+        lastError = e;
+        console.error(`sendWhatsAppMessage intento ${attempt + 1} falló:`, e?.message || e);
+        if (attempt < maxAttempts - 1) {
+          const wait = e?.retryAfterMs
+            ? Math.min(e.retryAfterMs, MAX_RETRY_WAIT_MS)
+            : fallbackDelays[attempt];
+          console.error(`Esperando ${wait}ms antes del próximo intento (retry_after real: ${e?.retryAfterMs || "n/a"})`);
+          await new Promise((r) => setTimeout(r, wait));
+        }
       }
     }
-  }
-  const wasenderMsgId = sendResult?.data?.msgId;
-  if (sent && wasenderMsgId) {
-    try {
-      await base44.asServiceRole.entities.Conversation.update(savedMsg.id, { wasender_msg_id: String(wasenderMsgId) });
-    } catch { /* no romper el flujo por esto */ }
-  }
-  if (!sent) {
-    console.error("sendWhatsAppMessage: se agotaron los reintentos, el mensaje quedó sin enviar:", lastError?.message || lastError);
-    try {
-      await base44.asServiceRole.entities.Conversation.update(savedMsg.id, { delivery_failed: true });
-    } catch { /* no romper el flujo por esto */ }
+    const wasenderMsgId = sendResult?.data?.msgId;
+    if (sent && wasenderMsgId) {
+      try {
+        await base44.asServiceRole.entities.Conversation.update(savedMsg.id, { wasender_msg_id: String(wasenderMsgId) });
+      } catch { /* no romper el flujo por esto */ }
+    }
+    if (!sent) {
+      console.error("sendWhatsAppMessage: se agotaron los reintentos, el mensaje quedó sin enviar:", lastError?.message || lastError);
+      try {
+        await base44.asServiceRole.entities.Conversation.update(savedMsg.id, { delivery_failed: true });
+      } catch { /* no romper el flujo por esto */ }
+    }
   }
 
-  return { ...reply, reply: finalReplyText, appointment_created: !!appointmentCreated };
+  // Demora configurable antes de mandar cada mensaje (practice.bot_response_delay_seconds,
+  // 5/15/30/60s) — para que la conversación no se sienta instantánea/robotizada. Se aplica
+  // ANTES del primer mensaje (como antes) y, si hay un segundo mensaje (los datos completos
+  // de la cita después del mensaje corto de confirmación), TAMBIÉN antes de ese — así se
+  // siente como dos tiempos naturales de conversación, no un bloque único de texto largo.
+  if (responseDelaySeconds > 0) {
+    await new Promise((r) => setTimeout(r, responseDelaySeconds * 1000));
+  }
+  await sendAndSaveBotMessage(finalReplyText);
+
+  if (secondaryReplyText) {
+    if (responseDelaySeconds > 0) {
+      await new Promise((r) => setTimeout(r, responseDelaySeconds * 1000));
+    }
+    await sendAndSaveBotMessage(secondaryReplyText);
+  }
+
+  return { ...reply, reply: finalReplyText, secondary_reply: secondaryReplyText, appointment_created: !!appointmentCreated };
 }
 
 const ZERNIO_BASE = "https://zernio.com/api/v1";

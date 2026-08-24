@@ -273,7 +273,10 @@ export default function PublicPageEditor() {
           <h1 className="text-lg font-heading font-semibold">Página pública</h1>
           <p className="text-xs text-muted-foreground">/u/{cleanHandle || "tuusuario"}</p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+          <Button type="button" variant="outline" size="sm" onClick={() => setFullscreen(true)} className="gap-1.5 lg:hidden">
+            <Smartphone className="w-3.5 h-3.5" /> Vista previa
+          </Button>
           <Button type="button" variant="outline" size="sm" onClick={copyLink} disabled={!publicLink} className="gap-1.5">
             {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
             {copied ? "Copiado" : "Copiar enlace"}

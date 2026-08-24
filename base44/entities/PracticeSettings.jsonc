@@ -14,7 +14,8 @@
     },
     "owner_display_name": {
       "type": "string",
-      "title": "Tu nombre (uso interno)"
+      "title": "Tu nombre (uso interno)",
+      "description": "Nombre de pila con el que te saluda el panel. Distinto de practice_name (el nombre del negocio que ven tus pacientes)."
     },
     "bot_tone_prompt": {
       "type": "string",

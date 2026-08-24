@@ -329,6 +329,7 @@ REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno quedó 
             service_name: { type: "string" },
             datetime: { type: "string", description: "ISO 8601" },
             professional_name: { type: "string", description: "Nombre del profesional elegido por el paciente, si el consultorio tiene varios. Vacío si no tiene preferencia." },
+            patient_first_name: { type: "string", description: "Nombre de pila del paciente, SOLO si es un paciente NUEVO (mirá el bloque 'Paciente nuevo/existente' del contexto) y ya te lo dijo en algun momento de esta conversación. Dejalo vacío si el paciente ya está registrado, o si todavía no te dijo su nombre." },
           },
         },
       },

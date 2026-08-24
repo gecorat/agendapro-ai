@@ -163,6 +163,45 @@ export async function deleteGoogleEvent(base44, appointment, practiceOwnerId) {
   }
 }
 
+// Trae los eventos reales (con título, no solo la franja horaria) del Google Calendar de
+// una persona, para MOSTRARLOS en la Agenda de Kame — a diferencia de getGoogleBusyRanges
+// (que solo bloquea horarios para la reserva), esto es de solo lectura y se pide fresco
+// cada vez que se abre la Agenda, sin guardar nada en la base. Así evitamos duplicar el
+// evento como una Appointment real y los problemas de sincronización que eso traería.
+export async function getGoogleEvents(base44, practiceOwnerId, professionalRefId, timeMin, timeMax) {
+  try {
+    const target = await resolveGoogleTarget(base44, practiceOwnerId, professionalRefId);
+    if (!target) return [];
+    const accessToken = await getValidAccessToken(base44, target);
+    const params = new URLSearchParams({
+      timeMin,
+      timeMax,
+      singleEvents: 'true',
+      orderBy: 'startTime',
+      maxResults: '250',
+    });
+    const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?${params.toString()}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json();
+    if (!res.ok) return [];
+    return (data.items || [])
+      // Nos quedamos solo con eventos con horario real (start.dateTime). Los eventos de
+      // todo el día (start.date, sin hora) no encajan bien en las vistas de Kame y se
+      // dejan afuera por ahora — igual siguen bloqueando la reserva via freebusy.
+      .filter((ev) => ev.start?.dateTime && ev.end?.dateTime && ev.status !== 'cancelled')
+      .map((ev) => ({
+        id: ev.id,
+        summary: ev.summary || 'Evento de Google Calendar',
+        start: ev.start.dateTime,
+        end: ev.end.dateTime,
+      }));
+  } catch (e) {
+    console.error('[getGoogleEvents] excepción', e?.message || e);
+    return [];
+  }
+}
+
 // Franjas ocupadas en el Google Calendar de la persona, para excluirlas de los horarios
 // que se ofrecen al reservar — así un evento personal en Google bloquea la reserva sin
 // necesidad de duplicarlo como una cita en Kame Agenda.

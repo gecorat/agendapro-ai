@@ -364,9 +364,11 @@ REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno quedó 
         // horario de atención real, los descansos, los días bloqueados, las citas ya
         // tomadas Y el Google Calendar personal del profesional (antes NO chequeaba
         // horario de atención ni Google Calendar, solo otras citas de Kame — el bot podía
-        // agendar fuera de horario sin que nadie lo notara). Solo se acepta un horário que
-        // coincida EXACTO con uno de los slots reales calculados (la misma grilla que usa
-        // la reserva pública), así todo queda alineado.
+        // agendar fuera de horario sin que nadie lo notara). Acepta CUALQUIER horario
+        // realmente libre dentro del horario laboral (no exige que caiga en una grilla
+        // redonda — eso rechazaba horarios válidos que no eran múltiplo exacto de la
+        // duración del servicio, confirmado en vivo). La grilla (generateSlotsForDay) se
+        // usa sólo para OFRECER alternativas cuando hace falta, no para aceptar o no.
         let assignedProfessionalRefId;
         if (isClinic && professionals?.length) {
           const chosenName = (reply.appointment.professional_name || "").toLowerCase().trim();
@@ -389,12 +391,11 @@ REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno quedó 
           try {
             googleBusy = await getGoogleBusyRanges(base44, professionalId, profRefId || undefined, dayStart.toISOString(), dayEnd.toISOString());
           } catch { /* si Google falla, seguimos sin ese dato en vez de bloquear todo el chequeo */ }
-          const slots = generateSlotsForDay(start, service, availability, appts, profRefId || null, googleBusy);
-          if (!referenceSlots.length) referenceSlots = slots;
-          if (slots.some((s) => s.getTime() === start.getTime())) {
+          if (isTimeAvailable(start, end, service, availability, myAppts, profRefId || null, googleBusy)) {
             matched = { professionalRefId: profRefId || undefined };
             break;
           }
+          if (!referenceSlots.length) referenceSlots = generateSlotsForDay(start, service, availability, myAppts, profRefId || null, googleBusy);
         }
 
         if (!matched) {

@@ -63,7 +63,8 @@ export default function TeamPublicLink() {
 
       <div className="pt-2">
         <h2 className="font-heading font-semibold text-sm mb-2">Tu calendario personal</h2>
-        <GoogleCalendarConnectCard />
+        {/* Oculto temporalmente hasta terminar la verificación de Google Cloud (ver Settings.jsx) */}
+        {/* <GoogleCalendarConnectCard /> */}
       </div>
     </div>
   );

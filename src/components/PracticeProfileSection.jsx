@@ -23,11 +23,17 @@ function Section({ title, description, children }) {
   );
 }
 
-// "Mi perfil" es la ÚNICA fuente de verdad para los datos del negocio (identidad,
-// contacto Y ubicación). "Página pública" (estética, tema, enlace) lee la dirección de
-// acá mismo y la muestra de solo lectura con un link de vuelta — antes había que
-// cargarla ahí directamente, sin que apareciera nunca en Perfil, lo que era confuso
-// ("¿por qué la dirección de mi negocio está en la pantalla de diseño de la página?").
+// "Mi perfil" separa dos cosas que antes estaban mezcladas en un solo campo
+// ("practice_name"), lo cual generaba confusión real: ¿ahí pongo mi nombre, o el del
+// consultorio? Ahora son DOS campos distintos:
+// - owner_display_name: tu nombre de pila, SOLO para que el panel te salude a vos (menú
+//   lateral). Nunca lo ve un paciente.
+// - practice_name (dentro de "Datos del negocio"): lo que ve el PACIENTE — en tu página
+//   pública, en los mensajes del bot de WhatsApp, en los recordatorios. Puede ser el
+//   nombre de tu consultorio O tu propio nombre y apellido si atenés de forma particular
+//   — las dos opciones son válidas, por eso quedó aclarado en el propio formulario.
+// "Página pública" (estética, tema, enlace) lee la dirección de acá mismo y la muestra de
+// solo lectura con un link de vuelta.
 // La foto de acá (avatar_url) es DISTINTA de la de Página pública (photo_url) — esta es
 // solo para el menú lateral mientras usás la app, no para tus pacientes.
 export default function PracticeProfileSection() {
@@ -35,6 +41,7 @@ export default function PracticeProfileSection() {
   const { toast } = useToast();
   const [user, setUser] = useState(null);
   const [form, setForm] = useState({
+    owner_display_name: "",
     professional_type: "dentist",
     practice_name: "",
     phone: "",
@@ -56,6 +63,9 @@ export default function PracticeProfileSection() {
   useEffect(() => {
     if (settings) {
       setForm({
+        // Si todavía no cargaste tu nombre de pila acá, sugerimos el de tu cuenta como
+        // punto de partida (no se guarda hasta que apretes Guardar).
+        owner_display_name: settings.owner_display_name || user?.full_name || "",
         professional_type: settings.professional_type || "dentist",
         practice_name: settings.practice_name || "",
         phone: settings.phone || "",
@@ -68,7 +78,7 @@ export default function PracticeProfileSection() {
         address_lng: settings.address_lng ?? null,
       });
     }
-  }, [settings]);
+  }, [settings, user]);
 
   async function handleSubmit(e) {
     e.preventDefault();

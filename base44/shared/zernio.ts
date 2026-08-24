@@ -343,6 +343,12 @@ REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno quedó 
   // "confirmado" sin haberse guardado nada) — ahora el mensaje final siempre refleja la
   // realidad, no lo que la IA cree que pasó.
   let finalReplyText = reply.reply;
+  // Cuando la cita se agenda o reagenda con éxito, `finalReplyText` pasa a ser un
+  // mensaje CORTO y cálido ("¡listo! ya te mando los datos..."), y esto se completa con
+  // los datos completos de la cita — se manda como un SEGUNDO mensaje de WhatsApp, un
+  // rato después del primero, para que la conversación se sienta en dos tiempos en vez de
+  // un bloque único de texto largo apenas confirma.
+  let secondaryReplyText = null;
   let appointmentCreated = null;
 
   if (

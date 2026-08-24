@@ -51,6 +51,40 @@ const PRO_EXTRAS = ["Bot de WhatsApp con IA", "Agenda y reservas online 24/7", "
 const PREMIUM_EXTRAS = ["Hasta 500 citas mensuales", "Bandeja de chats con toma de control", "Reportes y métricas avanzadas", "Solicitud automática de reseñas", "Soporte prioritario"];
 const WHATSAPP_URL = "https://wa.me/5491100000000?text=" + encodeURIComponent("Hola! Quiero probar Kame Agenda, ¿me cuentan cómo funciona?");
 
+// Mini recreación de la página pública real dentro de un marco de celular, para el selector
+// de temas interactivo. Usa datos de ejemplo fijos (no reales) — lo único que cambia es el
+// tema, tomado siempre de resolveTheme (la misma fuente que usa el editor real).
+function ThemePhonePreview({ theme }) {
+  const shapeClass = theme.radiusClass === "rounded-full" ? "rounded-full" : theme.radiusClass === "rounded-none" ? "rounded-none" : "rounded-2xl";
+  const headingStyle = theme.headingFont ? { fontFamily: theme.headingFont } : {};
+  return (
+    <div className="w-[230px] h-[460px] rounded-[2.1rem] p-2.5 mx-auto" style={{ background: "#111114", boxShadow: "0 20px 45px rgba(0,0,0,0.18)" }}>
+      <div className="w-full h-full rounded-[1.5rem] overflow-hidden" style={{ background: theme.bg }}>
+        <div className="px-4 pt-7 pb-4 flex flex-col items-center text-center">
+          <div className={`w-14 h-14 flex items-center justify-center font-heading font-bold text-lg shrink-0 ${shapeClass}`} style={{ background: theme.accentCss, color: theme.accentText, ...headingStyle }}>A</div>
+          <p className="mt-3 font-heading font-bold text-sm leading-tight" style={{ color: theme.text, ...headingStyle }}>Andrea Vidal</p>
+          <p className="text-[11px] mt-0.5" style={{ color: theme.muted }}>Odontología</p>
+          <div className="flex items-center gap-1.5 mt-4 w-full">
+            <span className={`flex-1 text-center px-2 py-1.5 text-[11px] font-semibold ${theme.radiusClass}`} style={{ background: theme.accentCss, color: theme.accentText }}>Agendar cita</span>
+            <span className={`flex-1 text-center px-2 py-1.5 text-[11px] font-medium border ${theme.radiusClass}`} style={{ color: theme.muted, borderColor: theme.cardBorder }}>Información</span>
+          </div>
+        </div>
+        <div className="px-4">
+          {[["Consulta general", "30 min · $29.000"], ["Limpieza dental", "45 min · $35.000"]].map(([n, s], i) => (
+            <div key={n} className="flex items-center justify-between py-2.5" style={i === 0 ? { borderBottom: `1px solid ${theme.cardBorder}` } : undefined}>
+              <div>
+                <p className="text-xs font-semibold" style={{ color: theme.text, ...headingStyle }}>{n}</p>
+                <p className="text-[10px] mt-0.5" style={{ color: theme.muted }}>{s}</p>
+              </div>
+              <ArrowRight className="w-3.5 h-3.5" style={{ color: theme.muted }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Landing() {
   return (
     <div className="min-h-screen bg-stone-50 text-slate-900 font-body antialiased">

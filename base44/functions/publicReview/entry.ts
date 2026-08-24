@@ -26,16 +26,19 @@ export default async function(req) {
 
       let practice_name = '';
       let page_color = '#0f172a';
+      let google_review_link = '';
       try {
         const settings = await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: rev.created_by_id });
         const s = settings?.[0];
         practice_name = s?.practice_name || '';
         page_color = s?.page_color || '#0f172a';
+        google_review_link = s?.google_review_link || '';
       } catch {}
 
       return Response.json({
         practice_name,
         page_color,
+        google_review_link,
         patient_name: rev.patient_name,
         service_name: rev.service_name,
         appointment_date: rev.appointment_date,

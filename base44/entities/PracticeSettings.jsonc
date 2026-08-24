@@ -9,7 +9,8 @@
     },
     "bot_assistant_name": {
       "type": "string",
-      "title": "Bot \u2014 Nombre del asistente"
+      "title": "Bot \u2014 Nombre del asistente",
+      "description": "Nombre propio del bot. Vac\u00edo = se presenta como la asistente virtual del consultorio, sin nombre propio."
     },
     "bot_tone_prompt": {
       "type": "string",

@@ -216,15 +216,22 @@ ${servicesText || "(sin servicios cargados)"}
 Próximas citas del consultorio:
 ${upcomingText || "(ninguna)"}
 
+Tus citas (las de ESTE paciente puntual, con quién estás hablando ahora):
+${patientUpcomingText || "(no tiene ninguna cita próxima)"}
+
 === HISTORIAL DE CONVERSACIÓN ===
 ${historyText || "(sin historial)"}
 
 === NUEVO MENSAJE DEL PACIENTE ===
 ${text}
 
-Instrucciones: Respondé al paciente. Si el paciente quiere agendar y tenés toda la información (servicio y fecha/hora${isClinic ? ", y ya se resolvió con qué profesional o que no tiene preferencia" : ""}), configurá action como "book" y completá appointment con service_name (exacto) y datetime en formato ISO 8601 CON offset de zona horaria de Argentina, por ejemplo "2026-09-07T10:00:00-03:00" (nunca sin el "-03:00" al final)${isClinic ? ", y professional_name si el paciente eligió a alguien" : ""}. Si falta información, pedila.
+Instrucciones: Respondé al paciente. Configurá "action" según lo que el paciente quiera hacer:
+- "book": para agendar un turno NUEVO. Necesitás tener servicio y fecha/hora completos${isClinic ? ", y ya resuelto con qué profesional o que no tiene preferencia" : ""}. Completá appointment.service_name (exacto, tal cual aparece en "Servicios disponibles") y appointment.datetime en ISO 8601 CON offset de Argentina, ej. "2026-09-07T10:00:00-03:00" (nunca sin el "-03:00" al final)${isClinic ? ", y appointment.professional_name si eligió a alguien" : ""}. Si falta información, pedisela en vez de adivinar.
+- "reschedule": cuando el paciente pide cambiar el día/hora de una cita que YA tiene (mirá "Tus citas" arriba). Completá appointment.datetime con la nueva fecha/hora (mismo formato ISO con offset). Si el paciente tiene más de una cita próxima, completá también appointment.service_name para indicar cuál de esas está reagendando (si no lo aclaró y hay ambigüedad, PREGUNTASELO en vez de adivinar cuál).
+- "cancel": cuando el paciente pide cancelar/anular una cita que ya tiene. Completá appointment.service_name solo si hace falta desambiguar entre varias citas próximas suyas.
+- "none": para cualquier otra respuesta (preguntas, saludos, falta info todavía).
 
-REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno está "confirmado", "agendado", "reservado" o "listo" salvo que en ESTE MISMO mensaje hayas configurado action="book" con service_name y datetime completos. Si action es "none", tu texto NO puede sonar a confirmación de nada nuevo — como mucho podés recordarle una cita que YA figura en "Próximas citas del consultorio" arriba (y solo si realmente está ahí, con esos datos exactos). Nunca dés por hecho que algo quedó agendado porque lo mencionaste antes en la conversación: la única fuente de verdad es la lista de "Próximas citas del consultorio". Si no estás seguro de si algo se agendó, preguntale al paciente qué necesita en vez de asumir.`;
+REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno quedó "confirmado", "agendado", "reagendado", "cancelado" o "listo" salvo que en ESTE MISMO mensaje hayas configurado action="book"/"reschedule"/"cancel" con los datos completos que hacen falta en cada caso. Si action es "none", tu texto NO puede sonar a confirmación de nada nuevo — como mucho podés recordarle una cita que YA figura en "Tus citas" arriba (y solo si realmente está ahí, con esos datos exactos). Nunca dés por hecho que algo quedó agendado, reagendado o cancelado porque lo mencionaste antes en la conversación: la única fuente de verdad es la lista de "Tus citas" / "Próximas citas del consultorio" de ESTE mensaje. Si no estás seguro de qué cita tocar, preguntá en vez de asumir.`;
 
   const llmRes = await base44.asServiceRole.integrations.Core.InvokeLLM({
     prompt: contextPrompt,

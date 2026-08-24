@@ -111,16 +111,16 @@ export default async function(req) {
 
         let channelUsed = "email";
         if (whatsappAllowed && wantsWhatsApp && patient?.phone) {
-          const zernioConnected = practice?.whatsapp_connected && practice?.zernio_account_id;
-          if (zernioConnected) {
+          // Antes esto solo chequeaba `zernio_account_id` para decidir si había WhatsApp
+          // conectado — una cuenta conectada por QR (Evolution API) nunca tiene ese campo
+          // cargado, así que NUNCA le llegaban recordatorios por WhatsApp a sus pacientes,
+          // sin ningún error visible (caía derecho al fallback de email en silencio). Ahora
+          // usamos la misma función genérica que ya sabe elegir Zernio o Evolution según
+          // corresponda, igual que el bot y las respuestas manuales.
+          const whatsAppConnected = !!practice?.whatsapp_connected;
+          if (whatsAppConnected) {
             try {
-              const plat = await getPlatformConfig();
-              await sendWhatsApp(base44, {
-                apiKey: plat?.zernio_api_key,
-                accountId: practice.zernio_account_id,
-                phone: patient.phone,
-                message: waReminderText,
-              });
+              await sendWhatsAppMessage(base44, practice, patient.phone, waReminderText);
               channelUsed = "whatsapp";
             } catch (e) {
               // Fallback a email si WhatsApp falla y el paciente acepta email

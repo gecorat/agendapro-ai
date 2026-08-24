@@ -69,7 +69,11 @@ export default function Settings() {
 
           <PublicLinkSection />
 
-          <GoogleCalendarConnectCard />
+          {/* Oculto temporalmente hasta terminar la verificación de scope sensible en Google
+              Cloud Console (ver conversación con soporte). El backend sigue activo: quien ya
+              lo había conectado sigue sincronizando normalmente, solo se esconde la entrada
+              para nuevos usuarios mientras la app está en modo Testing. */}
+          {/* <GoogleCalendarConnectCard /> */}
           <WhatsAppConnectCard />
           <WhatsAppUsageCard />
           <IntegrationCard icon={Mail} name="Email" description="Recordatorios y confirmaciones automáticas a tus pacientes" state="connected" />

@@ -7,6 +7,10 @@
       "title": "Bot \u2014 Prompt de objetivo",
       "description": "Instrucciones sobre QU\u00c9 tiene que lograr el bot (agendar, preguntar servicio/d\u00eda/horario, etc). Vac\u00edo = usa el predeterminado de la plataforma."
     },
+    "bot_assistant_name": {
+      "type": "string",
+      "title": "Bot \u2014 Nombre del asistente"
+    },
     "bot_tone_prompt": {
       "type": "string",
       "title": "Bot \u2014 Prompt de tono/personalidad",

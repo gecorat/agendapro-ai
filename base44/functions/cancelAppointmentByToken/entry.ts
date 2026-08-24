@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { getPlatformConfig, sendWhatsApp } from "../../shared/zernio.ts";
 import { buildEmailHtml } from "../../shared/email-template.ts";
+import { deleteGoogleEvent } from "../../shared/google-calendar.ts";
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -50,6 +51,17 @@ export default async function(req: Request): Promise<Response> {
     }
 
     await base44.asServiceRole.entities.Appointment.update(appt.id, { status: 'cancelled' });
+
+    // Borra el evento del Google Calendar de quien atendía esta cita, si estaba
+    // sincronizado. No debe romper el flujo de cancelación si Google falla.
+    try {
+      await deleteGoogleEvent(base44, appt, professionalId);
+      if (appt.google_event_id) {
+        await base44.asServiceRole.entities.Appointment.update(appt.id, { google_event_id: null });
+      }
+    } catch (e) {
+      console.error('[cancelAppointmentByToken] error al borrar evento de Google:', e?.message || e);
+    }
 
     // Notificar al profesional por email y WhatsApp
     if (practice) {

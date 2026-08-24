@@ -262,11 +262,13 @@ export default function PublicPageEditor() {
   const activeTheme = resolveTheme(form.theme_preset, form.page_color, { custom: { borderRadius: form.custom_border_radius } });
 
   return (
-    // Estructura de 2 columnas INDEPENDIENTES: el contenedor raíz no scrollea nunca
-    // (h-full). Cada columna maneja su propio scroll por separado. El scroll fantasma de
-    // toda la página (sidebar incluido) se resolvió aparte, en AppLayout.jsx.
-    <div className="h-full overflow-hidden flex flex-col" style={{ maxHeight: "100vh" }}>
-      <div className="shrink-0 border-b border-border px-4 md:px-6 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-background">
+    // Layout de flujo NORMAL de página (nada de h-full/overflow-hidden acá): el que scrollea
+    // es <main> en AppLayout.jsx. La columna del celular usa sticky para quedarse a la vista
+    // mientras se scrollea el formulario — mucho más robusto que pelearle un layout de
+    // "altura fija tipo app" a un contenedor padre que ya scrollea por su cuenta (eso fue lo
+    // que rompió el mockup en producción: quedaba flotando fuera de su caja).
+    <div className="pb-10">
+      <div className="border-b border-border px-4 md:px-6 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-background">
         <div>
           <h1 className="text-lg font-heading font-semibold">Página pública</h1>
           <p className="text-xs text-muted-foreground">/u/{cleanHandle || "tuusuario"}</p>
@@ -287,9 +289,9 @@ export default function PublicPageEditor() {
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 flex flex-col lg:flex-row">
-        {/* Columna Izquierda: wizard de 4 pasos — única que scrollea */}
-        <div className="w-full lg:w-[55%] overflow-y-auto px-4 md:px-6 py-5 pb-16">
+      <div className="flex flex-col lg:flex-row lg:items-start">
+        {/* Columna Izquierda: wizard de 4 pasos */}
+        <div className="w-full lg:w-[55%] px-4 md:px-6 py-5">
           <div className="max-w-2xl mx-auto">
             {/* Stepper */}
             <div className="flex items-center mb-7">
@@ -546,8 +548,10 @@ export default function PublicPageEditor() {
           </div>
         </div>
 
-        {/* Columna Derecha: mockup de celular con Live Preview, fija */}
-        <div className="hidden lg:flex lg:w-[45%] flex-col items-center justify-center gap-3 border-l border-border bg-muted/20 px-6 py-6 shrink-0">
+        {/* Columna Derecha: mockup de celular con Live Preview — sticky mientras se
+            scrollea el formulario, en vez de pelearle un layout de altura fija a <main>
+            (que ya scrollea toda la página en AppLayout.jsx). */}
+        <div className="hidden lg:flex lg:w-[45%] lg:sticky lg:top-6 lg:self-start flex-col items-center gap-3 border-l border-border bg-muted/20 px-6 py-6">
           <div
             className="rounded-[2.5rem] p-3 shrink-0"
             style={{ width: 300, height: 600, background: "#111114", boxShadow: "0 20px 45px rgba(0,0,0,0.18)" }}

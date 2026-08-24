@@ -406,7 +406,7 @@ REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno quedó 
           let offerSlots = referenceSlots;
           if (!offerSlots.length) {
             const refProfId = candidateProfessionalIds[0];
-            const found = findNextAvailableDaySlots(start, service, availability, appts, refProfId || null, []);
+            const found = findNextAvailableDaySlots(start, service, availability, myAppts, refProfId || null, []);
             offerSlots = found.slots;
           }
           const options = pickClosestSlots(offerSlots, start, 3);

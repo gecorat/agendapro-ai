@@ -298,6 +298,9 @@ function FullAssistant({ settings, reloadSettings }) {
       try {
         await base44.functions.invoke("syncAppointmentGoogle", { appointmentId: apptId });
       } catch { /* no romper el flujo si Google falla */ }
+      try {
+        await base44.functions.invoke("notifyPatientOfAppointmentChange", { appointmentId: apptId, changeType: "cancelled" });
+      } catch { /* no romper el flujo si el aviso falla */ }
       setActiveAppointments((prev) => prev.filter((a) => a.id !== apptId));
     } catch (e) {
       console.error(e);

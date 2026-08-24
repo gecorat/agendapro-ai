@@ -115,8 +115,15 @@ export default function PracticeProfileSection() {
     <form onSubmit={handleSubmit} className="space-y-5">
       <div>
         <h2 className="font-heading font-semibold">Mi perfil</h2>
-        <p className="text-sm text-muted-foreground">Tus datos personales y de cuenta. Para la estética de tu página de reservas, andá a "Página pública" en el menú.</p>
+        <p className="text-sm text-muted-foreground">Tus datos personales y los de tu negocio. Para la estética de tu página de reservas, andá a "Página pública" en el menú.</p>
       </div>
+
+      <Section title="Tu nombre" description="Solo para que el panel te salude a vos en el menú lateral. Esto NO lo ve ningún paciente.">
+        <div className="space-y-1.5">
+          <Label htmlFor="owner_display_name">Nombre de pila</Label>
+          <Input id="owner_display_name" value={form.owner_display_name} onChange={(e) => set("owner_display_name", e.target.value)} placeholder="Ej. Juan" className="max-w-xs" />
+        </div>
+      </Section>
 
       <Section title="Foto de perfil" description="Se muestra en el menú lateral mientras usás la app — no en tu página pública de reservas.">
         <div className="flex items-center gap-3">
@@ -133,10 +140,11 @@ export default function PracticeProfileSection() {
         </div>
       </Section>
 
-      <Section title="Identidad">
+      <Section title="Datos del negocio / consultorio" description="Esto es lo que VE EL PACIENTE: en tu página pública, en los mensajes del bot de WhatsApp y en los recordatorios.">
         <div className="space-y-1.5">
-          <Label htmlFor="practice_name">Nombre</Label>
-          <Input id="practice_name" value={form.practice_name} onChange={(e) => set("practice_name", e.target.value)} placeholder="Ej. Dr. Juan Pérez" />
+          <Label htmlFor="practice_name">Nombre del negocio/consultorio</Label>
+          <Input id="practice_name" value={form.practice_name} onChange={(e) => set("practice_name", e.target.value)} placeholder="Ej. Consultorio Dr. Pérez" />
+          <p className="text-xs text-muted-foreground">Podés poner el nombre de tu consultorio/clínica, o directamente tu propio nombre y apellido si atenés de forma particular — lo que corresponda para vos. Puede coincidir con "Tu nombre" de arriba, o no.</p>
         </div>
         <Select value={form.professional_type} onValueChange={(v) => set("professional_type", v)}>
           <SelectTrigger><SelectValue /></SelectTrigger>

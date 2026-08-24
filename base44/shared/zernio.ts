@@ -526,14 +526,16 @@ REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno quedó 
         try {
           googleBusy = await getGoogleBusyRanges(base44, professionalId, target.professional_ref_id || undefined, dayStart.toISOString(), dayEnd.toISOString());
         } catch { /* si Google falla, seguimos sin ese dato */ }
-        // Los slots se calculan contra TODAS las citas salvo la que estamos moviendo (así
-        // no choca contra sí misma).
-        const apptsExcludingTarget = (appts || []).filter((a) => a.id !== target.id);
-        const daySlots = generateSlotsForDay(start, targetService, availability, apptsExcludingTarget, target.professional_ref_id || null, googleBusy);
-        const isValidSlot = daySlots.some((s) => s.getTime() === start.getTime());
+        // Los slots se calculan contra TODAS las citas del consultorio salvo la que estamos
+        // moviendo (así no choca contra sí misma). Usamos myAppts (escopeado a este
+        // consultorio), no el `appts` crudo de toda la plataforma.
+        const apptsExcludingTarget = myAppts.filter((a) => a.id !== target.id);
+        // Acepta cualquier horario realmente libre dentro del horario laboral, no solo los
+        // alineados a la grilla redonda (mismo criterio que en el agendado nuevo).
+        const isValidSlot = isTimeAvailable(start, end, targetService, availability, apptsExcludingTarget, target.professional_ref_id || null, googleBusy);
 
         if (!isValidSlot) {
-          let offerSlots = daySlots;
+          let offerSlots = generateSlotsForDay(start, targetService, availability, apptsExcludingTarget, target.professional_ref_id || null, googleBusy);
           if (!offerSlots.length) {
             const found = findNextAvailableDaySlots(start, targetService, availability, apptsExcludingTarget, target.professional_ref_id || null, []);
             offerSlots = found.slots;
@@ -558,7 +560,7 @@ REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno quedó 
                   const p = (professionals || []).find((pr) => pr.id === target.professional_ref_id);
                   return p ? `${p.first_name} ${p.last_name || ""}`.trim() : undefined;
                 })()
-              : undefined;
+              : (practice?.practice_name || undefined);
             finalReplyText = buildConfirmationMessage({ practice, service: targetService, start, professionalName, title: '🔁 *Turno reagendado*' });
             await notifyProfessionalOfBotAction(base44, practice, {
               verb: "reagendó",

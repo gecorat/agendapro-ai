@@ -113,7 +113,10 @@ function PlanRequiredTeamTab() {
 function BotConfigTab() {
   const { settings } = usePracticeSettings();
   const status = getPlanStatus(settings);
-  if (!status.hasPaidPlan) {
+  // OJO: acá se usa canUseWhatsApp (pro/clinic), no hasPaidPlan — el plan Básico no
+  // incluye el bot de WhatsApp (ver PLAN_WHATSAPP_LIMIT en plan-utils.js), así que no
+  // tendría sentido dejarle configurar algo que no puede usar.
+  if (!status.canUseWhatsApp) {
     return (
       <PlanGate
         feature="Configuración del bot"

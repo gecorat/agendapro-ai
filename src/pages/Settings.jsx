@@ -2,7 +2,7 @@ import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Mail, CheckCircle2, Clock3 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import PublicLinkCard from "@/components/PublicLinkCard";
 import PracticeProfileSection from "@/components/PracticeProfileSection";
 import AvailabilityEditor from "@/components/AvailabilityEditor";
@@ -19,6 +19,13 @@ import { getPlanStatus, PLAN_PRICES, PLAN_LABELS } from "@/lib/plan-utils";
 
 export default function Settings() {
   const { canManageBilling } = usePracticeSettings();
+  // Permite abrir una pestaña puntual por URL (ej. /settings?tab=profile), usado por el
+  // link "Editar" de la dirección en Página pública. Sin esto, ese link siempre caía en
+  // la pestaña por defecto (Servicios) y el profesional tenía que buscar Perfil a mano.
+  const [searchParams] = useSearchParams();
+  const requestedTab = searchParams.get("tab");
+  const validTabs = ["profile", "services", "team", "hours", "templates", "bot", "integrations", ...(canManageBilling ? ["plan"] : [])];
+  const initialTab = validTabs.includes(requestedTab) ? requestedTab : "services";
 
   return (
     <div className="px-3 py-3 md:p-6 max-w-4xl mx-auto space-y-4">
@@ -27,7 +34,7 @@ export default function Settings() {
         <p className="text-muted-foreground text-sm">Gestioná tu consultorio</p>
       </div>
 
-      <Tabs defaultValue="services">
+      <Tabs defaultValue={initialTab}>
         <TabsList className={`grid w-full bg-muted/60 rounded-xl p-1 h-auto ${canManageBilling ? "grid-cols-8" : "grid-cols-7"}`}>
           <TabsTrigger value="profile" className="rounded-lg text-xs sm:text-sm py-1.5">Perfil</TabsTrigger>
           <TabsTrigger value="services" className="rounded-lg text-xs sm:text-sm py-1.5">Servicios</TabsTrigger>

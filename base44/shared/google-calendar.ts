@@ -26,7 +26,11 @@ export function buildAuthUrl({ clientId, redirectUri, state }) {
     client_id: clientId,
     redirect_uri: redirectUri,
     response_type: 'code',
-    scope: 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/userinfo.email',
+    // Antes pedíamos también calendar.readonly, pero no lo necesitábamos: freebusy.query
+    // y events.list ya funcionan con el scope calendar.events (que da lectura Y escritura
+    // sobre eventos). Pedir menos scope = revisión de Google más rápida y una pantalla de
+    // permisos más chica para el profesional que conecta su cuenta.
+    scope: 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.email',
     access_type: 'offline',
     prompt: 'consent',
     state,

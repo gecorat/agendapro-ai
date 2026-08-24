@@ -87,16 +87,18 @@ export default function Landing() {
               <Button size="lg" asChild className="bg-slate-900 hover:bg-slate-800 h-11 px-6 text-sm">
                 <Link to="/register">Probar gratis 14 días <ArrowRight className="w-4 h-4 ml-1.5" /></Link>
               </Button>
-              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 h-11 px-6 text-sm font-medium rounded-md bg-emerald-600 hover:bg-emerald-700 text-white transition-colors">
-                <MessageCircle className="w-4 h-4" /> ¿Preferís que te ayudemos?
-              </a>
               <Button size="lg" variant="outline" asChild className="h-11 px-6 border-slate-300 text-slate-700 hover:bg-white">
                 <Link to="/login">Ya tengo cuenta</Link>
               </Button>
             </div>
-            <p className="mt-4 text-xs text-slate-500 flex items-center gap-1.5">
-              <Check className="w-3.5 h-3.5 text-emerald-600" /> Sin tarjeta de crédito · Configurás todo y probás antes de pagar
-            </p>
+            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5">
+              <p className="text-xs text-slate-500 flex items-center gap-1.5">
+                <Check className="w-3.5 h-3.5 text-emerald-600" /> Sin tarjeta de crédito · probás antes de pagar
+              </p>
+              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-emerald-700 hover:text-emerald-800 inline-flex items-center gap-1">
+                <MessageCircle className="w-3.5 h-3.5" /> ¿Preferís que te ayudemos por WhatsApp?
+              </a>
+            </div>
           </div>
 
           {/* Visual mock */}

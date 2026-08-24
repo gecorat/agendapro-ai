@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { waitUntil } from "base44:runtime";
 import { checkWhatsAppUsage } from "../../shared/whatsapp-usage.ts";
 import { sendWhatsAppMessage, isChatPaused } from "../../shared/whatsapp-providers.ts";
+import { sendPushToUsers, getPracticeRecipientUserIds } from "../../shared/push.ts";
 
 // Webhook de Evolution API (conexión por QR, self-hosted). Identificamos de qué
 // consultorio es cada mensaje por ?practiceId= en la URL (que nosotros mismos generamos
@@ -87,11 +88,27 @@ export default async function (req: Request): Promise<Response> {
     // está apagado, no contesta a NADIE, pero el mensaje ya quedó guardado arriba para
     // atenderlo a mano desde la bandeja.
     if (practice.bot_enabled === false) {
+      waitUntil(
+        sendPushToUsers(base44, await getPracticeRecipientUserIds(base44, practice), {
+          title: "Mensaje nuevo (bot apagado)",
+          body: "Llegó un mensaje de WhatsApp y el bot está desactivado — nadie le va a responder.",
+          url: "/asistente",
+          tag: `wa-${fromPhone}`,
+        }).catch((e) => console.error("push bot_disabled error:", e?.message || e))
+      );
       return Response.json({ ok: true, skipped: "bot_disabled" });
     }
 
     const usage = await checkWhatsAppUsage(base44, practice);
     if (!usage.allowed) {
+      waitUntil(
+        sendPushToUsers(base44, await getPracticeRecipientUserIds(base44, practice), {
+          title: "Mensaje nuevo (sin cupo)",
+          body: "Llegó un mensaje de WhatsApp pero se acabó el cupo del plan — el bot no puede responder.",
+          url: "/upgrade-plan",
+          tag: `wa-${fromPhone}`,
+        }).catch((e) => console.error("push usage_blocked error:", e?.message || e))
+      );
       waitUntil(
         sendWhatsAppMessage(base44, practice, fromPhone, usage.autoReplyToPatient)
           .then(() =>

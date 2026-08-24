@@ -227,7 +227,11 @@ function FullAssistant({ settings, reloadSettings }) {
         if (sorted[i].role === "user") unread++; else break;
       }
       const pause = pauseByPhone.get(phone);
-      const patient = patientByPhone.get(phone);
+      // `phone` acá es el que vino tal cual en la Conversation (webhook de WhatsApp); lo
+      // canonicalizamos igual que al armar `patientByPhone` para que matchee sin importar
+      // el formato exacto con el que haya quedado guardado el teléfono del paciente.
+      const canonicalPhone = phone.replace(/\D/g, "").slice(-10);
+      const patient = patientByPhone.get(canonicalPhone);
       result.push({
         phone,
         patient,

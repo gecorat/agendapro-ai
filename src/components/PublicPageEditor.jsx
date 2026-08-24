@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import {
-  Loader2, Upload, Check, Copy, ExternalLink, Share2, Monitor, Smartphone,
+  Loader2, Upload, Check, Copy, ExternalLink, Share2, Smartphone,
   AlignLeft, AlignCenter, PanelTop, Circle, Square, MapPin, PenLine,
   ChevronLeft, ChevronRight, Maximize2, X,
 } from "lucide-react";

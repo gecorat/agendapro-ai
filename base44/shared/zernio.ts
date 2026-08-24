@@ -1,4 +1,40 @@
 import { findPatientByCanonicalPhone } from "./phone-utils.ts";
+import { sendEmail } from "./email-sender.ts";
+import { buildEmailHtml, getAppUrl } from "./email-template.ts";
+
+// Le avisa al PROFESIONAL (dueño de la cuenta) por email cuando el bot de WhatsApp
+// agenda, reagenda o cancela un turno solo, sin que nadie del consultorio haya estado
+// mirando la pantalla. Antes esto no existía: el bot le confirmaba todo al paciente por
+// WhatsApp, pero el profesional se enteraba recién al abrir la Agenda — sin ningún aviso.
+// Best-effort: si falla el envío, no debe romper la respuesta al paciente.
+async function notifyProfessionalOfBotAction(base44, practice, { verb, appt, req }) {
+  try {
+    if (!practice?.professional_email) return;
+    const dateStr = new Date(appt.start_datetime).toLocaleString("es-AR", {
+      weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit",
+      timeZone: "America/Argentina/Buenos_Aires",
+    });
+    const appUrl = await getAppUrl(base44, req).catch(() => "");
+    await sendEmail(base44, {
+      to: practice.professional_email,
+      subject: `El bot de WhatsApp ${verb} un turno — ${appt.service_name || "Consulta"}`,
+      body: buildEmailHtml({
+        title: `Turno ${verb} por el bot`,
+        greeting: `Hola ${practice.practice_name || ""}`.trim(),
+        lines: [`El bot de WhatsApp acaba de ${verb} un turno con ${appt.patient_name || "un paciente"}, sin que hiciera falta que lo atiendas vos.`],
+        details: [
+          { label: "Paciente", value: appt.patient_name || "—" },
+          { label: "Servicio", value: appt.service_name || "—" },
+          { label: "Día y horario", value: dateStr },
+        ],
+        primaryButton: appUrl ? { label: "Ver en la Agenda", url: `${appUrl}/agenda?edit=${appt.id}` } : null,
+        footer: practice.practice_name || "Kame Agenda",
+      }),
+    });
+  } catch (e) {
+    console.error("notifyProfessionalOfBotAction error:", e?.message || e);
+  }
+}
 
 export async function getPlatformConfig(base44) {
   const list = await base44.asServiceRole.entities.PlatformConfig.filter({});

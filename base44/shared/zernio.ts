@@ -1,7 +1,7 @@
 import { findPatientByCanonicalPhone } from "./phone-utils.ts";
 import { sendEmail } from "./email-sender.ts";
 import { buildEmailHtml } from "./email-template.ts";
-import { generateSlotsForDay, findNextAvailableDaySlots, pickClosestSlots } from "./scheduling.ts";
+import { generateSlotsForDay, findNextAvailableDaySlots, pickClosestSlots, isTimeAvailable } from "./scheduling.ts";
 import { getGoogleBusyRanges } from "./google-calendar.ts";
 import { DEFAULT_OBJECTIVE_PROMPT, DEFAULT_TONE_PROMPT, DEFAULT_RESPONSE_DELAY_SECONDS } from "./bot-defaults.ts";
 

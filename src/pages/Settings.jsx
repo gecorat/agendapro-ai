@@ -110,6 +110,21 @@ function PlanRequiredTeamTab() {
   return <ProfessionalsPanel />;
 }
 
+function BotConfigTab() {
+  const { settings } = usePracticeSettings();
+  const status = getPlanStatus(settings);
+  if (!status.hasPaidPlan) {
+    return (
+      <PlanGate
+        feature="Configuración del bot"
+        requiredPlan="pro"
+        description="Personalizá el objetivo y el tono del bot de WhatsApp. Disponible desde el plan Pro."
+      />
+    );
+  }
+  return <BotSettingsPanel />;
+}
+
 function PlanSection() {
   const { settings } = usePracticeSettings();
   const status = getPlanStatus(settings);

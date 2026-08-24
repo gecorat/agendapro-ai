@@ -585,7 +585,8 @@ REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno quedó 
                   return p ? `${p.first_name} ${p.last_name || ""}`.trim() : undefined;
                 })()
               : (practice?.practice_name || undefined);
-            finalReplyText = buildConfirmationMessage({ practice, service: targetService, start, professionalName, title: '🔁 *Turno reagendado*' });
+            finalReplyText = buildRescheduleAckMessage();
+            secondaryReplyText = buildConfirmationMessage({ practice, service: targetService, start, professionalName, title: '🔁 *Turno reagendado*' });
             await notifyProfessionalOfBotAction(base44, practice, {
               verb: "reagendó",
               appt: { ...target, start_datetime: start.toISOString() },

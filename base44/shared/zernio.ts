@@ -178,17 +178,20 @@ export async function orchestrateConversation(base44, ctx) {
   ]);
 
   const myServices = (services || []).filter((s) => s.created_by_id === professionalId);
+  // TODAS las citas de este consultorio (no de toda la plataforma). OJO: el campo
+  // correcto para esto es `professional_id` — `created_by_id` en una cita creada por el
+  // bot/una función del servidor SIEMPRE es un id genérico interno del sistema, nunca el
+  // id del profesional, así que comparar contra eso nunca matcheaba. Confirmado en vivo:
+  // esto rompía "tus citas" (reagendar/cancelar nunca encontraba nada) Y hacía que el
+  // cálculo de horarios disponibles chequeara contra TODAS las citas de TODOS los
+  // consultorios de la plataforma en vez de solo las propias.
+  const myAppts = (appts || []).filter((a) => a.professional_id === professionalId);
   const existingPatient = findPatientByCanonicalPhone(
     (patients || []).filter((p) => p.professional_id === professionalId),
     fromPhone
   );
-  const myUpcoming = (appts || [])
-    .filter(
-      (a) =>
-        a.created_by_id === professionalId &&
-        new Date(a.start_datetime) > new Date() &&
-        a.status !== "cancelled"
-    )
+  const myUpcoming = myAppts
+    .filter((a) => new Date(a.start_datetime) > new Date() && a.status !== "cancelled")
     .slice(0, 5);
   // Citas futuras DE ESTE PACIENTE puntual (no de todo el consultorio) — es lo que el bot
   // necesita para saber qué reagendar o cancelar cuando el paciente lo pide sin repetir
@@ -196,9 +199,8 @@ export async function orchestrateConversation(base44, ctx) {
   // las citas del paciente había que tocar, así que un pedido de "reagendame" no llegaba
   // a ningún lado.
   const myPatientUpcoming = existingPatient
-    ? (appts || []).filter(
+    ? myAppts.filter(
         (a) =>
-          a.created_by_id === professionalId &&
           a.patient_id === existingPatient.id &&
           new Date(a.start_datetime) > new Date() &&
           a.status !== "cancelled"

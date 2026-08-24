@@ -9,6 +9,7 @@ import { PROFESSIONAL_TYPES, getTypeLabel } from "@/lib/professional-presets";
 import { useToast } from "@/components/ui/use-toast";
 import { base44 } from "@/api/base44Client";
 import { convertImageToWebP } from "@/lib/image-utils";
+import AddressAutocompleteInput from "@/components/AddressAutocompleteInput";
 
 function Section({ title, description, children }) {
   return (
@@ -22,12 +23,13 @@ function Section({ title, description, children }) {
   );
 }
 
-// "Mi perfil" es exclusivamente cuenta/identidad del profesional (nombre, contacto,
-// foto personal, contraseña, rubro del negocio). Todo lo que tiene que ver con CÓMO se ve
-// tu página pública (portada, tema, colores, enlace, dirección mostrada, redes) se movió a
-// "Página pública". La foto de acá (avatar_url) es DISTINTA de la de Página pública
-// (photo_url) — esta es solo para el menú lateral mientras usás la app, no para tus
-// pacientes.
+// "Mi perfil" es la ÚNICA fuente de verdad para los datos del negocio (identidad,
+// contacto Y ubicación). "Página pública" (estética, tema, enlace) lee la dirección de
+// acá mismo y la muestra de solo lectura con un link de vuelta — antes había que
+// cargarla ahí directamente, sin que apareciera nunca en Perfil, lo que era confuso
+// ("¿por qué la dirección de mi negocio está en la pantalla de diseño de la página?").
+// La foto de acá (avatar_url) es DISTINTA de la de Página pública (photo_url) — esta es
+// solo para el menú lateral mientras usás la app, no para tus pacientes.
 export default function PracticeProfileSection() {
   const { settings, save, reload } = usePracticeSettings();
   const { toast } = useToast();
@@ -38,6 +40,11 @@ export default function PracticeProfileSection() {
     phone: "",
     professional_email: "",
     avatar_url: "",
+    address: "",
+    address_city: "",
+    address_province: "",
+    address_lat: null,
+    address_lng: null,
   });
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -54,6 +61,11 @@ export default function PracticeProfileSection() {
         phone: settings.phone || "",
         professional_email: settings.professional_email || "",
         avatar_url: settings.avatar_url || "",
+        address: settings.address || "",
+        address_city: settings.address_city || "",
+        address_province: settings.address_province || "",
+        address_lat: settings.address_lat ?? null,
+        address_lng: settings.address_lng ?? null,
       });
     }
   }, [settings]);
@@ -137,6 +149,18 @@ export default function PracticeProfileSection() {
             <Label htmlFor="email">Email</Label>
             <Input id="email" type="email" value={form.professional_email} onChange={(e) => set("professional_email", e.target.value)} />
           </div>
+        </div>
+      </Section>
+
+      <Section title="Ubicación" description="Se muestra en tu página pública y en los mensajes de confirmación del bot de WhatsApp (con link a Google Maps).">
+        <AddressAutocompleteInput
+          value={form.address}
+          onChange={(v) => set("address", v)}
+          onPlaceSelect={({ address, lat, lng }) => setForm((f) => ({ ...f, address, address_lat: lat, address_lng: lng }))}
+        />
+        <div className="grid grid-cols-2 gap-3 pt-1">
+          <Input value={form.address_city} onChange={(e) => set("address_city", e.target.value)} placeholder="Localidad" />
+          <Input value={form.address_province} onChange={(e) => set("address_province", e.target.value)} placeholder="Provincia" />
         </div>
       </Section>
 

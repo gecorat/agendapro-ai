@@ -378,14 +378,9 @@ export default function PublicBooking() {
     }
   }, [service, slot, form, professionalId, selectedPro, DATE_STEP, SUCCESS_STEP]);
 
-  const theme = resolveTheme(settings?.theme_preset || "clean_dark_tech", settings?.page_color, {
-    secondaryColor: settings?.page_color_secondary,
+  const theme = resolveTheme(settings?.theme_preset, settings?.page_color, {
     fontOverride: settings?.heading_font_override,
-    custom: {
-      borderRadius: settings?.custom_border_radius,
-      cardOpacity: settings?.custom_card_opacity,
-      blurEnabled: settings?.custom_blur_enabled,
-    },
+    custom: { borderRadius: settings?.custom_border_radius },
   });
 
   if (loading) {

@@ -376,6 +376,22 @@ function FullAssistant({ settings, reloadSettings, save }) {
     }
   };
 
+  // Interruptor GENERAL del bot: a diferencia de "Desconectar" (corta la sesión de
+  // WhatsApp por completo), esto deja el número conectado pero el bot deja de contestar a
+  // CUALQUIER paciente hasta que se reactive — los mensajes entrantes se siguen guardando
+  // en la bandeja para responder a mano. Útil para pausar del todo sin perder la conexión
+  // (ej. vacaciones, feriados, mientras se ajusta la configuración).
+  const handleToggleBot = async (checked) => {
+    setBotToggling(true);
+    try {
+      await save?.({ bot_enabled: checked });
+    } catch (e) {
+      console.error("Error al cambiar el estado del bot", e);
+    } finally {
+      setBotToggling(false);
+    }
+  };
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [activeMessages.length, sending]);

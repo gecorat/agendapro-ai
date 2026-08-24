@@ -46,6 +46,11 @@
       "title": "Bot \u2014 Pausado hasta",
       "description": "Solo aplica cuando bot_enabled=false. Vac\u00edo/null = pausa indefinida (hasta reactivar a mano). Con fecha = se considera reactivado autom\u00e1ticamente en cuanto se cumple, sin necesidad de ning\u00fan proceso en segundo plano \u2014 se calcula al vuelo comparando contra la hora actual (ver base44/shared/bot-status.ts)."
     },
+    "google_review_link": {
+      "type": "string",
+      "title": "Link para dejar rese\u00f1a en Google",
+      "description": "Lo pega el profesional (sale de su Perfil de Negocio de Google, tarjeta 'Conseguir m\u00e1s rese\u00f1as', o se arma con el Place ID). Se usa para invitar a repetir en Google a quien deja 4-5 estrellas en la rese\u00f1a interna."
+    },
     "professional_type": {
       "type": "string",
       "title": "Tipo de profesional",

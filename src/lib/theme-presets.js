@@ -1,225 +1,267 @@
-// Sistema de temas de la página pública de reservas (/u/:handle) y su editor. 6 presets
-// premium + 1 tema "custom" totalmente controlable. El color primario y secundario, y la
-// tipografía, son universales: se aplican arriba de CUALQUIER tema (predefinido o custom).
+// Sistema de temas de la página pública de reservas (/u/:handle) y su editor.
+// 8 presets full-width cerrados (reemplaza el sistema anterior de 6 temas + "Personalizado"
+// con opacidad/blur/patrones de fondo). Cada preset trae su propio color de acento,
+// tipografía y radio de botones por defecto; el color de acento y la tipografía se pueden
+// afinar desde "Personalización fina" (page_color / heading_font_override), y el radio de
+// botones desde custom_border_radius. Todo lo demás (opacidad de tarjetas, blur manual,
+// marcos de foto, generador de patrones) se eliminó: cada preset ya viene resuelto.
 export const THEME_PRESETS = {
-  luxury_gold: {
-    label: "Luxury Gold",
-    description: "Negro profundo, bordes finos metalizados, sombras marcadas.",
-    bg: "#0D0D0D",
-    cardBg: "#1A1712",
-    cardBorder: "rgba(212,175,55,0.28)",
-    text: "#F5EFE0",
-    muted: "#B8A98A",
-    chipBg: "rgba(212,175,55,0.08)",
-    glass: false,
-    neon: false,
-    cardClass: "shadow-2xl shadow-black/50",
-    defaultFont: "serif_elegant",
-  },
-  glassmorphism_premium: {
-    label: "Glassmorphism Premium",
-    description: "Vidrio esmerilado intenso (blur-xl), tarjetas semitransparentes.",
-    bg: "#0B132B",
-    cardBg: "rgba(255,255,255,0.10)",
-    cardBorder: "rgba(255,255,255,0.18)",
-    text: "#FFFFFF",
-    muted: "#C3CBEA",
-    chipBg: "rgba(255,255,255,0.12)",
-    glass: true,
-    neon: false,
-    cardClass: "backdrop-blur-xl border-white/10 shadow-xl shadow-black/30",
-    defaultFont: "geometric",
-  },
-  warm_botanical: {
-    label: "Warm Botanical",
-    description: "Crema/lino cálido, tarjetas blancas bien redondeadas.",
-    bg: "#F4F1EA",
+  botanical_wave: {
+    label: "Botanical Wave",
+    description: "Verde salvia claro, cabecera curva. Nutrición, psicología, spas.",
+    bg: "#F4F6F0",
     cardBg: "#FFFFFF",
-    cardBorder: "#E6E0D2",
-    text: "#3A362C",
-    muted: "#8A8270",
-    chipBg: "#8FA77C1a",
+    cardBorder: "#E2E7DC",
+    text: "#1C2A23",
+    muted: "#5A6B60",
+    chipBg: "#2D4A3E14",
+    accent: "#2D4A3E",
     glass: false,
     neon: false,
-    cardClass: "shadow-sm rounded-3xl",
-    forceRadius: "rounded-3xl",
+    curved: true,
+    cardClass: "shadow-sm",
+    forceRadius: "full",
     defaultFont: "modern_sans",
+    swatches: ["#2D4A3E", "#6B8F71", "#A8C3A0", "#C5A059", "#8C6D62"],
   },
-  clean_dark_tech: {
-    label: "Clean Dark Tech",
-    description: "Grafito estilo Vercel/Linear, bordes micro-brillantes, botones neón.",
-    bg: "#090D16",
-    cardBg: "#12161F",
-    cardBorder: "rgba(255,255,255,0.09)",
-    text: "#F1F3F7",
-    muted: "#8890A0",
-    chipBg: "rgba(255,255,255,0.06)",
+  oled_obsidian: {
+    label: "OLED Obsidian",
+    description: "Negro puro, líneas finas. Tech, barberías, DJs.",
+    bg: "#000000",
+    cardBg: "#0A0A0A",
+    cardBorder: "#27272A",
+    text: "#FFFFFF",
+    muted: "#A1A1AA",
+    chipBg: "#FFFFFF0D",
+    accent: "#10B981",
     glass: false,
     neon: true,
-    cardClass: "shadow-lg shadow-black/30",
+    curved: false,
+    cardClass: "shadow-lg shadow-black/40",
+    forceRadius: "none",
     defaultFont: "geometric",
+    swatches: ["#10B981", "#3B82F6", "#A78BFA", "#F472B6", "#F4F4F5"],
   },
-  minimal_light: {
-    label: "Minimal Light",
-    description: "Editorial pulcro, blanco impoluto, bordes sólidos sin sombra.",
-    bg: "#FFFFFF",
+  editorial_luxe: {
+    label: "Editorial Luxe",
+    description: "Serif de alto impacto, marfil cálido. Médicos estéticos, boutique.",
+    bg: "#FAF8F5",
     cardBg: "#FFFFFF",
-    cardBorder: "#111111",
-    text: "#0F172A",
-    muted: "#64748B",
-    chipBg: "#0F172A0D",
+    cardBorder: "#EFECE6",
+    text: "#1A1817",
+    muted: "#706C68",
+    chipBg: "#C5A05914",
+    accent: "#C5A059",
+    accentText: "#1A1817",
     glass: false,
     neon: false,
+    curved: false,
+    cardClass: "shadow-sm",
+    forceRadius: "none",
+    defaultFont: "serif_elegant",
+    swatches: ["#C5A059", "#1A1817", "#706C68", "#8C7A5B", "#EFECE6"],
+  },
+  warm_terracotta: {
+    label: "Warm Terracotta",
+    description: "Cálido y humano. Fotógrafos, diseñadores, coaches.",
+    bg: "#FDF6F0",
+    cardBg: "#FFFFFF",
+    cardBorder: "#F3E2D4",
+    text: "#3D261D",
+    muted: "#8C6D62",
+    chipBg: "#D96B4314",
+    accent: "#D96B43",
+    glass: false,
+    neon: false,
+    curved: false,
+    cardClass: "shadow-sm",
+    forceRadius: "soft",
+    defaultFont: "modern_sans",
+    swatches: ["#D96B43", "#3D261D", "#E8A87C", "#8C6D62", "#F3E2D4"],
+  },
+  corporate_glass: {
+    label: "Corporate Glass",
+    description: "Degradé azul marino, tarjetas de vidrio. Contadores, consultoras.",
+    bg: "linear-gradient(180deg, #0F172A 0%, #1E293B 100%)",
+    cardBg: "rgba(30,41,59,0.7)",
+    cardBorder: "rgba(255,255,255,0.1)",
+    text: "#F8FAFC",
+    muted: "#94A3B8",
+    chipBg: "#FFFFFF14",
+    accent: "#38BDF8",
+    glass: true,
+    neon: false,
+    curved: false,
+    cardClass: "backdrop-blur-xl shadow-xl shadow-black/30",
+    forceRadius: "soft",
+    defaultFont: "geometric_dm",
+    swatches: ["#38BDF8", "#818CF8", "#F8FAFC", "#94A3B8", "#0EA5E9"],
+  },
+  minimal_high_fashion: {
+    label: "Minimal High-Fashion",
+    description: "Alto contraste, blanco absoluto. Modelos, arquitectos, trainers.",
+    bg: "#FFFFFF",
+    cardBg: "#FAFAFA",
+    cardBorder: "#E5E5E5",
+    text: "#000000",
+    muted: "#666666",
+    chipBg: "#0000000D",
+    accent: "#000000",
+    glass: false,
+    neon: false,
+    curved: false,
     cardClass: "",
     noShadow: true,
-    defaultFont: "modern_sans",
+    forceRadius: "none",
+    defaultFont: "display_syne",
+    swatches: ["#000000", "#666666", "#E5E5E5", "#FAFAFA", "#999999"],
   },
-  photo_focus: {
-    label: "Photo Focus",
-    description: "Tu portada domina el header, con degradé que se funde con el contenido.",
-    bg: "#111318",
-    cardBg: "#1A1D24",
-    cardBorder: "rgba(255,255,255,0.10)",
-    text: "#FFFFFF",
-    muted: "#C7CAD1",
-    chipBg: "rgba(255,255,255,0.08)",
+  nordic_slate: {
+    label: "Nordic Slate",
+    description: "Gris pizarra frío, pulcro. Odontología, fisioterapia, salud.",
+    bg: "#EBEEF1",
+    cardBg: "#FFFFFF",
+    cardBorder: "#CBD5E1",
+    text: "#1E293B",
+    muted: "#64748B",
+    chipBg: "#0EA5E914",
+    accent: "#0EA5E9",
     glass: false,
     neon: false,
-    photoFocus: true, // el header (portada) es más grande y funde con degradé hacia bg
-    cardClass: "shadow-lg shadow-black/30",
+    curved: false,
+    cardClass: "shadow-sm",
+    forceRadius: "soft",
+    defaultFont: "modern_sans_inter",
+    swatches: ["#0EA5E9", "#1E293B", "#64748B", "#CBD5E1", "#7DD3FC"],
+  },
+  executive_gold: {
+    label: "Executive Gold",
+    description: "Azul marino profundo, dorado metálico. Finanzas, real estate VIP.",
+    bg: "#0A111E",
+    cardBg: "#111C2E",
+    cardBorder: "#1E2D4A",
+    text: "#F8FAFC",
+    muted: "#94A3B8",
+    chipBg: "#FFFFFF0D",
+    accent: "#E2C044",
+    accentGradient: "linear-gradient(135deg, #E2C044 0%, #B8860B 100%)",
+    glass: false,
+    neon: false,
+    curved: false,
+    cardClass: "shadow-lg shadow-black/40",
+    forceRadius: "none",
     defaultFont: "editorial",
+    swatches: ["#E2C044", "#B8860B", "#F8FAFC", "#94A3B8", "#1E2D4A"],
   },
-  custom: {
-    label: "Personalizado",
-    description: "Definís vos cada cosa: fondo, redondeado, opacidad, blur.",
-    bg: "#121212",
-    cardBg: "#1C1C1C",
-    cardBorder: "rgba(255,255,255,0.12)",
-    text: "#F5F5F5",
-    muted: "#A0A0A0",
-    chipBg: "rgba(255,255,255,0.08)",
-    glass: false,
-    neon: false,
-    cardClass: "",
-    defaultFont: "modern_sans",
-  },
+};
+
+// Mapa de compatibilidad: los 7 valores viejos (temas anteriores al rediseño de 8 presets)
+// se resuelven al preset nuevo más parecido, así ninguna página existente rompe.
+const LEGACY_THEME_MAP = {
+  luxury_gold: "executive_gold",
+  glassmorphism_premium: "corporate_glass",
+  warm_botanical: "botanical_wave",
+  clean_dark_tech: "oled_obsidian",
+  minimal_light: "minimal_high_fashion",
+  photo_focus: "warm_terracotta",
+  custom: "nordic_slate",
 };
 
 // Tipografías premium seleccionables globalmente (anulan la fuente por defecto del tema).
 export const FONT_OPTIONS = {
   serif_elegant: { label: "Serif Elegante", family: "'Playfair Display', serif", googleFont: "Playfair+Display:wght@500;600;700" },
-  modern_sans: { label: "Modern Sans", family: "'Plus Jakarta Sans', sans-serif", googleFont: "Plus+Jakarta+Sans:wght@500;600;700" },
-  geometric: { label: "Geométrica", family: "'Outfit', sans-serif", googleFont: "Outfit:wght@600;700" },
-  editorial: { label: "Editorial", family: "'Cinzel', serif", googleFont: "Cinzel:wght@600;700" },
+  modern_sans: { label: "Sans Moderna", family: "'Plus Jakarta Sans', sans-serif", googleFont: "Plus+Jakarta+Sans:wght@400;500;700" },
+  geometric: { label: "Geométrica", family: "'Space Grotesk', sans-serif", googleFont: "Space+Grotesk:wght@500;600;700" },
+  editorial: { label: "Editorial", family: "'Cinzel', serif", googleFont: "Cinzel:wght@500;600;700" },
+  // Fuentes "internas" de ciertos presets (no aparecen como opción manual en el selector,
+  // solo se usan como defaultFont de su tema, pero viven acá para que loadThemeFont las cargue).
+  geometric_dm: { label: "DM Sans", family: "'DM Sans', sans-serif", googleFont: "DM+Sans:wght@400;500;700" },
+  display_syne: { label: "Syne", family: "'Syne', sans-serif", googleFont: "Syne:wght@600;700" },
+  modern_sans_inter: { label: "Inter", family: "'Inter', sans-serif", googleFont: "Inter:wght@400;500;600" },
 };
+
+// Las 4 opciones que ve el usuario en "Tipografía de encabezado" (Personalización fina).
+export const HEADING_FONT_CHOICES = ["serif_elegant", "modern_sans", "geometric", "editorial"];
 
 export const BORDER_RADIUS_CLASS = {
   none: "rounded-none",
-  soft: "rounded-2xl",
-  full: "rounded-3xl",
+  soft: "rounded-xl",
+  full: "rounded-full",
 };
+export const BORDER_RADIUS_PX = { none: 0, soft: 12, full: 999 };
 
 // Estima si conviene texto claro u oscuro arriba de un color de fondo.
 function isLightColor(hex) {
-  if (!hex || hex.length < 7) return false;
+  if (!hex || hex.length < 7 || !hex.startsWith("#")) return false;
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
   return (r * 299 + g * 587 + b * 114) / 1000 > 150;
 }
 
-// Resuelve el tema final: mezcla el preset elegido con color primario/secundario
-// universales, la tipografía elegida (o la default del tema), y los controles de
-// redondeado/opacidad/blur — estos últimos son UNIVERSALES: se aplican arriba de
-// CUALQUIERA de los 7 temas, no solo "Personalizado" (antes sí estaban atados a ese
-// tema específico).
+export function resolvePresetKey(key) {
+  if (key && THEME_PRESETS[key]) return key;
+  if (key && LEGACY_THEME_MAP[key]) return LEGACY_THEME_MAP[key];
+  return "nordic_slate";
+}
+
+// Resuelve el tema final: preset (con su acento/tipografía/radio propios) + los 2 únicos
+// overrides opcionales de "Personalización fina": color de acento (pageColor) y tipografía
+// de encabezado (fontOverride). custom.borderRadius también es opcional ("auto" = usar el
+// radio propio del preset).
 export function resolveTheme(presetKey, pageColor, options = {}) {
-  const { secondaryColor, fontOverride, custom = {} } = options;
-  const preset = THEME_PRESETS[presetKey] || THEME_PRESETS.clean_dark_tech;
-  const accent = pageColor || "#3B82F6";
-  const secondary = secondaryColor || accent;
+  const { fontOverride, custom = {} } = options;
+  const key = resolvePresetKey(presetKey);
+  const preset = THEME_PRESETS[key];
+
+  const hasCustomAccent = !!pageColor;
+  const accent = pageColor || preset.accent;
+  // El degradé propio del preset (ej. dorado de Executive Gold) solo se usa si el usuario
+  // no eligió un color de acento manual — un hex simple siempre gana.
+  const accentCss = !hasCustomAccent && preset.accentGradient ? preset.accentGradient : accent;
 
   const fontKey = fontOverride && fontOverride !== "default" ? fontOverride : preset.defaultFont;
   const font = FONT_OPTIONS[fontKey];
 
-  let cardBg = preset.cardBg;
-  const cardBorder = preset.cardBorder;
-  let radiusClass = preset.forceRadius || BORDER_RADIUS_CLASS.soft;
-  let cardClass = preset.cardClass || "";
-  let glass = preset.glass;
-
-  if (custom.borderRadius) {
-    radiusClass = BORDER_RADIUS_CLASS[custom.borderRadius] || radiusClass;
+  let radiusKey = preset.forceRadius || "soft";
+  if (custom.borderRadius && custom.borderRadius !== "auto") {
+    radiusKey = custom.borderRadius;
   }
-  if (custom.cardOpacity !== undefined && custom.cardOpacity !== null && custom.cardOpacity !== 100) {
-    cardBg = hexToRgba(preset.cardBg, custom.cardOpacity / 100);
-  }
-  if (custom.blurEnabled) {
-    glass = true;
-    cardClass = `${cardClass} backdrop-blur-md`.trim();
-  }
+  const radiusClass = BORDER_RADIUS_CLASS[radiusKey] || BORDER_RADIUS_CLASS.soft;
+  const radiusPx = BORDER_RADIUS_PX[radiusKey] ?? 12;
 
   return {
-    ...preset,
+    key,
+    label: preset.label,
+    bg: preset.bg,
+    cardBg: preset.cardBg,
+    cardBorder: preset.cardBorder,
+    text: preset.text,
+    muted: preset.muted,
+    chipBg: preset.chipBg,
+    glass: preset.glass,
+    neon: preset.neon,
+    curved: preset.curved,
+    noShadow: preset.noShadow,
+    cardClass: preset.cardClass || "",
+    secondary: accent,
     accent,
-    secondary,
-    accentText: isLightColor(accent) ? "#0F172A" : "#FFFFFF",
-    cardBorderNeon: preset.neon ? `${accent}55` : cardBorder,
+    accentCss,
+    accentText: preset.accentText || (isLightColor(accent) ? "#0F172A" : "#FFFFFF"),
+    cardBorderNeon: preset.neon ? `${accent}55` : preset.cardBorder,
     neonGlow: preset.neon ? `0 0 0 1px ${accent}55, 0 0 18px ${accent}80, 0 0 40px ${accent}30` : undefined,
     headingFont: font?.family || null,
     googleFont: font?.googleFont || null,
-    cardBg,
-    cardBorder,
     radiusClass,
-    cardClass,
-    glass,
+    radiusPx,
   };
 }
 
-function hexToRgba(hex, alpha) {
-  if (!hex || hex.startsWith("rgba") || hex.startsWith("rgb(")) return hex;
-  if (hex.startsWith("rgba(") || hex.length < 7) return hex;
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b)) return hex;
-  return `rgba(${r},${g},${b},${alpha})`;
-}
-
-// Patrones de fondo del Generador de Fondos (tema Personalizado), 100% CSS, sin assets
-// externos. "nature" usa tonos verdes fijos (motivo orgánico); el resto sigue el color
-// primario/secundario elegido para integrarse con la marca.
-export function getBackgroundPatternStyle(pattern, primary, secondary) {
-  const sec = secondary || primary;
-  switch (pattern) {
-    case "nature":
-      return {
-        backgroundColor: "#1b2318",
-        backgroundImage: `
-          radial-gradient(circle at 12% 18%, #6b8e5a66 0%, transparent 32%),
-          radial-gradient(circle at 88% 12%, #8fa77c55 0%, transparent 38%),
-          radial-gradient(circle at 45% 78%, #4a5d3a66 0%, transparent 42%),
-          radial-gradient(circle at 92% 88%, #a3b58955 0%, transparent 34%)`,
-      };
-    case "waves":
-      return {
-        backgroundColor: "#0f1115",
-        backgroundImage: `repeating-linear-gradient(135deg, ${primary}26 0px, ${primary}26 2px, transparent 2px, transparent 42px), repeating-linear-gradient(45deg, ${sec}1f 0px, ${sec}1f 2px, transparent 2px, transparent 42px)`,
-      };
-    case "mesh":
-      return {
-        backgroundColor: "#0d0f14",
-        backgroundImage: `
-          radial-gradient(at 20% 30%, ${primary}70 0px, transparent 50%),
-          radial-gradient(at 80% 20%, ${sec}70 0px, transparent 50%),
-          radial-gradient(at 40% 85%, ${primary}55 0px, transparent 50%),
-          radial-gradient(at 92% 92%, ${sec}55 0px, transparent 50%)`,
-      };
-    case "gradient":
-      return { backgroundImage: `linear-gradient(135deg, ${primary}, ${sec})` };
-    default:
-      return {};
-  }
+// Forma del avatar derivada del radio del tema (reemplaza el selector manual de "marco").
+export function avatarShapeClass(radiusClass) {
+  if (radiusClass === "rounded-full") return "rounded-full";
+  if (radiusClass === "rounded-none") return "rounded-none";
+  return "rounded-2xl";
 }
 
 // Carga dinámicamente la fuente de Google que haga falta (una sola vez por fuente).
@@ -267,14 +309,3 @@ export function googleMapsEmbedSrc({ address, city, province, lat, lng }) {
   if (!full) return "";
   return `https://maps.google.com/maps?q=${encodeURIComponent(full)}&z=15&output=embed`;
 }
-
-export const PHOTO_FRAME_CLASS = {
-  circle: "rounded-full",
-  rounded: "rounded-2xl",
-};
-
-export const PHOTO_ALIGN_CLASS = {
-  left: "mr-auto ml-0 items-start text-left",
-  center: "mx-auto items-center text-center",
-  right: "ml-auto mr-0 items-end text-right",
-};

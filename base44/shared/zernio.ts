@@ -153,19 +153,28 @@ export async function orchestrateConversation(base44, ctx) {
 
   const botList = await base44.asServiceRole.entities.BotConfig.filter({});
   const bot = botList?.[0] || {};
-  const systemPrompt =
-    bot.system_prompt ||
-    "Sos la asistente virtual del consultorio. Ayudá a agendar, confirmar y reprogramar citas. Sé amable, breve y profesional.";
+  // Prioridad del prompt de OBJETIVO: lo que cargó el propio profesional en su
+  // Configuración del bot > lo que dejó cargado el admin en BotConfig (compatibilidad
+  // con lo que ya había antes) > el predeterminado de la plataforma.
+  // El prompt de TONO es nuevo (no tenía equivalente antes), así que solo tiene el
+  // override del profesional y el predeterminado.
+  const objectivePrompt = practice?.bot_objective_prompt || bot.system_prompt || DEFAULT_OBJECTIVE_PROMPT;
+  const tonePrompt = practice?.bot_tone_prompt || DEFAULT_TONE_PROMPT;
+  const systemPrompt = `${objectivePrompt}\n\n${tonePrompt}`;
   const model = bot.model && bot.model !== "automatic" ? bot.model : undefined;
+  // Cuánto esperar antes de mandar la respuesta por WhatsApp, configurable por el
+  // profesional (5/15/30/60s) — para que no se sienta instantáneo/robotizado.
+  const responseDelaySeconds = Number(practice?.bot_response_delay_seconds) || DEFAULT_RESPONSE_DELAY_SECONDS;
 
   const isClinic = practice?.plan === "clinic";
 
-  const [services, patients, appts, allHistory, professionals] = await Promise.all([
+  const [services, patients, appts, allHistory, professionals, availability] = await Promise.all([
     base44.asServiceRole.entities.Service.filter({ active: true }),
     base44.asServiceRole.entities.Patient.filter({}),
     base44.asServiceRole.entities.Appointment.filter({}),
     base44.asServiceRole.entities.Conversation.filter({ professional_id: professionalId, phone: fromPhone }),
     isClinic ? base44.asServiceRole.entities.Professional.filter({ practice_owner_id: professionalId, active: true }) : Promise.resolve([]),
+    base44.asServiceRole.entities.Availability.filter({ practice_owner_id: professionalId }),
   ]);
 
   const myServices = (services || []).filter((s) => s.created_by_id === professionalId);

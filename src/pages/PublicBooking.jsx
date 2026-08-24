@@ -108,8 +108,9 @@ function buildWaMessage(service, date, slot, form) {
 
 // Header con foto/portada: la foto va con position:absolute + z-index alto + overflow
 // visible en el contenedor, así queda SIEMPRE integrada sobre la portada sin cortes,
-// sin importar bordes redondeados del contenedor de la tarjeta. Si photo_frame === "none"
-// (el usuario desactivó la foto), el <img>/fallback NO se renderiza en absoluto.
+// sin importar bordes redondeados del contenedor de la tarjeta. La forma del avatar
+// (círculo / cuadrado redondeado / recto) se deriva del radio del tema, ya no hay un
+// selector manual de "marco". bleed=true quita el chrome de tarjeta (usado en mobile).
 function ProfileHeader({ settings, theme, brand, cardClass, glassStyle, align, size = 96, rounded = "rounded-t-3xl", headingFontStyle, bleed = false }) {
   const frameClass = avatarShapeClass(theme.radiusClass);
   const isBanner = align === "banner";

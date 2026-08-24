@@ -452,7 +452,7 @@ export default function PublicBooking() {
         <div className="space-y-3">
           <h2 className="font-heading font-semibold text-lg" style={{ color: theme.text }}>Elegí el servicio</h2>
           {services.length === 0 ? (
-            <div className={`p-8 text-center space-y-3 rounded-2xl border border-dashed ${cardClass}`} style={cardStyle}>
+            <div className={`p-8 text-center space-y-3 border border-dashed ${cardClass}`} style={cardStyle}>
               <CalendarX className="w-12 h-12 mx-auto opacity-40" style={{ color: theme.muted }} />
               <div>
                 <p className="font-medium" style={{ color: theme.text }}>Todavía no hay servicios disponibles</p>
@@ -465,7 +465,7 @@ export default function PublicBooking() {
                 <button
                   key={s.id}
                   onClick={() => { setService(s); setStep(hasProfessionals ? PRO_STEP : DATE_STEP); }}
-                  className={`group w-full text-left p-4 rounded-xl border-2 hover:shadow-md transition-all cursor-pointer flex items-center justify-between ${cardClass}`}
+                  className={`group w-full text-left p-4 border-2 hover:shadow-md transition-all cursor-pointer flex items-center justify-between ${cardClass}`}
                   style={{ ...cardStyle, borderColor: theme.cardBorder }}
                 >
                   <div className="flex items-center gap-3 min-w-0">
@@ -492,7 +492,7 @@ export default function PublicBooking() {
       )}
 
       {hasProfessionals && step === PRO_STEP && (
-        <div className={`rounded-2xl border p-5 space-y-3 ${cardClass}`} style={cardStyle}>
+        <div className={`border p-5 space-y-3 ${cardClass}`} style={cardStyle}>
           <div className="flex items-center justify-between">
             <h2 className="font-heading font-semibold" style={{ color: theme.text }}>Elegí con quién agendar</h2>
             <button className="text-sm hover:underline" style={{ color: theme.muted }} onClick={() => setStep(1)}>Cambiar servicio</button>
@@ -502,7 +502,7 @@ export default function PublicBooking() {
               <button
                 key={p.id}
                 onClick={() => { setSelectedPro(p); setDate(null); setSlot(null); setStep(DATE_STEP); }}
-                className="w-full text-left p-3.5 rounded-xl border-2 flex items-center gap-3 transition-all hover:shadow-sm"
+                className={`w-full text-left p-3.5 border-2 flex items-center gap-3 transition-all hover:shadow-sm ${theme.radiusClass}`}
                 style={{ ...cardStyle, borderColor: theme.cardBorder }}
               >
                 <div className="w-9 h-9 rounded-full flex items-center justify-center font-semibold text-sm shrink-0" style={{ background: `${brand}20`, color: brand }}>
@@ -516,7 +516,7 @@ export default function PublicBooking() {
             ))}
             <button
               onClick={() => { setSelectedPro(null); setDate(null); setSlot(null); setStep(DATE_STEP); }}
-              className="w-full text-left p-3.5 rounded-xl border-2 border-dashed flex items-center gap-3 transition-all"
+              className={`w-full text-left p-3.5 border-2 border-dashed flex items-center gap-3 transition-all ${theme.radiusClass}`}
               style={{ borderColor: theme.cardBorder, color: theme.muted }}
             >
               <User className="w-5 h-5 shrink-0" />
@@ -527,7 +527,7 @@ export default function PublicBooking() {
       )}
 
       {step === DATE_STEP && (
-        <div className={`rounded-2xl border p-5 space-y-4 ${cardClass}`} style={cardStyle}>
+        <div className={`border p-5 space-y-4 ${cardClass}`} style={cardStyle}>
           <div className="flex items-center justify-between">
             <h2 className="font-heading font-semibold" style={{ color: theme.text }}>Elegí fecha y hora</h2>
             <button className="text-sm hover:underline" style={{ color: theme.muted }} onClick={() => setStep(hasProfessionals ? PRO_STEP : 1)}>Atrás</button>
@@ -545,7 +545,7 @@ export default function PublicBooking() {
               {upcomingDays.map((d) => {
                 const selected = date && d.toDateString() === date.toDateString();
                 return (
-                  <button key={d.toISOString()} onClick={() => { setDate(d); setSlot(null); setBookingError(null); }} className="p-2 rounded-lg border text-center transition-colors" style={selected ? { background: theme.accentCss, borderColor: brand, color: theme.accentText } : { borderColor: theme.cardBorder, color: theme.text }}>
+                  <button key={d.toISOString()} onClick={() => { setDate(d); setSlot(null); setBookingError(null); }} className={`p-2 border text-center transition-colors ${theme.radiusClass}`} style={selected ? { background: theme.accentCss, borderColor: brand, color: theme.accentText } : { borderColor: theme.cardBorder, color: theme.text }}>
                     <p className="text-xs capitalize opacity-70">{d.toLocaleDateString("es-AR", { weekday: "short" })}</p>
                     <p className="font-medium text-sm">{d.getDate()}</p>
                   </button>
@@ -561,7 +561,7 @@ export default function PublicBooking() {
               ) : (
                 <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                   {slots.map((s) => (
-                    <button key={s.toISOString()} onClick={() => { setSlot(s); setBookingError(null); }} className="p-2 rounded-lg border text-sm transition-colors" style={slot && slot.toISOString() === s.toISOString() ? { background: theme.accentCss, borderColor: brand, color: theme.accentText } : { borderColor: theme.cardBorder, color: theme.text }}>{formatSlot(s)}</button>
+                    <button key={s.toISOString()} onClick={() => { setSlot(s); setBookingError(null); }} className={`p-2 border text-sm transition-colors ${theme.radiusClass}`} style={slot && slot.toISOString() === s.toISOString() ? { background: theme.accentCss, borderColor: brand, color: theme.accentText } : { borderColor: theme.cardBorder, color: theme.text }}>{formatSlot(s)}</button>
                   ))}
                 </div>
               )}
@@ -572,7 +572,7 @@ export default function PublicBooking() {
       )}
 
       {step === DATA_STEP && (
-        <div className={`rounded-2xl border p-5 space-y-4 ${cardClass}`} style={cardStyle}>
+        <div className={`border p-5 space-y-4 ${cardClass}`} style={cardStyle}>
           <div className="flex items-center justify-between">
             <h2 className="font-heading font-semibold" style={{ color: theme.text }}>Tus datos</h2>
             <button className="text-sm hover:underline" style={{ color: theme.muted }} onClick={() => setStep(DATE_STEP)}>Atrás</button>
@@ -594,7 +594,7 @@ export default function PublicBooking() {
       )}
 
       {step === CONFIRM_STEP && (
-        <div className={`rounded-2xl border p-5 space-y-4 ${cardClass}`} style={cardStyle}>
+        <div className={`border p-5 space-y-4 ${cardClass}`} style={cardStyle}>
           <div className="flex items-center justify-between">
             <h2 className="font-heading font-semibold" style={{ color: theme.text }}>Revisá tu reserva</h2>
             <button className="text-sm hover:underline" style={{ color: theme.muted }} onClick={() => setStep(DATA_STEP)}>Atrás</button>
@@ -622,7 +622,7 @@ export default function PublicBooking() {
         const waMsg = buildWaMessage(service, date, slot, form);
         const confirmWaUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(waMsg)}`;
         return (
-          <div className={`rounded-2xl border p-6 text-center space-y-3 ${cardClass}`} style={cardStyle}>
+          <div className={`border p-6 text-center space-y-3 ${cardClass}`} style={cardStyle}>
             <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center mx-auto"><Check className="w-7 h-7 text-emerald-600" /></div>
             <h2 className="font-heading font-semibold text-lg" style={{ color: theme.text }}>¡Solicitud registrada!</h2>
             <p className="text-sm" style={{ color: theme.muted }}>{service?.name}{selectedPro ? ` con ${selectedPro.first_name}` : ""}</p>
@@ -649,14 +649,14 @@ export default function PublicBooking() {
     <div className={`flex items-center gap-2 ${className}`}>
       <button
         onClick={() => setTab("agendar")}
-        className="flex-1 px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+        className={`flex-1 px-4 py-2 text-sm font-semibold transition-all ${theme.radiusClass}`}
         style={tab === "agendar" ? { background: theme.accentCss, color: theme.accentText, boxShadow: theme.neon ? theme.neonGlow : "0 2px 8px rgba(0,0,0,0.15)" } : { background: "transparent", color: theme.muted, border: `1px solid ${theme.cardBorder}` }}
       >
         Agendar cita
       </button>
       <button
         onClick={() => setTab("info")}
-        className="flex-1 px-4 py-2 rounded-xl text-sm font-medium transition-all border"
+        className={`flex-1 px-4 py-2 text-sm font-medium transition-all border ${theme.radiusClass}`}
         style={tab === "info" ? { borderColor: brand, color: brand, background: `${brand}10` } : { borderColor: theme.cardBorder, color: theme.muted, background: "transparent" }}
       >
         Información

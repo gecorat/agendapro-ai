@@ -863,22 +863,15 @@ function FullAssistant({ settings, reloadSettings, save }) {
     <div className="h-full overflow-hidden flex flex-col">
       <div className="flex items-center justify-between gap-2 px-4 h-11 border-b border-border bg-card shrink-0">
         <p className="text-xs text-muted-foreground truncate">{settings?.whatsapp_phone_number || settings?.zernio_phone || "WhatsApp conectado"}</p>
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="flex items-center gap-1.5" title={settings?.bot_enabled === false ? "El bot no está respondiendo a nadie" : "El bot está respondiendo automáticamente"}>
-            <Bot className={`w-3.5 h-3.5 ${settings?.bot_enabled === false ? "text-muted-foreground" : "text-emerald-600"}`} />
-            <span className="text-xs text-muted-foreground hidden sm:inline">Bot</span>
-            <Switch
-              checked={settings?.bot_enabled !== false}
-              onCheckedChange={handleToggleBot}
-              disabled={botToggling}
-            />
-          </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <BotPauseButton settings={settings} save={save} />
           <Button variant="outline" size="sm" onClick={handleDisconnect} disabled={disconnecting} className="h-7 px-2 gap-1.5 text-xs shrink-0">
             {disconnecting ? <Loader2 className="w-3 h-3 animate-spin" /> : <LogOut className="w-3 h-3" />}
             Desconectar
           </Button>
         </div>
       </div>
+      <BotPauseBanner settings={settings} className="mx-4 mt-3 rounded-lg" />
       <div className="flex-1 min-h-0 flex">
         {ChatListColumn}
         {ChatColumn}

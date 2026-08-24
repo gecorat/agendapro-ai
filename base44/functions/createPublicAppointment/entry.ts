@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { findPatientByCanonicalPhone } from '../../shared/phone-utils.ts';
 import { pushAppointmentToGoogle } from '../../shared/google-calendar.ts';
+import { sendPushToUsers, getPracticeRecipientUserIds } from '../../shared/push.ts';
 
 export default async function (req: Request): Promise<Response> {
   try {
@@ -108,6 +109,24 @@ export default async function (req: Request): Promise<Response> {
     if (googleEventId) {
       await base44.asServiceRole.entities.Appointment.update(appointment.id, { google_event_id: googleEventId });
       appointment.google_event_id = googleEventId;
+    }
+
+    // Push al dueño (y a cualquier profesional del equipo) — no bloquea la respuesta de la
+    // reserva si falla o si todavía no hay VAPID configurado.
+    try {
+      const practices = await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: professional_id });
+      const practice = practices?.[0];
+      if (practice) {
+        const recipients = await getPracticeRecipientUserIds(base44, practice);
+        await sendPushToUsers(base44, recipients, {
+          title: 'Nueva reserva pendiente',
+          body: `${patient.first_name} ${patient.last_name || ''}`.trim() + ` — ${service.name}`,
+          url: '/agenda',
+          tag: `appt-${appointment.id}`,
+        });
+      }
+    } catch (e) {
+      console.error('push createPublicAppointment error:', e?.message || e);
     }
 
     return Response.json({ appointment, patient });

@@ -38,7 +38,9 @@ const STEPS = [
 ];
 
 const FAQ = [
+  { q: "¿Qué incluye exactamente la prueba de 14 días?", a: "Las funciones del plan Básico (página de reservas, agenda, pacientes, recordatorios por email) más un simulador del bot de WhatsApp para que veas cómo respondería. El WhatsApp real con tus pacientes se activa al pasar a Pro o Premium." },
   { q: "¿Necesito tarjeta para probar?", a: "No. Los 14 días de prueba son sin tarjeta y sin compromiso. Solo necesitás tu email." },
+  { q: "¿Me cobran algo si no hago nada al terminar la prueba?", a: "No. Como nunca pedimos una tarjeta, no hay nada que cobrar automáticamente. Si termina la prueba y todavía no elegiste un plan, tu cuenta queda pausada hasta que actives uno." },
   { q: "¿Funciona con mi WhatsApp actual?", a: "Sí. Usamos un proveedor que coexiste con tu WhatsApp personal. No perdés tu número." },
   { q: "¿Cuánto tarda la configuración?", a: "Entre 5 y 10 minutos. La plataforma te guía paso a paso con una guía de bienvenida." },
   { q: "¿Puedo cancelar cuando quiera?", a: "Sí, sin penalidades. El plan se cobra mes a mes vía Mercado Pago." },

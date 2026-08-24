@@ -405,24 +405,17 @@ export default function PublicBooking() {
 
   const brand = theme.accent;
   const headingFontStyle = theme.headingFont ? { fontFamily: theme.headingFont } : {};
-  const customBgStyle = settings?.custom_bg_image_url
-    ? { background: `url(${settings.custom_bg_image_url}) center/cover` }
-    : settings?.custom_bg_pattern && settings.custom_bg_pattern !== "none"
-    ? getBackgroundPatternStyle(settings?.custom_bg_pattern, theme.accent, theme.secondary)
-    : {};
-  const showCustomOverlay = !!settings?.custom_bg_image_url;
   const igUrl = normalizeSocialUrl(settings?.instagram_url, "instagram");
   const fbUrl = normalizeSocialUrl(settings?.facebook_url, "facebook");
   const webUrl = normalizeSocialUrl(settings?.website_url, "website");
   const waUrl = whatsappUrl(settings?.phone);
   const mapsUrl = googleMapsUrl(settings?.address, settings?.address_city, settings?.address_province);
-  const frameClass = PHOTO_FRAME_CLASS[settings?.photo_frame] || PHOTO_FRAME_CLASS.circle;
   const glassStyle = theme.glass ? { backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)" } : {};
   const cardClass = `${theme.cardClass || ""} ${theme.radiusClass || "rounded-2xl"}`;
   const cardStyle = { background: theme.cardBg, borderColor: theme.cardBorder, color: theme.text, ...glassStyle };
 
   const primaryBtnStyle = {
-    backgroundColor: brand,
+    background: theme.accentCss,
     color: theme.accentText,
     boxShadow: theme.neon ? theme.neonGlow : undefined,
   };
@@ -436,7 +429,7 @@ export default function PublicBooking() {
               <div className="flex flex-col items-center gap-1.5 w-20">
                 <span
                   className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors"
-                  style={step >= s.num ? { backgroundColor: brand, color: theme.accentText } : { background: theme.chipBg || "#e2e8f0", color: theme.muted }}
+                  style={step >= s.num ? { background: theme.accentCss, color: theme.accentText } : { background: theme.chipBg || "#e2e8f0", color: theme.muted }}
                 >
                   {step > s.num ? <Check className="w-4 h-4" /> : s.num}
                 </span>
@@ -445,7 +438,7 @@ export default function PublicBooking() {
                 </span>
               </div>
               {i < STEPS.length - 1 && (
-                <div className="flex-1 h-px mt-4 mx-1" style={{ background: step > s.num ? brand : theme.cardBorder }} />
+                <div className="flex-1 h-px mt-4 mx-1" style={{ background: step > s.num ? theme.accent : theme.cardBorder }} />
               )}
             </React.Fragment>
           ))}

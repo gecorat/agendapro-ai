@@ -203,7 +203,7 @@ export async function orchestrateConversation(base44, ctx) {
   const contextPrompt = `${systemPrompt}
 
 === FECHA Y HORA ACTUAL ===
-Hoy es ${todayLabel} (${todayIsoDate}), son las ${nowTimeLabel} hora de Argentina. Cuando el paciente diga "hoy", "mañana", "pasado mañana", un día de la semana ("el viernes", "el lunes que viene") u otra referencia relativa, calculá la fecha exacta a partir de ESTA fecha de hoy, nunca de memoria ni de otra suposición.
+Hoy es ${todayLabel} (${todayIsoDate}), son las ${nowTimeLabel} hora de Argentina. Cuando el paciente diga "hoy", "mañana", "pasado mañana", un día de la semana ("el viernes", "el lunes que viene") u otra referencia relativa, calculá la fecha exacta a partir de ESTA fecha de hoy, nunca de memoria ni de otra suposición. IMPORTANTE: para calcular appointment.datetime, usá EXCLUSIVAMENTE la fecha/hora que el paciente pidió en su ÚLTIMO mensaje (el de "NUEVO MENSAJE DEL PACIENTE" más abajo) — ignorá por completo horarios que se hayan mencionado en mensajes ANTERIORES del historial (intentos fallidos, ideas descartadas, etc.), salvo que el paciente esté respondiendo "sí"/confirmando explícitamente esa propuesta concreta que vos mismo le acabas de hacer en tu mensaje anterior. El texto de tu respuesta y el valor de appointment.datetime SIEMPRE tienen que describir exactamente el mismo día y hora — nunca uno distinto del otro.
 
 === CONTEXTO DEL CONSULTORIO ===
 Consultorio: ${practice?.practice_name || ""}

@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
-import { Loader2, Bot, RotateCcw, Save, Target, Sparkles, Timer, MessageSquareText } from "lucide-react";
+import { Loader2, Bot, RotateCcw, Save, Target, Sparkles, Timer, MessageSquareText, UserCircle2 } from "lucide-react";
 
 // Ejemplo estático de cómo queda el mensaje de confirmación real que arma el bot (no es
 // editable acá — el formato en sí es fijo, a propósito, para que el paciente SIEMPRE lea
@@ -29,6 +30,7 @@ export default function BotSettingsPanel() {
   const [saving, setSaving] = useState(false);
   const [objective, setObjective] = useState("");
   const [tone, setTone] = useState("");
+  const [assistantName, setAssistantName] = useState("");
   const [delaySeconds, setDelaySeconds] = useState(15);
   const [initialized, setInitialized] = useState(false);
 
@@ -51,6 +53,7 @@ export default function BotSettingsPanel() {
     if (!settings || !defaults || initialized) return;
     setObjective(settings.bot_objective_prompt || defaults.objectivePrompt || "");
     setTone(settings.bot_tone_prompt || defaults.tonePrompt || "");
+    setAssistantName(settings.bot_assistant_name || "");
     setDelaySeconds(settings.bot_response_delay_seconds || defaults.responseDelaySeconds || 15);
     setInitialized(true);
   }, [settings, defaults, initialized]);
@@ -61,6 +64,7 @@ export default function BotSettingsPanel() {
       await save({
         bot_objective_prompt: objective.trim(),
         bot_tone_prompt: tone.trim(),
+        bot_assistant_name: assistantName.trim(),
         bot_response_delay_seconds: delaySeconds,
       });
       toast({ title: "Configuración del bot guardada", description: "Los próximos mensajes por WhatsApp ya usan estos cambios." });
@@ -96,6 +100,21 @@ export default function BotSettingsPanel() {
           <h2 className="font-heading font-semibold">Configuración del bot de WhatsApp</h2>
           <p className="text-sm text-muted-foreground">Ajustá cómo agenda y cómo habla la asistente virtual. Arranca con el predeterminado ya cargado — editalo o restauralo cuando quieras.</p>
         </div>
+      </div>
+
+      {/* Nombre del asistente */}
+      <div className="bg-card rounded-2xl border border-border p-4 space-y-2.5">
+        <div className="flex items-center gap-1.5">
+          <UserCircle2 className="w-4 h-4 text-primary" />
+          <Label className="font-medium">Nombre del asistente</Label>
+        </div>
+        <p className="text-xs text-muted-foreground -mt-1">Opcional. Si lo cargás, el bot se presenta con ese nombre al saludar o si el paciente le pregunta cómo se llama.</p>
+        <Input
+          value={assistantName}
+          onChange={(e) => setAssistantName(e.target.value)}
+          placeholder="Ej: Sofía"
+          className="max-w-xs"
+        />
       </div>
 
       {/* Objetivo */}

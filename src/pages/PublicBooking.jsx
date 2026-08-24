@@ -111,17 +111,48 @@ function buildWaMessage(service, date, slot, form) {
 // sin importar bordes redondeados del contenedor de la tarjeta. La forma del avatar
 // (círculo / cuadrado redondeado / recto) se deriva del radio del tema, ya no hay un
 // selector manual de "marco". bleed=true quita el chrome de tarjeta (usado en mobile).
+// IMPORTANTE: sin portada subida, NO se pinta ninguna franja de color por defecto (esa
+// franja "fantasma" con gradiente del acento fue un bug: el brief pide que sin portada
+// el fondo plano del tema ocupe todo el espacio). La única excepción es align="banner",
+// donde el usuario elige explícitamente un banner destacado con el acento del tema.
 function ProfileHeader({ settings, theme, brand, cardClass, glassStyle, align, size = 96, rounded = "rounded-t-3xl", headingFontStyle, bleed = false }) {
   const frameClass = avatarShapeClass(theme.radiusClass);
   const isBanner = align === "banner";
+  const hasCover = !!settings?.cover_image_url || isBanner;
   const alignClass = align === "left" ? "justify-start" : "justify-center";
   const textAlignClass = align === "left" ? "text-left items-start" : "text-center items-center";
   const half = size / 2;
   const coverHeight = isBanner ? "h-40" : "h-28";
   const photoTopOffset = isBanner ? 160 : 112;
-  // El "corte en curva" del header (Botanical Wave) solo tiene sentido en mobile a pantalla
-  // completa (bleed) — en desktop el header ya vive dentro de una tarjeta con esquinas propias.
-  const curvedBottom = theme.curved && bleed ? { borderBottomLeftRadius: "50% 24px", borderBottomRightRadius: "50% 24px" } : {};
+  const curvedBottom = theme.curved && bleed && hasCover ? { borderBottomLeftRadius: "50% 24px", borderBottomRightRadius: "50% 24px" } : {};
+
+  const avatarNode = settings?.photo_url ? (
+    <img
+      src={settings.photo_url}
+      alt={settings.practice_name}
+      className={`object-cover block ${frameClass}`}
+      style={{ width: size, height: size, boxShadow: hasCover ? `0 0 0 4px ${theme.bg && theme.bg.startsWith("linear") ? theme.cardBg : theme.bg}${theme.neon ? `, 0 0 24px ${brand}66` : ""}` : (theme.neon ? `0 0 24px ${brand}66` : undefined) }}
+    />
+  ) : (
+    <div
+      className={`flex items-center justify-center text-2xl font-heading font-bold ${frameClass}`}
+      style={{ width: size, height: size, background: theme.accentCss, color: theme.accentText, boxShadow: hasCover ? `0 0 0 4px ${theme.bg && theme.bg.startsWith("linear") ? theme.cardBg : theme.bg}` : undefined }}
+    >
+      {(settings?.practice_name || "?")[0]?.toUpperCase()}
+    </div>
+  );
+
+  if (!hasCover) {
+    return (
+      <div className={bleed ? "" : `border overflow-hidden ${cardClass}`} style={bleed ? {} : { background: theme.cardBg, borderColor: theme.cardBorder, ...glassStyle }}>
+        <div className={`${bleed ? "px-5" : "px-6"} pt-6 pb-5 flex flex-col ${textAlignClass}`}>
+          <div className={`flex w-full ${alignClass}`}>{avatarNode}</div>
+          <h1 className="text-2xl font-bold font-heading leading-tight mt-3" style={{ color: theme.text, ...headingFontStyle }}>{settings?.practice_name || "Reservá tu turno"}</h1>
+          {settings?.specialty && <p className="text-sm mt-1" style={{ color: theme.muted, opacity: 0.85 }}>{settings.specialty}</p>}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={bleed ? "" : `border overflow-hidden ${cardClass}`} style={bleed ? {} : { background: theme.cardBg, borderColor: theme.cardBorder, ...glassStyle }}>
@@ -136,21 +167,7 @@ function ProfileHeader({ settings, theme, brand, cardClass, glassStyle, align, s
           {settings?.cover_image_url && <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.25)" }} />}
         </div>
         <div className={`absolute left-0 right-0 px-6 flex z-20 ${alignClass}`} style={{ top: `${photoTopOffset - half}px` }}>
-          {settings?.photo_url ? (
-            <img
-              src={settings.photo_url}
-              alt={settings.practice_name}
-              className={`object-cover block ${frameClass}`}
-              style={{ width: size, height: size, boxShadow: `0 0 0 4px ${theme.bg && theme.bg.startsWith("linear") ? theme.cardBg : theme.bg}${theme.neon ? `, 0 0 24px ${brand}66` : ""}` }}
-            />
-          ) : (
-            <div
-              className={`flex items-center justify-center text-2xl font-heading font-bold ${frameClass}`}
-              style={{ width: size, height: size, background: theme.accentCss, color: theme.accentText, boxShadow: `0 0 0 4px ${theme.bg && theme.bg.startsWith("linear") ? theme.cardBg : theme.bg}` }}
-            >
-              {(settings?.practice_name || "?")[0]?.toUpperCase()}
-            </div>
-          )}
+          {avatarNode}
         </div>
       </div>
       <div className={`${bleed ? "px-5" : "px-6"} pb-5 flex flex-col ${textAlignClass}`} style={{ paddingTop: `${half + 12}px` }}>

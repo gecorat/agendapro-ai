@@ -1,6 +1,56 @@
 import { findPatientByCanonicalPhone } from "./phone-utils.ts";
 import { sendEmail } from "./email-sender.ts";
 import { buildEmailHtml } from "./email-template.ts";
+import { generateSlotsForDay, findNextAvailableDaySlots, pickClosestSlots } from "./scheduling.ts";
+import { getGoogleBusyRanges } from "./google-calendar.ts";
+import { DEFAULT_OBJECTIVE_PROMPT, DEFAULT_TONE_PROMPT, DEFAULT_RESPONSE_DELAY_SECONDS } from "./bot-defaults.ts";
+
+// Link corto de Google Maps para la dirección del consultorio. Si hay coordenadas
+// guardadas (address_lat/lng, las carga el autocompletado de dirección del perfil) el
+// link va directo a ese punto exacto; si no, arma una búsqueda por texto de la
+// dirección — funciona igual en WhatsApp, solo que Google puede tardar un toque más en
+// afinar el resultado exacto.
+function buildMapsLink(practice) {
+  if (practice?.address_lat != null && practice?.address_lng != null) {
+    return `https://maps.google.com/?q=${practice.address_lat},${practice.address_lng}`;
+  }
+  const addressParts = [practice?.address, practice?.address_city, practice?.address_province].filter(Boolean).join(', ');
+  if (!addressParts) return null;
+  return `https://maps.google.com/?q=${encodeURIComponent(addressParts)}`;
+}
+
+function formatSlotList(slots) {
+  return slots
+    .map((s) => `- ${s.toLocaleString("es-AR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "America/Argentina/Buenos_Aires" })}`)
+    .join("\n");
+}
+
+// Arma el mensaje de confirmación final que recibe el paciente por WhatsApp, con formato
+// enriquecido (negrita nativa de WhatsApp con un solo asterisco) y emojis. Se construye
+// SIEMPRE de este lado con los datos reales que quedaron guardados — nunca se deja que
+// la IA redacte los detalles de la cita, para que el paciente nunca lea algo distinto de
+// lo que efectivamente quedó en la agenda.
+function buildConfirmationMessage({ practice, service, start, professionalName }) {
+  const dateStr = start.toLocaleString("es-AR", {
+    weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit",
+    timeZone: "America/Argentina/Buenos_Aires",
+  });
+  const addressText = [practice?.address, practice?.address_city].filter(Boolean).join(', ');
+  const mapsLink = buildMapsLink(practice);
+
+  const lines = [
+    `✅ *Turno confirmado*`,
+    `📅 *Día y horario:* ${dateStr}`,
+    `🩺 *Servicio:* ${service?.name || 'Consulta'}`,
+  ];
+  if (professionalName) lines.push(`👤 *Profesional:* ${professionalName}`);
+  if (addressText) lines.push(`📍 *Dirección:* ${addressText}`);
+  if (mapsLink) lines.push(`🗺️ ${mapsLink}`);
+  lines.push('');
+  lines.push('¡Te esperamos! 😊 Si necesitás reagendar o cancelar, avisanos por este mismo medio.');
+  lines.push('⏰ Te vamos a recordar la cita unas horas antes.');
+  return lines.join('\n');
+}
 
 // Le avisa al PROFESIONAL (dueño de la cuenta) por email cuando el bot de WhatsApp
 // agenda, reagenda o cancela un turno solo, sin que nadie del consultorio haya estado

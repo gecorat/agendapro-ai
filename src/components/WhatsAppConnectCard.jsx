@@ -42,7 +42,6 @@ export default function WhatsAppConnectCard() {
       }, QR_REFRESH_MS);
     }
     return () => clearInterval(refreshRef.current);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qrCode, qrStatus]);
 
   if (!settings) {
@@ -149,7 +148,7 @@ export default function WhatsAppConnectCard() {
     try {
       await base44.functions.invoke("disconnectWhatsApp", {});
       await reload();
-    } catch (e) {
+    } catch {
       setError("No se pudo desconectar. Intentá de nuevo.");
     } finally {
       setDisconnecting(false);

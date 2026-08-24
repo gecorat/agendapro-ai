@@ -97,7 +97,7 @@ export default function PublicReview() {
                 <Star className="w-7 h-7 text-amber-500 fill-amber-500" />
               </div>
               <h2 className="font-heading font-semibold text-lg">¡Gracias por tu {rating} estrellas!</h2>
-              <p className="text-sm text-muted-foreground">¿Nos dejaías esta misma reseña en Google también? Ayuda mucho a que más pacientes nos encuentren — te lleva 10 segundos.</p>
+              <p className="text-sm text-muted-foreground">¿Nos dejarías esta misma reseña en Google también? Ayuda mucho a que más pacientes nos encuentren — te lleva 10 segundos.</p>
               <Button className="w-full" style={{ backgroundColor: brand }} asChild>
                 <a href={data.google_review_link} target="_blank" rel="noopener noreferrer" onClick={() => setGooglePromptDismissed(true)}>
                   <ExternalLink className="w-4 h-4 mr-2" /> Dejar reseña en Google

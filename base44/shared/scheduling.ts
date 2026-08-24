@@ -114,3 +114,43 @@ export function pickClosestSlots(slots, requestedTime, count = 3) {
   }
   return sorted.slice(0, count).sort((a, b) => a.getTime() - b.getTime());
 }
+
+// Chequeo DIRECTO de disponibilidad para un horario EXACTO (no necesariamente alineado a
+// la grilla de generateSlotsForDay). generateSlotsForDay sirve para OFRECER opciones (ahí
+// tiene sentido una grilla prolija de horarios redondos); pero para ACEPTAR el horario que
+// el paciente pidió puntualmente, exigir que caiga justo en esa grilla era demasiado
+// estricto — confirmado en vivo: un horario realmente libre, dentro del horario de
+// atención y sin ningún choque, se rechazaba solo porque no coincidía exacto con un múltiplo
+// de la duración del servicio contado desde el inicio del horario laboral. Esta función
+// valida el rango pedido contra horario de atención, descansos, otras citas y Google
+// Calendar directamente, sin pasar por ninguna grilla.
+export function isTimeAvailable(start, end, service, availability, appointments, professionalRefId, googleBusy) {
+  if (!service) return false;
+  if (start.getTime() < Date.now()) return false;
+  if (isBlockedDate(availability, start)) return false;
+
+  const dayOfWeek = start.getDay();
+  const workRanges = getWorkRanges(availability, dayOfWeek, professionalRefId);
+  const withinWork = workRanges.some((r) => {
+    const rStart = parseTimeToDate(start, r.start);
+    const rEnd = parseTimeToDate(start, r.end);
+    return start.getTime() >= rStart.getTime() && end.getTime() <= rEnd.getTime();
+  });
+  if (!withinWork) return false;
+
+  const breakRanges = getBreakRanges(availability, dayOfWeek, professionalRefId);
+  const overlapsBreak = breakRanges.some((br) => rangesOverlap(start, end, parseTimeToDate(start, br.start), parseTimeToDate(start, br.end)));
+  if (overlapsBreak) return false;
+
+  const overlapsBooked = (appointments || []).some((a) => {
+    if (a.status === 'cancelled') return false;
+    if ((a.professional_ref_id || null) !== (professionalRefId || null)) return false;
+    return rangesOverlap(start, end, new Date(a.start_datetime), new Date(a.end_datetime));
+  });
+  if (overlapsBooked) return false;
+
+  const overlapsGoogle = (googleBusy || []).some((b) => rangesOverlap(start, end, new Date(b.start), new Date(b.end)));
+  if (overlapsGoogle) return false;
+
+  return true;
+}

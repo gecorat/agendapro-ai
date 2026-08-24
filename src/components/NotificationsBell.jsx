@@ -227,6 +227,9 @@ export default function NotificationsBell({ user }) {
       try {
         await base44.functions.invoke("syncAppointmentGoogle", { appointmentId: id });
       } catch { /* no romper el flujo si Google falla */ }
+      try {
+        await base44.functions.invoke("notifyPatientOfAppointmentChange", { appointmentId: id, changeType: "cancelled" });
+      } catch { /* no romper el flujo si el aviso falla */ }
       toast({ title: "Cita cancelada" });
       loadPending();
     } catch {

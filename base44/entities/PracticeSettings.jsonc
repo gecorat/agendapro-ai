@@ -4,7 +4,6 @@
   "properties": {
     "bot_objective_prompt": {
       "type": "string",
-      "bot_assistant_name_marker": true,
       "title": "Bot \u2014 Prompt de objetivo",
       "description": "Instrucciones sobre QU\u00c9 tiene que lograr el bot (agendar, preguntar servicio/d\u00eda/horario, etc). Vac\u00edo = usa el predeterminado de la plataforma."
     },

@@ -67,6 +67,16 @@
     "google_client_secret": {
       "type": "string",
       "title": "Google OAuth Client Secret"
+    },
+    "vapid_public_key": {
+      "type": "string",
+      "title": "Web Push \u2014 VAPID Public Key",
+      "description": "Clave p\u00fablica del par VAPID usado para las notificaciones push del navegador. No es secreta (se expone al frontend), pero tiene que coincidir siempre con vapid_private_key."
+    },
+    "vapid_private_key": {
+      "type": "string",
+      "title": "Web Push \u2014 VAPID Private Key",
+      "description": "Clave privada del par VAPID. Nunca se expone al frontend, solo la usan las funciones de servidor para firmar los envios push."
     }
   },
   "required": [],

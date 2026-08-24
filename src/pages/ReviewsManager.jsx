@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
-import { Loader2, Star, Send, Plus, MessageCircle, Mail, Ban, RotateCcw, ExternalLink } from "lucide-react";
+import { Loader2, Star, Send, Plus, MessageCircle, Mail, Ban, RotateCcw, ExternalLink, Check } from "lucide-react";
 
 const STATUS_CONFIG = {
   pending: { label: "Pendiente", bgSoft: "bg-slate-100", text: "text-slate-600" },
@@ -112,6 +113,32 @@ export default function ReviewsManager() {
         <Button onClick={() => setOpen(true)} disabled={eligibleAppts.length === 0} className="shadow-sm shrink-0">
           <Plus className="w-4 h-4 mr-1" /> Solicitar
         </Button>
+      </div>
+
+      <div className="rounded-2xl border border-border p-4 space-y-2">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
+            <Star className="w-4 h-4 text-amber-600" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-medium">Link de reseña en Google</p>
+            <p className="text-xs text-muted-foreground">Quien deje 4-5 estrellas acá adentro va a ver un botón para repetirla en Google.</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Input
+            value={googleLink}
+            onChange={(e) => setGoogleLink(e.target.value)}
+            onBlur={saveGoogleLink}
+            placeholder="https://search.google.com/local/writereview?placeid=..."
+            className="text-sm"
+          />
+          {savingLink && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground shrink-0" />}
+          {linkSaved && <Check className="w-4 h-4 text-emerald-600 shrink-0" />}
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Lo sacás de tu Perfil de Negocio de Google (business.google.com) → tarjeta "Conseguir más reseñas" → copiar link.
+        </p>
       </div>
 
       {loading ? (

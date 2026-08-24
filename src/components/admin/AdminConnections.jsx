@@ -257,7 +257,8 @@ export default function AdminConnections() {
           </Select>
         </div>
         <div className="space-y-2">
-          <Label>Instrucciones (system prompt)</Label>
+          <Label>Instrucciones (system prompt) — fallback de plataforma</Label>
+          <p className="text-xs text-muted-foreground -mt-1">Cada consultorio ahora tiene su propio "Objetivo" y "Tono" editables en Ajustes → Bot (con su propio predeterminado). Este campo solo se usa como último respaldo para consultorios que nunca personalizaron el suyo.</p>
           <Textarea
             rows={8}
             value={prompt}

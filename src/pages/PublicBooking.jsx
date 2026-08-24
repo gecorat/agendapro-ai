@@ -460,18 +460,18 @@ export default function PublicBooking() {
               </div>
             </div>
           ) : (
-            <div className="space-y-2.5">
-              {services.map((s) => (
+            <div className={`border overflow-hidden ${cardClass}`} style={cardStyle}>
+              {services.map((s, i) => (
                 <button
                   key={s.id}
                   onClick={() => { setService(s); setStep(hasProfessionals ? PRO_STEP : DATE_STEP); }}
-                  className={`group w-full text-left p-4 border-2 hover:shadow-md transition-all cursor-pointer flex items-center justify-between ${cardClass}`}
-                  style={{ ...cardStyle, borderColor: theme.cardBorder }}
+                  className="group w-full text-left px-4 py-3.5 hover:opacity-80 transition-opacity cursor-pointer flex items-center justify-between"
+                  style={i < services.length - 1 ? { borderBottom: `1px solid ${theme.cardBorder}` } : undefined}
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-1.5 h-12 rounded-full shrink-0" style={{ background: s.color || brand }} />
+                    <div className="w-1 h-10 rounded-full shrink-0" style={{ background: s.color || brand }} />
                     <div className="min-w-0">
-                      <p className="font-semibold truncate" style={{ color: theme.text }}>{s.name}</p>
+                      <p className="font-semibold truncate" style={{ color: theme.text, fontFamily: theme.headingFont || undefined }}>{s.name}</p>
                       {s.description && <p className="text-xs truncate" style={{ color: theme.muted }}>{s.description}</p>}
                       <div className="flex items-center gap-3 mt-1">
                         <span className="text-xs flex items-center gap-1" style={{ color: theme.muted }}>
@@ -483,7 +483,7 @@ export default function PublicBooking() {
                       </div>
                     </div>
                   </div>
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-all shrink-0 ml-2" style={{ color: theme.muted }} />
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-all shrink-0 ml-2" style={{ color: theme.muted }} />
                 </button>
               ))}
             </div>

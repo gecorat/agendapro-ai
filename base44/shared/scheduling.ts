@@ -5,27 +5,59 @@
 // horarios inventados por la IA. Si cambia la lógica de disponibilidad en un lugar, hay
 // que replicar el cambio acá también (no se pudo compartir un solo archivo entre el
 // frontend Vite y las funciones Deno de este proyecto).
+//
+// OJO ZONA HORARIA: en el navegador (de donde se portó esta lógica), `new Date().setHours()`
+// usa la zona horaria del propio usuario (Argentina, para esta app). Acá en el servidor
+// (Deno) el runtime corre en OTRA zona horaria (probablemente UTC) — usar `.setHours()`
+// o `.getDay()` directo sobre un Date corría el horario laboral varias horas, aceptando
+// o rechazando horarios que en Argentina eran otra cosa. Confirmado en vivo: pedir un
+// turno a las 14:45 (dentro de un horario 09:00-18:00 sin descansos) se rechazaba porque
+// el límite de las 18:00 se interpretaba en UTC, no en hora argentina. Todas las
+// funciones de acá abajo por eso pasan SIEMPRE por argentinaYMD/argentinaDayOfWeek /
+// parseTimeToDate, que fijan expresamente el offset "-03:00", sin importar en qué huso
+// horario esté corriendo el proceso que las llama.
+const AR_TZ = 'America/Argentina/Buenos_Aires';
 
+// Fecha (año-mes-día) que corresponde a un instante, LEÍDA en horario argentino — sin
+// esto, un mismo instante cerca de la medianoche podía "caer" en el día equivocado según
+// el huso horario del servidor.
+function argentinaYMD(date) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: AR_TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
+}
+
+// Día de la semana (0=domingo..6=sábado) en horario argentino. El truco: se arma un
+// instante al mediodía argentino de esa fecha (nunca cruza medianoche hacia otro día en
+// UTC) y se lee con getUTCDay(), que no depende del huso horario del proceso.
+function argentinaDayOfWeek(date) {
+  const ymd = argentinaYMD(date);
+  return new Date(`${ymd}T12:00:00-03:00`).getUTCDay();
+}
+
+// Arma un Date para una hora "HH:mm" en el mismo DÍA (argentino) que `date`, siempre en
+// horario argentino real, sin importar el huso horario del proceso que corre esto.
 function parseTimeToDate(date, time) {
   const [h, m] = time.split(':').map(Number);
-  const d = new Date(date);
-  d.setHours(h, m, 0, 0);
-  return d;
+  const ymd = argentinaYMD(date);
+  const hh = String(h).padStart(2, '0');
+  const mm = String(m).padStart(2, '0');
+  return new Date(`${ymd}T${hh}:${mm}:00-03:00`);
+}
+
+// Principio y fin del día (00:00:00.000 y 23:59:59.999) en horario argentino.
+function argentinaDayBounds(date) {
+  const ymd = argentinaYMD(date);
+  return {
+    start: new Date(`${ymd}T00:00:00.000-03:00`),
+    end: new Date(`${ymd}T23:59:59.999-03:00`),
+  };
 }
 
 function rangesOverlap(aStart, aEnd, bStart, bEnd) {
   return aStart < bEnd && bStart < aEnd;
 }
 
-function toDateStr(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
 function isBlockedDate(availability, date) {
-  const dateStr = toDateStr(date);
+  const dateStr = argentinaYMD(date);
   return availability.some((a) => (a.type === 'holiday' || a.type === 'block') && a.date === dateStr);
 }
 
@@ -51,13 +83,12 @@ function getBreakRanges(availability, dayOfWeek, professionalRefId) {
 export function generateSlotsForDay(date, service, availability, appointments, professionalRefId, googleBusy) {
   if (!service) return [];
   if (isBlockedDate(availability, date)) return [];
-  const dayOfWeek = date.getDay();
+  const dayOfWeek = argentinaDayOfWeek(date);
   const workRanges = getWorkRanges(availability, dayOfWeek, professionalRefId);
   const breakRanges = getBreakRanges(availability, dayOfWeek, professionalRefId);
   if (!workRanges.length) return [];
 
-  const dayStart = new Date(date); dayStart.setHours(0, 0, 0, 0);
-  const dayEnd = new Date(date); dayEnd.setHours(23, 59, 59, 999);
+  const { start: dayStart, end: dayEnd } = argentinaDayBounds(date);
   const booked = (appointments || []).filter((a) => {
     if (a.status === 'cancelled') return false;
     if ((a.professional_ref_id || null) !== (professionalRefId || null)) return false;
@@ -129,7 +160,7 @@ export function isTimeAvailable(start, end, service, availability, appointments,
   if (start.getTime() < Date.now()) return false;
   if (isBlockedDate(availability, start)) return false;
 
-  const dayOfWeek = start.getDay();
+  const dayOfWeek = argentinaDayOfWeek(start);
   const workRanges = getWorkRanges(availability, dayOfWeek, professionalRefId);
   const withinWork = workRanges.some((r) => {
     const rStart = parseTimeToDate(start, r.start);

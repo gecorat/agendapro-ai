@@ -662,15 +662,12 @@ export default function PublicBooking() {
   );
 
   return (
-    <div className="min-h-screen w-full relative" style={{ background: theme.bg, ...customBgStyle }}>
-      {showCustomOverlay && (
-        <div className="absolute inset-0" style={{ background: "#000", opacity: (settings?.custom_bg_overlay_opacity ?? 40) / 100 }} />
-      )}
+    <div className="min-h-screen w-full relative" style={{ background: theme.bg }}>
       <div className="relative">
       <div className="hidden lg:block max-w-6xl mx-auto px-8 py-10">
         <div className="grid gap-8 items-start" style={{ gridTemplateColumns: "55% 45%" }}>
           <div className="space-y-4 lg:sticky lg:top-8">
-            <ProfileHeader settings={settings} theme={theme} brand={brand} frameClass={frameClass} cardClass={cardClass} glassStyle={glassStyle} align={settings?.photo_align} size={104} headingFontStyle={headingFontStyle} />
+            <ProfileHeader settings={settings} theme={theme} brand={brand} cardClass={cardClass} glassStyle={glassStyle} align={settings?.photo_align} size={104} headingFontStyle={headingFontStyle} />
             <NavButtons />
             {tab === "info" && <InfoBlock theme={theme} settings={settings} igUrl={igUrl} fbUrl={fbUrl} webUrl={webUrl} waUrl={waUrl} mapsUrl={mapsUrl} cardClass={cardClass} glassStyle={glassStyle} />}
           </div>
@@ -678,12 +675,17 @@ export default function PublicBooking() {
         </div>
       </div>
 
-      <div className="lg:hidden max-w-md mx-auto px-4 py-5 space-y-4">
-        <ProfileHeader settings={settings} theme={theme} brand={brand} frameClass={frameClass} cardClass={cardClass} glassStyle={glassStyle} align={settings?.photo_align} size={88} headingFontStyle={headingFontStyle} />
-        <NavButtons />
-        {tab === "info" ? (
-          <InfoBlock theme={theme} settings={settings} igUrl={igUrl} fbUrl={fbUrl} webUrl={webUrl} waUrl={waUrl} mapsUrl={mapsUrl} cardClass={cardClass} glassStyle={glassStyle} />
-        ) : BookingSteps}
+      {/* Mobile: 100% full-width, 0 padding lateral en el contenedor raíz. El header/portada
+          sangra borde a borde (bleed) y solo el contenido interior (nav + secciones) recibe
+          padding propio, para que no quede el aspecto "encajonado" de tarjeta con margen. */}
+      <div className="lg:hidden w-full pb-10">
+        <ProfileHeader settings={settings} theme={theme} brand={brand} cardClass={cardClass} glassStyle={glassStyle} align={settings?.photo_align} size={112} headingFontStyle={headingFontStyle} bleed />
+        <div className="px-4 space-y-4 mt-4">
+          <NavButtons />
+          {tab === "info" ? (
+            <InfoBlock theme={theme} settings={settings} igUrl={igUrl} fbUrl={fbUrl} webUrl={webUrl} waUrl={waUrl} mapsUrl={mapsUrl} cardClass={cardClass} glassStyle={glassStyle} />
+          ) : BookingSteps}
+        </div>
       </div>
       </div>
     </div>

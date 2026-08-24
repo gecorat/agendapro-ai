@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import {
   Loader2, Upload, Check, Copy, ExternalLink, Share2, Monitor, Smartphone,
-  AlignLeft, AlignCenter, AlignRight, Circle, Square, Ban, Sparkles,
+  AlignLeft, AlignCenter, AlignRight, Circle, Square, Ban, Sparkles, MapPin, PenLine,
 } from "lucide-react";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import {

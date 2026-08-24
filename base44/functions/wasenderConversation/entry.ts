@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { orchestrateConversation } from "../../shared/zernio.ts";
 
+// [DEPRECADO] Reemplazado por evolutionConversation.ts — ver wasenderWebhook.ts.
 // Equivalente a zernioConversation, pero para consultorios conectados por QR
 // (WasenderAPI). orchestrateConversation es la misma para ambos proveedores — decide
 // solo/internamente por dónde mandar la respuesta según practice.whatsapp_connection_type.

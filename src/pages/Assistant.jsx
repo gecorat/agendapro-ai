@@ -295,6 +295,9 @@ function FullAssistant({ settings, reloadSettings }) {
     setCancellingApptId(apptId);
     try {
       await base44.entities.Appointment.update(apptId, { status: "cancelled" });
+      try {
+        await base44.functions.invoke("syncAppointmentGoogle", { appointmentId: apptId });
+      } catch { /* no romper el flujo si Google falla */ }
       setActiveAppointments((prev) => prev.filter((a) => a.id !== apptId));
     } catch (e) {
       console.error(e);

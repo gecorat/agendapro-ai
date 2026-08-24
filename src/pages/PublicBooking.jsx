@@ -262,7 +262,6 @@ export default function PublicBooking() {
   const SUCCESS_STEP = hasProfessionals ? 6 : 5;
 
   const themeForFont = resolveTheme(settings?.theme_preset, settings?.page_color, {
-    secondaryColor: settings?.page_color_secondary,
     fontOverride: settings?.heading_font_override,
   });
   useEffect(() => {

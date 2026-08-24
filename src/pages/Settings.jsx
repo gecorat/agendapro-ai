@@ -12,6 +12,7 @@ import WhatsAppUsageCard from "@/components/WhatsAppUsageCard";
 import ServiceManagerPanel from "@/components/ServiceManagerPanel";
 import ProfessionalsPanel from "@/components/ProfessionalsPanel";
 import MessageTemplatesPanel from "@/components/MessageTemplatesPanel";
+import BotSettingsPanel from "@/components/BotSettingsPanel";
 import PlanGate from "@/components/PlanGate";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import { getPlanStatus, PLAN_PRICES, PLAN_LABELS } from "@/lib/plan-utils";
@@ -27,12 +28,13 @@ export default function Settings() {
       </div>
 
       <Tabs defaultValue="services">
-        <TabsList className={`grid w-full bg-muted/60 rounded-xl p-1 h-auto ${canManageBilling ? "grid-cols-7" : "grid-cols-6"}`}>
+        <TabsList className={`grid w-full bg-muted/60 rounded-xl p-1 h-auto ${canManageBilling ? "grid-cols-8" : "grid-cols-7"}`}>
           <TabsTrigger value="profile" className="rounded-lg text-xs sm:text-sm py-1.5">Perfil</TabsTrigger>
           <TabsTrigger value="services" className="rounded-lg text-xs sm:text-sm py-1.5">Servicios</TabsTrigger>
           <TabsTrigger value="team" className="rounded-lg text-xs sm:text-sm py-1.5">Equipo</TabsTrigger>
           <TabsTrigger value="hours" className="rounded-lg text-xs sm:text-sm py-1.5">Horarios</TabsTrigger>
           <TabsTrigger value="templates" className="rounded-lg text-xs sm:text-sm py-1.5">Plantillas</TabsTrigger>
+          <TabsTrigger value="bot" className="rounded-lg text-xs sm:text-sm py-1.5">Bot</TabsTrigger>
           <TabsTrigger value="integrations" className="rounded-lg text-xs sm:text-sm py-1.5">Integraciones</TabsTrigger>
           {/* La pestaña Plan es exclusiva del dueño real de la cuenta — un co-admin ve y
               gestiona todo lo demás, pero nunca facturación. */}
@@ -59,6 +61,10 @@ export default function Settings() {
 
         <TabsContent value="templates" className="mt-4">
           <MessageTemplatesPanel />
+        </TabsContent>
+
+        <TabsContent value="bot" className="mt-4">
+          <BotConfigTab />
         </TabsContent>
 
         <TabsContent value="integrations" className="space-y-3 mt-4">

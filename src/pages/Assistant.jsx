@@ -861,7 +861,7 @@ function FullAssistant({ settings, reloadSettings }) {
 }
 
 export default function Assistant() {
-  const { settings, loading, reload } = usePracticeSettings();
+  const { settings, loading, reload, save } = usePracticeSettings();
   const planStatus = getPlanStatus(settings);
 
   if (loading || !settings) {
@@ -890,5 +890,5 @@ export default function Assistant() {
     );
   }
 
-  return <FullAssistant settings={settings} reloadSettings={reload} />;
+  return <FullAssistant settings={settings} reloadSettings={reload} save={save} />;
 }

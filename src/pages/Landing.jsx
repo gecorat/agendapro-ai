@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -7,7 +7,7 @@ import {
   ArrowRight, Star, ShieldCheck, Zap, Phone, Stethoscope,
 } from "lucide-react";
 import { PLAN_PRICES } from "@/lib/plan-utils";
-import { THEME_PRESETS, resolveTheme } from "@/lib/theme-presets";
+import { THEME_PRESETS, resolveTheme, loadThemeFont } from "@/lib/theme-presets";
 
 const BENEFITS = [
   { icon: MessageCircle, title: "Responde por WhatsApp 24/7", desc: "El bot atiende, agenda y confirma turnos mientras vos estás consultando o descansando." },

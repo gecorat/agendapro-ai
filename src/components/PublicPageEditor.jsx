@@ -5,15 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Slider } from "@/components/ui/slider";
 import {
   Loader2, Upload, Check, Copy, ExternalLink, Share2, Monitor, Smartphone,
-  AlignLeft, AlignCenter, AlignRight, Circle, Square, Ban, Sparkles, MapPin, PenLine,
+  AlignLeft, AlignCenter, PanelTop, Circle, Square, MapPin, PenLine,
 } from "lucide-react";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import {
-  THEME_PRESETS, FONT_OPTIONS, resolveTheme, PHOTO_FRAME_CLASS,
-  loadThemeFont, getBackgroundPatternStyle,
+  THEME_PRESETS, FONT_OPTIONS, HEADING_FONT_CHOICES, resolveTheme, avatarShapeClass,
+  loadThemeFont,
 } from "@/lib/theme-presets";
 import { useToast } from "@/components/ui/use-toast";
 import { Link } from "react-router-dom";

@@ -110,17 +110,20 @@ export default function BotSettingsPanel() {
       </div>
 
       {/* Interruptor general del bot */}
-      <div className={`rounded-2xl border p-4 flex items-center justify-between gap-3 ${settings?.bot_enabled === false ? "bg-muted/40 border-border" : "bg-emerald-50 border-emerald-200"}`}>
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${settings?.bot_enabled === false ? "bg-muted" : "bg-emerald-100"}`}>
-            <Power className={`w-4 h-4 ${settings?.bot_enabled === false ? "text-muted-foreground" : "text-emerald-600"}`} />
+      <div className={`rounded-2xl border p-4 space-y-3 ${botPauseStatus.paused ? "bg-amber-500/5 border-amber-200" : "bg-emerald-50 border-emerald-200"}`}>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${botPauseStatus.paused ? "bg-amber-500/10" : "bg-emerald-100"}`}>
+              <Power className={`w-4 h-4 ${botPauseStatus.paused ? "text-amber-600" : "text-emerald-600"}`} />
+            </div>
+            <div className="min-w-0">
+              <p className="font-medium text-sm">{botPauseStatus.paused ? "Bot pausado" : "Bot activo"}</p>
+              <p className="text-xs text-muted-foreground">{botPauseStatus.paused ? "No le está respondiendo a nadie." : "Está respondiendo automáticamente por WhatsApp."}</p>
+            </div>
           </div>
-          <div className="min-w-0">
-            <p className="font-medium text-sm">{settings?.bot_enabled === false ? "Bot desactivado" : "Bot activo"}</p>
-            <p className="text-xs text-muted-foreground">{settings?.bot_enabled === false ? "No le está respondiendo a nadie. Los mensajes se siguen guardando en Chats para atenderlos a mano." : "Está respondiendo automáticamente por WhatsApp."}</p>
-          </div>
+          <BotPauseButton settings={settings} save={save} />
         </div>
-        <Switch checked={settings?.bot_enabled !== false} onCheckedChange={handleToggleBot} disabled={botToggling} />
+        <BotPauseBanner settings={settings} className="!bg-transparent !p-0" />
       </div>
 
       {/* Nombre del asistente */}

@@ -305,7 +305,7 @@ export default function Landing() {
               <Button className="mt-7 bg-slate-900 hover:bg-slate-800 h-11" asChild><Link to="/register">Probar gratis 14 días</Link></Button>
             </Card>
           </div>
-          <p className="text-center text-xs text-slate-400 mt-6">Los 3 planes empiezan igual: 14 días gratis, sin tarjeta. Elegís el plan recién cuando termina la prueba.</p>
+          <p className="text-center text-xs text-slate-400 mt-6">La prueba de 14 días incluye las funciones del plan Básico + simulador del bot. Activás WhatsApp real con Pro o Premium cuando quieras.</p>
         </div>
       </section>
 

@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
-import { Loader2, Star, Send, Plus, MessageCircle, Mail, Ban, RotateCcw, ExternalLink, Check } from "lucide-react";
+import { Loader2, Star, Send, Plus, MessageCircle, Mail, Ban, RotateCcw, Check } from "lucide-react";
 
 const STATUS_CONFIG = {
   pending: { label: "Pendiente", bgSoft: "bg-slate-100", text: "text-slate-600" },

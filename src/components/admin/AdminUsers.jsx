@@ -169,6 +169,7 @@ export default function AdminUsers() {
         await base44.entities.PracticeSettings.create({
           ...data,
           practice_name: me.full_name || "Cuenta de administrador",
+          owner_display_name: me.full_name || "",
           professional_email: me.email,
         });
       }

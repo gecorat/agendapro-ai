@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
-import { getPlatformConfig, sendWhatsApp } from "../../shared/zernio.ts";
 import { buildEmailHtml } from "../../shared/email-template.ts";
 import { deleteGoogleEvent } from "../../shared/google-calendar.ts";
+import { sendWhatsAppMessage } from "../../shared/whatsapp-providers.ts";
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -89,15 +89,12 @@ export default async function(req: Request): Promise<Response> {
         } catch { /* notificación no interrumpe la cancelación */ }
       }
 
-      if (practice.whatsapp_connected && practice.zernio_phone && practice.zernio_account_id) {
+      // Antes solo chequeaba zernio_phone + zernio_account_id — nunca le llegaba este
+      // aviso al profesional si estaba conectado por QR (Evolution API). Usamos el mismo
+      // patrón genérico que en sendPendingAppointmentAlert.
+      if (practice.whatsapp_connected && practice.whatsapp_phone_number) {
         try {
-          const plat = await getPlatformConfig(base44);
-          await sendWhatsApp(base44, {
-            apiKey: plat?.zernio_api_key,
-            accountId: practice.zernio_account_id,
-            phone: practice.zernio_phone,
-            message: `❌ Cita cancelada por el paciente\n\nPaciente: ${patientName}\nServicio: ${serviceName}\nFecha: ${dateStr}`,
-          });
+          await sendWhatsAppMessage(base44, practice, practice.whatsapp_phone_number, `❌ Cita cancelada por el paciente\n\nPaciente: ${patientName}\nServicio: ${serviceName}\nFecha: ${dateStr}`);
         } catch { /* notificación no interrumpe la cancelación */ }
       }
     }

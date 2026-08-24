@@ -167,12 +167,12 @@ function InfoBlock({ theme, settings, igUrl, fbUrl, webUrl, waUrl, mapsUrl, card
   return (
     <div className="space-y-3">
       {settings?.description && (
-        <div className={`rounded-2xl border p-4 ${cardClass}`} style={{ background: theme.cardBg, borderColor: theme.cardBorder, ...glassStyle }}>
+        <div className={`border p-4 ${cardClass}`} style={{ background: theme.cardBg, borderColor: theme.cardBorder, ...glassStyle }}>
           <p className="text-sm leading-relaxed" style={{ color: theme.text }}>{settings.description}</p>
         </div>
       )}
       {(settings?.phone || settings?.professional_email || fbUrl || igUrl || webUrl) && (
-        <div className={`rounded-2xl border overflow-hidden ${cardClass}`} style={{ background: theme.cardBg, borderColor: theme.cardBorder, ...glassStyle }}>
+        <div className={`border overflow-hidden ${cardClass}`} style={{ background: theme.cardBg, borderColor: theme.cardBorder, ...glassStyle }}>
           {waUrl && (
             <a href={waUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-3.5 hover:opacity-80 transition-opacity" style={rowStyle}>
               <MessageCircle className="w-4 h-4 shrink-0" style={{ color: theme.muted }} />
@@ -206,7 +206,7 @@ function InfoBlock({ theme, settings, igUrl, fbUrl, webUrl, waUrl, mapsUrl, card
         </div>
       )}
       {settings?.address && (
-        <div className={`rounded-2xl border overflow-hidden ${cardClass}`} style={{ background: theme.cardBg, borderColor: theme.cardBorder, ...glassStyle }}>
+        <div className={`border overflow-hidden ${cardClass}`} style={{ background: theme.cardBg, borderColor: theme.cardBorder, ...glassStyle }}>
           <div className="px-4 py-3.5 flex items-start gap-3">
             <MapPin className="w-4 h-4 shrink-0 mt-0.5" style={{ color: theme.muted }} />
             <p className="text-sm" style={{ color: theme.text }}>{[settings.address, settings.address_city, settings.address_province].filter(Boolean).join(", ")}</p>

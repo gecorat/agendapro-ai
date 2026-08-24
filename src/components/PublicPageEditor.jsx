@@ -44,44 +44,25 @@ function SegButton({ active, onClick, children, title }) {
   );
 }
 
-const PATTERN_OPTIONS = [
-  { value: "none", label: "Ninguno" },
-  { value: "nature", label: "Hojas / Naturaleza" },
-  { value: "waves", label: "Ondas fluidas" },
-  { value: "mesh", label: "Malla geométrica" },
-  { value: "gradient", label: "Degradado 2 colores" },
-];
-
 // Simulador en tiempo real: se recalcula en cada render a partir del form actual, así
 // nunca puede quedar "pegado" mostrando un estado viejo. Foto con position:absolute +
-// z-index alto (no se corta), y si photo_frame === "none" no se renderiza ninguna imagen.
+// z-index alto (no se corta). La forma del avatar sale del radio del tema (ya no hay
+// selector manual de "marco").
 function LivePreview({ form, viewport }) {
   const theme = resolveTheme(form.theme_preset, form.page_color, {
-    secondaryColor: form.page_color_secondary,
     fontOverride: form.heading_font_override,
-    custom: {
-      borderRadius: form.custom_border_radius,
-      cardOpacity: form.custom_card_opacity,
-      blurEnabled: form.custom_blur_enabled,
-    },
+    custom: { borderRadius: form.custom_border_radius },
   });
-  const frameClass = PHOTO_FRAME_CLASS[form.photo_frame] || PHOTO_FRAME_CLASS.circle;
-  const showPhoto = form.photo_frame !== "none";
-  const photoJustify = form.photo_align === "left" ? "justify-start" : form.photo_align === "right" ? "justify-end" : "justify-center";
+  const frameClass = avatarShapeClass(theme.radiusClass);
+  const isBanner = form.photo_align === "banner";
+  const photoJustify = form.photo_align === "left" ? "justify-start" : "justify-center";
   const glassStyle = theme.glass ? { backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)" } : {};
   const cardClass = `${theme.cardClass || ""} ${theme.radiusClass || "rounded-xl"}`;
   const size = 64;
   const half = size / 2;
+  const coverHeight = isBanner ? "h-32" : "h-24";
+  const photoTop = isBanner ? 128 : 96;
   const headingFontStyle = theme.headingFont ? { fontFamily: theme.headingFont } : {};
-
-  // El fondo personalizado (patrón o imagen) ahora es universal: se aplica arriba de
-  // CUALQUIER tema, no solo "Personalizado".
-  const bgOverrideStyle = form.custom_bg_image_url
-    ? { background: `url(${form.custom_bg_image_url}) center/cover` }
-    : form.custom_bg_pattern && form.custom_bg_pattern !== "none"
-    ? getBackgroundPatternStyle(form.custom_bg_pattern, theme.accent, theme.secondary)
-    : {};
-  const showBgOverlay = !!form.custom_bg_image_url;
 
   useEffect(() => {
     if (theme.googleFont) loadThemeFont(theme.googleFont);
@@ -89,61 +70,51 @@ function LivePreview({ form, viewport }) {
 
   return (
     <div className={`mx-auto rounded-2xl overflow-hidden border border-border shadow-sm transition-all duration-300 relative ${viewport === "mobile" ? "max-w-[300px]" : "max-w-full"}`}>
-      <div className="relative" style={{ background: theme.bg, ...bgOverrideStyle }}>
-        {showBgOverlay && (
-          <div className="absolute inset-0" style={{ background: "#000", opacity: (form.custom_bg_overlay_opacity ?? 40) / 100 }} />
-        )}
+      <div className="relative" style={{ background: theme.bg }}>
         <div className="relative">
           <div className="relative" style={{ overflow: "visible" }}>
             <div
-              className={`overflow-hidden ${theme.photoFocus ? "h-36" : "h-24"}`}
+              className={`overflow-hidden ${coverHeight}`}
               style={{
                 background: form.cover_image_url
                   ? `url(${form.cover_image_url}) center ${form.cover_align || "center"}/cover`
-                  : `linear-gradient(135deg, ${theme.accent}, ${theme.secondary || theme.accent}66)`,
+                  : `linear-gradient(135deg, ${theme.accentCss}, ${theme.accent}66)`,
               }}
             >
-              {form.cover_image_url && (
-                <div
-                  className="absolute inset-0"
-                  style={theme.photoFocus ? { background: `linear-gradient(to bottom, transparent 40%, ${theme.bg} 100%)` } : { background: "rgba(0,0,0,0.25)" }}
+              {form.cover_image_url && <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.25)" }} />}
+            </div>
+            <div className={`absolute left-0 right-0 px-5 flex z-20 ${photoJustify}`} style={{ top: `${photoTop - half}px` }}>
+              {form.photo_url ? (
+                <img
+                  src={form.photo_url}
+                  alt=""
+                  className={`object-cover block ${frameClass}`}
+                  style={{ width: size, height: size, boxShadow: theme.neon ? `0 0 0 3px ${theme.bg}, 0 0 14px ${theme.accent}80` : `0 0 0 3px ${theme.bg}` }}
                 />
+              ) : (
+                <div
+                  className={`flex items-center justify-center font-heading font-bold ${frameClass}`}
+                  style={{ width: size, height: size, background: theme.accentCss, color: theme.accentText, boxShadow: `0 0 0 3px ${theme.bg}` }}
+                >
+                  {(form.practice_name || "?")[0]?.toUpperCase()}
+                </div>
               )}
             </div>
-            {showPhoto && (
-              <div className={`absolute left-0 right-0 px-5 flex z-20 ${photoJustify}`} style={{ top: `${(theme.photoFocus ? 144 : 96) - half}px` }}>
-                {form.photo_url ? (
-                  <img
-                    src={form.photo_url}
-                    alt=""
-                    className={`object-cover block ${frameClass}`}
-                    style={{ width: size, height: size, boxShadow: theme.neon ? `0 0 0 3px ${theme.bg}, 0 0 14px ${theme.accent}80` : `0 0 0 3px ${theme.bg}` }}
-                  />
-                ) : (
-                  <div
-                    className={`flex items-center justify-center font-heading font-bold ${frameClass}`}
-                    style={{ width: size, height: size, background: theme.accent, color: theme.accentText, boxShadow: `0 0 0 3px ${theme.bg}` }}
-                  >
-                    {(form.practice_name || "?")[0]?.toUpperCase()}
-                  </div>
-                )}
-              </div>
-            )}
           </div>
-          <div className="px-5 pb-5" style={{ paddingTop: showPhoto ? `${half + 8}px` : "16px" }}>
-            <div className={`${form.photo_align === "left" ? "text-left" : form.photo_align === "right" ? "text-right" : "text-center"}`}>
+          <div className="px-5 pb-5" style={{ paddingTop: `${half + 8}px` }}>
+            <div className={form.photo_align === "left" ? "text-left" : "text-center"}>
               <p className="text-base font-heading font-bold" style={{ color: theme.text, ...headingFontStyle }}>{form.practice_name || "Tu consultorio"}</p>
               {form.specialty && <p className="text-xs mt-0.5" style={{ color: theme.muted }}>{form.specialty}</p>}
             </div>
             <div className="flex items-center justify-center gap-1.5 mt-3">
-              <span className={`px-3 py-1 text-xs font-semibold ${theme.radiusClass === "rounded-none" ? "rounded-none" : "rounded-full"}`} style={{ background: theme.accent, color: theme.accentText, boxShadow: theme.neon ? theme.neonGlow : undefined }}>Agendar cita</span>
+              <span className={`px-3 py-1 text-xs font-semibold ${theme.radiusClass === "rounded-none" ? "rounded-none" : "rounded-full"}`} style={{ background: theme.accentCss, color: theme.accentText, boxShadow: theme.neon ? theme.neonGlow : undefined }}>Agendar cita</span>
               <span className={`px-3 py-1 text-xs font-medium border ${theme.radiusClass === "rounded-none" ? "rounded-none" : "rounded-full"}`} style={{ color: theme.muted, borderColor: theme.cardBorder }}>Información</span>
             </div>
 
             <div className="mt-4 space-y-2">
               <div className={`border p-3 ${cardClass}`} style={{ background: theme.cardBg, borderColor: theme.cardBorder, ...glassStyle }}>
                 <p className="text-xs font-medium" style={{ color: theme.text }}>Consulta</p>
-                <p className="text-[10px] mt-0.5" style={{ color: theme.secondary && form.page_color_secondary ? theme.secondary : theme.muted }}>30 min · $50.000</p>
+                <p className="text-[10px] mt-0.5" style={{ color: theme.muted }}>30 min · $50.000</p>
               </div>
               <div className={`border p-3 ${cardClass}`} style={{ background: theme.cardBg, borderColor: theme.cardBorder, ...glassStyle }}>
                 <p className="text-xs font-medium" style={{ color: theme.text }}>Primera consulta</p>

@@ -146,8 +146,6 @@ export default function Landing() {
               </div>
             </Card>
           </div>
-            </Card>
-          </div>
         </div>
 
         {/* Triggers */}

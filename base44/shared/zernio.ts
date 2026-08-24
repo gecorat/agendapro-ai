@@ -441,8 +441,8 @@ REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno quedó 
           let patientId = existingPatient?.id;
           // Si es un paciente NUEVO y la IA logró sacarle el nombre en la conversación
           // (appointment.patient_first_name), lo usamos acá en vez de guardarlo como
-          // "Paciente" genérico para siempre. Antes esto NUNCA pasaba — ni se le pegía al
-          // paciente el nombre, ni había forma de que la IA lo devolviera aunque se lo
+          // "Paciente" genérico para siempre. Antes esto NUNCA pasaba — ni se le pedía el
+          // nombre al paciente, ni había forma de que la IA lo devolviera aunque se lo
           // preguntara: la ficha quedaba con el nombre "Paciente" a mano de por vida.
           const suppliedFirstName = (reply.appointment.patient_first_name || "").trim();
           let patientName = existingPatient

@@ -6,6 +6,7 @@ import { getPlanStatus } from "@/lib/plan-utils";
 import WelcomeGuide from "@/pages/WelcomeGuide";
 import Dashboard from "@/pages/Dashboard";
 import PublicLinkCard from "@/components/PublicLinkCard";
+import InstallAppPrompt from "@/components/InstallAppPrompt";
 
 function PublicLinkBar({ handle, practiceName, brand }) {
   const cleanHandle = (handle || "").trim().replace(/^@/, "").replace(/\s+/g, "");
@@ -47,6 +48,7 @@ export default function Home() {
 
   return (
     <div className="px-3 py-3 md:p-6 space-y-4">
+      <InstallAppPrompt />
       {isInvitedProfessional && <OwnPlanTeaser />}
       {settings?.handle && <PublicLinkBar handle={settings.handle} practiceName={settings.practice_name} brand={settings.page_color} />}
       {status.hasPaidPlan ? <Dashboard /> : <WelcomeGuide />}

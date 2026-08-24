@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Star, Check, Loader2, CalendarClock } from "lucide-react";
+import { Star, Check, Loader2, CalendarClock, ExternalLink } from "lucide-react";
 
 export default function PublicReview() {
   const { id } = useParams();
@@ -15,6 +15,7 @@ export default function PublicReview() {
   const [text, setText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+  const [googlePromptDismissed, setGooglePromptDismissed] = useState(false);
   const [error, setError] = useState("");
 
   const token = new URLSearchParams(window.location.search).get("t") || "";
@@ -65,6 +66,7 @@ export default function PublicReview() {
   }
 
   const brand = data?.page_color || "#0f172a";
+  const offerGoogle = done && rating >= 4 && data?.google_review_link && !googlePromptDismissed;
 
   if (error && !data) {
     return (
@@ -89,7 +91,23 @@ export default function PublicReview() {
 
       <div className="max-w-lg mx-auto px-4 py-6">
         <Card className="p-6 text-center space-y-4">
-          {done ? (
+          {offerGoogle ? (
+            <>
+              <div className="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center mx-auto">
+                <Star className="w-7 h-7 text-amber-500 fill-amber-500" />
+              </div>
+              <h2 className="font-heading font-semibold text-lg">¡Gracias por tu {rating} estrellas!</h2>
+              <p className="text-sm text-muted-foreground">¿Nos dejaías esta misma reseña en Google también? Ayuda mucho a que más pacientes nos encuentren — te lleva 10 segundos.</p>
+              <Button className="w-full" style={{ backgroundColor: brand }} asChild>
+                <a href={data.google_review_link} target="_blank" rel="noopener noreferrer" onClick={() => setGooglePromptDismissed(true)}>
+                  <ExternalLink className="w-4 h-4 mr-2" /> Dejar reseña en Google
+                </a>
+              </Button>
+              <button type="button" onClick={() => setGooglePromptDismissed(true)} className="text-xs text-muted-foreground hover:text-foreground underline">
+                Ahora no
+              </button>
+            </>
+          ) : done ? (
             <>
               <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center mx-auto">
                 <Check className="w-7 h-7 text-emerald-600" />

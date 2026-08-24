@@ -605,6 +605,14 @@ REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno quedó 
   // El envío por WhatsApp va AL FINAL, después de que todo lo importante (la cita, el
   // registro de la conversación) ya está guardado de forma durable.
   //
+  // Demora configurable antes de mandar la respuesta (practice.bot_response_delay_seconds,
+  // 5/15/30/60s) — para que la conversación no se sienta instantánea/robotizada. Va ANTES
+  // del envío, no antes de guardar: así la Agenda y la bandeja de chats ya reflejan la
+  // cita/respuesta en el momento, aunque el mensaje al paciente tarde un poco más.
+  if (responseDelaySeconds > 0) {
+    await new Promise((r) => setTimeout(r, responseDelaySeconds * 1000));
+  }
+
   // Confirmado en vivo: el plan trial de WasenderAPI limita a 1 mensaje por minuto — el
   // segundo mensaje de cualquier conversación rápida choca con un 429 que trae
   // "retry_after" (en segundos). Reintentar rápido (1s/3s/6s) no servía de nada contra ese

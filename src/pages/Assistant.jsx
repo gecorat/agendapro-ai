@@ -115,7 +115,7 @@ function ContactAvatar({ name, url, loading, size = "w-9 h-9", textSize = "text-
   );
 }
 
-function FullAssistant({ settings, reloadSettings }) {
+function FullAssistant({ settings, reloadSettings, save }) {
   const [user, setUser] = useState(null);
   const [allMsgs, setAllMsgs] = useState([]);
   const [patients, setPatients] = useState([]);
@@ -130,6 +130,7 @@ function FullAssistant({ settings, reloadSettings }) {
   const [filter, setFilter] = useState("all");
   const [pauseLoading, setPauseLoading] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
+  const [botToggling, setBotToggling] = useState(false);
   const [activeAppointments, setActiveAppointments] = useState([]);
   const [newTag, setNewTag] = useState("");
   const [savingNotes, setSavingNotes] = useState(false);

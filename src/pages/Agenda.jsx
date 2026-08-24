@@ -74,7 +74,30 @@ export default function Agenda() {
         const d = new Date(a.start_datetime);
         return d >= start && d <= end;
       });
-      setAppointments(filtered);
+
+      // Eventos de Google Calendar del mismo rango, en modo solo lectura (no se guardan
+      // como Appointment). Si nadie tiene Google conectado, la función devuelve [] sin
+      // romper nada. No deben interrumpir la carga de la Agenda si Google falla.
+      let googleItems = [];
+      try {
+        const gRes = await base44.functions.invoke("getGoogleAgendaEvents", {
+          timeMin: start.toISOString(),
+          timeMax: end.toISOString(),
+        });
+        googleItems = (gRes?.data?.events || []).map((ev) => ({
+          id: `google_${ev.id}`,
+          patient_name: ev.summary,
+          service_name: "Evento de Google Calendar",
+          start_datetime: ev.start,
+          end_datetime: ev.end,
+          status: "google",
+          origin: "google_calendar",
+          professional_ref_id: ev.professional_ref_id || "",
+          is_google: true,
+        }));
+      } catch { /* si falla Google, la Agenda igual muestra las citas de Kame */ }
+
+      setAppointments([...filtered, ...googleItems]);
     } finally {
       setLoading(false);
     }

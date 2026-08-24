@@ -83,6 +83,13 @@ export default async function (req: Request): Promise<Response> {
       return Response.json({ ok: true, skipped: "chat_paused" });
     }
 
+    // Interruptor GENERAL del bot (distinto de la pausa por conversación de arriba): si
+    // está apagado, no contesta a NADIE, pero el mensaje ya quedó guardado arriba para
+    // atenderlo a mano desde la bandeja.
+    if (practice.bot_enabled === false) {
+      return Response.json({ ok: true, skipped: "bot_disabled" });
+    }
+
     const usage = await checkWhatsAppUsage(base44, practice);
     if (!usage.allowed) {
       waitUntil(

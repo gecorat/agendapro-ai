@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
-import { getPlatformConfig, sendWhatsApp } from "../../shared/zernio.ts";
 import { buildEmailHtml, getAppUrl } from "../../shared/email-template.ts";
 import { sendEmail } from "../../shared/email-sender.ts";
+import { sendWhatsAppMessage } from "../../shared/whatsapp-providers.ts";
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -80,22 +80,22 @@ export default async function(req: Request): Promise<Response> {
     }
 
     let waSent = false;
-    if (practice.whatsapp_connected && practice.zernio_phone && practice.zernio_account_id) {
-      const plat = await getPlatformConfig(base44);
+    // Antes solo chequeaba zernio_phone + zernio_account_id — una cuenta conectada por QR
+    // (Evolution API) nunca tiene esos dos campos cargados, así que este aviso al
+    // profesional NUNCA le llegaba por WhatsApp si estaba conectado por QR (que hoy es el
+    // camino recomendado). Usamos whatsapp_phone_number (genérico, lo llenan los dos
+    // proveedores) y la función de envío genérica, para que mande el mensaje a la propia
+    // cuenta conectada sea cual sea el proveedor.
+    if (practice.whatsapp_connected && practice.whatsapp_phone_number) {
       try {
-        await sendWhatsApp(base44, {
-          apiKey: plat?.zernio_api_key,
-          accountId: practice.zernio_account_id,
-          phone: practice.zernio_phone,
-          message: `🔔 Nueva cita pendiente
+        await sendWhatsAppMessage(base44, practice, practice.whatsapp_phone_number, `🔔 Nueva cita pendiente
 
 Paciente: ${patientName}
 Servicio: ${serviceName}
 Fecha: ${dateStr}
 Origen: ${originLabel}
 
-Confirmá desde el email o ingresá a Kame Agenda.`,
-        });
+Confirmá desde el email o ingresá a Kame Agenda.`);
         waSent = true;
       } catch (e) {
         // WhatsApp fail shouldn't fail the whole function

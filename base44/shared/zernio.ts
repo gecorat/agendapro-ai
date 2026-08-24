@@ -383,11 +383,109 @@ REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno quedó 
             } catch (e) {
               console.error("sendAppointmentConfirmation invoke error:", e?.message || e);
             }
+            // Aviso al PROFESIONAL de que el bot agendó solo un turno nuevo — antes esto
+            // no pasaba y el consultorio se enteraba recién al abrir la Agenda a mano.
+            await notifyProfessionalOfBotAction(base44, practice, { verb: "agendó", appt: newAppt });
           } catch (e) {
             console.error("Appointment.create error:", e?.message || e);
             finalReplyText = "Uy, tuve un problema técnico al guardar tu turno. ¿Podés confirmarme de nuevo el día y horario para intentarlo otra vez?";
           }
         }
+      }
+    }
+  } else if (reply.action === "reschedule" && reply.appointment?.datetime) {
+    // El paciente quiere mover una cita que YA tiene — antes esta acción ni siquiera
+    // existía: el bot no tenía forma de tocar una cita existente, así que un pedido de
+    // "reagendame" no rompía nada pero tampoco hacía nada (ni avisaba al paciente).
+    let target = null;
+    const wantedService = (reply.appointment.service_name || "").trim().toLowerCase();
+    if (wantedService) {
+      target = myPatientUpcoming.find((a) => (a.service_name || "").trim().toLowerCase() === wantedService);
+    }
+    if (!target && myPatientUpcoming.length === 1) target = myPatientUpcoming[0];
+
+    if (!target) {
+      finalReplyText = myPatientUpcoming.length === 0
+        ? "No encontré ninguna cita tuya próxima para reagendar. ¿Querés que te agende un turno nuevo?"
+        : `Tenés más de un turno próximo (${myPatientUpcoming.map((a) => a.service_name).join(", ")}). ¿Cuál de esos querés reagendar?`;
+    } else {
+      let rawDatetime = reply.appointment.datetime;
+      if (rawDatetime && !/(Z|[+-]\d{2}:\d{2})$/.test(rawDatetime)) {
+        rawDatetime = `${rawDatetime}-03:00`;
+      }
+      const start = new Date(rawDatetime);
+      const durationMs = new Date(target.end_datetime).getTime() - new Date(target.start_datetime).getTime();
+      const end = new Date(start.getTime() + (durationMs > 0 ? durationMs : 30 * 60000));
+
+      if (isNaN(start.getTime())) {
+        finalReplyText = "No pude entender bien la nueva fecha y hora. ¿Podés indicármela de otra forma? Por ejemplo: 'mañana a las 15hs'.";
+      } else {
+        const overlapping = (appts || []).filter((a) => {
+          if (a.id === target.id) return false;
+          if (a.status === "cancelled") return false;
+          if (a.created_by_id !== professionalId) return false;
+          if ((a.professional_ref_id || null) !== (target.professional_ref_id || null)) return false;
+          const aStart = new Date(a.start_datetime);
+          const aEnd = new Date(a.end_datetime);
+          return aStart < end && start < aEnd;
+        });
+
+        if (overlapping.length > 0) {
+          finalReplyText = `Che, disculpá — ese horario nuevo ya no está disponible. ¿Querés que te proponga otro horario cercano, o preferis decirme vos otra opción?`;
+        } else {
+          try {
+            await base44.asServiceRole.entities.Appointment.update(target.id, {
+              start_datetime: start.toISOString(),
+              end_datetime: end.toISOString(),
+            });
+            try {
+              await base44.asServiceRole.functions.invoke("syncAppointmentGoogle", { appointmentId: target.id });
+            } catch (e) {
+              console.error("syncAppointmentGoogle invoke error (reschedule):", e?.message || e);
+            }
+            const dateStr = start.toLocaleString("es-AR", {
+              weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit",
+              timeZone: "America/Argentina/Buenos_Aires",
+            });
+            finalReplyText = `¡Listo! Reagendé tu turno de ${target.service_name} para el ${dateStr}.`;
+            await notifyProfessionalOfBotAction(base44, practice, {
+              verb: "reagendó",
+              appt: { ...target, start_datetime: start.toISOString() },
+            });
+          } catch (e) {
+            console.error("Appointment.update error (reschedule):", e?.message || e);
+            finalReplyText = "Uy, tuve un problema técnico al reagendar tu turno. ¿Podés confirmarme de nuevo el nuevo día y horario?";
+          }
+        }
+      }
+    }
+  } else if (reply.action === "cancel") {
+    // Igual que reschedule: antes esta acción no existía, un pedido de cancelación por
+    // WhatsApp no tenía forma de tocar la cita real.
+    let target = null;
+    const wantedService = (reply.appointment?.service_name || "").trim().toLowerCase();
+    if (wantedService) {
+      target = myPatientUpcoming.find((a) => (a.service_name || "").trim().toLowerCase() === wantedService);
+    }
+    if (!target && myPatientUpcoming.length === 1) target = myPatientUpcoming[0];
+
+    if (!target) {
+      finalReplyText = myPatientUpcoming.length === 0
+        ? "No encontré ninguna cita tuya próxima para cancelar."
+        : `Tenés más de un turno próximo (${myPatientUpcoming.map((a) => a.service_name).join(", ")}). ¿Cuál de esos querés cancelar?`;
+    } else {
+      try {
+        await base44.asServiceRole.entities.Appointment.update(target.id, { status: "cancelled" });
+        try {
+          await base44.asServiceRole.functions.invoke("syncAppointmentGoogle", { appointmentId: target.id });
+        } catch (e) {
+          console.error("syncAppointmentGoogle invoke error (cancel):", e?.message || e);
+        }
+        finalReplyText = `Listo, cancelé tu turno de ${target.service_name}. Si querés agendar otro, avisame.`;
+        await notifyProfessionalOfBotAction(base44, practice, { verb: "canceló", appt: target });
+      } catch (e) {
+        console.error("Appointment.update error (cancel):", e?.message || e);
+        finalReplyText = "Uy, tuve un problema técnico al cancelar tu turno. ¿Podés intentar de nuevo en un momento?";
       }
     }
   }

@@ -3,6 +3,10 @@ import { waitUntil } from "base44:runtime";
 import { checkWhatsAppUsage } from "../../shared/whatsapp-usage.ts";
 import { sendWhatsAppMessage, isChatPaused } from "../../shared/whatsapp-providers.ts";
 
+// [DEPRECADO] Reemplazado por evolutionWebhook.ts — la conexión por QR ahora corre sobre
+// Evolution API en vez de WasenderAPI. Se deja este archivo sin borrar por si hace falta
+// consultarlo, pero WasenderAPI ya no recibe tráfico de esta app (ningún
+// PracticeSettings.wasender_session_id se crea ni se usa más).
 // Webhook de WasenderAPI (conexión por QR). A diferencia de Zernio, acá identificamos de
 // qué consultorio es cada mensaje por el ?practiceId= en la URL (que nosotros mismos
 // generamos al crear la sesión), no por un campo dentro del payload — así evitamos

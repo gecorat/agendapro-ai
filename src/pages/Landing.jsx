@@ -101,36 +101,40 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* Visual mock */}
+          {/* Visual mock — recreación real de la página pública de reservas (tema Nordic Slate,
+              uno de los 8 presets reales) para que el prospecto vea el producto real, no una
+              maqueta genérica de calendario. */}
           <div className="relative lg:pl-6">
             <div className="absolute -inset-4 bg-gradient-to-br from-indigo-100/60 to-emerald-100/40 rounded-3xl blur-2xl" />
-            <Card className="relative p-5 shadow-xl shadow-slate-200/60 border-slate-200 bg-white">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <p className="text-xs text-slate-400">Próximas citas</p>
-                  <p className="font-heading font-semibold text-sm">Hoy, Jueves 14</p>
+            <Card className="relative p-0 overflow-hidden shadow-xl shadow-slate-200/60 border-slate-200">
+              <div className="px-5 pt-5 pb-4" style={{ background: "#EBEEF1" }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-2xl flex items-center justify-center font-heading font-bold text-white shrink-0" style={{ background: "#0EA5E9" }}>A</div>
+                  <div className="min-w-0">
+                    <p className="font-heading font-bold text-sm text-slate-900 truncate">Andrea Vidal · Odontología</p>
+                    <p className="text-xs text-slate-500">/u/andreavidal</p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5 text-xs text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Bot activo
+                <div className="flex items-center gap-1.5 mt-4">
+                  <span className="flex-1 text-center px-3 py-1.5 rounded-lg text-xs font-semibold text-white" style={{ background: "#0EA5E9" }}>Agendar cita</span>
+                  <span className="flex-1 text-center px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300 text-slate-500">Información</span>
                 </div>
               </div>
-              <div className="space-y-2.5">
+              <div className="bg-white">
                 {[
-                  { t: "09:30", n: "María González", s: "Limpieza dental", c: "bg-blue-500" },
-                  { t: "11:00", n: "Carlos Pérez", s: "Consulta general", c: "bg-amber-500" },
-                  { t: "15:30", n: "Ana Romero", s: "Control mensual", c: "bg-emerald-500" },
-                ].map((a) => (
-                  <div key={a.t} className="flex items-center gap-3 p-2.5 rounded-lg border border-slate-100 bg-slate-50/60">
-                    <div className="text-xs font-medium text-slate-500 w-10">{a.t}</div>
-                    <div className={`w-1 h-8 rounded-full ${a.c}`} />
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{a.n}</p>
-                      <p className="text-xs text-slate-500 truncate">{a.s}</p>
+                  { n: "Consulta general", s: "30 min · $29.000" },
+                  { n: "Limpieza dental", s: "45 min · $35.000" },
+                ].map((s, i) => (
+                  <div key={s.n} className={`flex items-center justify-between px-5 py-3 ${i === 0 ? "border-b border-slate-100" : ""}`}>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800">{s.n}</p>
+                      <p className="text-xs text-slate-400 mt-0.5">{s.s}</p>
                     </div>
+                    <ArrowRight className="w-4 h-4 text-slate-300" />
                   </div>
                 ))}
               </div>
-              <div className="mt-4 rounded-lg bg-slate-900 p-3 text-white">
+              <div className="m-4 mt-3 rounded-lg bg-slate-900 p-3 text-white">
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
                   <span className="text-xs font-medium">WhatsApp · 08:47</span>
@@ -140,6 +144,8 @@ export default function Landing() {
                   <span className="text-white"> "Listo María, te agendé mañana a las 09:30. Te recuerdo media hora antes. 🦷"</span>
                 </p>
               </div>
+            </Card>
+          </div>
             </Card>
           </div>
         </div>

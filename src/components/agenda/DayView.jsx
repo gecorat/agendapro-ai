@@ -59,8 +59,9 @@ export default function DayView({ date, appts, onNew, onEdit }) {
             return (
               <button
                 key={a.id}
-                onClick={() => onEdit(a)}
-                className={`w-full text-left rounded-xl border-l-[3px] ${cfg.border} bg-card shadow-sm hover:shadow-md hover:-translate-y-px transition-all px-3 py-2.5`}
+                onClick={() => !a.is_google && onEdit(a)}
+                disabled={a.is_google}
+                className={`w-full text-left rounded-xl border-l-[3px] ${cfg.border} bg-card shadow-sm transition-all px-3 py-2.5 ${a.is_google ? "cursor-default" : "hover:shadow-md hover:-translate-y-px"}`}
               >
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold tabular-nums text-muted-foreground w-12 shrink-0">{formatTime(new Date(a.start_datetime))}</span>

@@ -105,22 +105,30 @@ export default function DayDetailSheet({ date, appts, onClose, onNew, onEdit, on
                         )}
 
                         <div className="px-3 pb-2.5 flex items-center gap-1.5">
-                          <button onClick={() => toggleViewPatient(a)} className="flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md border border-border hover:bg-accent transition-colors">
-                            <Eye className="w-3 h-3" /> Ver paciente
-                          </button>
-                          <button onClick={() => onEdit(a)} className="flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md border border-border hover:bg-accent transition-colors">
-                            <CalendarClock className="w-3 h-3" /> Reagendar
-                          </button>
-                          {a.status !== "cancelled" && (
-                            confirmCancelId === a.id ? (
-                              <button onClick={() => handleCancel(a)} disabled={cancellingId === a.id} className="flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md bg-rose-500 text-white hover:bg-rose-600 transition-colors ml-auto">
-                                {cancellingId === a.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <XCircle className="w-3 h-3" />} Confirmar
+                          {a.is_google ? (
+                            <span className="text-[11px] font-medium text-violet-500 px-2 py-1">
+                              Bloqueado desde Google Calendar — solo lectura
+                            </span>
+                          ) : (
+                            <>
+                              <button onClick={() => toggleViewPatient(a)} className="flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md border border-border hover:bg-accent transition-colors">
+                                <Eye className="w-3 h-3" /> Ver paciente
                               </button>
-                            ) : (
-                              <button onClick={() => setConfirmCancelId(a.id)} className="flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md border border-border text-rose-600 hover:bg-rose-50 transition-colors ml-auto">
-                                <XCircle className="w-3 h-3" /> Cancelar
+                              <button onClick={() => onEdit(a)} className="flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md border border-border hover:bg-accent transition-colors">
+                                <CalendarClock className="w-3 h-3" /> Reagendar
                               </button>
-                            )
+                              {a.status !== "cancelled" && (
+                                confirmCancelId === a.id ? (
+                                  <button onClick={() => handleCancel(a)} disabled={cancellingId === a.id} className="flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md bg-rose-500 text-white hover:bg-rose-600 transition-colors ml-auto">
+                                    {cancellingId === a.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <XCircle className="w-3 h-3" />} Confirmar
+                                  </button>
+                                ) : (
+                                  <button onClick={() => setConfirmCancelId(a.id)} className="flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md border border-border text-rose-600 hover:bg-rose-50 transition-colors ml-auto">
+                                    <XCircle className="w-3 h-3" /> Cancelar
+                                  </button>
+                                )
+                              )}
+                            </>
                           )}
                         </div>
                       </div>

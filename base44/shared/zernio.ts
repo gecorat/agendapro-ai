@@ -240,7 +240,7 @@ REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno quedó 
       type: "object",
       properties: {
         reply: { type: "string", description: "Respuesta al paciente" },
-        action: { type: "string", enum: ["none", "book"] },
+        action: { type: "string", enum: ["none", "book", "reschedule", "cancel"] },
         appointment: {
           type: "object",
           properties: {

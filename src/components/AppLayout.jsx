@@ -113,10 +113,14 @@ export default function AppLayout() {
   // Encabezado del menú: en vez de la marca genérica, muestra a QUIÉN está logueado — su
   // nombre, su rol (Administrador para el dueño o un co-admin; Usuario para un invitado
   // normal del plan Clinic), y su propia foto de perfil si la cargó (si no, el logo de
-  // siempre).
+  // siempre). OJO: para el dueño, esto usa owner_display_name (su nombre de pila, campo
+  // separado en Ajustes → Perfil) y NO practice_name (que es el nombre del NEGOCIO,
+  // pensado para los pacientes) — antes se mostraba practice_name acá, mezclando "cómo
+  // te saluda el panel" con "cómo te ve un paciente", que era justamente la confusión que
+  // llevaba a la gente a no saber qué poner en ese campo.
   const myPhoto = isOwner ? settings?.avatar_url : professional?.photo_url;
   const myName = isOwner
-    ? (settings?.practice_name || user?.full_name || "Mi cuenta")
+    ? (settings?.owner_display_name || user?.full_name || "Mi cuenta")
     : (`${professional?.first_name || ""} ${professional?.last_name || ""}`.trim() || user?.full_name || "Usuario");
   const myRole = hasFullAccess ? "Administrador" : "Usuario";
 

@@ -268,6 +268,15 @@ REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno está "
 
             appointmentCreated = newAppt;
 
+            // Empuja el evento a Google Calendar de quien atiende, igual que hace la
+            // reserva pública y el formulario manual — antes esto nunca se llamaba para
+            // citas creadas por el bot de WhatsApp.
+            try {
+              await base44.asServiceRole.functions.invoke("syncAppointmentGoogle", { appointmentId: newAppt.id });
+            } catch (e) {
+              console.error("syncAppointmentGoogle invoke error:", e?.message || e);
+            }
+
             // El texto de confirmación lo armamos NOSOTROS con los datos reales que se
             // guardaron, no confiamos en la redacción libre de la IA para los detalles
             // (día, hora, servicio) — así el paciente nunca lee algo distinto de lo que

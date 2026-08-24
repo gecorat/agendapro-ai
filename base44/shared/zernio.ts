@@ -501,18 +501,37 @@ REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno quedó 
       if (isNaN(start.getTime())) {
         finalReplyText = "No pude entender bien la nueva fecha y hora. ¿Podés indicármela de otra forma? Por ejemplo: 'mañana a las 15hs'.";
       } else {
-        const overlapping = (appts || []).filter((a) => {
-          if (a.id === target.id) return false;
-          if (a.status === "cancelled") return false;
-          if (a.created_by_id !== professionalId) return false;
-          if ((a.professional_ref_id || null) !== (target.professional_ref_id || null)) return false;
-          const aStart = new Date(a.start_datetime);
-          const aEnd = new Date(a.end_datetime);
-          return aStart < end && start < aEnd;
-        });
+        // Mismo chequeo real que en el agendado nuevo: horario de atención, descansos,
+        // días bloqueados, otras citas y Google Calendar — no solo "choca con otra cita".
+        // Resolvemos un objeto Service para calcular la grilla de horarios: si el
+        // servicio original sigue existiendo lo usamos tal cual; si ya no existe (lo
+        // borraron), armamos uno sintético con la duración que ya tenía esa cita, para no
+        // dejar de poder reagendarla por eso.
+        const targetService = myServices.find((s) => s.name.trim().toLowerCase() === (target.service_name || "").trim().toLowerCase())
+          || { name: target.service_name, duration_minutes: Math.max(5, Math.round((durationMs > 0 ? durationMs : 30 * 60000) / 60000)), margin_minutes: 0 };
 
-        if (overlapping.length > 0) {
-          finalReplyText = `Che, disculpá — ese horario nuevo ya no está disponible. ¿Querés que te proponga otro horario cercano, o preferis decirme vos otra opción?`;
+        const dayStart = new Date(start); dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(start); dayEnd.setHours(23, 59, 59, 999);
+        let googleBusy = [];
+        try {
+          googleBusy = await getGoogleBusyRanges(base44, professionalId, target.professional_ref_id || undefined, dayStart.toISOString(), dayEnd.toISOString());
+        } catch { /* si Google falla, seguimos sin ese dato */ }
+        // Los slots se calculan contra TODAS las citas salvo la que estamos moviendo (así
+        // no choca contra sí misma).
+        const apptsExcludingTarget = (appts || []).filter((a) => a.id !== target.id);
+        const daySlots = generateSlotsForDay(start, targetService, availability, apptsExcludingTarget, target.professional_ref_id || null, googleBusy);
+        const isValidSlot = daySlots.some((s) => s.getTime() === start.getTime());
+
+        if (!isValidSlot) {
+          let offerSlots = daySlots;
+          if (!offerSlots.length) {
+            const found = findNextAvailableDaySlots(start, targetService, availability, apptsExcludingTarget, target.professional_ref_id || null, []);
+            offerSlots = found.slots;
+          }
+          const options = pickClosestSlots(offerSlots, start, 3);
+          finalReplyText = options.length
+            ? `Che, disculpá — ese horario nuevo no está disponible. Te propongo estas opciones:\n${formatSlotList(options)}\n\n¿Te sirve alguna?`
+            : `Che, disculpá — no encontré horarios disponibles cerca de esa fecha. ¿Podés decirme otro día que te venga bien?`;
         } else {
           try {
             await base44.asServiceRole.entities.Appointment.update(target.id, {
@@ -524,11 +543,13 @@ REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno quedó 
             } catch (e) {
               console.error("syncAppointmentGoogle invoke error (reschedule):", e?.message || e);
             }
-            const dateStr = start.toLocaleString("es-AR", {
-              weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit",
-              timeZone: "America/Argentina/Buenos_Aires",
-            });
-            finalReplyText = `¡Listo! Reagendé tu turno de ${target.service_name} para el ${dateStr}.`;
+            const professionalName = target.professional_ref_id
+              ? (() => {
+                  const p = (professionals || []).find((pr) => pr.id === target.professional_ref_id);
+                  return p ? `${p.first_name} ${p.last_name || ""}`.trim() : undefined;
+                })()
+              : undefined;
+            finalReplyText = buildConfirmationMessage({ practice, service: targetService, start, professionalName, title: '🔁 *Turno reagendado*' });
             await notifyProfessionalOfBotAction(base44, practice, {
               verb: "reagendó",
               appt: { ...target, start_datetime: start.toISOString() },

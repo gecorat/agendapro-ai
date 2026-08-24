@@ -86,6 +86,13 @@ function ThemePhonePreview({ theme }) {
 }
 
 export default function Landing() {
+  const [selectedTheme, setSelectedTheme] = useState("nordic_slate");
+  const previewTheme = resolveTheme(selectedTheme, null);
+
+  useEffect(() => {
+    if (previewTheme.googleFont) loadThemeFont(previewTheme.googleFont);
+  }, [previewTheme.googleFont]);
+
   return (
     <div className="min-h-screen bg-stone-50 text-slate-900 font-body antialiased">
       <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-stone-50/80 backdrop-blur-md">

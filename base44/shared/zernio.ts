@@ -458,12 +458,15 @@ REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno quedó 
             // El mensaje de confirmación lo armamos NOSOTROS con los datos reales que se
             // guardaron (nunca dejamos que la IA redacte los detalles), con el formato
             // enriquecido (negrita + emojis) definido en buildConfirmationMessage.
+            // Si hay varios profesionales (clinic) mostramos quién atiende; si no, mostramos
+            // el nombre del consultorio/profesional único (antes esta línea directamente no
+            // aparecía para planes sin equipo, dejando la confirmación incompleta).
             const professionalName = assignedProfessionalRefId
               ? (() => {
                   const p = professionals.find((pr) => pr.id === assignedProfessionalRefId);
                   return p ? `${p.first_name} ${p.last_name || ""}`.trim() : undefined;
                 })()
-              : undefined;
+              : (practice?.practice_name || undefined);
             finalReplyText = buildConfirmationMessage({ practice, service, start, professionalName });
 
             try {

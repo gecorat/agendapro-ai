@@ -119,7 +119,30 @@ export async function orchestrateConversation(base44, ctx) {
     ? `\n=== PROFESIONALES DISPONIBLES ===\n${professionalsText}\nEste consultorio tiene varios profesionales. Si el paciente todavía no dijo con quién o qué especialidad prefiere, PREGUNTASELO antes de agendar. Si dice que no tiene preferencia, se lo asigna automáticamente. Cuando agendes, completá appointment.professional_name con el nombre elegido (o dejalo vacío si no tiene preferencia).\n`
     : "";
 
+  // SIN esto, la IA no tiene forma de saber qué día es "hoy" y termina adivinando —
+  // confirmado en vivo: un pedido de "mañana a las 10" se agendó para el jueves en vez del
+  // día siguiente real, porque la IA no tenía ninguna fecha de referencia en el prompt.
+  // Se lo damos explícito, con el día de la semana en palabras (no solo la fecha) para que
+  // no tenga ni que calcularlo.
+  const nowAR = new Date();
+  const todayLabel = nowAR.toLocaleDateString("es-AR", {
+    timeZone: "America/Argentina/Buenos_Aires",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const nowTimeLabel = nowAR.toLocaleTimeString("es-AR", {
+    timeZone: "America/Argentina/Buenos_Aires",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const todayIsoDate = nowAR.toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" }); // YYYY-MM-DD
+
   const contextPrompt = `${systemPrompt}
+
+=== FECHA Y HORA ACTUAL ===
+Hoy es ${todayLabel} (${todayIsoDate}), son las ${nowTimeLabel} hora de Argentina. Cuando el paciente diga "hoy", "mañana", "pasado mañana", un día de la semana ("el viernes", "el lunes que viene") u otra referencia relativa, calculá la fecha exacta a partir de ESTA fecha de hoy, nunca de memoria ni de otra suposición.
 
 === CONTEXTO DEL CONSULTORIO ===
 Consultorio: ${practice?.practice_name || ""}

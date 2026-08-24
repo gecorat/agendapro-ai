@@ -25,6 +25,17 @@ function formatSlotList(slots) {
     .join("\n");
 }
 
+// Mensajes cortos y cálidos que se mandan JUSTO ANTES de los datos completos de la cita
+// (ver buildConfirmationMessage más abajo) — así la conversación se siente en dos tiempos
+// naturales ("listo, ya te mando los datos..." y después la tarjeta con todo) en vez de
+// tirarle al paciente un bloque grande de texto de una sola vez.
+function buildBookAckMessage() {
+  return '¡Perfecto! ✅ Ya quedó agendado tu turno. Te paso los datos en un toque...';
+}
+function buildRescheduleAckMessage() {
+  return '¡Listo! 🔁 Ya reagendé tu turno. Te paso los datos actualizados en un toque...';
+}
+
 // Arma el mensaje de confirmación final que recibe el paciente por WhatsApp, con formato
 // enriquecido (negrita nativa de WhatsApp con un solo asterisco) y emojis. Se construye
 // SIEMPRE de este lado con los datos reales que quedaron guardados — nunca se deja que

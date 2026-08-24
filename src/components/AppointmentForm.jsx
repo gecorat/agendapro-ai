@@ -154,6 +154,8 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
 
       let apptId = appointment?.id;
       let savedAppt;
+      const wasRescheduled = appointment && new Date(payload.start_datetime).getTime() !== new Date(appointment.start_datetime).getTime();
+      const wasJustCancelled = appointment && appointment.status !== "cancelled" && form.status === "cancelled";
       if (appointment) {
         savedAppt = await base44.entities.Appointment.update(appointment.id, payload);
       } else {
@@ -181,6 +183,23 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
       try {
         await base44.functions.invoke("syncAppointmentGoogle", { appointmentId: apptId });
       } catch { /* no romper el flujo si Google falla */ }
+
+      // Avisa al paciente por WhatsApp/email cuando el PROFESIONAL reagenda o cancela a
+      // mano — antes esto solo pasaba cuando la acción venía del bot. Best-effort: nunca
+      // debe bloquear el guardado, que ya terminó arriba.
+      if (wasJustCancelled) {
+        try {
+          await base44.functions.invoke("notifyPatientOfAppointmentChange", { appointmentId: apptId, changeType: "cancelled" });
+        } catch { /* no romper el flujo si el aviso falla */ }
+      } else if (wasRescheduled) {
+        try {
+          await base44.functions.invoke("notifyPatientOfAppointmentChange", {
+            appointmentId: apptId,
+            changeType: "rescheduled",
+            previousStartDatetime: appointment.start_datetime,
+          });
+        } catch { /* no romper el flujo si el aviso falla */ }
+      }
 
       // If editing a recurring appointment with "future" scope, update all future instances
       if (appointment && appointment.recurring_rule_id && editScope === "future") {

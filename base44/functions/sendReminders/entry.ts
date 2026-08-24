@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { sendEmail } from "../../shared/email-sender.ts";
-import { sendWhatsApp } from "../../shared/zernio.ts";
+import { sendWhatsAppMessage } from "../../shared/whatsapp-providers.ts";
 import { buildEmailHtml, getAppUrl } from "../../shared/email-template.ts";
 import { getAppointmentContext } from "../../shared/appointment-context.ts";
 
@@ -21,19 +21,14 @@ export default async function(req) {
       return in24Window || in3Window;
     });
 
-    // Cache de PracticeSettings y PlatformConfig para evitar consultas repetidas
+    // Cache de PracticeSettings para evitar consultas repetidas
     let practices = null;
-    let platformConfig = null;
     const getPracticeFor = async (appt) => {
       if (!practices) {
         practices = await base44.asServiceRole.entities.PracticeSettings.filter({});
       }
       const profId = appt.professional_id || appt.created_by_id;
       return (practices || []).find((p) => p.created_by_id === profId) || null;
-    };
-    const getPlatformConfig = async () => {
-      if (!platformConfig) platformConfig = await getPlatformConfigShared(base44);
-      return platformConfig;
     };
 
     let sent = 0;
@@ -156,9 +151,4 @@ export default async function(req) {
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
-}
-
-async function getPlatformConfigShared(base44) {
-  const list = await base44.asServiceRole.entities.PlatformConfig.filter({});
-  return list?.[0] || null;
 }

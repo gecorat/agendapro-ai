@@ -4,6 +4,10 @@ export const statusConfig = {
   cancelled: { label: "Cancelada", dot: "bg-rose-400", text: "text-rose-500", bgSoft: "bg-rose-50", border: "border-rose-200", strike: true },
   completed: { label: "Completada", dot: "bg-sky-500", text: "text-sky-700", bgSoft: "bg-sky-50", border: "border-sky-200" },
   no_show: { label: "Ausencia", dot: "bg-slate-400", text: "text-slate-500", bgSoft: "bg-slate-50", border: "border-slate-200" },
+  // Eventos importados de Google Calendar en modo solo-lectura (ver getGoogleAgendaEvents).
+  // No son citas reales de Kame, por eso llevan un estilo bien distinto (violeta) y en las
+  // vistas se les desactivan las acciones de editar/cancelar.
+  google: { label: "Google", dot: "bg-violet-400", text: "text-violet-600", bgSoft: "bg-violet-50", border: "border-violet-200" },
 };
 
 export const HOURS = Array.from({ length: 14 }, (_, i) => i + 8); // 8:00 - 21:00

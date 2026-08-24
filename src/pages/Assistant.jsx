@@ -188,8 +188,17 @@ function FullAssistant({ settings, reloadSettings }) {
   }, [user, load]);
 
   const patientByPhone = useMemo(() => {
+    // Mismo criterio que el backend (base44/shared/phone-utils.ts): comparamos por los
+    // últimos 10 dígitos, no el string completo — así "+5493425526816" (con el 9 de
+    // celular) y "+543425526816" (sin él, si alguien lo cargó a mano en la ficha del
+    // paciente) matchean con la MISMA conversación, en vez de que la bandeja muestre el
+    // número pelado en vez del nombre real del paciente.
+    const canonical = (phone) => {
+      const digits = (phone || "").replace(/\D/g, "");
+      return digits.length <= 10 ? digits : digits.slice(-10);
+    };
     const map = new Map();
-    for (const p of patients) if (p.phone) map.set(p.phone.replace(/[^\d]/g, ""), p);
+    for (const p of patients) if (p.phone) map.set(canonical(p.phone), p);
     return map;
   }, [patients]);
 

@@ -277,7 +277,7 @@ function FullAssistant({ settings, reloadSettings }) {
       .catch(() => setActiveAppointments([]));
   }, [activePatient?.id]);
 
-  // Foto real de WhatsApp del contacto (confirmado que WasenderAPI la expone). La URL
+  // Foto real de WhatsApp del contacto (vía Evolution API). La URL
   // vence, así que se pide fresca cada vez que cambia la conversación activa — no se
   // guarda en la base para no terminar con fotos rotas al rato.
   useEffect(() => {

@@ -7,6 +7,7 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { registerServiceWorker, subscribeToPush } from "@/lib/push-notifications";
 
 const EXTERNAL_ORIGINS = ["whatsapp", "public_link"];
 
@@ -180,6 +181,32 @@ export default function NotificationsBell({ user }) {
     return unsubscribe;
   }, [loadPending]);
 
+  // Registra el service worker siempre (no hace falta permiso para eso), y si el permiso de
+  // notificaciones ya estaba concedido de antes (usuario recurrente), re-suscribe a push en
+  // silencio — cubre el caso de que la suscripción del navegador haya expirado o de que se
+  // haya sumado este dispositivo/navegador nuevo, sin que la persona tenga que volver a
+  // tocar la campanita a propósito.
+  useEffect(() => {
+    registerServiceWorker().then(() => {
+      if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+        subscribeToPush();
+      }
+    });
+  }, []);
+
+  // Si tocaron una notificación con la app cerrada/en background, el service worker nos
+  // manda a dónde navegar apenas la ventana recupera el foco.
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !navigator.serviceWorker) return;
+    const handler = (event) => {
+      if (event.data?.type === "NOTIFICATION_NAVIGATE" && event.data.url) {
+        navigate(event.data.url);
+      }
+    };
+    navigator.serviceWorker.addEventListener("message", handler);
+    return () => navigator.serviceWorker.removeEventListener("message", handler);
+  }, [navigate]);
+
   const showBrowserNotification = (appt) => {
     if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
     try {
@@ -202,7 +229,8 @@ export default function NotificationsBell({ user }) {
     if (typeof Notification === "undefined" || Notification.permission !== "default") return;
     Notification.requestPermission().then((perm) => {
       if (perm === "granted") {
-        toast({ title: "Notificaciones activadas", description: "Te avisaremos cuando llegue una cita nueva." });
+        toast({ title: "Notificaciones activadas", description: "Te avisamos incluso con el teléfono bloqueado o la app cerrada." });
+        subscribeToPush();
       }
     });
   };

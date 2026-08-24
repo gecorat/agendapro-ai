@@ -30,7 +30,7 @@ function formatSlotList(slots) {
 // SIEMPRE de este lado con los datos reales que quedaron guardados — nunca se deja que
 // la IA redacte los detalles de la cita, para que el paciente nunca lea algo distinto de
 // lo que efectivamente quedó en la agenda.
-function buildConfirmationMessage({ practice, service, start, professionalName }) {
+function buildConfirmationMessage({ practice, service, start, professionalName, title = '✅ *Turno confirmado*' }) {
   const dateStr = start.toLocaleString("es-AR", {
     weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit",
     timeZone: "America/Argentina/Buenos_Aires",
@@ -39,7 +39,7 @@ function buildConfirmationMessage({ practice, service, start, professionalName }
   const mapsLink = buildMapsLink(practice);
 
   const lines = [
-    `✅ *Turno confirmado*`,
+    title,
     `📅 *Día y horario:* ${dateStr}`,
     `🩺 *Servicio:* ${service?.name || 'Consulta'}`,
   ];

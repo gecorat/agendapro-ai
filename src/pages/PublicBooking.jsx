@@ -119,7 +119,9 @@ function ProfileHeader({ settings, theme, brand, cardClass, glassStyle, align, s
   const half = size / 2;
   const coverHeight = isBanner ? "h-40" : "h-28";
   const photoTopOffset = isBanner ? 160 : 112;
-  const curvedBottom = theme.curved && !bleed ? { borderBottomLeftRadius: "50% 24px", borderBottomRightRadius: "50% 24px" } : {};
+  // El "corte en curva" del header (Botanical Wave) solo tiene sentido en mobile a pantalla
+  // completa (bleed) — en desktop el header ya vive dentro de una tarjeta con esquinas propias.
+  const curvedBottom = theme.curved && bleed ? { borderBottomLeftRadius: "50% 24px", borderBottomRightRadius: "50% 24px" } : {};
 
   return (
     <div className={bleed ? "" : `border overflow-hidden ${cardClass}`} style={bleed ? {} : { background: theme.cardBg, borderColor: theme.cardBorder, ...glassStyle }}>
@@ -128,7 +130,7 @@ function ProfileHeader({ settings, theme, brand, cardClass, glassStyle, align, s
           className={`${coverHeight} overflow-hidden ${bleed ? "" : rounded}`}
           style={{
             background: settings?.cover_image_url ? `url(${settings.cover_image_url}) center ${settings?.cover_align || "center"}/cover` : `linear-gradient(135deg, ${theme.accentCss}, ${theme.accent}55)`,
-            ...(bleed ? curvedBottom : {}),
+            ...curvedBottom,
           }}
         >
           {settings?.cover_image_url && <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.25)" }} />}

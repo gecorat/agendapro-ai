@@ -1,7 +1,14 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
+import { instanceNameFor, ensureInstance, connectInstance, getConnectionState, getConnectedPhone } from '../../shared/evolution-api.ts';
 
-// Arranca la conexión rápida por QR (WasenderAPI): crea la sesión, la conecta, y devuelve
-// el string del QR para que el frontend lo renderice como imagen.
+function randomSecret() {
+  return crypto.randomUUID().replace(/-/g, '');
+}
+
+// Arranca la conexión rápida por QR sobre Evolution API (self-hosted, vía VPS propio):
+// crea (o reutiliza) la instancia de WhatsApp de este profesional y devuelve el string
+// del QR para que el frontend lo renderice — misma respuesta que antes daba WasenderAPI,
+// así el componente de conexión no necesitó cambiar.
 export default async function (req: Request): Promise<Response> {
   try {
     const base44 = createClientFromRequest(req);
@@ -18,92 +25,52 @@ export default async function (req: Request): Promise<Response> {
     }
 
     const cfg = await base44.asServiceRole.entities.PlatformConfig.filter({});
-    const pat = cfg?.[0]?.wasender_personal_access_token;
-    if (!pat) return Response.json({ error: 'not_configured', message: 'La conexión por QR todavía no está configurada. Contactá al administrador.' }, { status: 400 });
-
-    const phoneNumber = practice.phone || practice.professional_email || '+000000000';
-    // La URL de webhook incluye el id del consultorio como query param: así identificamos
-    // sin ambigüedad de quién es cada mensaje entrante, sin depender de que el payload de
-    // WasenderAPI incluya un identificador propio (nos costó caro asumir mal el formato
-    // exacto de un proveedor externo la primera vez, con Zernio).
-    const webhookUrl = `https://base44.app/api/apps/6a726ce53f9d0f63f3816283/functions/wasenderWebhook?practiceId=${practice.id}`;
-
-    let session;
-    // Si ya había una sesión creada antes (por ejemplo, un intento anterior que no llegó a
-    // conectarse), la reutilizamos en vez de crear una nueva: WasenderAPI no permite dos
-    // sesiones con el mismo número de teléfono, así que reintentar sin esto tiraba "The
-    // phone number has already been taken".
-    if (practice.wasender_session_id) {
-      const detailRes = await fetch(`https://www.wasenderapi.com/api/whatsapp-sessions/${practice.wasender_session_id}`, {
-        headers: { Authorization: `Bearer ${pat}` },
-      });
-      const detailData = await detailRes.json().catch(() => ({}));
-      if (detailRes.ok && detailData?.success) {
-        session = detailData.data;
-      }
+    const baseUrl = (cfg?.[0]?.evolution_base_url || '').replace(/\/$/, '');
+    const apiKey = cfg?.[0]?.evolution_api_key;
+    if (!baseUrl || !apiKey) {
+      return Response.json({ error: 'not_configured', message: 'La conexión por QR todavía no está configurada. Contactá al administrador.' }, { status: 400 });
     }
 
-    if (!session) {
-      const createRes = await fetch('https://www.wasenderapi.com/api/whatsapp-sessions', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${pat}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: `Kame Agenda - ${practice.practice_name || user.email}`,
-          phone_number: phoneNumber,
-          account_protection: true,
-          log_messages: true,
-          read_incoming_messages: false,
-          webhook_url: webhookUrl,
-          webhook_enabled: true,
-          webhook_events: ['messages.received', 'session.status', 'message.sent'],
-          ignore_groups: true,
-          ignore_channels: true,
-          ignore_broadcasts: true,
-        }),
-      });
-      const createData = await createRes.json().catch(() => ({}));
-      if (!createRes.ok || !createData?.success) {
-        return Response.json({ error: createData?.message || 'No se pudo crear la sesión de WhatsApp' }, { status: 400 });
-      }
-      session = createData.data;
-    }
+    const instanceName = practice.evolution_instance_name || instanceNameFor(practice.id);
+    const webhookSecret = practice.evolution_webhook_secret || randomSecret();
+    // El id del consultorio Y un secreto propio (generado por nosotros, no por Evolution)
+    // viajan en la URL del webhook — así lo verificamos sin depender de que el proveedor
+    // firme el payload de alguna forma en particular.
+    const webhookUrl = `https://base44.app/api/apps/6a726ce53f9d0f63f3816283/functions/evolutionWebhook?practiceId=${practice.id}&secret=${webhookSecret}`;
 
-    // Si ya estaba conectada de antes (por ejemplo, el usuario escaneó en un intento previo
-    // pero el polling no lo detectó a tiempo), lo reflejamos directo sin volver a pedir QR.
-    if (session.status === 'connected') {
+    await ensureInstance(baseUrl, apiKey, instanceName, webhookUrl);
+
+    // Si ya estaba conectada de un intento anterior que el polling no había detectado,
+    // lo reflejamos directo sin volver a pedir QR.
+    const currentState = await getConnectionState(baseUrl, apiKey, instanceName);
+    if (currentState === 'open') {
+      const phone = await getConnectedPhone(baseUrl, apiKey, instanceName);
       await base44.asServiceRole.entities.PracticeSettings.update(practice.id, {
         whatsapp_connection_type: 'qr',
-        wasender_session_id: String(session.id),
-        wasender_api_key: session.api_key,
-        wasender_webhook_secret: session.webhook_secret,
+        evolution_instance_name: instanceName,
+        evolution_webhook_secret: webhookSecret,
         whatsapp_status: 'connected',
         whatsapp_connected: true,
-        whatsapp_phone_number: session.phone_number,
+        whatsapp_phone_number: phone || practice.whatsapp_phone_number || '',
       });
       return Response.json({ qrCode: null, status: 'ALREADY_CONNECTED', connected: true });
     }
 
-    const connectRes = await fetch(`https://www.wasenderapi.com/api/whatsapp-sessions/${session.id}/connect`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${pat}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({}),
-    });
-    const connectData = await connectRes.json().catch(() => ({}));
-    if (!connectRes.ok || !connectData?.success) {
-      return Response.json({ error: connectData?.message || 'No se pudo iniciar la conexión' }, { status: 400 });
-    }
+    const { code, base64 } = await connectInstance(baseUrl, apiKey, instanceName);
+    // Preferimos el string de "code" (se renderiza como QR del lado del cliente, igual
+    // que antes). Si la instancia solo da la imagen ya armada, mandamos el data-URI
+    // completo y el frontend detecta el prefijo "data:" para mostrarlo como <img>.
+    const qrCode = code || base64 || null;
 
-    const qrCode = connectData.data?.qrCode || null;
     await base44.asServiceRole.entities.PracticeSettings.update(practice.id, {
       whatsapp_connection_type: 'qr',
-      wasender_session_id: String(session.id),
-      wasender_api_key: session.api_key,
-      wasender_webhook_secret: session.webhook_secret,
-      whatsapp_status: qrCode ? 'need_scan' : (connectData.data?.status || 'connecting').toLowerCase(),
+      evolution_instance_name: instanceName,
+      evolution_webhook_secret: webhookSecret,
+      whatsapp_status: qrCode ? 'need_scan' : 'connecting',
       whatsapp_connected: false,
     });
 
-    return Response.json({ qrCode, status: connectData.data?.status || 'NEED_SCAN' });
+    return Response.json({ qrCode, status: qrCode ? 'NEED_SCAN' : 'CONNECTING' });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

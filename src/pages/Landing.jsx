@@ -183,6 +183,36 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Theme showcase — usa THEME_PRESETS real (misma fuente que el editor), así nunca se
+          desincroniza de los temas que la gente realmente puede elegir. */}
+      <section className="px-5 py-16 bg-white border-t border-slate-200">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center max-w-2xl mx-auto mb-10">
+            <h2 className="text-2xl md:text-3xl font-heading font-bold tracking-tight">Tu página, con tu estilo</h2>
+            <p className="text-slate-500 mt-2 text-sm">8 diseños profesionales listos para usar. Elegís el que va con tu marca, sin tocar una línea de código.</p>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {Object.entries(THEME_PRESETS).map(([key, preset]) => {
+              const theme = resolveTheme(key, null);
+              return (
+                <div key={key} className="rounded-xl overflow-hidden border border-slate-200">
+                  <div className="h-16 flex items-center justify-center" style={{ background: theme.bg }}>
+                    <div
+                      className={theme.radiusClass === "rounded-full" ? "rounded-full" : theme.radiusClass === "rounded-none" ? "rounded-none" : "rounded-lg"}
+                      style={{ width: 22, height: 22, background: theme.accentCss }}
+                    />
+                  </div>
+                  <div className="px-2.5 py-2 bg-slate-50">
+                    <p className="text-[11px] font-semibold text-slate-800 leading-tight">{preset.label}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <p className="text-center text-xs text-slate-400 mt-6">Full-width en el celular, sin marcos ni bordes gruesos — pensada para que la reserva se sienta parte de tu marca, no de una app genérica.</p>
+        </div>
+      </section>
+
       {/* Testimonials */}
       <section className="px-5 py-16">
         <div className="max-w-6xl mx-auto">

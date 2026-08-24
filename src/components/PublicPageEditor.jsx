@@ -136,10 +136,10 @@ export default function PublicPageEditor() {
     instagram_url: "", facebook_url: "", website_url: "",
     handle: "", photo_url: "", cover_image_url: "",
     photo_align: "center", photo_frame: "circle", cover_align: "center",
-    page_color: "#3B82F6", page_color_secondary: "", theme_preset: "clean_dark_tech",
+    page_color: "", theme_preset: "nordic_slate",
     heading_font_override: "default", published: true,
     custom_bg_pattern: "none", custom_bg_image_url: "", custom_bg_overlay_opacity: 40,
-    custom_border_radius: "soft", custom_card_opacity: 100, custom_blur_enabled: false,
+    custom_border_radius: "auto", custom_card_opacity: 100, custom_blur_enabled: false,
   });
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -162,6 +162,17 @@ export default function PublicPageEditor() {
   useEffect(() => {
     if (settings && !didInitialSync.current) {
       didInitialSync.current = true;
+      // Cuentas que se guardaron antes del rediseño de 8 presets quedaron con
+      // theme_preset en una clave vieja y custom_border_radius="soft" escrito en
+      // silencio (era el default oculto de la versión anterior, no una elección real).
+      // Si detectamos esa combinación, la tratamos como "auto" (heredar el radio propio
+      // del preset nuevo) en vez de forzar 12px sobre los 8 temas. Si el radio guardado
+      // es "none"/"full", o el tema ya es una clave nueva, se respeta tal cual: ahí sí es
+      // una elección explícita del usuario.
+      const isLegacyThemeKey = settings.theme_preset && !THEME_PRESETS[settings.theme_preset];
+      const rawRadius = settings.custom_border_radius;
+      const resolvedRadius = !rawRadius || (isLegacyThemeKey && rawRadius === "soft") ? "auto" : rawRadius;
+
       setForm({
         practice_name: settings.practice_name || "",
         specialty: settings.specialty || "",
@@ -172,18 +183,17 @@ export default function PublicPageEditor() {
         handle: settings.handle || "",
         photo_url: settings.photo_url || "",
         cover_image_url: settings.cover_image_url || "",
-        photo_align: settings.photo_align || "center",
+        photo_align: settings.photo_align === "right" ? "center" : (settings.photo_align || "center"),
         photo_frame: settings.photo_frame || "circle",
         cover_align: settings.cover_align || "center",
-        page_color: settings.page_color || "#3B82F6",
-        page_color_secondary: settings.page_color_secondary || "",
-        theme_preset: settings.theme_preset || "clean_dark_tech",
+        page_color: settings.page_color || "",
+        theme_preset: settings.theme_preset || "nordic_slate",
         heading_font_override: settings.heading_font_override || "default",
         published: settings.published !== false,
         custom_bg_pattern: settings.custom_bg_pattern || "none",
         custom_bg_image_url: settings.custom_bg_image_url || "",
         custom_bg_overlay_opacity: settings.custom_bg_overlay_opacity ?? 40,
-        custom_border_radius: settings.custom_border_radius || "soft",
+        custom_border_radius: resolvedRadius,
         custom_card_opacity: settings.custom_card_opacity ?? 100,
         custom_blur_enabled: !!settings.custom_blur_enabled,
       });

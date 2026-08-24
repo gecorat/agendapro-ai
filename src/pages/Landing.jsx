@@ -272,30 +272,30 @@ export default function Landing() {
               <div className="flex items-center gap-2 mb-1">
                 <span className="font-heading font-semibold text-lg">Básico</span>
               </div>
-              <p className="text-3xl font-heading font-bold mt-3">{PLAN_PRICES.basic.toLocaleString("es-AR")}<span className="text-sm font-normal text-slate-500"> ARS / mes</span></p>
+              <p className="text-3xl font-heading font-bold mt-3">{PLAN_PRICES.basic}<span className="text-sm font-normal text-slate-500"> ARS / mes</span></p>
               <ul className="mt-5 space-y-3 flex-1">
                 {BASIC_FEATURES.map((f) => <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700"><Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" /> {f}</li>)}
               </ul>
-              <Button className="mt-7 bg-slate-900 hover:bg-slate-800 h-11" asChild><Link to="/register">Empezar prueba</Link></Button>
+              <Button className="mt-7 bg-slate-900 hover:bg-slate-800 h-11" asChild><Link to="/register">Probar gratis 14 días</Link></Button>
             </Card>
             <Card className="p-7 flex flex-col border-slate-200 bg-white">
               <div className="flex items-center gap-2 mb-1">
                 <span className="font-heading font-semibold text-lg">Pro</span>
                 <span className="text-xs rounded-full bg-indigo-50 text-indigo-700 px-2 py-0.5 font-medium ring-1 ring-inset ring-indigo-100">Más popular</span>
               </div>
-              <p className="text-3xl font-heading font-bold mt-3">{PLAN_PRICES.pro.toLocaleString("es-AR")}<span className="text-sm font-normal text-slate-500"> ARS / mes</span></p>
+              <p className="text-3xl font-heading font-bold mt-3">{PLAN_PRICES.pro}<span className="text-sm font-normal text-slate-500"> ARS / mes</span></p>
               <ul className="mt-5 space-y-3 flex-1">
                 <li className="text-xs font-medium text-slate-400 uppercase tracking-wide pb-1">Todo lo del Básico +</li>
                 {PRO_EXTRAS.map((f) => <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700"><Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" /> {f}</li>)}
               </ul>
-              <Button className="mt-7 bg-slate-900 hover:bg-slate-800 h-11" asChild><Link to="/register">Empezar prueba</Link></Button>
+              <Button className="mt-7 bg-slate-900 hover:bg-slate-800 h-11" asChild><Link to="/register">Probar gratis 14 días</Link></Button>
             </Card>
             <Card className="p-7 flex flex-col border-2 border-slate-900 bg-white relative">
               <div className="flex items-center gap-2 mb-1">
                 <span className="font-heading font-semibold text-lg">Premium</span>
                 <Sparkles className="w-4 h-4 text-amber-500" />
               </div>
-              <p className="text-3xl font-heading font-bold mt-3">{PLAN_PRICES.clinic.toLocaleString("es-AR")}<span className="text-sm font-normal text-slate-500"> ARS / mes</span></p>
+              <p className="text-3xl font-heading font-bold mt-3">{PLAN_PRICES.clinic}<span className="text-sm font-normal text-slate-500"> ARS / mes</span></p>
               <ul className="mt-5 space-y-3 flex-1">
                 <li className="text-xs font-medium text-slate-400 uppercase tracking-wide pb-1">Todo lo del Pro +</li>
                 {PREMIUM_EXTRAS.map((f) => <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700"><Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" /> {f}</li>)}

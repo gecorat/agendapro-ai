@@ -202,7 +202,14 @@ export default function WhatsAppConnectCard() {
           <div className="flex flex-col items-center gap-4 py-2">
             {qrCode ? (
               <div className="p-3 bg-white rounded-xl border border-border">
-                <QRCodeSVG value={qrCode} size={220} />
+                {/* Evolution API normalmente da el string crudo del QR (se renderiza acá
+                    igual que antes con WasenderAPI). Si en cambio da la imagen ya armada
+                    (data:image/...), la mostramos directo en vez de re-generar el QR. */}
+                {qrCode.startsWith("data:image") ? (
+                  <img src={qrCode} alt="Código QR de WhatsApp" width={220} height={220} />
+                ) : (
+                  <QRCodeSVG value={qrCode} size={220} />
+                )}
               </div>
             ) : (
               <div className="w-[220px] h-[220px] flex items-center justify-center">

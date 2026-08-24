@@ -53,8 +53,6 @@ function LivePreview({ form, fullbleed = false }) {
   const frameClass = avatarShapeClass(theme.radiusClass);
   const isBanner = form.photo_align === "banner";
   const photoJustify = form.photo_align === "left" ? "justify-start" : "justify-center";
-  const glassStyle = theme.glass ? { backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)" } : {};
-  const cardClass = `${theme.cardClass || ""} ${theme.radiusClass || "rounded-xl"}`;
   const size = fullbleed ? 88 : 64;
   const half = size / 2;
   const coverHeight = isBanner ? (fullbleed ? "h-40" : "h-32") : (fullbleed ? "h-28" : "h-24");

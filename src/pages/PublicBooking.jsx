@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CalendarClock, Clock, ArrowRight, Check, Loader2, Calendar, MapPin, Mail, CalendarX, MessageCircle, Instagram, Facebook, Globe, ExternalLink, Navigation, User } from "lucide-react";
-import { resolveTheme, normalizeSocialUrl, whatsappUrl, googleMapsUrl, googleMapsEmbedSrc, PHOTO_FRAME_CLASS, getBackgroundPatternStyle, loadThemeFont } from "@/lib/theme-presets";
+import { resolveTheme, normalizeSocialUrl, whatsappUrl, googleMapsUrl, googleMapsEmbedSrc, avatarShapeClass, loadThemeFont } from "@/lib/theme-presets";
 
 function parseTimeToDate(date, time) {
   const [h, m] = time.split(":").map(Number);

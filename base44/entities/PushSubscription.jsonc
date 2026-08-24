@@ -1,0 +1,47 @@
+{
+  "name": "PushSubscription",
+  "properties": {
+    "endpoint": {
+      "description": "URL \u00fanica que identifica esta suscripci\u00f3n en el servicio push del navegador (FCM, Mozilla, etc). Es la clave natural para no duplicar la misma suscripci\u00f3n.",
+      "title": "Push endpoint",
+      "type": "string"
+    },
+    "keys_auth": {
+      "title": "Secreto auth de la suscripci\u00f3n",
+      "type": "string"
+    },
+    "keys_p256dh": {
+      "title": "Clave p\u00fablica p256dh de la suscripci\u00f3n",
+      "type": "string"
+    },
+    "user_agent": {
+      "description": "Solo informativo, para que la persona pueda identificar sus dispositivos si alg\u00fan d\u00eda se muestra una lista.",
+      "title": "User agent del navegador/dispositivo",
+      "type": "string"
+    },
+    "user_id": {
+      "description": "Id del usuario logueado (base44 auth) en cuyo dispositivo/navegador se activaron las notificaciones. No es el professional_id del negocio: cada persona logueada puede tener varias suscripciones (una por dispositivo/navegador).",
+      "title": "Usuario (auth) due\u00f1o de esta suscripci\u00f3n",
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id",
+    "endpoint",
+    "keys_p256dh",
+    "keys_auth"
+  ],
+  "rls": {
+    "create": true,
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    }
+  },
+  "type": "object"
+}

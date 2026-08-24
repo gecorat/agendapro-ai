@@ -131,6 +131,20 @@ export async function orchestrateConversation(base44, ctx) {
         a.status !== "cancelled"
     )
     .slice(0, 5);
+  // Citas futuras DE ESTE PACIENTE puntual (no de todo el consultorio) — es lo que el bot
+  // necesita para saber qué reagendar o cancelar cuando el paciente lo pide sin repetir
+  // todos los datos. Antes no existía este recorte: el bot no tenía forma de saber cuál de
+  // las citas del paciente había que tocar, así que un pedido de "reagendame" no llegaba
+  // a ningún lado.
+  const myPatientUpcoming = existingPatient
+    ? (appts || []).filter(
+        (a) =>
+          a.created_by_id === professionalId &&
+          a.patient_id === existingPatient.id &&
+          new Date(a.start_datetime) > new Date() &&
+          a.status !== "cancelled"
+      )
+    : [];
   const history = (allHistory || [])
     .sort((a, b) => new Date(b.created_date) - new Date(a.created_date))
     .slice(0, 10)
@@ -141,6 +155,9 @@ export async function orchestrateConversation(base44, ctx) {
     .join("\n");
   const upcomingText = myUpcoming
     .map((a) => `- ${new Date(a.start_datetime).toLocaleString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })} ${a.service_name} (${a.status})`)
+    .join("\n");
+  const patientUpcomingText = myPatientUpcoming
+    .map((a) => `- ${a.service_name} — ${new Date(a.start_datetime).toLocaleString("es-AR", { timeZone: "America/Argentina/Buenos_Aires", weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}`)
     .join("\n");
   const patientText = existingPatient
     ? `Paciente existente: ${existingPatient.first_name} ${existingPatient.last_name || ""}`.trim()

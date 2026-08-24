@@ -4,31 +4,31 @@
   "properties": {
     "app_base_url": {
       "type": "string",
-      "title": "URL pública de la app",
-      "description": "Dominio público donde está publicada la app (ej. https://agendate.base44.app). Se usa para construir los enlaces de confirmación/cancelación/reagendar en los emails.",
+      "title": "URL p\u00fablica de la app",
+      "description": "Dominio p\u00fablico donde est\u00e1 publicada la app (ej. https://agendate.base44.app). Se usa para construir los enlaces de confirmaci\u00f3n/cancelaci\u00f3n/reagendar en los emails.",
       "format": "url"
     },
     "mercadopago_access_token": {
       "type": "string",
-      "title": "Mercado Pago — Access Token"
+      "title": "Mercado Pago \u2014 Access Token"
     },
     "mercadopago_public_key": {
       "type": "string",
-      "title": "Mercado Pago — Public Key"
+      "title": "Mercado Pago \u2014 Public Key"
     },
     "zernio_api_key": {
       "type": "string",
-      "title": "Zernio — API Key (proveedor de WhatsApp)"
+      "title": "Zernio \u2014 API Key (proveedor de WhatsApp)"
     },
     "zernio_account_id": {
       "type": "string",
-      "title": "Zernio — Account ID (cuenta por defecto)",
-      "description": "Account ID de la cuenta de WhatsApp principal en Zernio. Cada profesional puede tener el suyo en su configuración."
+      "title": "Zernio \u2014 Account ID (cuenta por defecto)",
+      "description": "Account ID de la cuenta de WhatsApp principal en Zernio. Cada profesional puede tener el suyo en su configuraci\u00f3n."
     },
     "zernio_webhook_secret": {
       "type": "string",
-      "title": "Zernio — Webhook Secret",
-      "description": "Secreto compartido para verificar la firma de los webhooks entrantes de Zernio. Configurarlo también en el dashboard de Zernio al crear el webhook."
+      "title": "Zernio \u2014 Webhook Secret",
+      "description": "Secreto compartido para verificar la firma de los webhooks entrantes de Zernio. Configurarlo tambi\u00e9n en el dashboard de Zernio al crear el webhook."
     },
     "bot_preview_limit": {
       "type": "number",
@@ -37,17 +37,27 @@
     },
     "google_maps_api_key": {
       "type": "string",
-      "title": "Google Maps / Places — API Key",
-      "description": "Habilita el autocompletado de direcciones en el perfil y el mapa embebido en la página pública. Sin esto, ambos siguen funcionando en modo básico (texto libre / mapa sin key)."
+      "title": "Google Maps / Places \u2014 API Key",
+      "description": "Habilita el autocompletado de direcciones en el perfil y el mapa embebido en la p\u00e1gina p\u00fablica. Sin esto, ambos siguen funcionando en modo b\u00e1sico (texto libre / mapa sin key)."
     },
     "wasender_personal_access_token": {
       "type": "string",
-      "title": "WasenderAPI — Personal Access Token",
-      "description": "Token de la cuenta (Dashboard → Settings → Personal Access Token). Habilita la opción de conectar WhatsApp por QR. Es distinto del API Key de cada sesión, que se genera automáticamente por profesional."
+      "title": "[DEPRECADO] WasenderAPI \u2014 Personal Access Token",
+      "description": "Ya no se usa: la conexi\u00f3n por QR ahora corre sobre Evolution API (self-hosted). Se deja el campo sin borrar por compatibilidad hacia atr\u00e1s, pero el c\u00f3digo nuevo no lo lee."
+    },
+    "evolution_base_url": {
+      "type": "string",
+      "title": "Evolution API \u2014 Base URL",
+      "description": "URL de tu instancia de Evolution API self-hosted, sin barra al final (ej: https://evolution.tudominio.com). Habilita la opci\u00f3n de conectar WhatsApp por QR."
+    },
+    "evolution_api_key": {
+      "type": "string",
+      "title": "Evolution API \u2014 Global API Key",
+      "description": "La API Key global configurada en el .env de tu Evolution API (AUTHENTICATION_API_KEY). Se usa para crear y administrar la instancia de WhatsApp de cada profesional."
     },
     "debug_last_webhook_payload": {
       "type": "string",
-      "title": "Debug: último payload crudo de Zernio",
+      "title": "Debug: \u00faltimo payload crudo de Zernio",
       "description": "Temporal, para diagnosticar el formato real de los webhooks de Zernio. Se puede borrar una vez resuelto."
     },
     "google_client_id": {

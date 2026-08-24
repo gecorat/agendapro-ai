@@ -7,19 +7,19 @@ import { useToast } from "@/components/ui/use-toast";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import { Loader2, Bot, RotateCcw, Save, Target, Sparkles, Timer, MessageSquareText } from "lucide-react";
 
-// Ejemplo est\u00e1tico de c\u00f3mo queda el mensaje de confirmaci\u00f3n real que arma el bot (no es
-// editable ac\u00e1 -- el formato en s\u00ed es fijo, a prop\u00f3sito, para que el paciente SIEMPRE lea
-// datos reales de la cita y no algo que la IA redact\u00f3 libremente). Lo que S\u00cd se puede
-// ajustar es el tono general de conversaci\u00f3n, m\u00e1s abajo.
-const EXAMPLE_CONFIRMATION = `\u2705 *Turno confirmado*
-\ud83d\udcc5 *D\u00eda y horario:* martes 26 de agosto, 10:00
-\ud83e\ude7a *Servicio:* Consulta general
-\ud83d\udc64 *Profesional:* Gonzalo Corat
-\ud83d\udccd *Direcci\u00f3n:* Av. Siempre Viva 742, C\u00f3rdoba
-\ud83d\uddfa\ufe0f https://maps.google.com/?q=...
+// Ejemplo estático de cómo queda el mensaje de confirmación real que arma el bot (no es
+// editable acá — el formato en sí es fijo, a propósito, para que el paciente SIEMPRE lea
+// datos reales de la cita y no algo que la IA redactó libremente). Lo que SÍ se puede
+// ajustar es el tono general de conversación, más abajo.
+const EXAMPLE_CONFIRMATION = `✅ *Turno confirmado*
+📅 *Día y horario:* martes 26 de agosto, 10:00
+🩺 *Servicio:* Consulta general
+👤 *Profesional:* Gonzalo Corat
+📍 *Dirección:* Av. Siempre Viva 742, Córdoba
+🗺️ https://maps.google.com/?q=...
 
-\u00a1Te esperamos! \ud83d\ude0a Si necesit\u00e1s reagendar o cancelar, avisanos por este mismo medio.
-\u23f0 Te vamos a recordar la cita unas horas antes.`;
+¡Te esperamos! 😊 Si necesitás reagendar o cancelar, avisanos por este mismo medio.
+⏰ Te vamos a recordar la cita unas horas antes.`;
 
 export default function BotSettingsPanel() {
   const { toast } = useToast();
@@ -30,6 +30,7 @@ export default function BotSettingsPanel() {
   const [objective, setObjective] = useState("");
   const [tone, setTone] = useState("");
   const [delaySeconds, setDelaySeconds] = useState(15);
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -42,18 +43,17 @@ export default function BotSettingsPanel() {
     })();
   }, []);
 
-  // Se completa reci\u00e9n cuando llegan AMBOS: la configuraci\u00f3n actual del consultorio Y
-  // los valores predeterminados (para poder mostrar el default como placeholder cuando el
-  // profesional todav\u00eda no personaliz\u00f3 nada).
+  // Se completa recién cuando llegan AMBOS: la configuración actual del consultorio Y
+  // los valores predeterminados. Si el profesional todavía no personalizó nada, el campo
+  // arranca YA CARGADO con el texto predeterminado (editable ahí mismo) — no vacío — así
+  // se ve de entrada qué es lo que el bot está usando hoy en la conversación real.
   useEffect(() => {
-    if (!settings || !defaults) return;
-    setObjective(settings.bot_objective_prompt || "");
-    setTone(settings.bot_tone_prompt || "");
+    if (!settings || !defaults || initialized) return;
+    setObjective(settings.bot_objective_prompt || defaults.objectivePrompt || "");
+    setTone(settings.bot_tone_prompt || defaults.tonePrompt || "");
     setDelaySeconds(settings.bot_response_delay_seconds || defaults.responseDelaySeconds || 15);
-  }, [settings, defaults]);
-
-  const isCustomObjective = objective.trim().length > 0;
-  const isCustomTone = tone.trim().length > 0;
+    setInitialized(true);
+  }, [settings, defaults, initialized]);
 
   async function handleSave() {
     setSaving(true);
@@ -63,7 +63,7 @@ export default function BotSettingsPanel() {
         bot_tone_prompt: tone.trim(),
         bot_response_delay_seconds: delaySeconds,
       });
-      toast({ title: "Configuraci\u00f3n del bot guardada", description: "Los pr\u00f3ximos mensajes por WhatsApp ya usan estos cambios." });
+      toast({ title: "Configuración del bot guardada", description: "Los próximos mensajes por WhatsApp ya usan estos cambios." });
     } catch (err) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
@@ -71,17 +71,20 @@ export default function BotSettingsPanel() {
     }
   }
 
-  if (loading || !settings) {
+  if (loading || !settings || !initialized) {
     return <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
   }
 
   if (!hasFullAccess) {
     return (
       <div className="text-center py-12 text-sm text-muted-foreground">
-        Solo el due\u00f1o de la cuenta (o un co-admin) puede configurar el bot.
+        Solo el dueño de la cuenta (o un co-admin) puede configurar el bot.
       </div>
     );
   }
+
+  const objectiveIsDefault = objective === (defaults?.objectivePrompt || "");
+  const toneIsDefault = tone === (defaults?.tonePrompt || "");
 
   return (
     <div className="space-y-4">
@@ -90,8 +93,8 @@ export default function BotSettingsPanel() {
           <Bot className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h2 className="font-heading font-semibold">Configuraci\u00f3n del bot de WhatsApp</h2>
-          <p className="text-sm text-muted-foreground">Ajust\u00e1 c\u00f3mo agenda y c\u00f3mo habla la asistente virtual. Los valores vac\u00edos usan el predeterminado de la plataforma.</p>
+          <h2 className="font-heading font-semibold">Configuración del bot de WhatsApp</h2>
+          <p className="text-sm text-muted-foreground">Ajustá cómo agenda y cómo habla la asistente virtual. Arranca con el predeterminado ya cargado — editalo o restauralo cuando quieras.</p>
         </div>
       </div>
 
@@ -100,13 +103,13 @@ export default function BotSettingsPanel() {
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5">
             <Target className="w-4 h-4 text-primary" />
-            <Label className="font-medium">Objetivo (qu\u00e9 tiene que lograr)</Label>
+            <Label className="font-medium">Objetivo (qué tiene que lograr)</Label>
           </div>
           <Button
             type="button" variant="ghost" size="sm"
             className="text-xs text-muted-foreground gap-1 h-7"
             onClick={() => setObjective(defaults?.objectivePrompt || "")}
-            disabled={!isCustomObjective && objective === (defaults?.objectivePrompt || "")}
+            disabled={objectiveIsDefault}
           >
             <RotateCcw className="w-3 h-3" /> Restaurar predeterminado
           </Button>
@@ -115,11 +118,10 @@ export default function BotSettingsPanel() {
           rows={10}
           value={objective}
           onChange={(e) => setObjective(e.target.value)}
-          placeholder={defaults?.objectivePrompt}
           className="text-sm font-mono"
         />
         <p className="text-xs text-muted-foreground">
-          {isCustomObjective ? "Est\u00e1s usando tu propia versi\u00f3n." : "Vac\u00edo: se est\u00e1 usando el predeterminado de la plataforma (lo ves arriba, en gris)."}
+          {objectiveIsDefault ? "Estás usando el texto predeterminado tal cual." : "Personalizado — distinto del predeterminado de la plataforma."}
         </p>
       </div>
 
@@ -128,13 +130,13 @@ export default function BotSettingsPanel() {
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5">
             <Sparkles className="w-4 h-4 text-primary" />
-            <Label className="font-medium">Tono y personalidad (c\u00f3mo tiene que hablar)</Label>
+            <Label className="font-medium">Tono y personalidad (cómo tiene que hablar)</Label>
           </div>
           <Button
             type="button" variant="ghost" size="sm"
             className="text-xs text-muted-foreground gap-1 h-7"
             onClick={() => setTone(defaults?.tonePrompt || "")}
-            disabled={!isCustomTone && tone === (defaults?.tonePrompt || "")}
+            disabled={toneIsDefault}
           >
             <RotateCcw className="w-3 h-3" /> Restaurar predeterminado
           </Button>
@@ -143,11 +145,10 @@ export default function BotSettingsPanel() {
           rows={7}
           value={tone}
           onChange={(e) => setTone(e.target.value)}
-          placeholder={defaults?.tonePrompt}
           className="text-sm font-mono"
         />
         <p className="text-xs text-muted-foreground">
-          {isCustomTone ? "Est\u00e1s usando tu propia versi\u00f3n." : "Vac\u00edo: se est\u00e1 usando el predeterminado de la plataforma (lo ves arriba, en gris)."}
+          {toneIsDefault ? "Estás usando el texto predeterminado tal cual." : "Personalizado — distinto del predeterminado de la plataforma."}
         </p>
       </div>
 
@@ -157,7 +158,7 @@ export default function BotSettingsPanel() {
           <Timer className="w-4 h-4 text-primary" />
           <Label className="font-medium">Demora antes de responder</Label>
         </div>
-        <p className="text-xs text-muted-foreground -mt-1">Para que la conversaci\u00f3n no se sienta instant\u00e1nea. La cita ya queda guardada al instante en tu Agenda; esto solo demora el mensaje que recibe el paciente.</p>
+        <p className="text-xs text-muted-foreground -mt-1">Para que la conversación no se sienta instantánea. La cita ya queda guardada al instante en tu Agenda; esto solo demora el mensaje que recibe el paciente.</p>
         <div className="flex flex-wrap gap-1.5 pt-1">
           {(defaults?.responseDelayOptions || [
             { value: 5, label: "5 segundos" },
@@ -181,11 +182,11 @@ export default function BotSettingsPanel() {
         </div>
       </div>
 
-      {/* Ejemplo del mensaje de confirmaci\u00f3n */}
+      {/* Ejemplo del mensaje de confirmación */}
       <div className="bg-card rounded-2xl border border-border p-4 space-y-2.5">
         <div className="flex items-center gap-1.5">
           <MessageSquareText className="w-4 h-4 text-primary" />
-          <Label className="font-medium">As\u00ed queda el mensaje de confirmaci\u00f3n</Label>
+          <Label className="font-medium">Así queda el mensaje de confirmación</Label>
         </div>
         <p className="text-xs text-muted-foreground -mt-1">
           Este formato es fijo (no editable) para que el paciente siempre reciba los datos reales de la cita, nunca un texto libre de la IA. Ejemplo:
@@ -197,7 +198,7 @@ export default function BotSettingsPanel() {
 
       <Button onClick={handleSave} disabled={saving} className="shadow-sm">
         {saving ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}
-        Guardar configuraci\u00f3n del bot
+        Guardar configuración del bot
       </Button>
     </div>
   );

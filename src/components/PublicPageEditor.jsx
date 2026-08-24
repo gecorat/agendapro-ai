@@ -508,16 +508,26 @@ export default function PublicPageEditor() {
               <Textarea rows={3} value={form.description} onChange={(e) => set("description", e.target.value)} placeholder="Contá brevemente quién sos y qué ofrecés." />
             </Section>
 
-            <Section title="Dirección">
-              <AddressAutocompleteInput
-                value={form.address}
-                onChange={(v) => set("address", v)}
-                onPlaceSelect={({ address, lat, lng }) => setForm((f) => ({ ...f, address, address_lat: lat, address_lng: lng }))}
-              />
-              <div className="grid grid-cols-2 gap-3 pt-1">
-                <Input value={form.address_city} onChange={(e) => set("address_city", e.target.value)} placeholder="Localidad" />
-                <Input value={form.address_province} onChange={(e) => set("address_province", e.target.value)} placeholder="Provincia" />
-              </div>
+            <Section title="Dirección" description="Se edita desde tu Perfil — acá solo la ves reflejada, para que esté siempre igual en la página pública y en los mensajes del bot.">
+              {settings?.address || settings?.address_city ? (
+                <div className="flex items-start gap-2.5 rounded-lg border border-border p-3">
+                  <MapPin className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+                  <div className="min-w-0">
+                    <p className="text-sm">{[settings.address, settings.address_city, settings.address_province].filter(Boolean).join(', ')}</p>
+                  </div>
+                  <Button type="button" variant="ghost" size="sm" className="ml-auto shrink-0 gap-1 h-7" asChild>
+                    <Link to="/settings?tab=profile"><PenLine className="w-3.5 h-3.5" /> Editar</Link>
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2.5 rounded-lg border border-dashed border-border p-3">
+                  <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <p className="text-sm text-muted-foreground flex-1">Todavía no cargaste una dirección.</p>
+                  <Button type="button" variant="outline" size="sm" className="shrink-0 gap-1 h-7" asChild>
+                    <Link to="/settings?tab=profile"><PenLine className="w-3.5 h-3.5" /> Cargarla</Link>
+                  </Button>
+                </div>
+              )}
             </Section>
 
             <Section title="Redes y sitio web">

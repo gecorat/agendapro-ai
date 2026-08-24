@@ -9,6 +9,8 @@ import {
 } from "lucide-react";
 import DemoChat from "@/components/assistant/DemoChat";
 import WhatsAppConnectCard from "@/components/WhatsAppConnectCard";
+import BotPauseButton from "@/components/BotPauseButton";
+import BotPauseBanner from "@/components/BotPauseBanner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -130,7 +132,6 @@ function FullAssistant({ settings, reloadSettings, save }) {
   const [filter, setFilter] = useState("all");
   const [pauseLoading, setPauseLoading] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
-  const [botToggling, setBotToggling] = useState(false);
   const [activeAppointments, setActiveAppointments] = useState([]);
   const [newTag, setNewTag] = useState("");
   const [savingNotes, setSavingNotes] = useState(false);
@@ -380,17 +381,8 @@ function FullAssistant({ settings, reloadSettings, save }) {
   // WhatsApp por completo), esto deja el número conectado pero el bot deja de contestar a
   // CUALQUIER paciente hasta que se reactive — los mensajes entrantes se siguen guardando
   // en la bandeja para responder a mano. Útil para pausar del todo sin perder la conexión
-  // (ej. vacaciones, feriados, mientras se ajusta la configuración).
-  const handleToggleBot = async (checked) => {
-    setBotToggling(true);
-    try {
-      await save?.({ bot_enabled: checked });
-    } catch (e) {
-      console.error("Error al cambiar el estado del bot", e);
-    } finally {
-      setBotToggling(false);
-    }
-  };
+  // (ej. vacaciones, feriados, mientras se ajusta la configuración). El control con las
+  // duraciones (BotPauseButton) usa `save` directamente, ya no hace falta este wrapper.
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

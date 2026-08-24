@@ -154,7 +154,7 @@ function ProfileHeader({ settings, theme, brand, cardClass, glassStyle, align, s
         </div>
       </div>
       <div className={`${bleed ? "px-5" : "px-6"} pb-5 flex flex-col ${textAlignClass}`} style={{ paddingTop: `${half + 12}px` }}>
-        <h1 className={bleed ? "text-2xl font-bold font-heading leading-tight" : "text-2xl font-bold font-heading leading-tight"} style={{ color: theme.text, ...headingFontStyle }}>{settings?.practice_name || "Reservá tu turno"}</h1>
+        <h1 className="text-2xl font-bold font-heading leading-tight" style={{ color: theme.text, ...headingFontStyle }}>{settings?.practice_name || "Reservá tu turno"}</h1>
         {settings?.specialty && <p className="text-sm mt-1" style={{ color: theme.muted, opacity: 0.85 }}>{settings.specialty}</p>}
       </div>
     </div>

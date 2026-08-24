@@ -163,8 +163,6 @@ export default function PublicPageEditor() {
   const { toast } = useToast();
   const [form, setForm] = useState({
     practice_name: "", specialty: "", description: "",
-    address: "", address_city: "", address_province: "",
-    address_lat: null, address_lng: null,
     instagram_url: "", facebook_url: "", website_url: "",
     handle: "", photo_url: "", cover_image_url: "",
     photo_align: "center", photo_frame: "circle", cover_align: "center",

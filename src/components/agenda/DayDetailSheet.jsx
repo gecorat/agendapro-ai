@@ -37,6 +37,9 @@ export default function DayDetailSheet({ date, appts, onClose, onNew, onEdit, on
     setCancellingId(a.id);
     try {
       await base44.entities.Appointment.update(a.id, { status: "cancelled" });
+      try {
+        await base44.functions.invoke("syncAppointmentGoogle", { appointmentId: a.id });
+      } catch { /* no romper el flujo si Google falla */ }
       await onChanged?.();
     } finally {
       setCancellingId(null);

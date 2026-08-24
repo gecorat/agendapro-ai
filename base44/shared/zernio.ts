@@ -160,7 +160,11 @@ export async function orchestrateConversation(base44, ctx) {
   // override del profesional y el predeterminado.
   const objectivePrompt = practice?.bot_objective_prompt || bot.system_prompt || DEFAULT_OBJECTIVE_PROMPT;
   const tonePrompt = practice?.bot_tone_prompt || DEFAULT_TONE_PROMPT;
-  const systemPrompt = `${objectivePrompt}\n\n${tonePrompt}`;
+  const assistantName = (practice?.bot_assistant_name || "").trim();
+  const nameBlock = assistantName
+    ? `Te llamás ${assistantName}. Presentáte con ese nombre si el paciente te pregunta cómo te llamás, o de forma natural al saludar por primera vez en la conversación — no hace falta repetirlo en cada mensaje.`
+    : `No tenés un nombre propio asignado: presentate genéricamente como "la asistente virtual del consultorio" si te preguntan cómo te llamás.`;
+  const systemPrompt = `${objectivePrompt}\n\n${tonePrompt}\n\n${nameBlock}`;
   const model = bot.model && bot.model !== "automatic" ? bot.model : undefined;
   // Cuánto esperar antes de mandar la respuesta por WhatsApp, configurable por el
   // profesional (5/15/30/60s) — para que no se sienta instantáneo/robotizado.

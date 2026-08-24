@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
-import { Loader2, Bot, RotateCcw, Save, Target, Sparkles, Timer, MessageSquareText, UserCircle2 } from "lucide-react";
+import { Loader2, Bot, RotateCcw, Save, Target, Sparkles, Timer, MessageSquareText, UserCircle2, Power } from "lucide-react";
 
 // Ejemplo estático de cómo queda el mensaje de confirmación real que arma el bot (no es
 // editable acá — el formato en sí es fijo, a propósito, para que el paciente SIEMPRE lea

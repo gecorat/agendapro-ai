@@ -34,7 +34,7 @@
     },
     "address": {
       "type": "string",
-      "title": "Dirección"
+      "title": "Direcci\u00f3n"
     },
     "address_city": {
       "type": "string",
@@ -46,15 +46,15 @@
     },
     "address_lat": {
       "type": "number",
-      "title": "Latitud de la dirección"
+      "title": "Latitud de la direcci\u00f3n"
     },
     "address_lng": {
       "type": "number",
-      "title": "Longitud de la dirección"
+      "title": "Longitud de la direcci\u00f3n"
     },
     "phone": {
       "type": "string",
-      "title": "Teléfono del consultorio"
+      "title": "Tel\u00e9fono del consultorio"
     },
     "professional_email": {
       "type": "string",
@@ -65,24 +65,24 @@
       "type": "string",
       "title": "Instagram",
       "format": "url",
-      "description": "Enlace a tu perfil de Instagram (se muestra en tu página de reservas)"
+      "description": "Enlace a tu perfil de Instagram (se muestra en tu p\u00e1gina de reservas)"
     },
     "facebook_url": {
       "type": "string",
       "title": "Facebook",
       "format": "url",
-      "description": "Enlace a tu página de Facebook (se muestra en tu página de reservas)"
+      "description": "Enlace a tu p\u00e1gina de Facebook (se muestra en tu p\u00e1gina de reservas)"
     },
     "website_url": {
       "type": "string",
       "title": "Sitio web",
       "format": "url",
-      "description": "Tu sitio web, si tenés (se muestra en tu página de reservas)"
+      "description": "Tu sitio web, si ten\u00e9s (se muestra en tu p\u00e1gina de reservas)"
     },
     "handle": {
       "type": "string",
-      "title": "Usuario público (@)",
-      "description": "Nombre único para tu enlace de reservas, sin espacios ni @"
+      "title": "Usuario p\u00fablico (@)",
+      "description": "Nombre \u00fanico para tu enlace de reservas, sin espacios ni @"
     },
     "photo_url": {
       "type": "string",
@@ -118,7 +118,7 @@
       "type": "string",
       "title": "Imagen de portada",
       "format": "url",
-      "description": "Banner de fondo en la página pública, detrás de la foto de perfil. Si no se carga, se usa el color/gradiente del tema."
+      "description": "Banner de fondo en la p\u00e1gina p\u00fablica, detr\u00e1s de la foto de perfil. Si no se carga, se usa el color/gradiente del tema."
     },
     "cover_align": {
       "type": "string",
@@ -174,7 +174,7 @@
     },
     "page_color": {
       "type": "string",
-      "title": "Color de la página pública",
+      "title": "Color de la p\u00e1gina p\u00fablica",
       "default": "#0f172a"
     },
     "page_color_secondary": {
@@ -184,7 +184,7 @@
     },
     "theme_preset": {
       "type": "string",
-      "title": "Tema visual de la página pública",
+      "title": "Tema visual de la p\u00e1gina p\u00fablica",
       "enum": [
         "luxury_gold",
         "glassmorphism_premium",
@@ -211,11 +211,11 @@
     },
     "description": {
       "type": "string",
-      "title": "Descripción / presentación"
+      "title": "Descripci\u00f3n / presentaci\u00f3n"
     },
     "published": {
       "type": "boolean",
-      "title": "Página pública publicada",
+      "title": "P\u00e1gina p\u00fablica publicada",
       "default": true
     },
     "google_calendar_connected": {
@@ -230,16 +230,16 @@
     },
     "whatsapp_connection_type": {
       "type": "string",
-      "title": "Tipo de conexión de WhatsApp",
+      "title": "Tipo de conexi\u00f3n de WhatsApp",
       "enum": [
         "qr",
         "official"
       ],
-      "description": "qr = WasenderAPI (rápido, no oficial). official = Zernio/Meta (API oficial)."
+      "description": "qr = Evolution API self-hosted (r\u00e1pido, no oficial). official = Zernio/Meta (API oficial)."
     },
     "whatsapp_status": {
       "type": "string",
-      "title": "Estado detallado de la conexión",
+      "title": "Estado detallado de la conexi\u00f3n",
       "enum": [
         "disconnected",
         "connecting",
@@ -250,34 +250,44 @@
     },
     "whatsapp_phone_number": {
       "type": "string",
-      "title": "Número de WhatsApp conectado (genérico, cualquier tipo de conexión)"
+      "title": "N\u00famero de WhatsApp conectado (gen\u00e9rico, cualquier tipo de conexi\u00f3n)"
     },
     "wasender_session_id": {
       "type": "string",
-      "title": "WasenderAPI — ID de sesión"
+      "title": "[DEPRECADO] WasenderAPI \u2014 ID de sesi\u00f3n"
     },
     "wasender_api_key": {
       "type": "string",
-      "title": "WasenderAPI — API Key de la sesión (para enviar mensajes)"
+      "title": "[DEPRECADO] WasenderAPI \u2014 API Key de la sesi\u00f3n (para enviar mensajes)"
     },
     "wasender_webhook_secret": {
       "type": "string",
-      "title": "WasenderAPI — Webhook Secret de la sesión"
+      "title": "[DEPRECADO] WasenderAPI \u2014 Webhook Secret de la sesi\u00f3n"
+    },
+    "evolution_instance_name": {
+      "type": "string",
+      "title": "Evolution API \u2014 Nombre de instancia",
+      "description": "Identificador \u00fanico de la instancia de WhatsApp de este profesional en Evolution API. Se genera autom\u00e1ticamente (a partir del ID del consultorio) al conectar por QR."
+    },
+    "evolution_webhook_secret": {
+      "type": "string",
+      "title": "Evolution API \u2014 Webhook secret",
+      "description": "Secreto propio (generado por Kame, no por Evolution) que viaja en la URL del webhook para verificar que los mensajes entrantes realmente vienen de esa instancia."
     },
     "zernio_profile_id": {
       "type": "string",
-      "title": "Zernio — Profile ID",
-      "description": "Perfil de Zernio creado automáticamente para este profesional al iniciar la conexión de WhatsApp."
+      "title": "Zernio \u2014 Profile ID",
+      "description": "Perfil de Zernio creado autom\u00e1ticamente para este profesional al iniciar la conexi\u00f3n de WhatsApp."
     },
     "zernio_account_id": {
       "type": "string",
-      "title": "Zernio — Account ID",
-      "description": "ID de la cuenta de WhatsApp conectada en Zernio para este profesional (se obtiene automáticamente al conectar)"
+      "title": "Zernio \u2014 Account ID",
+      "description": "ID de la cuenta de WhatsApp conectada en Zernio para este profesional (se obtiene autom\u00e1ticamente al conectar)"
     },
     "zernio_phone": {
       "type": "string",
-      "title": "Número de WhatsApp del profesional",
-      "description": "Número que usa el profesional para recibir mensajes (con código de país)"
+      "title": "N\u00famero de WhatsApp del profesional",
+      "description": "N\u00famero que usa el profesional para recibir mensajes (con c\u00f3digo de pa\u00eds)"
     },
     "plan": {
       "type": "string",
@@ -293,7 +303,7 @@
     "trial_ends_at": {
       "type": "string",
       "format": "date-time",
-      "title": "Fin del período de prueba"
+      "title": "Fin del per\u00edodo de prueba"
     },
     "trial_origin": {
       "type": "string",
@@ -306,7 +316,7 @@
     },
     "invitation_code": {
       "type": "string",
-      "title": "Código de invitación usado"
+      "title": "C\u00f3digo de invitaci\u00f3n usado"
     },
     "bot_preview_count": {
       "type": "number",
@@ -320,41 +330,41 @@
     },
     "whatsapp_usage_count": {
       "type": "number",
-      "title": "Conversaciones procesadas este período",
-      "description": "Contador de conversaciones/turnos procesados por el bot de WhatsApp en el período de facturación actual. Solo lo escribe el backend.",
+      "title": "Conversaciones procesadas este per\u00edodo",
+      "description": "Contador de conversaciones/turnos procesados por el bot de WhatsApp en el per\u00edodo de facturaci\u00f3n actual. Solo lo escribe el backend.",
       "default": 0
     },
     "whatsapp_usage_period_start": {
       "type": "string",
       "format": "date-time",
-      "title": "Inicio del período de uso actual",
+      "title": "Inicio del per\u00edodo de uso actual",
       "description": "Cuando se reinicia (mensualmente), whatsapp_usage_count vuelve a 0."
     },
     "whatsapp_addon_conversations": {
       "type": "number",
       "title": "Conversaciones extra de packs adicionales",
-      "description": "Cupo comprado aparte del límite del plan (packs +100/+250). Se descuenta antes de bloquear/avisar.",
+      "description": "Cupo comprado aparte del l\u00edmite del plan (packs +100/+250). Se descuenta antes de bloquear/avisar.",
       "default": 0
     },
     "whatsapp_usage_alert_90_sent": {
       "type": "boolean",
-      "title": "Alerta de 90% ya enviada este período",
+      "title": "Alerta de 90% ya enviada este per\u00edodo",
       "default": false
     },
     "whatsapp_usage_alert_95_sent": {
       "type": "boolean",
-      "title": "Alerta de 95% ya enviada este período",
+      "title": "Alerta de 95% ya enviada este per\u00edodo",
       "default": false
     },
     "whatsapp_usage_alert_100_sent": {
       "type": "boolean",
-      "title": "Alerta de 100% ya enviada este período",
+      "title": "Alerta de 100% ya enviada este per\u00edodo",
       "default": false
     },
     "mercadopago_subscription_id": {
       "type": "string",
-      "title": "Mercado Pago — ID de suscripción",
-      "description": "preapproval_id devuelto por Mercado Pago al crear la suscripción recurrente. Lo usa el webhook para identificar a qué consultorio corresponde cada notificación de pago."
+      "title": "Mercado Pago \u2014 ID de suscripci\u00f3n",
+      "description": "preapproval_id devuelto por Mercado Pago al crear la suscripci\u00f3n recurrente. Lo usa el webhook para identificar a qu\u00e9 consultorio corresponde cada notificaci\u00f3n de pago."
     },
     "plan_granted_by_admin": {
       "type": "boolean",

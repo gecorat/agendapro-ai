@@ -2,6 +2,28 @@
   "name": "PracticeSettings",
   "type": "object",
   "properties": {
+    "bot_objective_prompt": {
+      "type": "string",
+      "title": "Bot \u2014 Prompt de objetivo",
+      "description": "Instrucciones sobre QU\u00c9 tiene que lograr el bot (agendar, preguntar servicio/d\u00eda/horario, etc). Vac\u00edo = usa el predeterminado de la plataforma."
+    },
+    "bot_tone_prompt": {
+      "type": "string",
+      "title": "Bot \u2014 Prompt de tono/personalidad",
+      "description": "Instrucciones sobre C\u00d3MO tiene que hablar el bot (tono, formalidad, uso de emojis, etc). Vac\u00edo = usa el predeterminado de la plataforma."
+    },
+    "bot_response_delay_seconds": {
+      "type": "number",
+      "title": "Bot \u2014 Demora antes de responder (segundos)",
+      "enum": [
+        5,
+        15,
+        30,
+        60
+      ],
+      "default": 15,
+      "description": "Cu\u00e1nto espera el bot antes de mandar su respuesta por WhatsApp, para que no se sienta instant\u00e1neo/robotizado."
+    },
     "professional_type": {
       "type": "string",
       "title": "Tipo de profesional",

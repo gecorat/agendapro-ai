@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { motion, useInView } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -18,8 +19,9 @@ const BENEFITS = [
   { icon: ShieldCheck, title: "Sin compromiso", desc: "14 días de prueba sin tarjeta. Probás el bot con tus datos antes de pagar." },
 ];
 
+// El primero es un contador animado (0 → 500), los demás son valores fijos.
 const TRIGGERS = [
-  { value: "+500", label: "profesionales ya automatizaron su agenda" },
+  { counter: 500, prefix: "+", label: "profesionales ya automatizaron su agenda" },
   { value: "14 días", label: "de prueba gratis, sin tarjeta" },
   { value: "5 min", label: "y está funcionando" },
   { value: "24/7", label: "atendiendo turnos" },
@@ -50,6 +52,49 @@ const BASIC_FEATURES = ["Página pública de reservas", "Agenda manual + calenda
 const PRO_EXTRAS = ["Bot de WhatsApp con IA", "Agenda y reservas online 24/7", "Recordatorios automáticos por WhatsApp", "Hasta 200 citas mensuales"];
 const PREMIUM_EXTRAS = ["Hasta 500 citas mensuales", "Bandeja de chats con toma de control", "Reportes y métricas avanzadas", "Solicitud automática de reseñas", "Soporte prioritario"];
 const WHATSAPP_URL = "https://wa.me/5491100000000?text=" + encodeURIComponent("Hola! Quiero probar Kame Agenda, ¿me cuentan cómo funciona?");
+
+// Envoltorio genérico para el efecto "aparece al bajar": fade + leve desplazamiento hacia
+// arriba, se dispara una sola vez cuando entra en viewport (no se repite al volver a
+// scrollear). `delay` sirve para escalonar varios elementos de una misma grilla.
+function Reveal({ children, delay = 0, className = "" }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 22 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-60px" }}
+      transition={{ duration: 0.55, delay, ease: [0.21, 0.47, 0.32, 0.98] }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+// Contador que anima de 0 al valor real la primera vez que entra en pantalla. Usado en el
+// "+500" de los triggers — es un n\u00famero de marketing (no viene de datos reales), pero el
+// efecto de conteo ayuda a que la cifra se note más al bajar por la página.
+function CountUp({ target, duration = 1.4 }) {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-60px" });
+  const [value, setValue] = useState(0);
+
+  useEffect(() => {
+    if (!inView) return;
+    let start = null;
+    let raf;
+    const step = (ts) => {
+      if (start === null) start = ts;
+      const progress = Math.min((ts - start) / (duration * 1000), 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setValue(Math.round(eased * target));
+      if (progress < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [inView, target, duration]);
+
+  return <span ref={ref}>{value}</span>;
+}
 
 // Mini recreación de la página pública real dentro de un marco de celular, para el selector
 // de temas interactivo. Usa datos de ejemplo fijos (no reales) — lo único que cambia es el
@@ -115,7 +160,7 @@ export default function Landing() {
       {/* Hero */}
       <section className="px-5 pt-14 pb-10 md:pt-20 md:pb-16">
         <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
-          <div>
+          <Reveal>
             <div className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700 mb-5 ring-1 ring-inset ring-indigo-100">
               <Sparkles className="w-3.5 h-3.5" /> Recepcionista virtual con IA
             </div>
@@ -135,19 +180,19 @@ export default function Landing() {
               </Button>
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5">
-              <p className="text-xs text-slate-500 flex items-center gap-1.5">
+              <p className="text-sm text-slate-600 flex items-center gap-1.5">
                 <Check className="w-3.5 h-3.5 text-emerald-600" /> Sin tarjeta de crédito · probás antes de pagar
               </p>
-              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-emerald-700 hover:text-emerald-800 inline-flex items-center gap-1">
+              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-emerald-700 hover:text-emerald-800 inline-flex items-center gap-1">
                 <MessageCircle className="w-3.5 h-3.5" /> ¿Preferís que te ayudemos por WhatsApp?
               </a>
             </div>
-          </div>
+          </Reveal>
 
           {/* Visual mock — recreación real de la página pública de reservas (tema Nordic Slate,
               uno de los 8 presets reales) para que el prospecto vea el producto real, no una
               maqueta genérica de calendario. */}
-          <div className="relative lg:pl-6">
+          <Reveal delay={0.15} className="relative lg:pl-6">
             <div className="absolute -inset-4 bg-gradient-to-br from-indigo-100/60 to-emerald-100/40 rounded-3xl blur-2xl" />
             <Card className="relative p-0 overflow-hidden shadow-xl shadow-slate-200/60 border-slate-200">
               <div className="px-5 pt-5 pb-4" style={{ background: "#EBEEF1" }}>
@@ -155,12 +200,12 @@ export default function Landing() {
                   <div className="w-11 h-11 rounded-2xl flex items-center justify-center font-heading font-bold text-white shrink-0" style={{ background: "#0EA5E9" }}>A</div>
                   <div className="min-w-0">
                     <p className="font-heading font-bold text-sm text-slate-900 truncate">Andrea Vidal · Odontología</p>
-                    <p className="text-xs text-slate-500">/u/andreavidal</p>
+                    <p className="text-xs text-slate-600">/u/andreavidal</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 mt-4">
                   <span className="flex-1 text-center px-3 py-1.5 rounded-lg text-xs font-semibold text-white" style={{ background: "#0EA5E9" }}>Agendar cita</span>
-                  <span className="flex-1 text-center px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300 text-slate-500">Información</span>
+                  <span className="flex-1 text-center px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300 text-slate-600">Información</span>
                 </div>
               </div>
               <div className="bg-white">
@@ -171,7 +216,7 @@ export default function Landing() {
                   <div key={s.n} className={`flex items-center justify-between px-5 py-3 ${i === 0 ? "border-b border-slate-100" : ""}`}>
                     <div>
                       <p className="text-sm font-semibold text-slate-800">{s.n}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">{s.s}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">{s.s}</p>
                     </div>
                     <ArrowRight className="w-4 h-4 text-slate-300" />
                   </div>
@@ -188,38 +233,42 @@ export default function Landing() {
                 </p>
               </div>
             </Card>
-          </div>
+          </Reveal>
         </div>
 
         {/* Triggers */}
-        <div className="max-w-5xl mx-auto mt-14 grid grid-cols-2 md:grid-cols-4 gap-6 border-t border-slate-200 pt-10">
+        <Reveal delay={0.1} className="max-w-5xl mx-auto mt-14 grid grid-cols-2 md:grid-cols-4 gap-6 border-t border-slate-200 pt-10">
           {TRIGGERS.map((t) => (
             <div key={t.label} className="text-center">
-              <p className="text-2xl md:text-3xl font-heading font-bold text-slate-900">{t.value}</p>
-              <p className="text-xs text-slate-500 mt-1 leading-tight">{t.label}</p>
+              <p className="text-2xl md:text-3xl font-heading font-bold text-slate-900">
+                {t.counter ? <>{t.prefix}<CountUp target={t.counter} /></> : t.value}
+              </p>
+              <p className="text-sm text-slate-600 mt-1 leading-tight">{t.label}</p>
             </div>
           ))}
-        </div>
+        </Reveal>
       </section>
 
       {/* Benefits */}
       <section className="px-5 py-16 border-y border-slate-200 bg-white">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center max-w-2xl mx-auto mb-10">
+          <Reveal className="text-center max-w-2xl mx-auto mb-10">
             <h2 className="text-2xl md:text-3xl font-heading font-bold tracking-tight">Todo lo que necesitás para no perder un solo turno</h2>
-            <p className="text-slate-500 mt-2 text-sm">Una plataforma pensada para profesionales de la salud, sin curva de aprendizaje.</p>
-          </div>
+            <p className="text-slate-600 mt-2 text-sm">Una plataforma pensada para profesionales de la salud, sin curva de aprendizaje.</p>
+          </Reveal>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {BENEFITS.map((f) => {
+            {BENEFITS.map((f, i) => {
               const Icon = f.icon;
               return (
-                <Card key={f.title} className="p-6 border-slate-200 hover:border-slate-300 hover:shadow-md transition-all bg-white">
-                  <div className="w-11 h-11 rounded-xl bg-slate-900 flex items-center justify-center mb-4">
-                    <Icon className="w-5 h-5 text-white" />
-                  </div>
-                  <h3 className="font-heading font-semibold text-[15px]">{f.title}</h3>
-                  <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">{f.desc}</p>
-                </Card>
+                <Reveal key={f.title} delay={(i % 3) * 0.08}>
+                  <Card className="p-6 h-full border-slate-200 hover:border-slate-300 hover:shadow-md transition-all bg-white">
+                    <div className="w-11 h-11 rounded-xl bg-slate-900 flex items-center justify-center mb-4">
+                      <Icon className="w-5 h-5 text-white" />
+                    </div>
+                    <h3 className="font-heading font-semibold text-[15px]">{f.title}</h3>
+                    <p className="text-sm text-slate-600 mt-1.5 leading-relaxed">{f.desc}</p>
+                  </Card>
+                </Reveal>
               );
             })}
           </div>
@@ -230,11 +279,11 @@ export default function Landing() {
           nunca se desincroniza de los temas que la gente realmente puede elegir. */}
       <section className="px-5 py-16 bg-white border-t border-slate-200">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center max-w-2xl mx-auto mb-10">
+          <Reveal className="text-center max-w-2xl mx-auto mb-10">
             <h2 className="text-2xl md:text-3xl font-heading font-bold tracking-tight">Tu página, con tu estilo</h2>
-            <p className="text-slate-500 mt-2 text-sm">8 diseños profesionales listos para usar. Tocá uno para ver cómo se vería tu página desde el celular.</p>
-          </div>
-          <div className="grid lg:grid-cols-[1fr_240px] gap-8 items-start">
+            <p className="text-slate-600 mt-2 text-sm">8 diseños profesionales listos para usar. Tocá uno para ver cómo se vería tu página desde el celular.</p>
+          </Reveal>
+          <Reveal delay={0.1} className="grid lg:grid-cols-[1fr_240px] gap-8 items-start">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {Object.entries(THEME_PRESETS).map(([key, preset]) => {
                 const theme = resolveTheme(key, null);
@@ -266,34 +315,36 @@ export default function Landing() {
             </div>
             <div className="lg:sticky lg:top-24">
               <ThemePhonePreview theme={previewTheme} />
-              <p className="text-center text-xs font-medium text-slate-500 mt-3">{THEME_PRESETS[selectedTheme].label}</p>
+              <p className="text-center text-sm font-medium text-slate-600 mt-3">{THEME_PRESETS[selectedTheme].label}</p>
             </div>
-          </div>
-          <p className="text-center text-xs text-slate-400 mt-8">Full-width en el celular, sin marcos ni bordes gruesos — pensada para que la reserva se sienta parte de tu marca, no de una app genérica.</p>
+          </Reveal>
+          <p className="text-center text-sm text-slate-600 mt-8">Full-width en el celular, sin marcos ni bordes gruesos — pensada para que la reserva se sienta parte de tu marca, no de una app genérica.</p>
         </div>
       </section>
 
       {/* Testimonials */}
       <section className="px-5 py-16">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-10">
+          <Reveal className="text-center mb-10">
             <div className="inline-flex items-center gap-1 text-amber-500 mb-2">
               {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
             </div>
             <h2 className="text-2xl md:text-3xl font-heading font-bold tracking-tight">Profesionales que ya delegaron su agenda</h2>
-          </div>
+          </Reveal>
           <div className="grid md:grid-cols-3 gap-5">
-            {TESTIMONIALS.map((t) => (
-              <Card key={t.name} className="p-6 border-slate-200 bg-white">
-                <div className="flex gap-0.5 text-amber-500 mb-3">
-                  {[...Array(t.rating)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
-                </div>
-                <p className="text-[15px] text-slate-700 leading-relaxed">"{t.text}"</p>
-                <div className="mt-4 pt-4 border-t border-slate-100">
-                  <p className="font-medium text-sm">{t.name}</p>
-                  <p className="text-xs text-slate-500">{t.role}</p>
-                </div>
-              </Card>
+            {TESTIMONIALS.map((t, i) => (
+              <Reveal key={t.name} delay={i * 0.1}>
+                <Card className="p-6 h-full border-slate-200 bg-white">
+                  <div className="flex gap-0.5 text-amber-500 mb-3">
+                    {[...Array(t.rating)].map((_, j) => <Star key={j} className="w-4 h-4 fill-current" />)}
+                  </div>
+                  <p className="text-[15px] text-slate-700 leading-relaxed">"{t.text}"</p>
+                  <div className="mt-4 pt-4 border-t border-slate-100">
+                    <p className="font-medium text-sm">{t.name}</p>
+                    <p className="text-sm text-slate-600">{t.role}</p>
+                  </div>
+                </Card>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -302,19 +353,21 @@ export default function Landing() {
       {/* How it works */}
       <section className="px-5 py-16 border-y border-slate-200 bg-slate-900 text-white">
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-heading font-bold tracking-tight text-center">Empezá en 3 pasos</h2>
+          <Reveal>
+            <h2 className="text-2xl md:text-3xl font-heading font-bold tracking-tight text-center">Empezá en 3 pasos</h2>
+          </Reveal>
           <div className="mt-10 space-y-7">
             {STEPS.map((s, i) => (
-              <div key={s.n} className="flex gap-4">
+              <Reveal key={s.n} delay={i * 0.1} className="flex gap-4">
                 <div className="relative shrink-0">
                   <div className="w-10 h-10 rounded-full bg-white text-slate-900 flex items-center justify-center font-semibold text-sm">{s.n}</div>
                   {i < STEPS.length - 1 && <div className="absolute left-1/2 top-10 -translate-x-1/2 w-px h-7 bg-white/20" />}
                 </div>
                 <div className="pb-2">
                   <h3 className="font-heading font-semibold">{s.t}</h3>
-                  <p className="text-sm text-slate-400 mt-1 leading-relaxed">{s.d}</p>
+                  <p className="text-sm text-slate-300 mt-1 leading-relaxed">{s.d}</p>
                 </div>
-              </div>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -323,60 +376,70 @@ export default function Landing() {
       {/* Pricing */}
       <section id="precios" className="px-5 py-16">
         <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-10">
+          <Reveal className="text-center mb-10">
             <h2 className="text-2xl md:text-3xl font-heading font-bold tracking-tight">Planes simples</h2>
-            <p className="text-slate-500 mt-2 text-sm">Probás gratis 14 días. Después elegís.</p>
-          </div>
+            <p className="text-slate-600 mt-2 text-sm">Probás gratis 14 días. Después elegís.</p>
+          </Reveal>
           <div className="grid md:grid-cols-3 gap-5">
-            <Card className="p-7 flex flex-col border border-slate-300 bg-white">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="font-heading font-semibold text-lg">Básico</span>
-              </div>
-              <p className="text-3xl font-heading font-bold mt-3">{PLAN_PRICES.basic}<span className="text-sm font-normal text-slate-500"> ARS / mes</span></p>
-              <ul className="mt-5 space-y-3 flex-1">
-                {BASIC_FEATURES.map((f) => <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700"><Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" /> {f}</li>)}
-              </ul>
-              <Button className="mt-7 bg-slate-900 hover:bg-slate-800 h-11" asChild><Link to="/register">Probar gratis 14 días</Link></Button>
-            </Card>
-            <Card className="p-7 flex flex-col border-slate-200 bg-white">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="font-heading font-semibold text-lg">Pro</span>
-                <span className="text-xs rounded-full bg-indigo-50 text-indigo-700 px-2 py-0.5 font-medium ring-1 ring-inset ring-indigo-100">Más popular</span>
-              </div>
-              <p className="text-3xl font-heading font-bold mt-3">{PLAN_PRICES.pro}<span className="text-sm font-normal text-slate-500"> ARS / mes</span></p>
-              <ul className="mt-5 space-y-3 flex-1">
-                <li className="text-xs font-medium text-slate-400 uppercase tracking-wide pb-1">Todo lo del Básico +</li>
-                {PRO_EXTRAS.map((f) => <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700"><Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" /> {f}</li>)}
-              </ul>
-              <Button className="mt-7 bg-slate-900 hover:bg-slate-800 h-11" asChild><Link to="/register">Probar gratis 14 días</Link></Button>
-            </Card>
-            <Card className="p-7 flex flex-col border-2 border-slate-900 bg-white relative">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="font-heading font-semibold text-lg">Premium</span>
-                <Sparkles className="w-4 h-4 text-amber-500" />
-              </div>
-              <p className="text-3xl font-heading font-bold mt-3">{PLAN_PRICES.clinic}<span className="text-sm font-normal text-slate-500"> ARS / mes</span></p>
-              <ul className="mt-5 space-y-3 flex-1">
-                <li className="text-xs font-medium text-slate-400 uppercase tracking-wide pb-1">Todo lo del Pro +</li>
-                {PREMIUM_EXTRAS.map((f) => <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700"><Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" /> {f}</li>)}
-              </ul>
-              <Button className="mt-7 bg-slate-900 hover:bg-slate-800 h-11" asChild><Link to="/register">Probar gratis 14 días</Link></Button>
-            </Card>
+            <Reveal delay={0}>
+              <Card className="p-7 flex flex-col h-full border border-slate-300 bg-white">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-heading font-semibold text-lg">Básico</span>
+                </div>
+                <p className="text-3xl font-heading font-bold mt-3">{PLAN_PRICES.basic}<span className="text-sm font-normal text-slate-600"> ARS / mes</span></p>
+                <ul className="mt-5 space-y-3 flex-1">
+                  {BASIC_FEATURES.map((f) => <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700"><Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" /> {f}</li>)}
+                </ul>
+                <Button className="mt-7 bg-slate-900 hover:bg-slate-800 h-11" asChild><Link to="/register">Probar gratis 14 días</Link></Button>
+              </Card>
+            </Reveal>
+            <Reveal delay={0.1}>
+              <Card className="p-7 flex flex-col h-full border-slate-200 bg-white">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-heading font-semibold text-lg">Pro</span>
+                  <span className="text-xs rounded-full bg-indigo-50 text-indigo-700 px-2 py-0.5 font-medium ring-1 ring-inset ring-indigo-100">Más popular</span>
+                </div>
+                <p className="text-3xl font-heading font-bold mt-3">{PLAN_PRICES.pro}<span className="text-sm font-normal text-slate-600"> ARS / mes</span></p>
+                <ul className="mt-5 space-y-3 flex-1">
+                  <li className="text-xs font-medium text-slate-500 uppercase tracking-wide pb-1">Todo lo del Básico +</li>
+                  {PRO_EXTRAS.map((f) => <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700"><Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" /> {f}</li>)}
+                </ul>
+                <Button className="mt-7 bg-slate-900 hover:bg-slate-800 h-11" asChild><Link to="/register">Probar gratis 14 días</Link></Button>
+              </Card>
+            </Reveal>
+            <Reveal delay={0.2}>
+              <Card className="p-7 flex flex-col h-full border-2 border-slate-900 bg-white relative">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-heading font-semibold text-lg">Premium</span>
+                  <Sparkles className="w-4 h-4 text-amber-500" />
+                </div>
+                <p className="text-3xl font-heading font-bold mt-3">{PLAN_PRICES.clinic}<span className="text-sm font-normal text-slate-600"> ARS / mes</span></p>
+                <ul className="mt-5 space-y-3 flex-1">
+                  <li className="text-xs font-medium text-slate-500 uppercase tracking-wide pb-1">Todo lo del Pro +</li>
+                  {PREMIUM_EXTRAS.map((f) => <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700"><Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" /> {f}</li>)}
+                </ul>
+                <Button className="mt-7 bg-slate-900 hover:bg-slate-800 h-11" asChild><Link to="/register">Probar gratis 14 días</Link></Button>
+              </Card>
+            </Reveal>
           </div>
-          <p className="text-center text-xs text-slate-400 mt-6">La prueba de 14 días incluye las funciones del plan Básico + simulador del bot. Activás WhatsApp real con Pro o Premium cuando quieras.</p>
+          <p className="text-center text-sm text-slate-600 mt-6">La prueba de 14 días incluye las funciones del plan Básico + simulador del bot. Activás WhatsApp real con Pro o Premium cuando quieras.</p>
         </div>
       </section>
 
       {/* FAQ */}
       <section className="px-5 py-16 border-t border-slate-200 bg-white">
         <div className="max-w-2xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-heading font-bold tracking-tight text-center mb-8">Preguntas frecuentes</h2>
+          <Reveal>
+            <h2 className="text-2xl md:text-3xl font-heading font-bold tracking-tight text-center mb-8">Preguntas frecuentes</h2>
+          </Reveal>
           <div className="space-y-3">
-            {FAQ.map((f) => (
-              <div key={f.q} className="rounded-xl border border-slate-200 p-5">
-                <p className="font-medium text-[15px]">{f.q}</p>
-                <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">{f.a}</p>
-              </div>
+            {FAQ.map((f, i) => (
+              <Reveal key={f.q} delay={Math.min(i, 3) * 0.06}>
+                <div className="rounded-xl border border-slate-200 p-5">
+                  <p className="font-medium text-[15px]">{f.q}</p>
+                  <p className="text-sm text-slate-600 mt-1.5 leading-relaxed">{f.a}</p>
+                </div>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -384,16 +447,16 @@ export default function Landing() {
 
       {/* Final CTA */}
       <section className="px-5 py-20 bg-slate-900 text-white">
-        <div className="max-w-2xl mx-auto text-center">
+        <Reveal className="max-w-2xl mx-auto text-center">
           <div className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white mb-5">
             <ShieldCheck className="w-3.5 h-3.5" /> Sin tarjeta · Cancelás cuando quieras
           </div>
           <h2 className="text-3xl md:text-4xl font-heading font-bold tracking-tight">Empezá hoy, sin compromiso</h2>
-          <p className="text-slate-400 mt-3 leading-relaxed">Configurá tu consultorio y probá el bot. Sin tarjeta, sin letras chicas.</p>
+          <p className="text-slate-300 mt-3 leading-relaxed">Configurá tu consultorio y probá el bot. Sin tarjeta, sin letras chicas.</p>
           <Button size="lg" className="mt-7 bg-white text-slate-900 hover:bg-slate-100 h-12 px-8" asChild>
             <Link to="/register">Crear cuenta gratis <ArrowRight className="w-4 h-4 ml-1.5" /></Link>
           </Button>
-        </div>
+        </Reveal>
       </section>
 
       <footer className="border-t border-slate-800 bg-slate-900 text-slate-400 px-5 py-8">
@@ -403,7 +466,7 @@ export default function Landing() {
               <CalendarClock className="w-3.5 h-3.5 text-white" />
             </div>
             <span className="font-medium text-slate-300">Kame Agenda</span>
-            <span className="text-slate-600">·</span>
+            <span className="text-slate-500">·</span>
             <span>Recepcionista virtual para profesionales de la salud</span>
           </div>
           <div className="flex items-center gap-4">

@@ -110,51 +110,49 @@ function buildWaMessage(service, date, slot, form) {
 // visible en el contenedor, así queda SIEMPRE integrada sobre la portada sin cortes,
 // sin importar bordes redondeados del contenedor de la tarjeta. Si photo_frame === "none"
 // (el usuario desactivó la foto), el <img>/fallback NO se renderiza en absoluto.
-function ProfileHeader({ settings, theme, brand, frameClass, cardClass, glassStyle, align, size = 96, rounded = "rounded-t-3xl", headingFontStyle }) {
-  const showPhoto = settings?.photo_frame !== "none";
-  const alignClass = align === "left" ? "justify-start" : align === "right" ? "justify-end" : "justify-center";
-  const textAlignClass = align === "left" ? "text-left items-start" : align === "right" ? "text-right items-end" : "text-center items-center";
+function ProfileHeader({ settings, theme, brand, cardClass, glassStyle, align, size = 96, rounded = "rounded-t-3xl", headingFontStyle, bleed = false }) {
+  const frameClass = avatarShapeClass(theme.radiusClass);
+  const isBanner = align === "banner";
+  const alignClass = align === "left" ? "justify-start" : "justify-center";
+  const textAlignClass = align === "left" ? "text-left items-start" : "text-center items-center";
   const half = size / 2;
-  const coverHeight = theme.photoFocus ? "h-44" : "h-28";
-  const photoTopOffset = theme.photoFocus ? 176 : 112;
+  const coverHeight = isBanner ? "h-40" : "h-28";
+  const photoTopOffset = isBanner ? 160 : 112;
+  const curvedBottom = theme.curved && !bleed ? { borderBottomLeftRadius: "50% 24px", borderBottomRightRadius: "50% 24px" } : {};
 
   return (
-    <div className={`border overflow-hidden ${cardClass}`} style={{ background: theme.cardBg, borderColor: theme.cardBorder, ...glassStyle }}>
+    <div className={bleed ? "" : `border overflow-hidden ${cardClass}`} style={bleed ? {} : { background: theme.cardBg, borderColor: theme.cardBorder, ...glassStyle }}>
       <div className="relative" style={{ overflow: "visible" }}>
         <div
-          className={`${coverHeight} overflow-hidden ${rounded}`}
-          style={{ background: settings?.cover_image_url ? `url(${settings.cover_image_url}) center ${settings?.cover_align || "center"}/cover` : `linear-gradient(135deg, ${brand}, ${theme.secondary || brand}55)` }}
+          className={`${coverHeight} overflow-hidden ${bleed ? "" : rounded}`}
+          style={{
+            background: settings?.cover_image_url ? `url(${settings.cover_image_url}) center ${settings?.cover_align || "center"}/cover` : `linear-gradient(135deg, ${theme.accentCss}, ${theme.accent}55)`,
+            ...(bleed ? curvedBottom : {}),
+          }}
         >
-          {settings?.cover_image_url && (
-            <div
-              className="absolute inset-0"
-              style={theme.photoFocus ? { background: `linear-gradient(to bottom, transparent 35%, ${theme.cardBg} 100%)` } : { background: "rgba(0,0,0,0.25)" }}
+          {settings?.cover_image_url && <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.25)" }} />}
+        </div>
+        <div className={`absolute left-0 right-0 px-6 flex z-20 ${alignClass}`} style={{ top: `${photoTopOffset - half}px` }}>
+          {settings?.photo_url ? (
+            <img
+              src={settings.photo_url}
+              alt={settings.practice_name}
+              className={`object-cover block ${frameClass}`}
+              style={{ width: size, height: size, boxShadow: `0 0 0 4px ${theme.bg && theme.bg.startsWith("linear") ? theme.cardBg : theme.bg}${theme.neon ? `, 0 0 24px ${brand}66` : ""}` }}
             />
+          ) : (
+            <div
+              className={`flex items-center justify-center text-2xl font-heading font-bold ${frameClass}`}
+              style={{ width: size, height: size, background: theme.accentCss, color: theme.accentText, boxShadow: `0 0 0 4px ${theme.bg && theme.bg.startsWith("linear") ? theme.cardBg : theme.bg}` }}
+            >
+              {(settings?.practice_name || "?")[0]?.toUpperCase()}
+            </div>
           )}
         </div>
-        {showPhoto && (
-          <div className={`absolute left-0 right-0 px-6 flex z-20 ${alignClass}`} style={{ top: `${photoTopOffset - half}px` }}>
-            {settings?.photo_url ? (
-              <img
-                src={settings.photo_url}
-                alt={settings.practice_name}
-                className={`object-cover block ${frameClass}`}
-                style={{ width: size, height: size, boxShadow: `0 0 0 4px ${theme.cardBg}${theme.neon ? `, 0 0 24px ${brand}66` : ""}` }}
-              />
-            ) : (
-              <div
-                className={`flex items-center justify-center text-2xl font-heading font-bold ${frameClass}`}
-                style={{ width: size, height: size, background: brand, color: theme.accentText, boxShadow: `0 0 0 4px ${theme.cardBg}` }}
-              >
-                {(settings?.practice_name || "?")[0]?.toUpperCase()}
-              </div>
-            )}
-          </div>
-        )}
       </div>
-      <div className={`px-6 pb-6 flex flex-col ${textAlignClass}`} style={{ paddingTop: showPhoto ? `${half + 12}px` : "24px" }}>
-        <h1 className="text-2xl font-bold font-heading leading-tight" style={{ color: theme.text, ...headingFontStyle }}>{settings?.practice_name || "Reservá tu turno"}</h1>
-        {settings?.specialty && <p className="text-sm mt-1" style={{ color: theme.muted }}>{settings.specialty}</p>}
+      <div className={`${bleed ? "px-5" : "px-6"} pb-5 flex flex-col ${textAlignClass}`} style={{ paddingTop: `${half + 12}px` }}>
+        <h1 className={bleed ? "text-2xl font-bold font-heading leading-tight" : "text-2xl font-bold font-heading leading-tight"} style={{ color: theme.text, ...headingFontStyle }}>{settings?.practice_name || "Reservá tu turno"}</h1>
+        {settings?.specialty && <p className="text-sm mt-1" style={{ color: theme.muted, opacity: 0.85 }}>{settings.specialty}</p>}
       </div>
     </div>
   );

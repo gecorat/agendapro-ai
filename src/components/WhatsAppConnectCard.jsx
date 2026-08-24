@@ -7,7 +7,6 @@ import { MessageCircle, CheckCircle2, XCircle, Loader2, LogOut, QrCode, ShieldCh
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import { getPlanStatus } from "@/lib/plan-utils";
 import PlanGate from "@/components/PlanGate";
-import InstallAppPrompt from "@/components/InstallAppPrompt";
 
 // Cada cuánto se pide un QR nuevo mientras el actual sigue sin escanearse (Evolution API
 // no nos manda un TTL explícito, así que renovamos nosotros del lado del cliente para que
@@ -192,7 +191,6 @@ export default function WhatsAppConnectCard() {
         </div>
       ) : (
         <div className="space-y-3">
-          <InstallAppPrompt />
           <div className="rounded-2xl border border-border p-4">
             <div className="grid sm:grid-cols-[auto_1fr] gap-4 items-center">
               {/* Recuadro del QR: mismo tamaño en los 3 estados (bot\u00f3n / cargando / QR real),

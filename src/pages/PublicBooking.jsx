@@ -542,7 +542,7 @@ export default function PublicBooking() {
               {upcomingDays.map((d) => {
                 const selected = date && d.toDateString() === date.toDateString();
                 return (
-                  <button key={d.toISOString()} onClick={() => { setDate(d); setSlot(null); setBookingError(null); }} className="p-2 rounded-lg border text-center transition-colors" style={selected ? { backgroundColor: brand, borderColor: brand, color: theme.accentText } : { borderColor: theme.cardBorder, color: theme.text }}>
+                  <button key={d.toISOString()} onClick={() => { setDate(d); setSlot(null); setBookingError(null); }} className="p-2 rounded-lg border text-center transition-colors" style={selected ? { background: theme.accentCss, borderColor: brand, color: theme.accentText } : { borderColor: theme.cardBorder, color: theme.text }}>
                     <p className="text-xs capitalize opacity-70">{d.toLocaleDateString("es-AR", { weekday: "short" })}</p>
                     <p className="font-medium text-sm">{d.getDate()}</p>
                   </button>
@@ -558,7 +558,7 @@ export default function PublicBooking() {
               ) : (
                 <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                   {slots.map((s) => (
-                    <button key={s.toISOString()} onClick={() => { setSlot(s); setBookingError(null); }} className="p-2 rounded-lg border text-sm transition-colors" style={slot && slot.toISOString() === s.toISOString() ? { backgroundColor: brand, borderColor: brand, color: theme.accentText } : { borderColor: theme.cardBorder, color: theme.text }}>{formatSlot(s)}</button>
+                    <button key={s.toISOString()} onClick={() => { setSlot(s); setBookingError(null); }} className="p-2 rounded-lg border text-sm transition-colors" style={slot && slot.toISOString() === s.toISOString() ? { background: theme.accentCss, borderColor: brand, color: theme.accentText } : { borderColor: theme.cardBorder, color: theme.text }}>{formatSlot(s)}</button>
                   ))}
                 </div>
               )}
@@ -647,7 +647,7 @@ export default function PublicBooking() {
       <button
         onClick={() => setTab("agendar")}
         className="flex-1 px-4 py-2 rounded-xl text-sm font-semibold transition-all"
-        style={tab === "agendar" ? { backgroundColor: brand, color: theme.accentText, boxShadow: theme.neon ? theme.neonGlow : "0 2px 8px rgba(0,0,0,0.15)" } : { background: "transparent", color: theme.muted, border: `1px solid ${theme.cardBorder}` }}
+        style={tab === "agendar" ? { background: theme.accentCss, color: theme.accentText, boxShadow: theme.neon ? theme.neonGlow : "0 2px 8px rgba(0,0,0,0.15)" } : { background: "transparent", color: theme.muted, border: `1px solid ${theme.cardBorder}` }}
       >
         Agendar cita
       </button>

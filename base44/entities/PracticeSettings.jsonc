@@ -40,6 +40,12 @@
       "default": true,
       "description": "Interruptor general del bot de WhatsApp. En false, el bot deja de responder autom\u00e1ticamente a CUALQUIER paciente (a diferencia de la pausa por conversaci\u00f3n, que es individual) \u2014 los mensajes entrantes se siguen guardando en la bandeja para atenderlos a mano. No afecta la conexi\u00f3n de WhatsApp en s\u00ed, solo si el bot contesta."
     },
+    "bot_paused_until": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Bot \u2014 Pausado hasta",
+      "description": "Solo aplica cuando bot_enabled=false. Vac\u00edo/null = pausa indefinida (hasta reactivar a mano). Con fecha = se considera reactivado autom\u00e1ticamente en cuanto se cumple, sin necesidad de ning\u00fan proceso en segundo plano \u2014 se calcula al vuelo comparando contra la hora actual (ver base44/shared/bot-status.ts)."
+    },
     "professional_type": {
       "type": "string",
       "title": "Tipo de profesional",

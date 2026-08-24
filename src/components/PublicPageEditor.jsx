@@ -144,7 +144,6 @@ export default function PublicPageEditor() {
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
-  const [uploadingCustomBg, setUploadingCustomBg] = useState(false);
   const [viewport, setViewport] = useState("desktop");
   const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(false);

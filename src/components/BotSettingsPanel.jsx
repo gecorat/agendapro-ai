@@ -34,6 +34,7 @@ export default function BotSettingsPanel() {
   const [assistantName, setAssistantName] = useState("");
   const [delaySeconds, setDelaySeconds] = useState(15);
   const [initialized, setInitialized] = useState(false);
+  const [botToggling, setBotToggling] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -73,6 +74,21 @@ export default function BotSettingsPanel() {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
       setSaving(false);
+    }
+  }
+
+  // Interruptor GENERAL: distinto de desconectar WhatsApp — el número sigue conectado,
+  // pero el bot deja de contestar automáticamente a cualquier paciente hasta reactivarlo.
+  // Los mensajes que lleguen mientras tanto se siguen guardando en la bandeja de Chats.
+  async function handleToggleBot(checked) {
+    setBotToggling(true);
+    try {
+      await save({ bot_enabled: checked });
+      toast({ title: checked ? "Bot reactivado" : "Bot desactivado", description: checked ? "Ya vuelve a responder automáticamente por WhatsApp." : "No va a responder a nadie hasta que lo reactives. Los mensajes se siguen guardando en Chats." });
+    } catch (err) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setBotToggling(false);
     }
   }
 

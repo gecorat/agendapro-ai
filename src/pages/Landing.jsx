@@ -300,9 +300,10 @@ export default function Landing() {
                 <li className="text-xs font-medium text-slate-400 uppercase tracking-wide pb-1">Todo lo del Pro +</li>
                 {PREMIUM_EXTRAS.map((f) => <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700"><Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" /> {f}</li>)}
               </ul>
-              <Button className="mt-7 bg-slate-900 hover:bg-slate-800 h-11" asChild><Link to="/register">Empezar prueba</Link></Button>
+              <Button className="mt-7 bg-slate-900 hover:bg-slate-800 h-11" asChild><Link to="/register">Probar gratis 14 días</Link></Button>
             </Card>
           </div>
+          <p className="text-center text-xs text-slate-400 mt-6">Los 3 planes empiezan igual: 14 días gratis, sin tarjeta. Elegís el plan recién cuando termina la prueba.</p>
         </div>
       </section>
 

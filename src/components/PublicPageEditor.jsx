@@ -52,53 +52,60 @@ function LivePreview({ form, fullbleed = false }) {
   });
   const frameClass = avatarShapeClass(theme.radiusClass);
   const isBanner = form.photo_align === "banner";
+  const hasCover = !!form.cover_image_url || isBanner;
   const photoJustify = form.photo_align === "left" ? "justify-start" : "justify-center";
   const size = fullbleed ? 88 : 64;
   const half = size / 2;
   const coverHeight = isBanner ? (fullbleed ? "h-40" : "h-32") : (fullbleed ? "h-28" : "h-24");
   const photoTop = (isBanner ? (fullbleed ? 160 : 128) : (fullbleed ? 112 : 96));
-  const curvedBottom = theme.curved && fullbleed ? { borderBottomLeftRadius: "50% 22px", borderBottomRightRadius: "50% 22px" } : {};
+  const curvedBottom = theme.curved && fullbleed && hasCover ? { borderBottomLeftRadius: "50% 22px", borderBottomRightRadius: "50% 22px" } : {};
   const headingFontStyle = theme.headingFont ? { fontFamily: theme.headingFont } : {};
 
   useEffect(() => {
     if (theme.googleFont) loadThemeFont(theme.googleFont);
   }, [theme.googleFont]);
 
+  const avatarNode = form.photo_url ? (
+    <img
+      src={form.photo_url}
+      alt=""
+      className={`object-cover block ${frameClass}`}
+      style={{ width: size, height: size, boxShadow: theme.neon ? `0 0 0 3px ${theme.bg}, 0 0 14px ${theme.accent}80` : `0 0 0 3px ${theme.bg}` }}
+    />
+  ) : (
+    <div
+      className={`flex items-center justify-center font-heading font-bold ${frameClass}`}
+      style={{ width: size, height: size, fontSize: fullbleed ? 30 : 22, background: theme.accentCss, color: theme.accentText, boxShadow: `0 0 0 3px ${theme.bg}` }}
+    >
+      {(form.practice_name || "?")[0]?.toUpperCase()}
+    </div>
+  );
+
   return (
     <div className={fullbleed ? "w-full h-full overflow-y-auto" : "mx-auto rounded-2xl overflow-hidden border border-border shadow-sm transition-all duration-300 relative max-w-[300px]"}>
       <div className="relative min-h-full" style={{ background: theme.bg }}>
         <div className="relative">
-          <div className="relative" style={{ overflow: "visible" }}>
-            <div
-              className={`overflow-hidden ${coverHeight}`}
-              style={{
-                background: form.cover_image_url
-                  ? `url(${form.cover_image_url}) center ${form.cover_align || "center"}/cover`
-                  : `linear-gradient(135deg, ${theme.accentCss}, ${theme.accent}66)`,
-                ...curvedBottom,
-              }}
-            >
-              {form.cover_image_url && <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.25)" }} />}
+          {hasCover ? (
+            <div className="relative" style={{ overflow: "visible" }}>
+              <div
+                className={`overflow-hidden ${coverHeight}`}
+                style={{
+                  background: form.cover_image_url
+                    ? `url(${form.cover_image_url}) center ${form.cover_align || "center"}/cover`
+                    : `linear-gradient(135deg, ${theme.accentCss}, ${theme.accent}66)`,
+                  ...curvedBottom,
+                }}
+              >
+                {form.cover_image_url && <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.25)" }} />}
+              </div>
+              <div className={`absolute left-0 right-0 ${fullbleed ? "px-6" : "px-5"} flex z-20 ${photoJustify}`} style={{ top: `${photoTop - half}px` }}>
+                {avatarNode}
+              </div>
             </div>
-            <div className={`absolute left-0 right-0 ${fullbleed ? "px-6" : "px-5"} flex z-20 ${photoJustify}`} style={{ top: `${photoTop - half}px` }}>
-              {form.photo_url ? (
-                <img
-                  src={form.photo_url}
-                  alt=""
-                  className={`object-cover block ${frameClass}`}
-                  style={{ width: size, height: size, boxShadow: theme.neon ? `0 0 0 3px ${theme.bg}, 0 0 14px ${theme.accent}80` : `0 0 0 3px ${theme.bg}` }}
-                />
-              ) : (
-                <div
-                  className={`flex items-center justify-center font-heading font-bold ${frameClass}`}
-                  style={{ width: size, height: size, fontSize: fullbleed ? 30 : 22, background: theme.accentCss, color: theme.accentText, boxShadow: `0 0 0 3px ${theme.bg}` }}
-                >
-                  {(form.practice_name || "?")[0]?.toUpperCase()}
-                </div>
-              )}
-            </div>
-          </div>
-          <div className={fullbleed ? "px-5 pb-6" : "px-5 pb-5"} style={{ paddingTop: `${half + (fullbleed ? 12 : 8)}px` }}>
+          ) : (
+            <div className={`${fullbleed ? "px-6" : "px-5"} pt-6 flex ${photoJustify}`}>{avatarNode}</div>
+          )}
+          <div className={fullbleed ? "px-5 pb-6" : "px-5 pb-5"} style={hasCover ? { paddingTop: `${half + (fullbleed ? 12 : 8)}px` } : { paddingTop: fullbleed ? 12 : 8 }}>
             <div className={form.photo_align === "left" ? "text-left" : "text-center"}>
               <p className={fullbleed ? "text-xl font-heading font-bold" : "text-base font-heading font-bold"} style={{ color: theme.text, ...headingFontStyle }}>{form.practice_name || "Tu consultorio"}</p>
               {form.specialty && <p className={fullbleed ? "text-sm mt-1" : "text-xs mt-0.5"} style={{ color: theme.muted, opacity: 0.85 }}>{form.specialty}</p>}

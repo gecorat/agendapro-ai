@@ -295,10 +295,10 @@ export default function PublicPageEditor() {
               </div>
             </Section>
 
-            <Section title="Tema visual" description="6 estilos premium + uno totalmente personalizable como punto de partida.">
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <Section title="Tema visual" description="8 presets full-width cerrados. Cada uno trae su propio color, tipografía y radio de botones — se pueden afinar abajo.">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {Object.entries(THEME_PRESETS).map(([key, preset]) => {
-                  const theme = resolveTheme(key, form.page_color, { secondaryColor: form.page_color_secondary });
+                  const theme = resolveTheme(key, null);
                   const selected = form.theme_preset === key;
                   return (
                     <button
@@ -308,19 +308,21 @@ export default function PublicPageEditor() {
                       className={`text-left rounded-xl border-2 overflow-hidden transition-all ${selected ? "border-primary shadow-sm" : "border-border hover:border-primary/40"}`}
                       style={selected && theme.neon ? { boxShadow: theme.neonGlow } : undefined}
                     >
-                      <div className={`h-12 flex items-center justify-center gap-1.5 ${theme.cardClass || ""}`} style={{ background: theme.bg }}>
-                        {key === "custom" ? (
-                          <Sparkles className="w-4 h-4" style={{ color: theme.accent }} />
-                        ) : (
-                          <>
-                            <div className="w-4 h-4 rounded-full" style={{ background: theme.accent, boxShadow: theme.neon ? `0 0 8px ${theme.accent}` : undefined }} />
-                            <div className="w-6 h-2 rounded-full" style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}` }} />
-                          </>
+                      <div className="h-14 flex flex-col items-center justify-center gap-1.5 relative" style={{ background: theme.bg }}>
+                        <div
+                          className={theme.radiusClass === "rounded-full" ? "rounded-full" : theme.radiusClass === "rounded-none" ? "rounded-none" : "rounded-lg"}
+                          style={{ width: 18, height: 18, background: theme.accentCss, boxShadow: theme.neon ? `0 0 8px ${theme.accent}` : undefined }}
+                        />
+                        <div className="w-10 h-1.5 rounded-full" style={{ background: theme.text, opacity: 0.7 }} />
+                        {selected && (
+                          <div className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
+                            <Check className="w-2.5 h-2.5 text-primary-foreground" strokeWidth={3} />
+                          </div>
                         )}
                       </div>
-                      <div className="px-2 py-1.5 bg-card flex items-center gap-1">
-                        <p className="text-[11px] font-medium">{preset.label}</p>
-                        {selected && <Check className="w-3 h-3 text-primary ml-auto" />}
+                      <div className="px-2 py-1.5 bg-card">
+                        <p className="text-[11px] font-semibold leading-tight">{preset.label}</p>
+                        <p className="text-[9.5px] text-muted-foreground leading-tight mt-0.5">{preset.description}</p>
                       </div>
                     </button>
                   );
@@ -328,102 +330,62 @@ export default function PublicPageEditor() {
               </div>
             </Section>
 
-            <Section title="Tipografía y color" description="Se aplican a cualquier tema, predefinido o personalizado.">
+            <Section title="Personalización fina" description="Opcional: afiná el color de acento, la tipografía de encabezado y el radio de los botones por arriba del preset elegido.">
               <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Color de acento</Label>
+                <div className="flex items-center gap-2">
+                  <input type="color" value={form.page_color || THEME_PRESETS[form.theme_preset]?.accent || "#3B82F6"} onChange={(e) => set("page_color", e.target.value)} className="w-9 h-9 rounded border border-input p-1 cursor-pointer shrink-0" />
+                  <Input value={form.page_color} onChange={(e) => set("page_color", e.target.value)} className="flex-1 font-mono text-xs" placeholder={THEME_PRESETS[form.theme_preset]?.accent || "Del tema"} />
+                  {form.page_color && (
+                    <button type="button" onClick={() => set("page_color", "")} className="text-xs text-muted-foreground hover:text-destructive underline shrink-0">Quitar</button>
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5 pt-0.5">
+                  {(THEME_PRESETS[form.theme_preset]?.swatches || []).map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => set("page_color", c)}
+                      title={c}
+                      className={`w-6 h-6 rounded-full border-2 transition-transform ${form.page_color === c ? "border-primary scale-110" : "border-border"}`}
+                      style={{ background: c }}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1.5 pt-2">
+                <Label className="text-xs text-muted-foreground">Estilo de botones</Label>
+                <div className="flex gap-1.5">
+                  <SegButton active={form.custom_border_radius === "auto"} onClick={() => set("custom_border_radius", "auto")}>Del tema</SegButton>
+                  <SegButton active={form.custom_border_radius === "none"} onClick={() => set("custom_border_radius", "none")}><Square className="w-3.5 h-3.5" /> Recto</SegButton>
+                  <SegButton active={form.custom_border_radius === "soft"} onClick={() => set("custom_border_radius", "soft")}><Square className="w-3.5 h-3.5 rounded" /> Suave</SegButton>
+                  <SegButton active={form.custom_border_radius === "full"} onClick={() => set("custom_border_radius", "full")}><Circle className="w-3.5 h-3.5" /> Píldora</SegButton>
+                </div>
+              </div>
+
+              <div className="space-y-1.5 pt-2">
                 <Label className="text-xs text-muted-foreground">Tipografía de encabezado</Label>
                 <div className="grid grid-cols-2 gap-1.5">
                   <button type="button" onClick={() => set("heading_font_override", "default")} className={`text-xs py-2 rounded-lg border ${form.heading_font_override === "default" ? "border-primary bg-primary/5 font-medium" : "border-border text-muted-foreground"}`}>
                     Del tema
                   </button>
-                  {Object.entries(FONT_OPTIONS).map(([key, f]) => (
-                    <button key={key} type="button" onClick={() => set("heading_font_override", key)} className={`text-xs py-2 rounded-lg border ${form.heading_font_override === key ? "border-primary bg-primary/5 font-medium" : "border-border text-muted-foreground"}`} style={{ fontFamily: f.family }}>
+                  {HEADING_FONT_CHOICES.map((key) => {
+                    const f = FONT_OPTIONS[key];
+                    return (
+                      <button key={key} type="button" onClick={() => set("heading_font_override", key)} className={`text-xs py-2 rounded-lg border ${form.heading_font_override === key ? "border-primary bg-primary/5 font-medium" : "border-border text-muted-foreground"}`} style={{ fontFamily: f.family }}>
                       {f.label}
-                    </button>
-                  ))}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3 pt-1">
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Color primario</Label>
-                  <div className="flex items-center gap-2">
-                    <input type="color" value={form.page_color} onChange={(e) => set("page_color", e.target.value)} className="w-9 h-9 rounded border border-input p-1 cursor-pointer shrink-0" />
-                    <Input value={form.page_color} onChange={(e) => set("page_color", e.target.value)} className="flex-1 font-mono text-xs" placeholder="#3B82F6" />
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Color secundario</Label>
-                  <div className="flex items-center gap-2">
-                    <input type="color" value={form.page_color_secondary || form.page_color} onChange={(e) => set("page_color_secondary", e.target.value)} className="w-9 h-9 rounded border border-input p-1 cursor-pointer shrink-0" />
-                    <Input value={form.page_color_secondary} onChange={(e) => set("page_color_secondary", e.target.value)} className="flex-1 font-mono text-xs" placeholder="Opcional" />
-                  </div>
-                </div>
-              </div>
-            </Section>
-
-            {/* Antes esto solo aparecía con el tema "Personalizado". Ahora aplica a
-                CUALQUIERA de los 7 temas: redondeado, opacidad, blur y fondo son ajustes
-                universales que se montan arriba del tema elegido. */}
-            <Section title="Estilo y fondo" description="Redondeado, transparencia, blur y fondo — se aplican sobre cualquier tema.">
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Redondeado de tarjetas y botones</Label>
-                <div className="flex gap-1.5">
-                  <SegButton active={form.custom_border_radius === "none"} onClick={() => set("custom_border_radius", "none")}><Square className="w-3.5 h-3.5" /> Recto</SegButton>
-                  <SegButton active={form.custom_border_radius === "soft"} onClick={() => set("custom_border_radius", "soft")}><Square className="w-3.5 h-3.5 rounded" /> Suave</SegButton>
-                  <SegButton active={form.custom_border_radius === "full"} onClick={() => set("custom_border_radius", "full")}><Circle className="w-3.5 h-3.5" /> Redondeado</SegButton>
-                </div>
-              </div>
-
-              <div className="space-y-1.5 pt-1">
-                <Label className="text-xs text-muted-foreground">Opacidad de las tarjetas ({form.custom_card_opacity}%)</Label>
-                <Slider value={[form.custom_card_opacity]} onValueChange={([v]) => set("custom_card_opacity", v)} max={100} step={5} />
-              </div>
-
-              <div className="flex items-center justify-between pt-2">
-                <div>
-                  <p className="text-sm font-medium">Efecto vidrio (blur) en tarjetas</p>
-                  <p className="text-xs text-muted-foreground">Desenfoca lo que hay detrás de cada tarjeta.</p>
-                </div>
-                <Switch checked={form.custom_blur_enabled} onCheckedChange={(v) => set("custom_blur_enabled", v)} />
-              </div>
-
-              <div className="space-y-1.5 pt-3 border-t border-border">
-                <Label className="text-xs text-muted-foreground">Fondo de página (opcional)</Label>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {PATTERN_OPTIONS.map((p) => (
-                    <button key={p.value} type="button" onClick={() => set("custom_bg_pattern", p.value)} className={`text-xs py-2 rounded-lg border ${form.custom_bg_pattern === p.value && !form.custom_bg_image_url ? "border-primary bg-primary/5 font-medium" : "border-border text-muted-foreground"}`}>
-                      {p.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="flex items-center gap-3 pt-1">
-                <div className="w-16 h-10 rounded-lg overflow-hidden border-2 border-border bg-accent flex items-center justify-center shrink-0">
-                  {form.custom_bg_image_url ? <img src={form.custom_bg_image_url} alt="fondo" className="w-full h-full object-cover" /> : <Upload className="w-4 h-4 text-muted-foreground" />}
-                </div>
-                <label className="cursor-pointer">
-                  <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md border border-input hover:bg-accent transition-colors">
-                    {uploadingCustomBg ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-                    {form.custom_bg_image_url ? "Cambiar imagen de fondo" : "O subir imagen de fondo"}
-                  </span>
-                  <input type="file" accept="image/*" className="hidden" onChange={(e) => handleUpload(e, "custom_bg_image_url", setUploadingCustomBg)} disabled={uploadingCustomBg} />
-                </label>
-                {form.custom_bg_image_url && (
-                  <button type="button" onClick={() => set("custom_bg_image_url", "")} className="text-xs text-muted-foreground hover:text-destructive underline">Quitar</button>
-                )}
-              </div>
-              {form.custom_bg_image_url && (
-                <div className="space-y-1.5 pt-1">
-                  <Label className="text-xs text-muted-foreground">Opacidad del overlay ({form.custom_bg_overlay_opacity}%)</Label>
-                  <Slider value={[form.custom_bg_overlay_opacity]} onValueChange={([v]) => set("custom_bg_overlay_opacity", v)} max={100} step={5} />
-                  <p className="text-xs text-muted-foreground">Más alto = fondo más oscurecido, mejor lectura del texto.</p>
-                </div>
-              )}
             </Section>
 
             <Section title="Foto de perfil">
               <div className="flex items-center gap-3">
-                <div className={`w-14 h-14 overflow-hidden border-2 border-border bg-accent flex items-center justify-center shrink-0 ${form.photo_frame === "none" ? "rounded-xl opacity-40" : PHOTO_FRAME_CLASS[form.photo_frame]}`}>
-                  {form.photo_frame !== "none" && form.photo_url ? <img src={form.photo_url} alt="perfil" className="w-full h-full object-cover" /> : <Upload className="w-4 h-4 text-muted-foreground" />}
+                <div className={`w-14 h-14 overflow-hidden border-2 border-border bg-accent flex items-center justify-center shrink-0 ${avatarShapeClass(resolveTheme(form.theme_preset, form.page_color, { custom: { borderRadius: form.custom_border_radius } }).radiusClass)}`}>
+                  {form.photo_url ? <img src={form.photo_url} alt="perfil" className="w-full h-full object-cover" /> : <Upload className="w-4 h-4 text-muted-foreground" />}
                 </div>
                 <label className="cursor-pointer">
                   <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md border border-input hover:bg-accent transition-colors">
@@ -433,27 +395,15 @@ export default function PublicPageEditor() {
                   <input type="file" accept="image/*" className="hidden" onChange={(e) => handleUpload(e, "photo_url", setUploadingPhoto)} disabled={uploadingPhoto} />
                 </label>
               </div>
-              <div className="grid grid-cols-2 gap-3 pt-1">
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Alineación</Label>
-                  <div className="flex gap-1.5">
-                    <SegButton active={form.photo_align === "left"} onClick={() => set("photo_align", "left")} title="Izquierda"><AlignLeft className="w-3.5 h-3.5" /></SegButton>
-                    <SegButton active={form.photo_align === "center"} onClick={() => set("photo_align", "center")} title="Centro"><AlignCenter className="w-3.5 h-3.5" /></SegButton>
-                    <SegButton active={form.photo_align === "right"} onClick={() => set("photo_align", "right")} title="Derecha"><AlignRight className="w-3.5 h-3.5" /></SegButton>
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Marco</Label>
-                  <div className="flex gap-1.5">
-                    <SegButton active={form.photo_frame === "circle"} onClick={() => set("photo_frame", "circle")} title="Círculo"><Circle className="w-3.5 h-3.5" /></SegButton>
-                    <SegButton active={form.photo_frame === "rounded"} onClick={() => set("photo_frame", "rounded")} title="Cuadrado redondeado"><Square className="w-3.5 h-3.5" /></SegButton>
-                    <SegButton active={form.photo_frame === "none"} onClick={() => set("photo_frame", "none")} title="Ocultar foto"><Ban className="w-3.5 h-3.5" /></SegButton>
-                  </div>
+              <p className="text-xs text-muted-foreground pt-1">Sin foto se muestra la inicial del nombre. La forma (círculo / cuadrado / recto) la define el tema elegido arriba.</p>
+              <div className="space-y-1.5 pt-2">
+                <Label className="text-xs text-muted-foreground">Alineación</Label>
+                <div className="flex gap-1.5">
+                  <SegButton active={form.photo_align === "left"} onClick={() => set("photo_align", "left")} title="Izquierda"><AlignLeft className="w-3.5 h-3.5" /> Izquierda</SegButton>
+                  <SegButton active={form.photo_align === "center"} onClick={() => set("photo_align", "center")} title="Centrado"><AlignCenter className="w-3.5 h-3.5" /> Centrado</SegButton>
+                  <SegButton active={form.photo_align === "banner"} onClick={() => set("photo_align", "banner")} title="Banner Top"><PanelTop className="w-3.5 h-3.5" /> Banner Top</SegButton>
                 </div>
               </div>
-              {form.photo_frame === "none" && (
-                <p className="text-xs text-amber-600">No se va a mostrar ninguna foto ni inicial en tu página pública.</p>
-              )}
             </Section>
 
             <Section title="Portada" description="Fondo del header. Si no cargás una, se usa el degradé del tema.">

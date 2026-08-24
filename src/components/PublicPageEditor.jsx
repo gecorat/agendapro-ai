@@ -16,7 +16,7 @@ import {
   loadThemeFont, getBackgroundPatternStyle,
 } from "@/lib/theme-presets";
 import { useToast } from "@/components/ui/use-toast";
-import AddressAutocompleteInput from "@/components/AddressAutocompleteInput";
+import { Link } from "react-router-dom";
 
 function Section({ title, description, children }) {
   return (

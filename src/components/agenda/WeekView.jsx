@@ -35,8 +35,8 @@ export default function WeekView({ days, appts, onDayClick, onEdit }) {
                     return (
                       <div
                         key={a.id}
-                        onClick={(e) => { e.stopPropagation(); onEdit(a); }}
-                        className="flex items-center gap-2 rounded-md px-1.5 py-1 -mx-1.5 hover:bg-muted/60 transition-colors"
+                        onClick={(e) => { e.stopPropagation(); if (!a.is_google) onEdit(a); }}
+                        className={`flex items-center gap-2 rounded-md px-1.5 py-1 -mx-1.5 transition-colors ${a.is_google ? "cursor-default" : "hover:bg-muted/60"}`}
                       >
                         <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dot}`} />
                         <span className="text-xs tabular-nums text-muted-foreground shrink-0">{formatTime(new Date(a.start_datetime))}</span>

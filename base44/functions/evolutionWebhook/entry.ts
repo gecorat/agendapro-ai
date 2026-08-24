@@ -3,6 +3,7 @@ import { waitUntil } from "base44:runtime";
 import { checkWhatsAppUsage } from "../../shared/whatsapp-usage.ts";
 import { sendWhatsAppMessage, isChatPaused } from "../../shared/whatsapp-providers.ts";
 import { sendPushToUsers, getPracticeRecipientUserIds } from "../../shared/push.ts";
+import { getBotPauseStatus } from "../../shared/bot-status.ts";
 
 // Webhook de Evolution API (conexión por QR, self-hosted). Identificamos de qué
 // consultorio es cada mensaje por ?practiceId= en la URL (que nosotros mismos generamos
@@ -84,19 +85,22 @@ export default async function (req: Request): Promise<Response> {
       return Response.json({ ok: true, skipped: "chat_paused" });
     }
 
-    // Interruptor GENERAL del bot (distinto de la pausa por conversación de arriba): si
-    // está apagado, no contesta a NADIE, pero el mensaje ya quedó guardado arriba para
-    // atenderlo a mano desde la bandeja.
-    if (practice.bot_enabled === false) {
+    // Interruptor GENERAL del bot (distinto de la pausa por conversación de arriba): puede
+    // estar pausado por tiempo (1/8/24hs) o indefinido. Si ya venció el tiempo, se trata
+    // como reactivado sin necesidad de ningún proceso en segundo plano (ver bot-status.ts).
+    const pauseStatus = getBotPauseStatus(practice);
+    if (pauseStatus.paused) {
       waitUntil(
         sendPushToUsers(base44, await getPracticeRecipientUserIds(base44, practice), {
-          title: "Mensaje nuevo (bot apagado)",
-          body: "Llegó un mensaje de WhatsApp y el bot está desactivado — nadie le va a responder.",
+          title: "Mensaje nuevo (bot pausado)",
+          body: pauseStatus.indefinite
+            ? "Llegó un mensaje de WhatsApp y el bot está pausado indefinidamente — nadie le va a responder."
+            : `Llegó un mensaje de WhatsApp y el bot está pausado hasta las ${pauseStatus.until.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}.`,
           url: "/asistente",
           tag: `wa-${fromPhone}`,
-        }).catch((e) => console.error("push bot_disabled error:", e?.message || e))
+        }).catch((e) => console.error("push bot_paused error:", e?.message || e))
       );
-      return Response.json({ ok: true, skipped: "bot_disabled" });
+      return Response.json({ ok: true, skipped: "bot_paused" });
     }
 
     const usage = await checkWhatsAppUsage(base44, practice);

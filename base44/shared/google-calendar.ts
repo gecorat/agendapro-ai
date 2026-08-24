@@ -26,11 +26,15 @@ export function buildAuthUrl({ clientId, redirectUri, state }) {
     client_id: clientId,
     redirect_uri: redirectUri,
     response_type: 'code',
-    // Antes pedíamos también calendar.readonly, pero no lo necesitábamos: freebusy.query
-    // y events.list ya funcionan con el scope calendar.events (que da lectura Y escritura
-    // sobre eventos). Pedir menos scope = revisión de Google más rápida y una pantalla de
-    // permisos más chica para el profesional que conecta su cuenta.
-    scope: 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.email',
+    // calendar.events: crear/editar/borrar los eventos de las citas.
+    // calendar.freebusy: consultar franjas ocupadas (freebusy.query) para bloquear la
+    // reserva sobre eventos personales del profesional. OJO: calendar.events NO alcanza
+    // para freebusy.query — lo confirmamos en vivo después de sacar calendar.readonly y
+    // notar que dejó de funcionar el bloqueo de horarios. calendar.freebusy es un scope
+    // dedicado y de MENOR sensibilidad que calendar.readonly (no expone el contenido de
+    // los eventos, solo si el horario está libre u ocupado), así que no reabre el
+    // problema de verificación que quisimos evitar al sacar calendar.readonly.
+    scope: 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.freebusy https://www.googleapis.com/auth/userinfo.email',
     access_type: 'offline',
     prompt: 'consent',
     state,

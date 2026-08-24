@@ -326,7 +326,7 @@ export default function Landing() {
       <section className="px-5 py-20 bg-slate-900 text-white">
         <div className="max-w-2xl mx-auto text-center">
           <div className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white mb-5">
-            <Clock className="w-3.5 h-3.5" /> Últimos cupos del mes
+            <ShieldCheck className="w-3.5 h-3.5" /> Sin tarjeta · Cancelás cuando quieras
           </div>
           <h2 className="text-3xl md:text-4xl font-heading font-bold tracking-tight">Empezá hoy, sin compromiso</h2>
           <p className="text-slate-400 mt-3 leading-relaxed">Configurá tu consultorio y probá el bot. Sin tarjeta, sin letras chicas.</p>

@@ -157,7 +157,7 @@ export default function PracticeProfileSection() {
         <p className="text-xs text-muted-foreground -mt-1">Define los términos y servicios sugeridos en toda la app.</p>
       </Section>
 
-      <Section title="Contacto">
+      <Section title="Contacto" description="También visible para tus pacientes, en tu página pública.">
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <Label htmlFor="phone">Teléfono</Label>

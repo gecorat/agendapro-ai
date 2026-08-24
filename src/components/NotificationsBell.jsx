@@ -224,6 +224,9 @@ export default function NotificationsBell({ user }) {
     setBusyId(id);
     try {
       await base44.entities.Appointment.update(id, { status: "cancelled" });
+      try {
+        await base44.functions.invoke("syncAppointmentGoogle", { appointmentId: id });
+      } catch { /* no romper el flujo si Google falla */ }
       toast({ title: "Cita cancelada" });
       loadPending();
     } catch {

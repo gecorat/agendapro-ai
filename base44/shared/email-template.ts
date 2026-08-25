@@ -31,6 +31,7 @@ export function buildEmailHtml({
   primaryButton,
   secondaryButton,
   whatsappButton,
+  mapsButton,
   footer,
 }: {
   title: string;
@@ -40,6 +41,7 @@ export function buildEmailHtml({
   primaryButton?: { label: string; url: string };
   secondaryButton?: { label: string; url: string };
   whatsappButton?: { label: string; url: string };
+  mapsButton?: { label: string; url: string };
   footer?: string;
 }): string {
   const greetingHtml = greeting ? `<p style="margin:0 0 16px;font-size:16px;color:#1e293b;">${escapeHtml(greeting)}</p>` : "";
@@ -72,10 +74,13 @@ ${details
   const whatsappHtml = whatsappButton
     ? `<a href="${escapeHtml(whatsappButton.url)}" style="display:inline-block;background:#25D366;color:#ffffff;font-family:Inter,Arial,sans-serif;font-size:15px;font-weight:600;text-decoration:none;padding:12px 28px;border-radius:8px;margin:8px 8px 8px 0;">${escapeHtml(whatsappButton.label)}</a>`
     : "";
+  const mapsHtml = mapsButton
+    ? `<a href="${escapeHtml(mapsButton.url)}" style="display:inline-block;background:#eff6ff;color:#1d4ed8;font-family:Inter,Arial,sans-serif;font-size:15px;font-weight:600;text-decoration:none;padding:12px 28px;border-radius:8px;border:1px solid #dbeafe;margin:8px 8px 8px 0;">🗺️ ${escapeHtml(mapsButton.label)}</a>`
+    : "";
 
   const buttonsHtml =
-    primaryHtml || secondaryHtml || whatsappHtml
-      ? `<div style="margin:20px 0 8px;">${primaryHtml}${secondaryHtml}${whatsappHtml}</div>`
+    primaryHtml || secondaryHtml || whatsappHtml || mapsHtml
+      ? `<div style="margin:20px 0 8px;">${primaryHtml}${secondaryHtml}${whatsappHtml}${mapsHtml}</div>`
       : "";
 
   const footerText = footer || "Kame Agenda";

@@ -9,7 +9,11 @@ export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
     const now = new Date();
-    const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    // Se sacó el recordatorio de 24hs: la ventana "hasta 24hs antes" atrapaba CUALQUIER
+    // cita del mismo día apenas se creaba (no solo las que realmente faltaban ~24hs), y el
+    // texto quedó hardcodeado como "mañana" sin comparar contra la fecha real — mandaba
+    // "recordás tu cita de mañana" para una cita de HOY. Ahora solo queda un recordatorio,
+    // 3 horas antes, que es una ventana chica y no tiene ese problema.
     const in3h = new Date(now.getTime() + 3 * 60 * 60 * 1000);
     const appUrl = await getAppUrl(base44, req);
 
@@ -18,9 +22,7 @@ export default async function(req) {
       if (a.is_demo) return false; // cita de prueba del simulador /bot — nunca recordatorios reales
       const start = new Date(a.start_datetime);
       const reminders = a.reminders_sent || 0;
-      const in24Window = reminders === 0 && start >= now && start <= in24h;
-      const in3Window = reminders === 1 && start >= now && start <= in3h;
-      return in24Window || in3Window;
+      return reminders === 0 && start >= now && start <= in3h;
     });
 
     // Cache de PracticeSettings para evitar consultas repetidas
@@ -56,7 +58,6 @@ export default async function(req) {
 
         const startDate = new Date(appt.start_datetime);
         const dateStr = startDate.toLocaleString("es-AR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "America/Argentina/Buenos_Aires" });
-        const is3h = (appt.reminders_sent || 0) >= 1;
         const serviceName = appt.service_name || "consulta";
 
         const practice = await getPracticeFor(appt);
@@ -74,9 +75,9 @@ export default async function(req) {
         const rescheduleUrl = practice?.handle ? `${appUrl}/reschedule/${cancelToken}` : null;
         const cancelUrl = `${appUrl}/x/${cancelToken}`;
 
-        const subject = is3h ? `Tu cita es en 3 horas — ${serviceName}` : `Recordatorio: tu cita de mañana — ${serviceName}`;
+        const subject = `Tu cita es en 3 horas — ${serviceName}`;
         const emailBody = buildEmailHtml({
-          title: is3h ? "Tu cita es en 3 horas" : "Recordatorio de tu cita",
+          title: "Tu cita es en 3 horas",
           greeting: `Hola ${patientName}`,
           lines: [
             `Tu cita fue confirmada. ¡Te esperamos!`,
@@ -98,13 +99,13 @@ export default async function(req) {
         // conversación se sienta en dos tiempos naturales — igual que hace el bot cuando
         // agenda o reagenda un turno (buildBookAckMessage/buildRescheduleAckMessage en
         // zernio.ts) — en vez de tirarle al paciente un bloque grande de una.
-        const waIntroText = `Hola${patientName ? ` ${patientName}` : ""}! Quería recordarte que ${is3h ? "en 3 horas es" : "mañana es"} tu cita programada${professionalName ? ` con ${professionalName}` : ""}. Te paso los detalles...`;
+        const waIntroText = `Hola${patientName ? ` ${patientName}` : ""}! Quería recordarte que en 3 horas es tu cita programada${professionalName ? ` con ${professionalName}` : ""}. Te paso los detalles...`;
 
         // Mismo formato enriquecido (negrita nativa de WhatsApp + emojis) que el mensaje de
         // confirmación del bot. Ya no lleva los links de reagendar/cancelar — ahora se pide
         // que avisen por el mismo medio en vez de mandar un link aparte.
         const waReminderText = [
-          `⏰ *${is3h ? "Tu cita es en 3 horas" : "Recordás tu cita de mañana"}*`,
+          `⏰ *Tu cita es en 3 horas*`,
           `📅 *Día y horario:* ${dateStr}`,
           `🩺 *Servicio:* ${serviceName}`,
           professionalName ? `👤 *Profesional:* ${professionalName}` : null,

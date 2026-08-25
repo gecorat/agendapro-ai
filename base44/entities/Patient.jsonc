@@ -12,7 +12,7 @@
     },
     "phone": {
       "type": "string",
-      "title": "Teléfono (WhatsApp)"
+      "title": "Tel\u00e9fono (WhatsApp)"
     },
     "email": {
       "type": "string",
@@ -38,6 +38,12 @@
       "title": "Consiente recibir recordatorios",
       "default": true
     },
+    "is_demo": {
+      "type": "boolean",
+      "title": "Paciente de prueba (simulador del bot)",
+      "default": false,
+      "description": "Creado por /bot para las citas de prueba del simulador. Se reutiliza entre pruebas y se borra junto con la \u00faltima cita de prueba que quede."
+    },
     "no_show_count": {
       "type": "number",
       "title": "Ausencias",
@@ -51,12 +57,12 @@
     "next_follow_up_date": {
       "type": "string",
       "format": "date",
-      "title": "Próximo seguimiento"
+      "title": "Pr\u00f3ximo seguimiento"
     },
     "last_appointment_date": {
       "type": "string",
       "format": "date",
-      "title": "Última cita"
+      "title": "\u00daltima cita"
     },
     "professional_id": {
       "type": "string",

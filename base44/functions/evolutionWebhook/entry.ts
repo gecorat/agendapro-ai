@@ -4,6 +4,7 @@ import { checkWhatsAppUsage } from "../../shared/whatsapp-usage.ts";
 import { sendWhatsAppMessage, isChatPaused } from "../../shared/whatsapp-providers.ts";
 import { sendPushToUsers, getPracticeRecipientUserIds } from "../../shared/push.ts";
 import { getBotPauseStatus } from "../../shared/bot-status.ts";
+import { getPracticeSecrets } from "../../shared/secrets.ts";
 
 // Webhook de Evolution API (conexión por QR, self-hosted). Identificamos de qué
 // consultorio es cada mensaje por ?practiceId= en la URL (que nosotros mismos generamos
@@ -26,7 +27,8 @@ export default async function (req: Request): Promise<Response> {
     const practice = practices?.[0];
     if (!practice) return Response.json({ ok: true, skipped: "no_matching_practice" });
 
-    if (!secret || secret !== practice.evolution_webhook_secret) {
+    const secrets = await getPracticeSecrets(base44, practice.id);
+    if (!secret || secret !== secrets?.evolution_webhook_secret) {
       return Response.json({ error: "Invalid signature" }, { status: 401 });
     }
 

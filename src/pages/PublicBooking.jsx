@@ -707,6 +707,15 @@ export default function PublicBooking() {
           ) : BookingSteps}
         </div>
       </div>
+      <a
+        href="https://kameagenda.com"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block text-center text-xs py-4 hover:opacity-80 transition-opacity"
+        style={{ color: theme.muted, opacity: 0.7 }}
+      >
+        ⚡ Powered by <span className="font-semibold">kameagenda.com</span>
+      </a>
       </div>
     </div>
   );

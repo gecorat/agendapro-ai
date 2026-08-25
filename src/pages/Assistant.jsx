@@ -206,7 +206,7 @@ function FullAssistant({ settings, reloadSettings, save }) {
 
   const pauseByPhone = useMemo(() => {
     const map = new Map();
-    for (const p of pauses) map.set(p.phone, p);
+    for (const p of pauses) map.set((p.phone || "").replace(/\D/g, ""), p);
     return map;
   }, [pauses]);
 
@@ -228,10 +228,14 @@ function FullAssistant({ settings, reloadSettings, save }) {
       for (let i = sorted.length - 1; i >= 0; i--) {
         if (sorted[i].role === "user") unread++; else break;
       }
-      const pause = pauseByPhone.get(phone);
-      // `phone` acá es el que vino tal cual en la Conversation (webhook de WhatsApp); lo
-      // canonicalizamos igual que al armar `patientByPhone` para que matchee sin importar
-      // el formato exacto con el que haya quedado guardado el teléfono del paciente.
+      // `phone` acá es el que vino tal cual en la Conversation (webhook de WhatsApp): puede
+      // traer o no el "+" según el proveedor (Zernio sí, Evolution no). ChatPause siempre
+      // guarda el teléfono normalizado (solo dígitos), así que normalizamos acá antes de
+      // buscar — si no, la pausa nunca matchea en cuentas conectadas por Zernio.
+      const pause = pauseByPhone.get(phone.replace(/\D/g, ""));
+      // Para el paciente sí usamos los últimos 10 dígitos (canonicalizamos igual que al
+      // armar `patientByPhone`) para que matchee sin importar el formato exacto con el que
+      // haya quedado guardado el teléfono del paciente.
       const canonicalPhone = phone.replace(/\D/g, "").slice(-10);
       const patient = patientByPhone.get(canonicalPhone);
       result.push({
@@ -270,7 +274,7 @@ function FullAssistant({ settings, reloadSettings, save }) {
   // si hay una fecha de vencimiento, mostramos ese botón resaltado; sin vencimiento pero
   // pausado, es "Indefinido"; sin pausa, ninguno.
   useEffect(() => {
-    const p = pauseByPhone.get(activePhone);
+    const p = pauseByPhone.get((activePhone || "").replace(/\D/g, ""));
     if (!p?.paused) { setSelectedDuration(null); return; }
     if (!p.paused_until) { setSelectedDuration(null); return; }
     const remainingMin = (new Date(p.paused_until) - new Date()) / 60000;

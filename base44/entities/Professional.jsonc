@@ -100,7 +100,7 @@
     "create": {
       "$or": [
         {
-          "practice_owner_id": "{{user.id}}"
+          "data.practice_owner_id": "{{user.id}}"
         },
         {
           "user_condition": {
@@ -112,10 +112,10 @@
     "update": {
       "$or": [
         {
-          "practice_owner_id": "{{user.id}}"
+          "data.practice_owner_id": "{{user.id}}"
         },
         {
-          "user_id": "{{user.id}}"
+          "data.user_id": "{{user.id}}"
         },
         {
           "user_condition": {
@@ -127,7 +127,7 @@
     "delete": {
       "$or": [
         {
-          "practice_owner_id": "{{user.id}}"
+          "data.practice_owner_id": "{{user.id}}"
         },
         {
           "user_condition": {

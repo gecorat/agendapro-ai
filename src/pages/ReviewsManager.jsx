@@ -90,7 +90,6 @@ export default function ReviewsManager() {
   useEffect(() => {
     if (settings && planStatus.hasPaidPlan) load();
     else if (settings) setLoading(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings, planStatus.hasPaidPlan]);
 
   const eligibleAppts = appointments.filter((a) => !reviews.some((r) => r.appointment_id === a.id));

@@ -14,6 +14,7 @@ export default async function(req) {
 
     const all = await base44.asServiceRole.entities.Appointment.filter({ status: "confirmed" });
     const toRemind = (all || []).filter((a) => {
+      if (a.is_demo) return false; // cita de prueba del simulador /bot — nunca recordatorios reales
       const start = new Date(a.start_datetime);
       const reminders = a.reminders_sent || 0;
       const in24Window = reminders === 0 && start >= now && start <= in24h;

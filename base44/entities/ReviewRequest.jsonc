@@ -81,6 +81,17 @@
       "title": "Enlace de rese\u00f1a de Google",
       "format": "url"
     },
+    "google_review_clicked": {
+      "type": "boolean",
+      "title": "Toc\u00f3 el bot\u00f3n de Google",
+      "default": false,
+      "description": "Se marca cuando el paciente toca 'Dejar rese\u00f1a en Google' despu\u00e9s de responder ac\u00e1 adentro con 4-5 estrellas. Es una se\u00f1al de intenci\u00f3n/click-through, NO confirma que efectivamente public\u00f3 la rese\u00f1a en Google \u2014 eso pasa fuera de la plataforma y no hay forma de saberlo sin integrar la API de Perfil de Negocio de Google (OAuth + polling), que es un desarrollo aparte."
+    },
+    "google_review_clicked_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Toc\u00f3 el bot\u00f3n de Google el"
+    },
     "professional_id": {
       "type": "string",
       "title": "Profesional titular"

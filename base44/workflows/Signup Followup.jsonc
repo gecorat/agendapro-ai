@@ -1,5 +1,6 @@
 {
-  "name": "Seguimiento de registro",
+  "name": "Campa\u00f1a de conversi\u00f3n de trial",
+  "description": "Reemplaza al flujo anterior de bienvenida + 1 recordatorio. Secuencia de 8 emails (d\u00eda 0, 2, 4, 6, 8, 10, 12 y 14 del trial) combinando beneficio de negocio + tip t\u00e9cnico, pensada para terminar en la adhesi\u00f3n a un plan pago. Cada paso se corta solo si el usuario ya convirti\u00f3 o la cuenta est\u00e1 suspendida (ver sendTrialCampaignEmail).",
   "trigger": {
     "condition": null,
     "config": {
@@ -9,60 +10,233 @@
       ]
     }
   },
-  "description": "Email de bienvenida al registrarse + recordatorio a los 2 d\u00edas si no configur\u00f3 el consultorio",
   "definition": {
     "document": {
       "dsl": "1.0.0",
-      "name": "signup_followup",
+      "name": "trial_conversion_campaign",
       "version": "1.0",
       "namespace": "base44"
     },
     "do": [
       {
-        "welcome_email": {
+        "step_0": {
           "call": "invoke_backend_function",
           "with": {
-            "function_name": "onUserSignup",
+            "function_name": "sendTrialCampaignEmail",
             "args": {
               "user_id": "${ .trigger.user_id }",
               "email": "${ .trigger.email }",
               "full_name": "${ .trigger.full_name }",
-              "mode": "welcome"
+              "step": 0
             }
           },
-          "then": "wait_2_days",
+          "then": "wait_1",
           "x-base44": {
-            "title": "Email de bienvenida",
-            "description": "Se env\u00eda al registrarse"
+            "title": "D\u00eda 0 \u2014 Bienvenida",
+            "description": "Configurar perfil y p\u00e1gina de reservas"
           }
         }
       },
       {
-        "wait_2_days": {
+        "wait_1": {
           "wait": "P2D",
-          "then": "reminder_check",
+          "then": "step_1",
           "x-base44": {
             "title": "Esperar 2 d\u00edas",
-            "description": "Pausa de 48 horas"
+            "description": "Hasta el d\u00eda 2"
           }
         }
       },
       {
-        "reminder_check": {
+        "step_1": {
           "call": "invoke_backend_function",
           "with": {
-            "function_name": "onUserSignup",
+            "function_name": "sendTrialCampaignEmail",
             "args": {
               "user_id": "${ .trigger.user_id }",
               "email": "${ .trigger.email }",
               "full_name": "${ .trigger.full_name }",
-              "mode": "reminder"
+              "step": 1
+            }
+          },
+          "then": "wait_2",
+          "x-base44": {
+            "title": "D\u00eda 2 \u2014 Servicios y p\u00e1gina de reservas",
+            "description": "Beneficio + tip t\u00e9cnico: cargar servicios"
+          }
+        }
+      },
+      {
+        "wait_2": {
+          "wait": "P2D",
+          "then": "step_2",
+          "x-base44": {
+            "title": "Esperar 2 d\u00edas",
+            "description": "Hasta el d\u00eda 4"
+          }
+        }
+      },
+      {
+        "step_2": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sendTrialCampaignEmail",
+            "args": {
+              "user_id": "${ .trigger.user_id }",
+              "email": "${ .trigger.email }",
+              "full_name": "${ .trigger.full_name }",
+              "step": 2
+            }
+          },
+          "then": "wait_3",
+          "x-base44": {
+            "title": "D\u00eda 4 \u2014 Bot de WhatsApp",
+            "description": "Momento 'aha': probar el bot"
+          }
+        }
+      },
+      {
+        "wait_3": {
+          "wait": "P2D",
+          "then": "step_3",
+          "x-base44": {
+            "title": "Esperar 2 d\u00edas",
+            "description": "Hasta el d\u00eda 6"
+          }
+        }
+      },
+      {
+        "step_3": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sendTrialCampaignEmail",
+            "args": {
+              "user_id": "${ .trigger.user_id }",
+              "email": "${ .trigger.email }",
+              "full_name": "${ .trigger.full_name }",
+              "step": 3
+            }
+          },
+          "then": "wait_4",
+          "x-base44": {
+            "title": "D\u00eda 6 \u2014 Recordatorios autom\u00e1ticos",
+            "description": "Beneficio: reducir ausentismo"
+          }
+        }
+      },
+      {
+        "wait_4": {
+          "wait": "P2D",
+          "then": "step_4",
+          "x-base44": {
+            "title": "Esperar 2 d\u00edas",
+            "description": "Hasta el d\u00eda 8"
+          }
+        }
+      },
+      {
+        "step_4": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sendTrialCampaignEmail",
+            "args": {
+              "user_id": "${ .trigger.user_id }",
+              "email": "${ .trigger.email }",
+              "full_name": "${ .trigger.full_name }",
+              "step": 4
+            }
+          },
+          "then": "wait_5",
+          "x-base44": {
+            "title": "D\u00eda 8 \u2014 Reportes y gesti\u00f3n",
+            "description": "Genera confianza en el valor de largo plazo"
+          }
+        }
+      },
+      {
+        "wait_5": {
+          "wait": "P2D",
+          "then": "step_5",
+          "x-base44": {
+            "title": "Esperar 2 d\u00edas",
+            "description": "Hasta el d\u00eda 10"
+          }
+        }
+      },
+      {
+        "step_5": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sendTrialCampaignEmail",
+            "args": {
+              "user_id": "${ .trigger.user_id }",
+              "email": "${ .trigger.email }",
+              "full_name": "${ .trigger.full_name }",
+              "step": 5
+            }
+          },
+          "then": "wait_6",
+          "x-base44": {
+            "title": "D\u00eda 10 \u2014 Comparaci\u00f3n de planes",
+            "description": "Venta directa: B\u00e1sico vs Pro vs Clinic"
+          }
+        }
+      },
+      {
+        "wait_6": {
+          "wait": "P2D",
+          "then": "step_6",
+          "x-base44": {
+            "title": "Esperar 2 d\u00edas",
+            "description": "Hasta el d\u00eda 12"
+          }
+        }
+      },
+      {
+        "step_6": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sendTrialCampaignEmail",
+            "args": {
+              "user_id": "${ .trigger.user_id }",
+              "email": "${ .trigger.email }",
+              "full_name": "${ .trigger.full_name }",
+              "step": 6
+            }
+          },
+          "then": "wait_7",
+          "x-base44": {
+            "title": "D\u00eda 12 \u2014 Urgencia: quedan 2 d\u00edas",
+            "description": "Recordar qu\u00e9 se pierde al terminar el trial"
+          }
+        }
+      },
+      {
+        "wait_7": {
+          "wait": "P2D",
+          "then": "step_7",
+          "x-base44": {
+            "title": "Esperar 2 d\u00edas",
+            "description": "Hasta el d\u00eda 14"
+          }
+        }
+      },
+      {
+        "step_7": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sendTrialCampaignEmail",
+            "args": {
+              "user_id": "${ .trigger.user_id }",
+              "email": "${ .trigger.email }",
+              "full_name": "${ .trigger.full_name }",
+              "step": 7
             }
           },
           "then": "end",
           "x-base44": {
-            "title": "Recordatorio de configuraci\u00f3n",
-            "description": "Solo si no configur\u00f3 el consultorio"
+            "title": "D\u00eda 14 \u2014 \u00daltimo d\u00eda",
+            "description": "Conversi\u00f3n final"
           }
         }
       }

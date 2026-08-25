@@ -23,16 +23,16 @@
   ],
   "rls": {
     "read": {
-      "professional_id": "{{user.id}}"
+      "data.professional_id": "{{user.id}}"
     },
     "create": {
-      "professional_id": "{{user.id}}"
+      "data.professional_id": "{{user.id}}"
     },
     "update": {
-      "professional_id": "{{user.id}}"
+      "data.professional_id": "{{user.id}}"
     },
     "delete": {
-      "professional_id": "{{user.id}}"
+      "data.professional_id": "{{user.id}}"
     }
   }
 }

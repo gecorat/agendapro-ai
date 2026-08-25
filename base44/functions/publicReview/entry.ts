@@ -28,7 +28,14 @@ export default async function(req) {
       let page_color = '#0f172a';
       let google_review_link = '';
       try {
-        const settings = await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: rev.created_by_id });
+        // rev.created_by_id NO sirve cuando la solicitud la creó el cron automático
+        // (autoCompleteAppointments corre asServiceRole, que deja un id sintético tipo
+        // "service_..." ahí en vez del dueño real). rev.professional_id sí queda bien en
+        // ese caso, así que se prueba primero y created_by_id queda de respaldo para
+        // solicitudes creadas a mano desde el manager (esas sí tienen created_by_id
+        // correcto, pero no professional_id).
+        const ownerId = rev.professional_id || rev.created_by_id;
+        const settings = await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: ownerId });
         const s = settings?.[0];
         practice_name = s?.practice_name || '';
         page_color = s?.page_color || '#0f172a';

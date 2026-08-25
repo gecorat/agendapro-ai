@@ -32,7 +32,9 @@
     "keys_auth"
   ],
   "rls": {
-    "create": true,
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
     "delete": {
       "created_by_id": "{{user.id}}"
     },

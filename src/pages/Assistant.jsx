@@ -646,7 +646,7 @@ function FullAssistant({ settings, reloadSettings, save }) {
                             {msg.sent_by === "human" ? "Vos" : "IA"}
                           </span>
                         )}
-                        <span className="text-[10px]" style={{ color: "#667781" }}>{new Date(msg.created_date).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}</span>
+                        <span className="text-[10px]" style={{ color: "#667781" }}>{new Date(msg.created_date).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", timeZone: AR_TZ })}</span>
                       </div>
                       {msg.delivery_failed && (
                         <p className="text-[10px] text-amber-600 mt-0.5">⚠ Puede no haber llegado al WhatsApp del paciente</p>

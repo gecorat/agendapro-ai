@@ -3,6 +3,7 @@ import { sendEmail } from "../../shared/email-sender.ts";
 import { sendWhatsAppMessage } from "../../shared/whatsapp-providers.ts";
 import { buildEmailHtml, getAppUrl } from "../../shared/email-template.ts";
 import { getAppointmentContext } from "../../shared/appointment-context.ts";
+import { buildMapsLink } from "../../shared/zernio.ts";
 
 export default async function(req) {
   try {
@@ -60,6 +61,7 @@ export default async function(req) {
 
         const practice = await getPracticeFor(appt);
         const { professionalName, address } = await getAppointmentContext(base44, appt, practice);
+        const mapsLink = buildMapsLink(practice);
 
         // Aseguramos un cancel_token para poder ofrecer los mismos botones de la
         // confirmación (reagendar / cancelar) también acá, no solo texto plano. OJO: no lo
@@ -77,23 +79,35 @@ export default async function(req) {
           title: is3h ? "Tu cita es en 3 horas" : "Recordatorio de tu cita",
           greeting: `Hola ${patientName}`,
           lines: [
-            `Tu cita de ${serviceName} fue confirmada. ¡Te esperamos!`,
+            `Tu cita fue confirmada. ¡Te esperamos!`,
             "Si necesitás reagendar o cancelar, usá los botones de abajo.",
           ],
           details: [
+            { label: "Servicio", value: serviceName },
             { label: "Día y horario", value: dateStr },
             { label: "Profesional", value: professionalName || "—" },
             ...(address ? [{ label: "Dirección", value: address }] : []),
           ],
           primaryButton: rescheduleUrl ? { label: "Reagendar", url: rescheduleUrl } : null,
           secondaryButton: { label: "Cancelar cita", url: cancelUrl },
+          mapsButton: mapsLink ? { label: "Cómo llegar", url: mapsLink } : null,
           footer: practice?.practice_name || "Kame Agenda",
         });
 
+        // Mismo formato enriquecido (negrita nativa de WhatsApp + emojis) que el mensaje de
+        // confirmación del bot, y con los MISMOS links de reagendar/cancelar que ya tenía el
+        // email — antes el recordatorio por WhatsApp era texto plano sin esos links.
         const waReminderText = [
-          `Hola ${patientName}, te recordamos tu cita de ${serviceName} para el ${dateStr}.`,
-          address ? `📍 ${address}` : null,
-          "¡Te esperamos!",
+          `⏰ *${is3h ? "Tu cita es en 3 horas" : "Recordás tu cita de mañana"}*`,
+          `📅 *Día y horario:* ${dateStr}`,
+          `🩺 *Servicio:* ${serviceName}`,
+          professionalName ? `👤 *Profesional:* ${professionalName}` : null,
+          address ? `📍 *Dirección:* ${address}` : null,
+          mapsLink ? `🗺️ ${mapsLink}` : null,
+          "",
+          "¿Necesitás reagendar o cancelar?",
+          rescheduleUrl ? `🔁 Reagendar: ${rescheduleUrl}` : null,
+          `❌ Cancelar: ${cancelUrl}`,
         ].filter(Boolean).join("\n");
 
         // Decidir canal

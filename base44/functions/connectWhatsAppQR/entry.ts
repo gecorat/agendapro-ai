@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { instanceNameFor, ensureInstance, connectInstance, getConnectionState, getConnectedPhone } from '../../shared/evolution-api.ts';
+import { getPracticeSecrets, setPracticeSecrets } from '../../shared/secrets.ts';
 
 function randomSecret() {
   return crypto.randomUUID().replace(/-/g, '');
@@ -32,13 +33,17 @@ export default async function (req: Request): Promise<Response> {
     }
 
     const instanceName = practice.evolution_instance_name || instanceNameFor(practice.id);
-    const webhookSecret = practice.evolution_webhook_secret || randomSecret();
+    const existingSecrets = await getPracticeSecrets(base44, practice.id);
+    const webhookSecret = existingSecrets?.evolution_webhook_secret || randomSecret();
     // El id del consultorio Y un secreto propio (generado por nosotros, no por Evolution)
     // viajan en la URL del webhook — así lo verificamos sin depender de que el proveedor
-    // firme el payload de alguna forma en particular.
+    // firme el payload de alguna forma en particular. El secreto en sí vive en
+    // PracticeSecrets (no en PracticeSettings), que tiene lectura pública por la página
+    // de reservas — nunca en un campo que un desconocido pueda leer.
     const webhookUrl = `https://base44.app/api/apps/6a726ce53f9d0f63f3816283/functions/evolutionWebhook?practiceId=${practice.id}&secret=${webhookSecret}`;
 
     await ensureInstance(baseUrl, apiKey, instanceName, webhookUrl);
+    await setPracticeSecrets(base44, practice.id, { evolution_webhook_secret: webhookSecret });
 
     // Si ya estaba conectada de un intento anterior que el polling no había detectado,
     // lo reflejamos directo sin volver a pedir QR.
@@ -48,7 +53,6 @@ export default async function (req: Request): Promise<Response> {
       await base44.asServiceRole.entities.PracticeSettings.update(practice.id, {
         whatsapp_connection_type: 'qr',
         evolution_instance_name: instanceName,
-        evolution_webhook_secret: webhookSecret,
         whatsapp_status: 'connected',
         whatsapp_connected: true,
         whatsapp_phone_number: phone || practice.whatsapp_phone_number || '',
@@ -65,7 +69,6 @@ export default async function (req: Request): Promise<Response> {
     await base44.asServiceRole.entities.PracticeSettings.update(practice.id, {
       whatsapp_connection_type: 'qr',
       evolution_instance_name: instanceName,
-      evolution_webhook_secret: webhookSecret,
       whatsapp_status: qrCode ? 'need_scan' : 'connecting',
       whatsapp_connected: false,
     });

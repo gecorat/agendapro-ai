@@ -49,7 +49,8 @@ export default async function(req) {
         patient_name: rev.patient_name,
         service_name: rev.service_name,
         appointment_date: rev.appointment_date,
-        status: rev.status
+        status: rev.status,
+        rating: rev.rating || null
       });
     }
 

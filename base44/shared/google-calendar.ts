@@ -12,6 +12,8 @@
 //   un evento personal en Google bloquea la reserva automáticamente, sin duplicar datos
 //   ni necesitar webhooks complejos.
 
+import { getPracticeSecrets, getProfessionalSecrets } from './secrets.ts';
+
 async function getPlatformCreds(base44) {
   const cfg = await base44.asServiceRole.entities.PlatformConfig.filter({});
   const c = cfg?.[0];
@@ -92,13 +94,17 @@ export async function resolveGoogleTarget(base44, practiceOwnerId, professionalR
   if (professionalRefId) {
     const rows = await base44.asServiceRole.entities.Professional.filter({ id: professionalRefId });
     const p = rows?.[0];
-    if (!p || !p.google_refresh_token || p.google_sync_enabled === false) return null;
-    return { kind: 'professional', record: p };
+    if (!p || p.google_sync_enabled === false) return null;
+    const secrets = await getProfessionalSecrets(base44, professionalRefId);
+    if (!secrets?.google_refresh_token) return null;
+    return { kind: 'professional', record: { ...p, google_refresh_token: secrets.google_refresh_token } };
   }
   const rows = await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: practiceOwnerId });
   const s = rows?.[0];
-  if (!s || !s.google_refresh_token || s.google_sync_enabled === false) return null;
-  return { kind: 'practice', record: s };
+  if (!s || s.google_sync_enabled === false) return null;
+  const secrets = await getPracticeSecrets(base44, s.id);
+  if (!secrets?.google_refresh_token) return null;
+  return { kind: 'practice', record: { ...s, google_refresh_token: secrets.google_refresh_token } };
 }
 
 async function getValidAccessToken(base44, target) {

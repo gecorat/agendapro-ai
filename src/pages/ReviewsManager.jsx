@@ -335,6 +335,11 @@ function ReviewCard({ review, onReload }) {
             </div>
           ) : null}
           {review.review_text && <p className="text-sm italic text-foreground/80">"{review.review_text}"</p>}
+          {review.google_review_clicked && (
+            <p className="text-xs text-emerald-700 flex items-center gap-1 mt-2 pt-2 border-t border-border/60">
+              <ExternalLink className="w-3 h-3" /> Tocó el botón para dejarla en Google también {review.google_review_clicked_at ? `· ${new Date(review.google_review_clicked_at).toLocaleDateString("es-AR")}` : ""}
+            </p>
+          )}
         </div>
       )}
 

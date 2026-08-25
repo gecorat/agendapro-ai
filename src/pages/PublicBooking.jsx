@@ -682,8 +682,8 @@ export default function PublicBooking() {
   );
 
   return (
-    <div className="min-h-screen w-full relative" style={{ background: theme.bg }}>
-      <div className="relative">
+    <div className="min-h-screen w-full flex flex-col" style={{ background: theme.bg }}>
+      <div className="relative flex-1">
       <div className="hidden lg:block max-w-6xl mx-auto px-8 py-10">
         <div className="grid gap-8 items-start" style={{ gridTemplateColumns: "55% 45%" }}>
           <div className="space-y-4 lg:sticky lg:top-8">
@@ -698,7 +698,7 @@ export default function PublicBooking() {
       {/* Mobile: 100% full-width, 0 padding lateral en el contenedor raíz. El header/portada
           sangra borde a borde (bleed) y solo el contenido interior (nav + secciones) recibe
           padding propio, para que no quede el aspecto "encajonado" de tarjeta con margen. */}
-      <div className="lg:hidden w-full pb-10">
+      <div className="lg:hidden w-full pb-6">
         <ProfileHeader settings={settings} theme={theme} brand={brand} cardClass={cardClass} glassStyle={glassStyle} align={settings?.photo_align} size={112} headingFontStyle={headingFontStyle} bleed />
         <div className="px-4 space-y-4 mt-4">
           <NavButtons />
@@ -707,16 +707,18 @@ export default function PublicBooking() {
           ) : BookingSteps}
         </div>
       </div>
+      </div>
+      {/* Fuera del área de contenido (flex-1): con esto, en páginas cortas queda pegado al
+          fondo real de la pantalla en vez de justo después del último paso. */}
       <a
         href="https://kameagenda.com"
         target="_blank"
         rel="noopener noreferrer"
-        className="block text-center text-xs py-4 hover:opacity-80 transition-opacity"
+        className="block text-center text-xs py-4 shrink-0 hover:opacity-80 transition-opacity"
         style={{ color: theme.muted, opacity: 0.7 }}
       >
         ⚡ Powered by <span className="font-semibold">kameagenda.com</span>
       </a>
-      </div>
     </div>
   );
 }

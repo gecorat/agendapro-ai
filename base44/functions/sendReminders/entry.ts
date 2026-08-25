@@ -108,8 +108,6 @@ export default async function(req) {
           "¿Necesitás reagendar o cancelar?",
           rescheduleUrl ? `🔁 Reagendar: ${rescheduleUrl}` : null,
           `❌ Cancelar: ${cancelUrl}`,
-          "",
-          "_PD: ¿Sos profesional? Ofrecé este mismo sistema de agendamiento automático a tus pacientes. Probá 14 días gratis: kameagenda.com_",
         ].filter(Boolean).join("\n");
 
         // Decidir canal

@@ -317,14 +317,6 @@
       "type": "string",
       "title": "[DEPRECADO] WasenderAPI \u2014 ID de sesi\u00f3n"
     },
-    "wasender_api_key": {
-      "type": "string",
-      "title": "[DEPRECADO] WasenderAPI \u2014 API Key de la sesi\u00f3n (para enviar mensajes)"
-    },
-    "wasender_webhook_secret": {
-      "type": "string",
-      "title": "[DEPRECADO] WasenderAPI \u2014 Webhook Secret de la sesi\u00f3n"
-    },
     "evolution_instance_name": {
       "type": "string",
       "title": "Evolution API \u2014 Nombre de instancia",

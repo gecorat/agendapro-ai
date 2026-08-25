@@ -103,6 +103,9 @@ export default function WelcomeGuide() {
           <p className="text-sm font-medium">¿Listo para recibir reservas?</p>
         </div>
         <p className="text-sm text-muted-foreground mt-1">Cuando completes los pasos, activá tu plan para habilitar el bot de WhatsApp y las reservas automáticas.</p>
+        <Button size="sm" className="mt-3" asChild>
+          <Link to="/upgrade-plan">Ver planes <ArrowRight className="w-3.5 h-3.5 ml-1" /></Link>
+        </Button>
       </Card>
     </div>
   );

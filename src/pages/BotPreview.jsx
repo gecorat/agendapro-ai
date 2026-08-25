@@ -4,70 +4,11 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { MessageCircle, Send, Loader2, Lock, Sparkles, RefreshCw } from "lucide-react";
+import { MessageCircle, Send, Loader2, Lock, Sparkles, RefreshCw, CalendarCheck2, Info } from "lucide-react";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import { getPlanStatus, PLAN_PRICES, PLAN_LABELS } from "@/lib/plan-utils";
-import { getTypeLabel } from "@/lib/professional-presets";
 
-const DAYS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-
-function buildContext(settings, services, availability) {
-  const lines = [];
-  lines.push(`- Consultorio: ${settings.practice_name || "No especificado"}`);
-  lines.push(`- Profesional: ${getTypeLabel(settings.professional_type)}`);
-  if (settings.specialty) lines.push(`- Especialidad: ${settings.specialty}`);
-  if (settings.address) lines.push(`- Dirección: ${settings.address}`);
-  if (settings.phone) lines.push(`- Teléfono: ${settings.phone}`);
-
-  if (services.length) {
-    lines.push("");
-    lines.push("Servicios disponibles:");
-    services.forEach((s) => {
-      let line = `  · ${s.name} — ${s.duration_minutes} min`;
-      if (s.price) line += ` · $${s.price}`;
-      if (s.description) line += ` (${s.description})`;
-      lines.push(line);
-    });
-  } else {
-    lines.push("Servicios disponibles: (aún no cargó servicios)");
-  }
-
-  const work = availability.filter((a) => a.type === "work");
-  if (work.length) {
-    lines.push("");
-    lines.push("Horarios de atención:");
-    const byDay = {};
-    work.forEach((a) => {
-      const d = DAYS[a.day_of_week] || `Día ${a.day_of_week}`;
-      byDay[d] = byDay[d] || [];
-      byDay[d].push(`${a.start_time}-${a.end_time}`);
-    });
-    Object.entries(byDay).forEach(([d, ranges]) => lines.push(`  · ${d}: ${ranges.join(", ")}`));
-  } else {
-    lines.push("Horarios de atención: lunes a viernes 09:00-18:00 (por defecto)");
-  }
-  return lines.join("\n");
-}
-
-function buildPrompt(masterPrompt, context, history, newMessage) {
-  const convo = history.map((m) => `${m.role === "user" ? "Paciente" : "Bot"}: ${m.content}`).join("\n");
-  return `${masterPrompt || "Sos la asistente virtual de un consultorio. Respondé de forma amable y breve en español."}
-
-=== CONTEXTO DEL CONSULTORIO ===
-${context}
-
-=== REGLAS DE LA SIMULACIÓN ===
-Estás en MODO DEMO dentro de la plataforma. El profesional está probando cómo responderías a sus pacientes por WhatsApp.
-- Respondé en español, de forma amable y breve, como lo harías en WhatsApp.
-- Podés proponer horarios y servicios según el contexto del consultorio.
-- NO confirmes ni agendes realmente: decile al paciente que para confirmar debe completar la reserva o esperar la confirmación.
-- No des consejos médicos ni diagnósticos.
-- Mantené la conversación enfocada en agendar.
-
-=== CONVERSACIÓN ===
-${convo ? convo + "\n" : ""}Paciente: ${newMessage}
-Bot:`;
-}
+const DEMO_TTL_MS = 5 * 60 * 1000;
 
 function formatTime() {
   return new Date().toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
@@ -76,43 +17,46 @@ function formatTime() {
 export default function BotPreview() {
   const { settings, save } = usePracticeSettings();
   const status = getPlanStatus(settings);
-  const [services, setServices] = useState([]);
-  const [availability, setAvailability] = useState([]);
-  const [masterPrompt, setMasterPrompt] = useState("");
   const [limit, setLimit] = useState(20);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [loadingCtx, setLoadingCtx] = useState(true);
   const scrollRef = useRef(null);
+  const cleanupTimers = useRef([]);
 
   const count = settings?.bot_preview_count || 0;
   const reachedLimit = count >= limit;
-  const botName = settings?.practice_name || "Asistente";
+  const botName = settings?.bot_assistant_name || settings?.practice_name || "Asistente";
 
-  const loadContext = useCallback(async () => {
-    try {
-      const [servs, avail, botCfg] = await Promise.all([
-        base44.entities.Service.filter({ active: true }),
-        base44.entities.Availability.filter({}),
-        base44.entities.BotConfig.filter({}),
-      ]);
-      setServices(servs || []);
-      setAvailability(avail || []);
-      setMasterPrompt(botCfg?.[0]?.system_prompt || "");
-      setLimit(botCfg?.[0]?.bot_preview_limit || 20);
-    } finally {
-      setLoadingCtx(false);
-    }
+  useEffect(() => {
+    (async () => {
+      try {
+        const botCfg = await base44.entities.BotConfig.filter({});
+        setLimit(botCfg?.[0]?.bot_preview_limit || 20);
+      } finally {
+        setLoadingCtx(false);
+      }
+    })();
   }, []);
 
   useEffect(() => {
-    loadContext();
-  }, [loadContext]);
+    // Por si quedan timers de limpieza pendientes al salir de la pantalla, no hacemos nada
+    // especial (el backend igual limpia lo vencido en el próximo mensaje que se mande) —
+    // esto es solo para no dejar timers corriendo sobre un componente ya desmontado.
+    return () => { cleanupTimers.current.forEach(clearTimeout); };
+  }, []);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages, sending]);
+
+  const scheduleDemoCleanup = useCallback((appointmentId) => {
+    const id = setTimeout(() => {
+      base44.functions.invoke("deleteDemoAppointment", { appointment_id: appointmentId }).catch(() => {});
+    }, DEMO_TTL_MS);
+    cleanupTimers.current.push(id);
+  }, []);
 
   const handleSend = async (e) => {
     e?.preventDefault();
@@ -126,11 +70,20 @@ export default function BotPreview() {
     setSending(true);
 
     try {
-      const context = buildContext(settings, services, availability);
-      const prompt = buildPrompt(masterPrompt, context, messages, text);
-      const res = await base44.integrations.Core.InvokeLLM({ prompt });
-      const reply = typeof res === "string" ? res : res?.output || "Disculpá, no entendí. ¿Podés repetirlo?";
-      setMessages([...history, { role: "assistant", content: reply, time: formatTime() }]);
+      const res = await base44.functions.invoke("botPreviewMessage", {
+        message: text,
+        history: messages.map((m) => ({ role: m.role, content: m.content })),
+      });
+      const reply = res?.data?.reply || "Disculpá, no entendí. ¿Podés repetirlo?";
+      const booked = !!res?.data?.booked;
+      const appointment = res?.data?.appointment;
+
+      setMessages([
+        ...history,
+        { role: "assistant", content: reply, time: formatTime() },
+        ...(booked && appointment ? [{ role: "system", appointment, time: formatTime() }] : []),
+      ]);
+      if (booked && appointment?.id) scheduleDemoCleanup(appointment.id);
 
       const newCount = count + 1;
       await save({ bot_preview_count: newCount });
@@ -168,12 +121,11 @@ export default function BotPreview() {
 
   return (
     <div className="p-4 md:p-6 max-w-2xl mx-auto h-full flex flex-col">
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-2">
         <div className="flex-1 min-w-0">
           <h1 className="text-xl font-heading font-semibold flex items-center gap-2">
             <MessageCircle className="w-5 h-5" /> Probar el bot
           </h1>
-          <p className="text-xs text-muted-foreground truncate">Durante tu prueba podés usar la página de citas, agenda, pacientes y reportes sin restricciones.</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <span className="text-xs text-muted-foreground whitespace-nowrap">
@@ -185,6 +137,13 @@ export default function BotPreview() {
             </Button>
           )}
         </div>
+      </div>
+
+      <div className="flex items-start gap-2 rounded-lg bg-primary/5 border border-primary/15 px-3 py-2.5 mb-3">
+        <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          Responde con tu configuración real (servicios, horarios y personalidad del bot que cargaste en Configuración). Si en la charla llegás a confirmar un turno, se crea de verdad en tu <span className="font-medium text-foreground">Agenda</span> y se borra solo a los 5 minutos — así ves exactamente cómo se vería, sin ensuciar tus datos. Con el plan {PLAN_LABELS.pro} o {PLAN_LABELS.clinic}, el bot haría esto mismo automáticamente por WhatsApp con tus pacientes reales.
+        </p>
       </div>
 
       <Card className="flex-1 flex flex-col overflow-hidden min-h-[50vh] p-0">
@@ -207,23 +166,36 @@ export default function BotPreview() {
               Escribí como si fueras tu paciente. Ej: <em>"Hola, quería sacar un turno para limpieza"</em>
             </div>
           )}
-          {messages.map((m, i) => (
-            <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"} gap-1.5`}>
-              {m.role === "assistant" && (
-                <div className="w-8 h-8 rounded-full bg-[#075e54] flex items-center justify-center shrink-0 self-end mb-1">
-                  <MessageCircle className="w-4 h-4 text-white" />
+          {messages.map((m, i) => {
+            if (m.role === "system") {
+              return (
+                <div key={i} className="flex justify-center py-1">
+                  <div className="flex items-center gap-1.5 bg-emerald-100 text-emerald-800 text-xs font-medium rounded-full px-3 py-1.5 shadow-sm">
+                    <CalendarCheck2 className="w-3.5 h-3.5" />
+                    Turno de prueba creado en tu Agenda — se borra solo en 5 min
+                    <Link to="/agenda" className="underline ml-1">Ver</Link>
+                  </div>
                 </div>
-              )}
-              <div className={`max-w-[75%] rounded-lg px-2.5 py-1.5 text-sm whitespace-pre-wrap shadow-sm ${
-                m.role === "user"
-                  ? "bg-[#dcf8c6] text-foreground rounded-br-none"
-                  : "bg-white text-foreground border border-slate-100 rounded-bl-none"
-              }`}>
-                {m.content}
-                <span className="text-[10px] text-slate-400 ml-2 align-bottom">{m.time}</span>
+              );
+            }
+            return (
+              <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"} gap-1.5`}>
+                {m.role === "assistant" && (
+                  <div className="w-8 h-8 rounded-full bg-[#075e54] flex items-center justify-center shrink-0 self-end mb-1">
+                    <MessageCircle className="w-4 h-4 text-white" />
+                  </div>
+                )}
+                <div className={`max-w-[75%] rounded-lg px-2.5 py-1.5 text-sm whitespace-pre-wrap shadow-sm ${
+                  m.role === "user"
+                    ? "bg-[#dcf8c6] text-foreground rounded-br-none"
+                    : "bg-white text-foreground border border-slate-100 rounded-bl-none"
+                }`}>
+                  {m.content}
+                  <span className="text-[10px] text-slate-400 ml-2 align-bottom">{m.time}</span>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
           {sending && (
             <div className="flex justify-start gap-1.5">
               <div className="w-8 h-8 rounded-full bg-[#075e54] flex items-center justify-center shrink-0 self-end mb-1">
@@ -257,10 +229,6 @@ export default function BotPreview() {
           </form>
         )}
       </Card>
-
-      <p className="text-xs text-muted-foreground text-center mt-2">
-        Esta es una simulación. El bot real por WhatsApp se activa con el plan {PLAN_LABELS.pro}.
-      </p>
     </div>
   );
 }

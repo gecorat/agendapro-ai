@@ -11,7 +11,7 @@ export default async function (req: Request): Promise<Response> {
     const now = new Date();
 
     const appts = await base44.asServiceRole.entities.Appointment.filter({ status: 'confirmed' });
-    const due = (appts || []).filter((a) => a.end_datetime && new Date(a.end_datetime) < now);
+    const due = (appts || []).filter((a) => !a.is_demo && a.end_datetime && new Date(a.end_datetime) < now);
 
     let completed = 0;
     let reviewRequestsCreated = 0;

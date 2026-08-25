@@ -74,6 +74,26 @@ export default async function(req) {
       return Response.json({ ok: true });
     }
 
+    if (action === 'trackGoogleClick') {
+      let rev;
+      try {
+        rev = await base44.asServiceRole.entities.ReviewRequest.get(id);
+      } catch {
+        return Response.json({ error: 'Solicitud no encontrada' }, { status: 404 });
+      }
+      if (!rev) return Response.json({ error: 'Solicitud no encontrada' }, { status: 404 });
+      if (!rev.token || rev.token !== token) {
+        return Response.json({ error: 'Token de acceso inválido' }, { status: 401 });
+      }
+      // Solo señal de intención (click), no confirma que se haya publicado la reseña en
+      // Google — eso pasa fuera de la plataforma.
+      await base44.asServiceRole.entities.ReviewRequest.update(id, {
+        google_review_clicked: true,
+        google_review_clicked_at: new Date().toISOString()
+      });
+      return Response.json({ ok: true });
+    }
+
     return Response.json({ error: 'Acción inválida' }, { status: 400 });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

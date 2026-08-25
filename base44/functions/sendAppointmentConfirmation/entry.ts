@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { buildEmailHtml, getAppUrl } from "../../shared/email-template.ts";
 import { sendEmail } from "../../shared/email-sender.ts";
 import { getAppointmentContext } from "../../shared/appointment-context.ts";
+import { buildMapsLink } from "../../shared/zernio.ts";
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -59,6 +60,7 @@ export default async function(req: Request): Promise<Response> {
     } catch {}
 
     const { professionalName, address } = await getAppointmentContext(base44, appt, practice);
+    const mapsLink = buildMapsLink(practice);
 
     // Asegurar cancel_token para el botón de cancelar/reagendar. No lo guardamos con un
     // update aparte: dos updates seguidos sobre el mismo turno en la misma corrida pueden
@@ -83,16 +85,18 @@ export default async function(req: Request): Promise<Response> {
         title: "Cita confirmada",
         greeting: `Hola ${patientName}`,
         lines: [
-          `Tu cita de ${serviceName} fue confirmada. ¡Te esperamos!`,
+          `Tu cita fue confirmada. ¡Te esperamos!`,
           "Si necesitás reagendar o cancelar, usá los botones de abajo.",
         ],
         details: [
+          { label: "Servicio", value: serviceName },
           { label: "Día y horario", value: dateStr },
           { label: "Profesional", value: professionalName || "—" },
           ...(address ? [{ label: "Dirección", value: address }] : []),
         ],
         primaryButton: rescheduleUrl ? { label: "Reagendar", url: rescheduleUrl } : null,
         secondaryButton: { label: "Cancelar cita", url: cancelUrl },
+        mapsButton: mapsLink ? { label: "Cómo llegar", url: mapsLink } : null,
         footer: signature,
       }),
     });

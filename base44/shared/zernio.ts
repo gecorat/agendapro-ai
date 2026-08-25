@@ -58,7 +58,8 @@ function buildConfirmationMessage({ practice, service, start, professionalName, 
   if (addressText) lines.push(`📍 *Dirección:* ${addressText}`);
   if (mapsLink) lines.push(`🗺️ ${mapsLink}`);
   lines.push('');
-  lines.push('¡Te esperamos! 😊 Si necesitás reagendar o cancelar, avisanos por este mismo medio.');
+  lines.push('¡Te esperamos! 😊');
+  lines.push('🔁 *Si necesitás reagendar o cancelar, avisanos por este mismo medio* 😊');
   lines.push('⏰ Te vamos a recordar la cita unas horas antes.');
   return lines.join('\n');
 }

@@ -88,22 +88,31 @@ const PAUSE_OPTIONS = [
   { label: "Indefinido", minutes: null },
 ];
 
+// Todas las fechas/horas del chat se muestran SIEMPRE en hora de Argentina, sin importar
+// en qué zona horaria esté configurado el celu/navegador de quien mira la pantalla — antes
+// esto usaba la hora local del dispositivo (sin fijar el huso horario), así que un celular
+// con otro huso, u otra configuración regional, mostraba una hora distinta a la real.
+const AR_TZ = "America/Argentina/Buenos_Aires";
+function arDateKey(d) {
+  return d.toLocaleDateString("en-CA", { timeZone: AR_TZ }); // YYYY-MM-DD, comparable como string
+}
+
 function fmtShort(dateStr) {
   if (!dateStr) return "";
   const d = new Date(dateStr);
   const now = new Date();
-  const isToday = d.toDateString() === now.toDateString();
-  if (isToday) return d.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
-  return d.toLocaleDateString("es-AR", { day: "numeric", month: "short" });
+  const isToday = arDateKey(d) === arDateKey(now);
+  if (isToday) return d.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", timeZone: AR_TZ });
+  return d.toLocaleDateString("es-AR", { day: "numeric", month: "short", timeZone: AR_TZ });
 }
 
 function dateSeparatorLabel(dateStr) {
   const d = new Date(dateStr);
   const now = new Date();
   const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
-  if (d.toDateString() === now.toDateString()) return "Hoy";
-  if (d.toDateString() === yesterday.toDateString()) return "Ayer";
-  return d.toLocaleDateString("es-AR", { day: "numeric", month: "long", year: d.getFullYear() !== now.getFullYear() ? "numeric" : undefined });
+  if (arDateKey(d) === arDateKey(now)) return "Hoy";
+  if (arDateKey(d) === arDateKey(yesterday)) return "Ayer";
+  return d.toLocaleDateString("es-AR", { day: "numeric", month: "long", year: d.getFullYear() !== now.getFullYear() ? "numeric" : undefined, timeZone: AR_TZ });
 }
 
 function ContactAvatar({ name, url, loading, size = "w-9 h-9", textSize = "text-xs" }) {

@@ -550,24 +550,45 @@ REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno quedó 
         ? "No encontré ninguna cita tuya próxima para reagendar. ¿Querés que te agende un turno nuevo?"
         : `Tenés más de un turno próximo (${myPatientUpcoming.map((a) => a.service_name).join(", ")}). ¿Cuál de esos querés reagendar?`;
     } else {
+      // Si el paciente pidió, ADEMÁS del horario nuevo, un servicio DISTINTO al que ya
+      // tenía esa cita (ej. "cambiame a consulta de marketing"), antes esto se ignoraba
+      // por completo: quedaba reagendada la hora pero con el servicio viejo, sin avisar de
+      // nada — confirmado en vivo. Ahora, si el nombre pedido coincide con un servicio real
+      // del catálogo, lo tratamos también como un cambio de servicio (no solo de horario), y
+      // usamos SU duración real para validar el horario y armar la cita — dos servicios
+      // pueden durar distinto, así que no alcanza con reusar el horario/duración viejos.
+      let newService = null;
+      let serviceNotFound = false;
+      if (wantedService && wantedService !== (target.service_name || "").trim().toLowerCase()) {
+        newService = myServices.find((s) => s.name.trim().toLowerCase() === wantedService) || null;
+        if (!newService) serviceNotFound = true;
+      }
+
+      if (serviceNotFound) {
+        const availableNames = myServices.map((s) => s.name).join(", ");
+        finalReplyText = `Disculpá, no tengo cargado un servicio que coincida exactamente con "${reply.appointment.service_name}". Los servicios disponibles son: ${availableNames || "(ninguno cargado todavía)"}. ¿Cuál de estos te gustaría?`;
+      } else {
       let rawDatetime = reply.appointment.datetime;
       if (rawDatetime && !/(Z|[+-]\d{2}:\d{2})$/.test(rawDatetime)) {
         rawDatetime = `${rawDatetime}-03:00`;
       }
       const start = new Date(rawDatetime);
       const durationMs = new Date(target.end_datetime).getTime() - new Date(target.start_datetime).getTime();
-      const end = new Date(start.getTime() + (durationMs > 0 ? durationMs : 30 * 60000));
+      const end = newService
+        ? new Date(start.getTime() + (newService.duration_minutes || 30) * 60000)
+        : new Date(start.getTime() + (durationMs > 0 ? durationMs : 30 * 60000));
 
       if (isNaN(start.getTime())) {
         finalReplyText = "No pude entender bien la nueva fecha y hora. ¿Podés indicármela de otra forma? Por ejemplo: 'mañana a las 15hs'.";
       } else {
         // Mismo chequeo real que en el agendado nuevo: horario de atención, descansos,
         // días bloqueados, otras citas y Google Calendar — no solo "choca con otra cita".
-        // Resolvemos un objeto Service para calcular la grilla de horarios: si el
-        // servicio original sigue existiendo lo usamos tal cual; si ya no existe (lo
-        // borraron), armamos uno sintético con la duración que ya tenía esa cita, para no
-        // dejar de poder reagendarla por eso.
-        const targetService = myServices.find((s) => s.name.trim().toLowerCase() === (target.service_name || "").trim().toLowerCase())
+        // Resolvemos un objeto Service para calcular la grilla de horarios: si el paciente
+        // pidió cambiar de servicio, usamos el NUEVO (con su propia duración real); si no,
+        // el original (si sigue existiendo; si ya no existe, uno sintético con la duración
+        // que ya tenía esa cita, para no dejar de poder reagendarla por eso).
+        const targetService = newService
+          || myServices.find((s) => s.name.trim().toLowerCase() === (target.service_name || "").trim().toLowerCase())
           || { name: target.service_name, duration_minutes: Math.max(5, Math.round((durationMs > 0 ? durationMs : 30 * 60000) / 60000)), margin_minutes: 0 };
 
         const dayStart = new Date(start); dayStart.setHours(0, 0, 0, 0);
@@ -599,6 +620,7 @@ REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno quedó 
             await base44.asServiceRole.entities.Appointment.update(target.id, {
               start_datetime: start.toISOString(),
               end_datetime: end.toISOString(),
+              ...(newService ? { service_name: newService.name } : {}),
             });
             try {
               await base44.asServiceRole.functions.invoke("syncAppointmentGoogle", { appointmentId: target.id });
@@ -615,12 +637,16 @@ REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno quedó 
             secondaryReplyText = buildConfirmationMessage({ practice, service: targetService, start, professionalName, title: '🔁 *Turno reagendado*' });
             await notifyProfessionalOfBotAction(base44, practice, {
               verb: "reagendó",
-              appt: { ...target, start_datetime: start.toISOString() },
+              appt: { ...target, start_datetime: start.toISOString(), ...(newService ? { service_name: newService.name } : {}) },
             });
           } catch (e) {
             console.error("Appointment.update error (reschedule):", e?.message || e);
             finalReplyText = "Uy, tuve un problema técnico al reagendar tu turno. ¿Podés confirmarme de nuevo el nuevo día y horario?";
           }
+        }
+      }
+      }
+    }
         }
       }
     }

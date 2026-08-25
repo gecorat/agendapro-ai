@@ -87,7 +87,7 @@ export default function BotPreview() {
 
       const newCount = count + 1;
       await save({ bot_preview_count: newCount });
-    } catch (err) {
+    } catch {
       setMessages([...history, { role: "assistant", content: "Hubo un error de conexión. Probá de nuevo.", time: formatTime() }]);
     } finally {
       setSending(false);

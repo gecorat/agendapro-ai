@@ -36,6 +36,7 @@ function normalizeGoogleReviewLink(raw) {
 export default function ReviewsManager() {
   const { toast } = useToast();
   const { preset, settings, save } = usePracticeSettings();
+  const planStatus = getPlanStatus(settings);
   const [reviews, setReviews] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [patients, setPatients] = useState([]);
@@ -51,13 +52,18 @@ export default function ReviewsManager() {
     setGoogleLink(settings?.google_review_link || "");
   }, [settings?.google_review_link]);
 
+  const hasUnsavedLinkChange = googleLink.trim() !== (settings?.google_review_link || "");
+
   const saveGoogleLink = async () => {
-    if (googleLink === (settings?.google_review_link || "")) return;
+    if (!hasUnsavedLinkChange) return;
     setSavingLink(true);
     try {
-      await save({ google_review_link: googleLink.trim() });
+      const normalized = normalizeGoogleReviewLink(googleLink);
+      await save({ google_review_link: normalized });
+      setGoogleLink(normalized);
       setLinkSaved(true);
-      setTimeout(() => setLinkSaved(false), 2000);
+      setTimeout(() => setLinkSaved(false), 2500);
+      toast({ title: "Link guardado" });
     } catch (err) {
       toast({ title: "No se pudo guardar el link", description: err.message, variant: "destructive" });
     } finally {
@@ -81,7 +87,11 @@ export default function ReviewsManager() {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    if (settings && planStatus.hasPaidPlan) load();
+    else if (settings) setLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings, planStatus.hasPaidPlan]);
 
   const eligibleAppts = appointments.filter((a) => !reviews.some((r) => r.appointment_id === a.id));
 

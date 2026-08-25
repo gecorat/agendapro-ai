@@ -94,9 +94,15 @@ export default async function(req) {
           footer: practice?.practice_name || "Kame Agenda",
         });
 
+        // Mensaje de entrada corto que se manda ANTES de los datos completos, para que la
+        // conversación se sienta en dos tiempos naturales — igual que hace el bot cuando
+        // agenda o reagenda un turno (buildBookAckMessage/buildRescheduleAckMessage en
+        // zernio.ts) — en vez de tirarle al paciente un bloque grande de una.
+        const waIntroText = `Hola${patientName ? ` ${patientName}` : ""}! Quería recordarte que ${is3h ? "en 3 horas es" : "mañana es"} tu cita programada${professionalName ? ` con ${professionalName}` : ""}. Te paso los detalles...`;
+
         // Mismo formato enriquecido (negrita nativa de WhatsApp + emojis) que el mensaje de
-        // confirmación del bot, y con los MISMOS links de reagendar/cancelar que ya tenía el
-        // email — antes el recordatorio por WhatsApp era texto plano sin esos links.
+        // confirmación del bot. Ya no lleva los links de reagendar/cancelar — ahora se pide
+        // que avisen por el mismo medio en vez de mandar un link aparte.
         const waReminderText = [
           `⏰ *${is3h ? "Tu cita es en 3 horas" : "Recordás tu cita de mañana"}*`,
           `📅 *Día y horario:* ${dateStr}`,
@@ -105,9 +111,7 @@ export default async function(req) {
           address ? `📍 *Dirección:* ${address}` : null,
           mapsLink ? `🗺️ ${mapsLink}` : null,
           "",
-          "¿Necesitás reagendar o cancelar?",
-          rescheduleUrl ? `🔁 Reagendar: ${rescheduleUrl}` : null,
-          `❌ Cancelar: ${cancelUrl}`,
+          "🔁 *Si necesitás reagendar o cancelar, avisanos por este mismo medio* 😊",
         ].filter(Boolean).join("\n");
 
         // Decidir canal
@@ -130,6 +134,9 @@ export default async function(req) {
           const whatsAppConnected = !!practice?.whatsapp_connected;
           if (whatsAppConnected) {
             try {
+              // Dos mensajes seguidos (intro + detalles), igual que el flujo de agendamiento
+              // del bot, en vez de un único bloque grande de texto.
+              await sendWhatsAppMessage(base44, practice, patient.phone, waIntroText);
               await sendWhatsAppMessage(base44, practice, patient.phone, waReminderText);
               channelUsed = "whatsapp";
             } catch (e) {

@@ -60,6 +60,8 @@ function buildConfirmationMessage({ practice, service, start, professionalName, 
   lines.push('');
   lines.push('¡Te esperamos! 😊 Si necesitás reagendar o cancelar, avisanos por este mismo medio.');
   lines.push('⏰ Te vamos a recordar la cita unas horas antes.');
+  lines.push('');
+  lines.push('_PD: ¿Sos profesional? Ofrecé este mismo sistema de agendamiento automático a tus pacientes. Probá 14 días gratis: kameagenda.com_');
   return lines.join('\n');
 }
 

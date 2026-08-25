@@ -60,6 +60,10 @@ export default async function (req: Request): Promise<Response> {
         lines: content.lines,
         primaryButton: { label: content.primaryButton.label, url: `${appUrl}${content.primaryButton.path}` },
         footer: 'Kame Agenda · Tu recepcionista virtual',
+        // El destinatario de esta campaña YA es el profesional en trial, no un paciente:
+        // el PD "¿Sos profesional? Probá gratis..." no aplica acá (sí sigue apareciendo en
+        // confirmaciones/reviews a pacientes, que no se tocaron).
+        showReferralFooter: false,
       }),
     });
 

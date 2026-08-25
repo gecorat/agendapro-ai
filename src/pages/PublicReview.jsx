@@ -33,7 +33,10 @@ export default function PublicReview() {
         if (d?.error) { setError(d.error); }
         else {
           setData(d);
-          if (d.status === "received") setDone(true);
+          if (d.status === "received") {
+            setDone(true);
+            if (d.rating) setRating(d.rating);
+          }
         }
       } catch {
         setError("No se pudo cargar la solicitud.");

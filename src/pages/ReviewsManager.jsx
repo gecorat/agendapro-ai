@@ -126,6 +126,30 @@ export default function ReviewsManager() {
     }
   };
 
+  if (!planStatus.loaded) {
+    return (
+      <div className="flex items-center justify-center h-48">
+        <div className="w-8 h-8 border-4 border-border border-t-primary rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!planStatus.hasPaidPlan) {
+    return (
+      <div className="px-3 py-3 md:p-6 max-w-3xl mx-auto space-y-4">
+        <div>
+          <h1 className="text-2xl font-heading font-semibold tracking-tight">Reseñas</h1>
+          <p className="text-sm text-muted-foreground">Pedí reseñas a tus pacientes y recibí sus respuestas</p>
+        </div>
+        <PlanGate
+          feature="Reseñas"
+          requiredPlan="basic"
+          description="Pedir y recibir reseñas de tus pacientes, con invitación automática a repetirlas en Google, está disponible a partir del plan Básico."
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="px-3 py-3 md:p-6 max-w-3xl mx-auto space-y-4">
       <div className="flex items-center justify-between gap-3">
@@ -152,15 +176,16 @@ export default function ReviewsManager() {
           <Input
             value={googleLink}
             onChange={(e) => setGoogleLink(e.target.value)}
-            onBlur={saveGoogleLink}
-            placeholder="https://search.google.com/local/writereview?placeid=..."
+            placeholder="Pegá el link completo, o solo el Place ID"
             className="text-sm"
           />
-          {savingLink && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground shrink-0" />}
-          {linkSaved && <Check className="w-4 h-4 text-emerald-600 shrink-0" />}
+          <Button size="sm" onClick={saveGoogleLink} disabled={!hasUnsavedLinkChange || savingLink} className="shrink-0 gap-1.5">
+            {savingLink ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : linkSaved ? <Check className="w-3.5 h-3.5" /> : null}
+            {linkSaved ? "Guardado" : "Guardar"}
+          </Button>
         </div>
         <p className="text-xs text-muted-foreground">
-          Lo sacás de tu Perfil de Negocio de Google (business.google.com) → tarjeta "Conseguir más reseñas" → copiar link.
+          Lo sacás de tu Perfil de Negocio de Google (business.google.com) → tarjeta "Conseguir más reseñas" → copiar link. También podés pegar solo el Place ID si lo tenés.
         </p>
       </div>
 

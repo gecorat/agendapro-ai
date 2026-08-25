@@ -647,9 +647,6 @@ REGLA CRÍTICA E INQUEBRANTABLE: NUNCA le digas al paciente que un turno quedó 
       }
       }
     }
-        }
-      }
-    }
   } else if (reply.action === "cancel") {
     // Igual que reschedule: antes esta acción no existía, un pedido de cancelación por
     // WhatsApp no tenía forma de tocar la cita real.

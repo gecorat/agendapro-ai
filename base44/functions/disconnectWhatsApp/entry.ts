@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { deleteInstance } from '../../shared/evolution-api.ts';
+import { setPracticeSecrets } from '../../shared/secrets.ts';
 
 // Acción explícita y auditable para desconectar WhatsApp, en vez de dejar que el cliente
 // escriba directo los campos de conexión de Zernio (bloqueados por RLS para no-admins).
@@ -37,8 +38,8 @@ export default async function (req: Request): Promise<Response> {
       zernio_account_id: '',
       zernio_phone: '',
       evolution_instance_name: '',
-      evolution_webhook_secret: '',
     });
+    await setPracticeSecrets(base44, practice.id, { evolution_webhook_secret: '' });
     return Response.json({ settings: updated });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

@@ -33,6 +33,7 @@ export function buildEmailHtml({
   whatsappButton,
   mapsButton,
   footer,
+  showReferralFooter = true,
 }: {
   title: string;
   greeting?: string;
@@ -43,6 +44,11 @@ export function buildEmailHtml({
   whatsappButton?: { label: string; url: string };
   mapsButton?: { label: string; url: string };
   footer?: string;
+  // El PD "¿Sos profesional? Probá gratis..." tiene sentido en emails a PACIENTES (para que
+  // se enteren de la plataforma). En emails que ya le llegan al PROFESIONAL en trial (como
+  // la campaña de conversión) no aplica y confunde. Default true = no rompe ningún llamado
+  // existente; se desactiva puntualmente pasando showReferralFooter: false.
+  showReferralFooter?: boolean;
 }): string {
   const greetingHtml = greeting ? `<p style="margin:0 0 16px;font-size:16px;color:#1e293b;">${escapeHtml(greeting)}</p>` : "";
   const linesHtml = lines

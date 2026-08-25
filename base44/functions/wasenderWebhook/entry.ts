@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { waitUntil } from "base44:runtime";
 import { checkWhatsAppUsage } from "../../shared/whatsapp-usage.ts";
 import { sendWhatsAppMessage, isChatPaused } from "../../shared/whatsapp-providers.ts";
+import { getPracticeSecrets } from "../../shared/secrets.ts";
 
 // [DEPRECADO] Reemplazado por evolutionWebhook.ts — la conexión por QR ahora corre sobre
 // Evolution API en vez de WasenderAPI. Se deja este archivo sin borrar por si hace falta
@@ -28,7 +29,8 @@ export default async function (req: Request): Promise<Response> {
     // Verificación de firma: WasenderAPI usa comparación directa contra el secret de esa
     // sesión (no HMAC), vía el header X-Webhook-Signature.
     const sig = req.headers.get("X-Webhook-Signature");
-    if (!sig || sig !== practice.wasender_webhook_secret) {
+    const secrets = await getPracticeSecrets(base44, practice.id);
+    if (!sig || sig !== secrets?.wasender_webhook_secret) {
       return Response.json({ error: "Invalid signature" }, { status: 401 });
     }
 

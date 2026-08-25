@@ -47,9 +47,21 @@
         "manual",
         "whatsapp",
         "public_link",
-        "google_calendar"
+        "google_calendar",
+        "bot_preview"
       ],
       "default": "manual"
+    },
+    "is_demo": {
+      "type": "boolean",
+      "title": "Cita de prueba (simulador del bot)",
+      "default": false,
+      "description": "Creada por /bot para probar el bot con datos reales. Se borra sola pocos minutos despu\u00e9s (ver demo_expires_at) \u2014 nunca dispara recordatorios, sincronizaci\u00f3n con Google Calendar ni avisos push, para no confundirse con una reserva real."
+    },
+    "demo_expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Cita de prueba \u2014 se borra despu\u00e9s de"
     },
     "recurring_rule_id": {
       "type": "string",

@@ -10,7 +10,7 @@ import { DEFAULT_OBJECTIVE_PROMPT, DEFAULT_TONE_PROMPT, DEFAULT_RESPONSE_DELAY_S
 // link va directo a ese punto exacto; si no, arma una búsqueda por texto de la
 // dirección — funciona igual en WhatsApp, solo que Google puede tardar un toque más en
 // afinar el resultado exacto.
-function buildMapsLink(practice) {
+export function buildMapsLink(practice) {
   if (practice?.address_lat != null && practice?.address_lng != null) {
     return `https://maps.google.com/?q=${practice.address_lat},${practice.address_lng}`;
   }

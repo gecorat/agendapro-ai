@@ -322,11 +322,6 @@
       "title": "Evolution API \u2014 Nombre de instancia",
       "description": "Identificador \u00fanico de la instancia de WhatsApp de este profesional en Evolution API. Se genera autom\u00e1ticamente (a partir del ID del consultorio) al conectar por QR."
     },
-    "evolution_webhook_secret": {
-      "type": "string",
-      "title": "Evolution API \u2014 Webhook secret",
-      "description": "Secreto propio (generado por Kame, no por Evolution) que viaja en la URL del webhook para verificar que los mensajes entrantes realmente vienen de esa instancia."
-    },
     "zernio_profile_id": {
       "type": "string",
       "title": "Zernio \u2014 Profile ID",
@@ -428,10 +423,6 @@
       "type": "boolean",
       "title": "Suscripcion cancelada por un admin (marca visual)",
       "default": false
-    },
-    "google_refresh_token": {
-      "type": "string",
-      "title": "Refresh token de Google (privado)"
     },
     "google_calendar_email": {
       "type": "string",

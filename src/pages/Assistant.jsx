@@ -89,17 +89,28 @@ const PAUSE_OPTIONS = [
 ];
 
 // Todas las fechas/horas del chat se muestran SIEMPRE en hora de Argentina, sin importar
-// en qué zona horaria esté configurado el celu/navegador de quien mira la pantalla — antes
-// esto usaba la hora local del dispositivo (sin fijar el huso horario), así que un celular
-// con otro huso, u otra configuración regional, mostraba una hora distinta a la real.
+// en qué zona horaria esté configurado el celu/navegador de quien mira la pantalla.
 const AR_TZ = "America/Argentina/Buenos_Aires";
+
+// Base44 guarda created_date en UTC pero SIN el sufijo "Z" (ej. "2026-08-25T14:31:03").
+// Sin esa "Z", `new Date(...)` del navegador interpreta el string como si YA fuera hora
+// local en vez de UTC — confirmado en vivo: un mensaje guardado a las 14:31 UTC (11:31 hora
+// real de Argentina) se mostraba como "14:31", el valor crudo sin convertir, en vez de
+// restarle las 3 horas de diferencia. Forzamos la "Z" al parsear para que se interprete
+// como UTC real y así sí se convierta bien a hora de Argentina al formatear.
+function parseServerDate(dateStr) {
+  if (!dateStr) return new Date(NaN);
+  const hasTz = /[zZ]$|[+-]\d{2}:?\d{2}$/.test(dateStr);
+  return new Date(hasTz ? dateStr : `${dateStr}Z`);
+}
+
 function arDateKey(d) {
   return d.toLocaleDateString("en-CA", { timeZone: AR_TZ }); // YYYY-MM-DD, comparable como string
 }
 
 function fmtShort(dateStr) {
   if (!dateStr) return "";
-  const d = new Date(dateStr);
+  const d = parseServerDate(dateStr);
   const now = new Date();
   const isToday = arDateKey(d) === arDateKey(now);
   if (isToday) return d.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", timeZone: AR_TZ });
@@ -107,7 +118,7 @@ function fmtShort(dateStr) {
 }
 
 function dateSeparatorLabel(dateStr) {
-  const d = new Date(dateStr);
+  const d = parseServerDate(dateStr);
   const now = new Date();
   const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
   if (arDateKey(d) === arDateKey(now)) return "Hoy";

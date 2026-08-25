@@ -101,6 +101,7 @@ export default function ReviewsManager() {
       const appt = appointments.find((a) => a.id === selectedAppt);
       const patient = patients.find((p) => p.id === appt.patient_id);
       const firstName = patient?.first_name || appt.patient_name || "";
+      const me = await base44.auth.me().catch(() => null);
       await base44.entities.ReviewRequest.create({
         patient_id: appt.patient_id,
         patient_name: appt.patient_name,
@@ -113,6 +114,7 @@ export default function ReviewsManager() {
         request_message: defaultMessage(firstName),
         token: crypto.randomUUID(),
         disabled: false,
+        professional_id: appt.professional_id || me?.id || "",
       });
       toast({ title: "Solicitud creada" });
       setOpen(false);

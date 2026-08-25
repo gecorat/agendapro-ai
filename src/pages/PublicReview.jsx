@@ -65,6 +65,13 @@ export default function PublicReview() {
     );
   }
 
+  function trackGoogleClick() {
+    // Fire-and-forget: no bloquea la navegación a Google, y si falla no rompe nada (el
+    // paciente ya se está yendo a dejar la reseña de cualquier forma).
+    base44.functions.invoke("publicReview", { action: "trackGoogleClick", id, token }).catch(() => {});
+    setGooglePromptDismissed(true);
+  }
+
   const brand = data?.page_color || "#0f172a";
   const offerGoogle = done && rating >= 4 && data?.google_review_link && !googlePromptDismissed;
 
@@ -99,7 +106,7 @@ export default function PublicReview() {
               <h2 className="font-heading font-semibold text-lg">¡Gracias por tu {rating} estrellas!</h2>
               <p className="text-sm text-muted-foreground">¿Nos dejarías esta misma reseña en Google también? Ayuda mucho a que más pacientes nos encuentren — te lleva 10 segundos.</p>
               <Button className="w-full" style={{ backgroundColor: brand }} asChild>
-                <a href={data.google_review_link} target="_blank" rel="noopener noreferrer" onClick={() => setGooglePromptDismissed(true)}>
+                <a href={data.google_review_link} target="_blank" rel="noopener noreferrer" onClick={trackGoogleClick}>
                   <ExternalLink className="w-4 h-4 mr-2" /> Dejar reseña en Google
                 </a>
               </Button>

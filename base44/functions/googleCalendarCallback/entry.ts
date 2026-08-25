@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { exchangeCode, getUserEmail } from '../../shared/google-calendar.ts';
+import { setPracticeSecrets, setProfessionalSecrets } from '../../shared/secrets.ts';
 
 // Recibe el "code" que Google manda de vuelta después de que la persona autoriza el
 // acceso a su Calendar. Canjea ese código por tokens reales y los guarda en el registro
@@ -44,20 +45,20 @@ export default async function (req: Request): Promise<Response> {
     if (statePayload.professionalRefId) {
       await base44.asServiceRole.entities.Professional.update(statePayload.professionalRefId, {
         google_calendar_connected: true,
-        google_refresh_token: tokens.refresh_token,
         google_calendar_email: email,
         google_sync_enabled: true,
       });
+      await setProfessionalSecrets(base44, statePayload.professionalRefId, { google_refresh_token: tokens.refresh_token });
     } else {
       const practices = await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: user.id });
       const practice = practices?.[0];
       if (!practice) return Response.json({ error: 'No se encontró tu consultorio' }, { status: 400 });
       await base44.asServiceRole.entities.PracticeSettings.update(practice.id, {
         google_calendar_connected: true,
-        google_refresh_token: tokens.refresh_token,
         google_calendar_email: email,
         google_sync_enabled: true,
       });
+      await setPracticeSecrets(base44, practice.id, { google_refresh_token: tokens.refresh_token });
     }
 
     return Response.json({ ok: true, email });

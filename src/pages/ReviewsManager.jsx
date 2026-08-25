@@ -7,7 +7,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
-import { Loader2, Star, Send, Plus, MessageCircle, Mail, Ban, RotateCcw, Check } from "lucide-react";
+import { getPlanStatus } from "@/lib/plan-utils";
+import PlanGate from "@/components/PlanGate";
+import { Loader2, Star, Send, Plus, MessageCircle, Mail, Ban, RotateCcw, Check, ExternalLink } from "lucide-react";
 
 const STATUS_CONFIG = {
   pending: { label: "Pendiente", bgSoft: "bg-slate-100", text: "text-slate-600" },
@@ -18,6 +20,17 @@ const STATUS_CONFIG = {
 
 function defaultMessage(firstName) {
   return `¡Hola ${firstName || ""}! Gracias por tu visita. ¿Nos dejarías una reseña? Tu opinión nos ayuda mucho.`;
+}
+
+// Acepta tanto un link completo (el que copian de "Conseguir más reseñas" en su Perfil de
+// Negocio de Google, o cualquier link de compartir de Maps) como un Place ID pelado
+// (ej. "ChIJN1t_tDeuEmsRUsoyG83frY4") — si no empieza con http, asumimos que es el Place ID
+// y armamos nosotros el link de reseña directa.
+function normalizeGoogleReviewLink(raw) {
+  const trimmed = (raw || "").trim();
+  if (!trimmed) return "";
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://search.google.com/local/writereview?placeid=${encodeURIComponent(trimmed)}`;
 }
 
 export default function ReviewsManager() {

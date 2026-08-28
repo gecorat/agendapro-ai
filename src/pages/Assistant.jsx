@@ -159,6 +159,24 @@ function FullAssistant({ settings, reloadSettings, save }) {
   const [avatarLoading, setAvatarLoading] = useState(false);
   const [cancellingApptId, setCancellingApptId] = useState(null);
   const [selectedDuration, setSelectedDuration] = useState(null);
+  // "No leído" tenía una heurística sola (mensajes del paciente al final sin respuesta
+  // nuestra después) sin ningún registro de si vos ya abriste ese chat — confirmado en
+  // vivo: abrir el chat no lo marcaba como leído, se quedaba marcado hasta que alguien
+  // (vos o el bot) mandaba una respuesta. Ahora guardamos, por teléfono, la última vez que
+  // abriste esa conversación (en este navegador) y la cruzamos con esa heurística.
+  const LAST_READ_KEY = "kameagenda_chat_last_read";
+  const [lastReadMap, setLastReadMap] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(LAST_READ_KEY) || "{}"); } catch { return {}; }
+  });
+  const markPhoneRead = (phone) => {
+    if (!phone) return;
+    const now = new Date().toISOString();
+    setLastReadMap((prev) => {
+      const next = { ...prev, [phone]: now };
+      try { localStorage.setItem(LAST_READ_KEY, JSON.stringify(next)); } catch { /* localStorage puede fallar en modo privado; no es crítico */ }
+      return next;
+    });
+  };
   const messagesEndRef = useRef(null);
 
   const connected = !!settings?.whatsapp_connected;

@@ -474,24 +474,45 @@ REGLAS ADICIONALES:
         } else {
           assignedProfessionalRefId = matched.professionalRefId;
           let patientId = existingPatient?.id;
-          // Si es un paciente NUEVO y la IA logró sacarle el nombre en la conversación
-          // (appointment.patient_first_name), lo usamos acá en vez de guardarlo como
-          // "Paciente" genérico para siempre. Antes esto NUNCA pasaba — ni se le pedía el
-          // nombre al paciente, ni había forma de que la IA lo devolviera aunque se lo
-          // preguntara: la ficha quedaba con el nombre "Paciente" a mano de por vida.
+          // Si es un paciente NUEVO y la IA logró sacarle nombre Y apellido en la
+          // conversación (appointment.patient_first_name / patient_last_name), los usamos
+          // acá en vez de guardarlo como "Paciente" genérico para siempre. Antes esto NUNCA
+          // pasaba — ni se le pedía el nombre al paciente, ni había forma de que la IA lo
+          // devolviera aunque se lo preguntara: la ficha quedaba con el nombre "Paciente" a
+          // mano de por vida. El apellido se suma con el mismo criterio (antes no existía).
           const suppliedFirstName = (reply.appointment.patient_first_name || "").trim();
+          const suppliedLastName = (reply.appointment.patient_last_name || "").trim();
+          // Email y DNI: campos opcionales que el bot SOLO completa si el objetivo
+          // configurado por el profesional le pide explícitamente recolectarlos (no forman
+          // parte del flujo de agendamiento por defecto). Se guardan tanto para pacientes
+          // nuevos como para pacientes YA registrados que todavía no los tengan cargados —
+          // así sirve también para "pedirlo más adelante en la sesión", no solo al agendar.
+          const suppliedEmail = (reply.appointment.patient_email || "").trim();
+          const suppliedDni = (reply.appointment.patient_dni || "").trim();
           let patientName = existingPatient
             ? `${existingPatient.first_name} ${existingPatient.last_name || ""}`.trim()
-            : (suppliedFirstName || "Paciente WhatsApp");
+            : (suppliedFirstName ? `${suppliedFirstName} ${suppliedLastName}`.trim() : "Paciente WhatsApp");
           try {
             if (!patientId) {
               const newPatient = await base44.asServiceRole.entities.Patient.create({
                 first_name: suppliedFirstName || "Paciente",
+                last_name: suppliedLastName || undefined,
                 phone: fromPhone,
                 professional_id: professionalId,
+                ...(suppliedEmail ? { email: suppliedEmail } : {}),
+                ...(suppliedDni ? { dni: suppliedDni } : {}),
               });
               patientId = newPatient.id;
-              patientName = newPatient.first_name;
+              patientName = `${newPatient.first_name} ${newPatient.last_name || ""}`.trim();
+            } else {
+              // Paciente ya registrado: si en ESTA conversación dio un email/DNI que todavía
+              // no tenía cargado, lo completamos sin pisar datos existentes.
+              const patientUpdates = {};
+              if (suppliedEmail && !existingPatient.email) patientUpdates.email = suppliedEmail;
+              if (suppliedDni && !existingPatient.dni) patientUpdates.dni = suppliedDni;
+              if (Object.keys(patientUpdates).length) {
+                await base44.asServiceRole.entities.Patient.update(patientId, patientUpdates);
+              }
             }
 
             const newAppt = await base44.asServiceRole.entities.Appointment.create({

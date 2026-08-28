@@ -379,7 +379,6 @@ export default function PublicPageEditor() {
                   <div className="flex gap-1.5">
                     <SegButton active={form.photo_align === "left"} onClick={() => set("photo_align", "left")} title="Izquierda"><AlignLeft className="w-3.5 h-3.5" /> Izquierda</SegButton>
                     <SegButton active={form.photo_align === "center"} onClick={() => set("photo_align", "center")} title="Centrado"><AlignCenter className="w-3.5 h-3.5" /> Centrado</SegButton>
-                    <SegButton active={form.photo_align === "banner"} onClick={() => set("photo_align", "banner")} title="Banner Top"><PanelTop className="w-3.5 h-3.5" /> Banner Top</SegButton>
                   </div>
                 </div>
 

@@ -651,13 +651,13 @@ export default function PublicBooking() {
       )}
 
       {step === DATA_STEP && (
-        <div className={`border p-5 space-y-4 ${cardClass}`} style={cardStyle}>
+        <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="font-heading font-semibold" style={{ color: theme.text }}>Tus datos</h2>
             <button className="text-sm hover:underline" style={{ color: theme.muted }} onClick={() => setStep(DATE_STEP)}>Atrás</button>
           </div>
-          <div className="rounded-lg p-3 text-sm" style={{ background: theme.chipBg || "#f8fafc", color: theme.text }}>
-            <p className="font-medium">{service?.name}{selectedPro ? ` con ${selectedPro.first_name}` : ""}</p>
+          <div className="text-sm pb-3" style={{ borderBottom: `1px solid ${theme.cardBorder}` }}>
+            <p className="font-medium" style={{ color: theme.text }}>{service?.name}{selectedPro ? ` con ${selectedPro.first_name}` : ""}</p>
             <p className="capitalize" style={{ color: theme.muted }}>{date && formatLongDate(date)} · {slot && formatSlot(slot)}</p>
           </div>
           <div className="grid grid-cols-2 gap-3">

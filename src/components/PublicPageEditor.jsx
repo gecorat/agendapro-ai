@@ -279,7 +279,7 @@ export default function PublicPageEditor() {
     } catch { /* noop */ }
   };
 
-  const activeTheme = resolveTheme(form.theme_preset, form.page_color, { custom: { borderRadius: form.custom_border_radius } });
+  const activeTheme = resolveTheme(form.theme_preset, form.page_color, { custom: { borderRadius: form.custom_border_radius, avatarBorderRadius: form.avatar_border_radius } });
 
   return (
     // Layout de flujo NORMAL de página (nada de h-full/overflow-hidden acá): el que scrollea

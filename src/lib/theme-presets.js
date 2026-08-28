@@ -205,10 +205,12 @@ export function resolvePresetKey(key) {
   return "nordic_slate";
 }
 
-// Resuelve el tema final: preset (con su acento/tipografía/radio propios) + los 2 únicos
-// overrides opcionales de "Personalización fina": color de acento (pageColor) y tipografía
-// de encabezado (fontOverride). custom.borderRadius también es opcional ("auto" = usar el
-// radio propio del preset).
+// Resuelve el tema final: preset (con su acento/tipografía/radio propios) + los overrides
+// opcionales de "Personalización fina": color de acento (pageColor), tipografía de
+// encabezado (fontOverride), radio de BOTONES (custom.borderRadius) y radio del AVATAR
+// (custom.avatarBorderRadius) — dos controles independientes: antes un único radio
+// gobernaba tanto los botones como la forma del avatar. "auto" en cualquiera de los dos
+// = heredar el radio propio del preset.
 export function resolveTheme(presetKey, pageColor, options = {}) {
   const { fontOverride, custom = {} } = options;
   const key = resolvePresetKey(presetKey);

@@ -106,6 +106,10 @@ export default function BotSettingsPanel() {
   const objectiveIsDefault = objective === (defaults?.objectivePrompt || "");
   const toneIsDefault = tone === (defaults?.tonePrompt || "");
 
+  const toggleRequiredField = (key) => {
+    setRequiredFields((prev) => prev.includes(key) ? prev.filter((f) => f !== key) : [...prev, key]);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
@@ -135,7 +139,35 @@ export default function BotSettingsPanel() {
         <BotPauseBanner settings={settings} className="!bg-transparent !p-0" />
       </div>
 
-      {/* Nombre del asistente */}
+      {/* Cómo se presenta el bot */}
+      <div className="bg-card rounded-2xl border border-border p-4 space-y-2.5">
+        <div className="flex items-center gap-1.5">
+          <Users className="w-4 h-4 text-primary" />
+          <Label className="font-medium">Cómo se presenta el bot</Label>
+        </div>
+        <p className="text-xs text-muted-foreground -mt-1">Elegí si habla como una asistente virtual aparte (con nombre propio, opcional) o como si fueras vos mismo respondiendo.</p>
+        <div className="flex flex-col sm:flex-row gap-2 pt-1">
+          <button
+            type="button"
+            onClick={() => setPersonaMode("assistant")}
+            className={`flex-1 text-left px-3 py-2.5 rounded-xl border text-sm transition-colors ${personaMode === "assistant" ? "border-primary bg-accent" : "border-border hover:bg-muted"}`}
+          >
+            <p className="font-medium">Asistente virtual</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Se presenta como la asistente del consultorio, con nombre propio si le cargás uno.</p>
+          </button>
+          <button
+            type="button"
+            onClick={() => setPersonaMode("professional")}
+            className={`flex-1 text-left px-3 py-2.5 rounded-xl border text-sm transition-colors ${personaMode === "professional" ? "border-primary bg-accent" : "border-border hover:bg-muted"}`}
+          >
+            <p className="font-medium">Vos mismo</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Habla en primera persona, como si el profesional estuviera respondiendo directamente.</p>
+          </button>
+        </div>
+      </div>
+
+      {/* Nombre del asistente — solo tiene sentido en modo "Asistente virtual" */}
+      {personaMode === "assistant" && (
       <div className="bg-card rounded-2xl border border-border p-4 space-y-2.5">
         <div className="flex items-center gap-1.5">
           <UserCircle2 className="w-4 h-4 text-primary" />
@@ -148,6 +180,49 @@ export default function BotSettingsPanel() {
           placeholder="Ej: Sofía"
           className="max-w-xs"
         />
+      </div>
+      )}
+
+      {/* Datos obligatorios para pacientes nuevos */}
+      <div className="bg-card rounded-2xl border border-border p-4 space-y-2.5">
+        <div className="flex items-center gap-1.5">
+          <IdCard className="w-4 h-4 text-primary" />
+          <Label className="font-medium">Datos obligatorios para agendar (pacientes nuevos)</Label>
+        </div>
+        <p className="text-xs text-muted-foreground -mt-1">El bot no confirma un turno nuevo hasta tener estos datos. Nombre y teléfono siempre se piden (el teléfono ya lo tiene por WhatsApp); elegí qué más necesitás pedirle. No aplica a pacientes ya registrados.</p>
+        <div className="space-y-2 pt-1">
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked disabled className="w-4 h-4 rounded accent-primary opacity-60" />
+            <span className="text-muted-foreground">Nombre (siempre obligatorio)</span>
+          </label>
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              checked={requiredFields.includes("last_name")}
+              onChange={() => toggleRequiredField("last_name")}
+              className="w-4 h-4 rounded accent-primary"
+            />
+            Apellido
+          </label>
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              checked={requiredFields.includes("email")}
+              onChange={() => toggleRequiredField("email")}
+              className="w-4 h-4 rounded accent-primary"
+            />
+            Email
+          </label>
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              checked={requiredFields.includes("dni")}
+              onChange={() => toggleRequiredField("dni")}
+              className="w-4 h-4 rounded accent-primary"
+            />
+            DNI
+          </label>
+        </div>
       </div>
 
       {/* Objetivo */}

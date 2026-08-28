@@ -4,6 +4,7 @@ import { pushAppointmentToGoogle } from '../../shared/google-calendar.ts';
 import { sendPushToUsers, getPracticeRecipientUserIds } from '../../shared/push.ts';
 import { sendWhatsAppMessage } from '../../shared/whatsapp-providers.ts';
 import { buildConfirmationMessage } from '../../shared/zernio.ts';
+import { getAppointmentContext } from '../../shared/appointment-context.ts';
 
 export default async function (req: Request): Promise<Response> {
   try {
@@ -136,10 +137,8 @@ export default async function (req: Request): Promise<Response> {
       // para que el paciente reciba exactamente el mismo tipo de mensaje sin importar si
       // reservó charlando con el bot o solo desde la página.
       try {
-        const professionalName = professional_ref_id
-          ? (() => null)() // se resuelve abajo si hace falta; por ahora usamos el nombre del consultorio
-          : undefined;
-        const waText = buildConfirmationMessage({ practice, service, start, professionalName: practice?.practice_name || undefined });
+        const { professionalName } = await getAppointmentContext(base44, appointment, practice);
+        const waText = buildConfirmationMessage({ practice, service, start, professionalName });
         await sendWhatsAppMessage(base44, practice, patient.phone, waText);
       } catch (e) {
         console.error('sendWhatsAppMessage error (createPublicAppointment):', e?.message || e);

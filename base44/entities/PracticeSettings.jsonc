@@ -205,7 +205,7 @@
     },
     "custom_border_radius": {
       "type": "string",
-      "title": "Redondeado de tarjetas/botones (anula el del preset)",
+      "title": "Estilo de botones (anula el radio del preset)",
       "enum": [
         "auto",
         "none",
@@ -213,7 +213,7 @@
         "full"
       ],
       "default": "auto",
-      "description": "'auto' = usar el radio propio del preset visual elegido."
+      "description": "Solo afecta a botones y tarjetas \u2014 la forma del avatar se controla aparte con avatar_border_radius. 'auto' = usar el radio propio del preset visual elegido."
     },
     "custom_card_opacity": {
       "type": "number",

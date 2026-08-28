@@ -267,7 +267,7 @@ function FullAssistant({ settings, reloadSettings, save }) {
       let unread = 0;
       for (let i = sorted.length - 1; i >= 0; i--) {
         if (sorted[i].role !== "user") break;
-        if (readAt && new Date(sorted[i].created_date) <= readAt) break;
+        if (readAt && parseServerDate(sorted[i].created_date) <= readAt) break;
         unread++;
       }
       // `phone` acá es el que vino tal cual en la Conversation (webhook de WhatsApp): puede

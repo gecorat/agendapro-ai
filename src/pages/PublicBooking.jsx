@@ -531,7 +531,7 @@ export default function PublicBooking() {
         <div className="space-y-3">
           <h2 className="font-heading font-semibold text-lg" style={{ color: theme.text }}>Elegí el servicio</h2>
           {services.length === 0 ? (
-            <div className={`p-8 text-center space-y-3 border border-dashed ${cardClass}`} style={cardStyle}>
+            <div className={`p-8 text-center space-y-3 border border-dashed ${theme.radiusClass}`} style={{ borderColor: theme.cardBorder }}>
               <CalendarX className="w-12 h-12 mx-auto opacity-40" style={{ color: theme.muted }} />
               <div>
                 <p className="font-medium" style={{ color: theme.text }}>Todavía no hay servicios disponibles</p>
@@ -539,12 +539,12 @@ export default function PublicBooking() {
               </div>
             </div>
           ) : (
-            <div className={`border overflow-hidden ${cardClass}`} style={cardStyle}>
+            <div>
               {services.map((s, i) => (
                 <button
                   key={s.id}
                   onClick={() => { setService(s); setStep(hasProfessionals ? PRO_STEP : DATE_STEP); }}
-                  className="group w-full text-left px-4 py-3.5 hover:opacity-80 transition-opacity cursor-pointer flex items-center justify-between"
+                  className="group w-full text-left py-3.5 hover:opacity-70 transition-opacity cursor-pointer flex items-center justify-between"
                   style={i < services.length - 1 ? { borderBottom: `1px solid ${theme.cardBorder}` } : undefined}
                 >
                   <div className="flex items-center gap-3 min-w-0">

@@ -92,6 +92,16 @@ export default async function (req: Request): Promise<Response> {
       }
     }
 
+    // En planes Pro/Clinic con WhatsApp conectado, la reserva por la página pública queda
+    // CONFIRMADA directo (no "pending") — ya le avisamos al paciente por WhatsApp al toque
+    // (más abajo), así que no hace falta el paso manual de "vos la confirmás desde la
+    // Agenda" que sí sigue existiendo en planes sin WhatsApp. Antes esto SIEMPRE quedaba
+    // pending y al paciente no le llegaba ningún aviso automático de la reserva.
+    const practices = await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: professional_id });
+    const practice = practices?.[0];
+    const isProOrClinic = practice?.plan === 'pro' || practice?.plan === 'clinic';
+    const autoConfirm = isProOrClinic && !!practice?.whatsapp_connected;
+
     const appointment = await base44.asServiceRole.entities.Appointment.create({
       patient_id: patient.id,
       patient_name: `${patient.first_name} ${patient.last_name || ''}`.trim(),
@@ -99,7 +109,7 @@ export default async function (req: Request): Promise<Response> {
       service_name: service.name,
       start_datetime: start.toISOString(),
       end_datetime: end.toISOString(),
-      status: 'pending',
+      status: autoConfirm ? 'confirmed' : 'pending',
       origin: 'public_link',
       professional_id,
       professional_ref_id: professional_ref_id || undefined,
@@ -113,15 +123,36 @@ export default async function (req: Request): Promise<Response> {
       appointment.google_event_id = googleEventId;
     }
 
+    if (autoConfirm) {
+      // Email: el workflow "Email de confirmación al paciente" solo dispara en un UPDATE
+      // de status a "confirmed", no en un CREATE que ya nace confirmado — así que acá lo
+      // invocamos a mano, igual que hace el bot de WhatsApp al agendar.
+      try {
+        await base44.asServiceRole.functions.invoke('sendAppointmentConfirmation', { appointment_id: appointment.id });
+      } catch (e) {
+        console.error('sendAppointmentConfirmation invoke error (createPublicAppointment):', e?.message || e);
+      }
+      // WhatsApp: mismo formato (negrita + emojis) que usa el bot al confirmar un turno,
+      // para que el paciente reciba exactamente el mismo tipo de mensaje sin importar si
+      // reservó charlando con el bot o solo desde la página.
+      try {
+        const professionalName = professional_ref_id
+          ? (() => null)() // se resuelve abajo si hace falta; por ahora usamos el nombre del consultorio
+          : undefined;
+        const waText = buildConfirmationMessage({ practice, service, start, professionalName: practice?.practice_name || undefined });
+        await sendWhatsAppMessage(base44, practice, patient.phone, waText);
+      } catch (e) {
+        console.error('sendWhatsAppMessage error (createPublicAppointment):', e?.message || e);
+      }
+    }
+
     // Push al dueño (y a cualquier profesional del equipo) — no bloquea la respuesta de la
     // reserva si falla o si todavía no hay VAPID configurado.
     try {
-      const practices = await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: professional_id });
-      const practice = practices?.[0];
       if (practice) {
         const recipients = await getPracticeRecipientUserIds(base44, practice);
         await sendPushToUsers(base44, recipients, {
-          title: 'Nueva reserva pendiente',
+          title: autoConfirm ? 'Nueva reserva confirmada' : 'Nueva reserva pendiente',
           body: `${patient.first_name} ${patient.last_name || ''}`.trim() + ` — ${service.name}`,
           url: '/agenda',
           tag: `appt-${appointment.id}`,

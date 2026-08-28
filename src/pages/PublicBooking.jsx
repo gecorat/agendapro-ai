@@ -116,7 +116,7 @@ function buildWaMessage(service, date, slot, form) {
 // el fondo plano del tema ocupe todo el espacio). La única excepción es align="banner",
 // donde el usuario elige explícitamente un banner destacado con el acento del tema.
 function ProfileHeader({ settings, theme, brand, cardClass, glassStyle, align, size = 96, rounded = "rounded-t-3xl", headingFontStyle, bleed = false }) {
-  const frameClass = avatarShapeClass(theme.radiusClass);
+  const frameClass = avatarShapeClass(theme.avatarRadiusClass);
   const isBanner = align === "banner";
   const hasCover = !!settings?.cover_image_url || isBanner;
   const alignClass = align === "left" ? "justify-start" : "justify-center";

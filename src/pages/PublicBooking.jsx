@@ -606,7 +606,7 @@ export default function PublicBooking() {
       )}
 
       {step === DATE_STEP && (
-        <div className={`border p-5 space-y-4 ${cardClass}`} style={cardStyle}>
+        <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="font-heading font-semibold" style={{ color: theme.text }}>Elegí fecha y hora</h2>
             <button className="text-sm hover:underline" style={{ color: theme.muted }} onClick={() => setStep(hasProfessionals ? PRO_STEP : 1)}>Atrás</button>

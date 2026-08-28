@@ -261,10 +261,14 @@ function FullAssistant({ settings, reloadSettings, save }) {
       const sorted = msgs.sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
       const last = sorted[sorted.length - 1];
       // Heurística de "sin leer": mensajes del paciente al final de la conversación que
-      // todavía no tienen ninguna respuesta nuestra después.
+      // todavía no tienen ninguna respuesta nuestra después, Y que llegaron después de la
+      // última vez que abriste ese chat (si nunca lo abriste, cuentan todos).
+      const readAt = lastReadMap[phone] ? new Date(lastReadMap[phone]) : null;
       let unread = 0;
       for (let i = sorted.length - 1; i >= 0; i--) {
-        if (sorted[i].role === "user") unread++; else break;
+        if (sorted[i].role !== "user") break;
+        if (readAt && new Date(sorted[i].created_date) <= readAt) break;
+        unread++;
       }
       // `phone` acá es el que vino tal cual en la Conversation (webhook de WhatsApp): puede
       // traer o no el "+" según el proveedor (Zernio sí, Evolution no). ChatPause siempre

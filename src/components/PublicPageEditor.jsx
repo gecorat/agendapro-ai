@@ -114,12 +114,12 @@ function LivePreview({ form, fullbleed = false }) {
               <p className={fullbleed ? "text-xl font-heading font-bold" : "text-base font-heading font-bold"} style={{ color: theme.text, ...headingFontStyle }}>{form.practice_name || "Tu consultorio"}</p>
               {form.specialty && <p className={fullbleed ? "text-sm mt-1" : "text-xs mt-0.5"} style={{ color: theme.muted, opacity: 0.85 }}>{form.specialty}</p>}
             </div>
-            <div className="flex items-center gap-1.5 mt-4">
-              <span className={`flex-1 text-center px-3 py-2 text-xs font-semibold ${theme.radiusClass}`} style={{ background: theme.accentCss, color: theme.accentText, boxShadow: theme.neon ? theme.neonGlow : undefined }}>Agendar cita</span>
-              <span className={`flex-1 text-center px-3 py-2 text-xs font-medium border ${theme.radiusClass}`} style={{ color: theme.muted, borderColor: theme.cardBorder }}>Información</span>
-            </div>
+            {form.description && (
+              <p className="text-xs mt-4 leading-relaxed" style={{ color: theme.muted }}>{form.description}</p>
+            )}
 
             <div className="mt-4">
+              <p className="text-[11px] font-semibold uppercase tracking-wide mb-1.5" style={{ color: theme.muted, opacity: 0.8 }}>Servicios</p>
               <div className="flex items-center justify-between py-3" style={{ borderBottom: `1px solid ${theme.cardBorder}` }}>
                 <div>
                   <p className="text-xs font-semibold" style={{ color: theme.text, fontFamily: theme.headingFont || undefined }}>Consulta</p>

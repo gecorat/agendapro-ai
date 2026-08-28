@@ -473,6 +473,16 @@ export default function PublicPageEditor() {
                 </div>
 
                 <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Forma del avatar</Label>
+                  <div className="flex gap-1.5">
+                    <SegButton active={form.avatar_border_radius === "auto"} onClick={() => set("avatar_border_radius", "auto")}>Del tema</SegButton>
+                    <SegButton active={form.avatar_border_radius === "none"} onClick={() => set("avatar_border_radius", "none")}><Square className="w-3.5 h-3.5" /> Recto</SegButton>
+                    <SegButton active={form.avatar_border_radius === "soft"} onClick={() => set("avatar_border_radius", "soft")}><Square className="w-3.5 h-3.5 rounded" /> Suave</SegButton>
+                    <SegButton active={form.avatar_border_radius === "full"} onClick={() => set("avatar_border_radius", "full")}><Circle className="w-3.5 h-3.5" /> Píldora</SegButton>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
                   <Label className="text-xs text-muted-foreground">Estilo de botones</Label>
                   <div className="flex gap-1.5">
                     <SegButton active={form.custom_border_radius === "auto"} onClick={() => set("custom_border_radius", "auto")}>Del tema</SegButton>

@@ -673,17 +673,17 @@ export default function PublicBooking() {
       )}
 
       {step === CONFIRM_STEP && (
-        <div className={`border p-5 space-y-4 ${cardClass}`} style={cardStyle}>
+        <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="font-heading font-semibold" style={{ color: theme.text }}>Revisá tu reserva</h2>
             <button className="text-sm hover:underline" style={{ color: theme.muted }} onClick={() => setStep(DATA_STEP)}>Atrás</button>
           </div>
-          <div className="rounded-lg p-4 space-y-2 text-sm" style={{ background: theme.chipBg || "#f8fafc" }}>
-            <div className="flex justify-between gap-2"><span style={{ color: theme.muted }}>Servicio</span><span className="font-medium text-right" style={{ color: theme.text }}>{service?.name}</span></div>
-            {selectedPro && <div className="flex justify-between gap-2"><span style={{ color: theme.muted }}>Con</span><span className="font-medium text-right" style={{ color: theme.text }}>{selectedPro.first_name} {selectedPro.last_name}</span></div>}
-            <div className="flex justify-between gap-2"><span style={{ color: theme.muted }}>Fecha</span><span className="font-medium capitalize" style={{ color: theme.text }}>{date && formatLongDate(date)}</span></div>
-            <div className="flex justify-between gap-2"><span style={{ color: theme.muted }}>Hora</span><span className="font-medium" style={{ color: theme.text }}>{slot && formatSlot(slot)}</span></div>
-            <div className="flex justify-between gap-2"><span style={{ color: theme.muted }}>A nombre de</span><span className="font-medium text-right" style={{ color: theme.text }}>{form.first_name} {form.last_name}</span></div>
+          <div className="space-y-2 text-sm pb-2">
+            <div className="flex justify-between gap-2 py-1.5" style={{ borderBottom: `1px solid ${theme.cardBorder}` }}><span style={{ color: theme.muted }}>Servicio</span><span className="font-medium text-right" style={{ color: theme.text }}>{service?.name}</span></div>
+            {selectedPro && <div className="flex justify-between gap-2 py-1.5" style={{ borderBottom: `1px solid ${theme.cardBorder}` }}><span style={{ color: theme.muted }}>Con</span><span className="font-medium text-right" style={{ color: theme.text }}>{selectedPro.first_name} {selectedPro.last_name}</span></div>}
+            <div className="flex justify-between gap-2 py-1.5" style={{ borderBottom: `1px solid ${theme.cardBorder}` }}><span style={{ color: theme.muted }}>Fecha</span><span className="font-medium capitalize" style={{ color: theme.text }}>{date && formatLongDate(date)}</span></div>
+            <div className="flex justify-between gap-2 py-1.5" style={{ borderBottom: `1px solid ${theme.cardBorder}` }}><span style={{ color: theme.muted }}>Hora</span><span className="font-medium" style={{ color: theme.text }}>{slot && formatSlot(slot)}</span></div>
+            <div className="flex justify-between gap-2 py-1.5"><span style={{ color: theme.muted }}>A nombre de</span><span className="font-medium text-right" style={{ color: theme.text }}>{form.first_name} {form.last_name}</span></div>
           </div>
           <div className="flex flex-col gap-2">
             <Button variant="outline" className="w-full" onClick={() => setStep(DATE_STEP)}>

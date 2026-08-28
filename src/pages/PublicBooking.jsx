@@ -253,6 +253,46 @@ function ContactBlock({ theme, settings, igUrl, fbUrl, webUrl, waUrl, mapsUrl, c
   );
 }
 
+function ReviewStars({ rating, color }) {
+  return (
+    <div className="flex items-center gap-0.5">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <Star key={n} className="w-3.5 h-3.5" style={{ color }} fill={n <= rating ? color : "none"} strokeWidth={1.5} />
+      ))}
+    </div>
+  );
+}
+
+// Reseñas reales de pacientes (ReviewRequest.status="received"), traídas por la función
+// pública getPublicReviews (ReviewRequest tiene lectura restringida por RLS, así que no se
+// puede leer directo desde el cliente anónimo). Sección opcional: el profesional la
+// prende/apaga desde el editor (settings.show_reviews_public).
+function ReviewsBlock({ theme, reviews, cardClass, glassStyle, headingFontStyle }) {
+  if (!reviews?.length) return null;
+  return (
+    <div className="space-y-3">
+      <h2 className="text-base font-heading font-semibold" style={{ color: theme.text, ...headingFontStyle }}>Reseñas de pacientes</h2>
+      <div className="space-y-2.5">
+        {reviews.map((r) => (
+          <div key={r.id} className={`border p-4 flex gap-3 ${cardClass}`} style={{ background: theme.cardBg, borderColor: theme.cardBorder, ...glassStyle }}>
+            <div className="w-9 h-9 rounded-full flex items-center justify-center font-heading font-bold text-sm shrink-0" style={{ background: theme.accentCss, color: theme.accentText }}>
+              {(r.name || "?")[0]?.toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="text-sm font-semibold" style={{ color: theme.text, ...headingFontStyle }}>{r.name}</p>
+                <ReviewStars rating={r.rating} color={theme.accent} />
+              </div>
+              {r.service_name && <p className="text-xs mt-0.5" style={{ color: theme.muted }}>{r.service_name}</p>}
+              {r.comment && <p className="text-sm mt-1.5 leading-relaxed" style={{ color: theme.muted }}>{r.comment}</p>}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function PublicBooking() {
   const { handle } = useParams();
   const cleanHandle = (handle || "").replace(/^@/, "");

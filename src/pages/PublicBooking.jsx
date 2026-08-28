@@ -178,16 +178,25 @@ function ProfileHeader({ settings, theme, brand, cardClass, glassStyle, align, s
   );
 }
 
-function InfoBlock({ theme, settings, igUrl, fbUrl, webUrl, waUrl, mapsUrl, cardClass, glassStyle }) {
-  const hasAny = settings?.description || settings?.address || settings?.phone || settings?.professional_email || fbUrl || igUrl || webUrl;
+// Descripción "Sobre mí": va sin caja/tarjeta propia, como texto suelto debajo del
+// encabezado — antes vivía adentro de InfoBlock con su propio fondo de tarjeta, lo que
+// sumaba una caja más a una página que ya tenía demasiadas superficies distintas.
+function DescriptionBlock({ theme, settings, headingFontStyle }) {
+  if (!settings?.description) return null;
+  return (
+    <div>
+      <h2 className="text-base font-heading font-semibold mb-2" style={{ color: theme.text, ...headingFontStyle }}>Sobre mí</h2>
+      <p className="text-sm leading-relaxed" style={{ color: theme.muted }}>{settings.description}</p>
+    </div>
+  );
+}
+
+function ContactBlock({ theme, settings, igUrl, fbUrl, webUrl, waUrl, mapsUrl, cardClass, glassStyle, headingFontStyle }) {
+  const hasAny = settings?.address || settings?.phone || settings?.professional_email || fbUrl || igUrl || webUrl;
   const rowStyle = { borderBottom: `1px solid ${theme.cardBorder}` };
   return (
     <div className="space-y-3">
-      {settings?.description && (
-        <div className={`border p-4 ${cardClass}`} style={{ background: theme.cardBg, borderColor: theme.cardBorder, ...glassStyle }}>
-          <p className="text-sm leading-relaxed" style={{ color: theme.text }}>{settings.description}</p>
-        </div>
-      )}
+      <h2 className="text-base font-heading font-semibold" style={{ color: theme.text, ...headingFontStyle }}>Contacto y ubicación</h2>
       {(settings?.phone || settings?.professional_email || fbUrl || igUrl || webUrl) && (
         <div className={`border overflow-hidden ${cardClass}`} style={{ background: theme.cardBg, borderColor: theme.cardBorder, ...glassStyle }}>
           {waUrl && (

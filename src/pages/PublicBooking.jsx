@@ -358,6 +358,14 @@ export default function PublicBooking() {
         setServices(servs || []);
         setAvailability(avail || []);
         setProfessionals((profs || []).filter((p) => p.invite_status !== "pending" && p.first_name));
+        if (s.show_reviews_public !== false) {
+          try {
+            const revRes = await base44.functions.invoke("getPublicReviews", { professional_id: pid });
+            setReviews(revRes?.data?.reviews || []);
+          } catch {
+            setReviews([]);
+          }
+        }
         try {
           const now = new Date(); now.setHours(0, 0, 0, 0);
           const toDate = new Date(now.getTime() + 21 * 86400000);

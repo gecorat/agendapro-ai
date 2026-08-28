@@ -707,7 +707,7 @@ export default function PublicBooking() {
         // botón manual solo se muestra cuando la cita queda pendiente de confirmación.
         const isAutoConfirmed = created.appointment?.status === "confirmed";
         return (
-          <div className={`border p-6 text-center space-y-3 ${cardClass}`} style={cardStyle}>
+          <div className="text-center space-y-3">
             <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center mx-auto"><Check className="w-7 h-7 text-emerald-600" /></div>
             <h2 className="font-heading font-semibold text-lg" style={{ color: theme.text }}>{isAutoConfirmed ? "¡Turno confirmado!" : "¡Solicitud registrada!"}</h2>
             <p className="text-sm" style={{ color: theme.muted }}>{service?.name}{selectedPro ? ` con ${selectedPro.first_name}` : ""}</p>

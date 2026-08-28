@@ -224,6 +224,8 @@ export default function PublicPageEditor() {
         custom_border_radius: resolvedRadius,
         custom_card_opacity: settings.custom_card_opacity ?? 100,
         custom_blur_enabled: !!settings.custom_blur_enabled,
+        avatar_border_radius: settings.avatar_border_radius || "auto",
+        show_reviews_public: settings.show_reviews_public !== false,
       });
     }
   }, [settings]);

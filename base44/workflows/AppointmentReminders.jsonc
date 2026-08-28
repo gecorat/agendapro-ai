@@ -1,5 +1,5 @@
 {
-  "description": "Env\u00eda recordatorios autom\u00e1ticos por email 3hs antes de cada cita confirmada",
+  "description": "Env\u00eda recordatorios autom\u00e1ticos por email 3hs antes de cada cita confirmada (y 24hs antes tambi\u00e9n, si se reserv\u00f3 con al menos 48hs de anticipaci\u00f3n)",
   "definition": {
     "document": {
       "dsl": "1.0.0",
@@ -17,7 +17,7 @@
           "then": "end",
           "x-base44": {
             "title": "Enviar recordatorios",
-            "description": "Citas en ventana de 3hs"
+            "description": "Citas en ventana de 3hs o 24hs (seg\u00fan margen de reserva)"
           }
         }
       }

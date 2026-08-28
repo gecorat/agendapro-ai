@@ -14,7 +14,7 @@ const EDITABLE_FIELDS = [
   'page_color', 'page_color_secondary', 'theme_preset', 'heading_font_override', 'description', 'published',
   'custom_bg_pattern', 'custom_bg_image_url', 'custom_bg_overlay_opacity', 'custom_border_radius', 'custom_card_opacity', 'custom_blur_enabled',
   'avatar_border_radius', 'show_reviews_public',
-  'bot_objective_prompt', 'bot_tone_prompt', 'bot_response_delay_seconds', 'bot_assistant_name', 'owner_display_name',
+  'bot_objective_prompt', 'bot_tone_prompt', 'bot_response_delay_seconds', 'bot_assistant_name', 'bot_persona_mode', 'bot_required_patient_fields', 'owner_display_name',
   'bot_enabled', 'bot_paused_until', 'google_review_link',
 ];
 

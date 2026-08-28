@@ -571,7 +571,7 @@ export default function PublicBooking() {
       )}
 
       {hasProfessionals && step === PRO_STEP && (
-        <div className={`border p-5 space-y-3 ${cardClass}`} style={cardStyle}>
+        <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="font-heading font-semibold" style={{ color: theme.text }}>Elegí con quién agendar</h2>
             <button className="text-sm hover:underline" style={{ color: theme.muted }} onClick={() => setStep(1)}>Cambiar servicio</button>
@@ -581,8 +581,8 @@ export default function PublicBooking() {
               <button
                 key={p.id}
                 onClick={() => { setSelectedPro(p); setDate(null); setSlot(null); setStep(DATE_STEP); }}
-                className={`w-full text-left p-3.5 border-2 flex items-center gap-3 transition-all hover:shadow-sm ${theme.radiusClass}`}
-                style={{ ...cardStyle, borderColor: theme.cardBorder }}
+                className={`w-full text-left p-3.5 border flex items-center gap-3 transition-colors hover:opacity-70 ${theme.radiusClass}`}
+                style={{ borderColor: theme.cardBorder, color: theme.text }}
               >
                 <div className="w-9 h-9 rounded-full flex items-center justify-center font-semibold text-sm shrink-0" style={{ background: `${brand}20`, color: brand }}>
                   {p.first_name?.[0]?.toUpperCase()}

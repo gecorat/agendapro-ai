@@ -363,7 +363,7 @@ export default function PublicPageEditor() {
                 <div className="space-y-2">
                   <Label>Avatar / Logo</Label>
                   <div className="flex items-center gap-3">
-                    <div className={`w-16 h-16 overflow-hidden border-2 border-border bg-accent flex items-center justify-center shrink-0 ${avatarShapeClass(activeTheme.radiusClass)}`}>
+                    <div className={`w-16 h-16 overflow-hidden border-2 border-border bg-accent flex items-center justify-center shrink-0 ${avatarShapeClass(activeTheme.avatarRadiusClass)}`}>
                       {form.photo_url ? <img src={form.photo_url} alt="perfil" className="w-full h-full object-cover" /> : <Upload className="w-5 h-5 text-muted-foreground" />}
                     </div>
                     <label className="cursor-pointer">

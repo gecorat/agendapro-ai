@@ -304,7 +304,12 @@ export default function PublicBooking() {
   const [availability, setAvailability] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [tab, setTab] = useState("agendar"); // solo se usa en mobile
+  const [reviews, setReviews] = useState([]);
+
+  // Ancla para el botón flotante "Agendar cita": hace scroll directo al flujo de
+  // reserva (que ahora vive en el mismo flujo de la página, ya no detrás de una pestaña).
+  const bookingRef = useRef(null);
+  const scrollToBooking = () => bookingRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   const [step, setStep] = useState(1);
   const [service, setService] = useState(null);

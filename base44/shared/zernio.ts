@@ -189,6 +189,18 @@ export async function orchestrateConversation(base44, ctx) {
   const objectivePrompt = practice?.bot_objective_prompt || bot.system_prompt || DEFAULT_OBJECTIVE_PROMPT;
   const tonePrompt = practice?.bot_tone_prompt || DEFAULT_TONE_PROMPT;
   const assistantName = (practice?.bot_assistant_name || "").trim();
+  const personaMode = practice?.bot_persona_mode === "professional" ? "professional" : "assistant";
+  const requiredPatientFields = Array.isArray(practice?.bot_required_patient_fields)
+    ? practice.bot_required_patient_fields
+    : ["last_name"];
+  const requireLastName = requiredPatientFields.includes("last_name");
+  const requireEmail = requiredPatientFields.includes("email");
+  const requireDni = requiredPatientFields.includes("dni");
+  const requiredDataLabels = ["nombre"];
+  if (requireLastName) requiredDataLabels.push("apellido");
+  if (requireEmail) requiredDataLabels.push("email");
+  if (requireDni) requiredDataLabels.push("DNI");
+  const requiredDataText = requiredDataLabels.join(", ");
   const nameBlock = assistantName
     ? `Te llamás ${assistantName}. Presentáte con ese nombre si el paciente te pregunta cómo te llamás, o de forma natural al saludar por primera vez en la conversación — no hace falta repetirlo en cada mensaje.`
     : `No tenés un nombre propio asignado: presentate genéricamente como "la asistente virtual del consultorio" si te preguntan cómo te llamás.`;

@@ -201,9 +201,11 @@ export async function orchestrateConversation(base44, ctx) {
   if (requireEmail) requiredDataLabels.push("email");
   if (requireDni) requiredDataLabels.push("DNI");
   const requiredDataText = requiredDataLabels.join(", ");
-  const nameBlock = assistantName
-    ? `Te llamás ${assistantName}. Presentáte con ese nombre si el paciente te pregunta cómo te llamás, o de forma natural al saludar por primera vez en la conversación — no hace falta repetirlo en cada mensaje.`
-    : `No tenés un nombre propio asignado: presentate genéricamente como "la asistente virtual del consultorio" si te preguntan cómo te llamás.`;
+  const nameBlock = personaMode === "professional"
+    ? `Hablás en PRIMERA PERSONA, como si vos mismo fueras ${practice?.practice_name || "el profesional"} respondiendo directamente por WhatsApp — NO te presentes como "la asistente virtual" ni como un bot aparte, y no uses ningún nombre de asistente distinto. Si te preguntan si sos una IA o un bot, respondé con naturalidad y sin dar vueltas (no lo niegues ni insistas en que sos la persona real), pero el resto de la conversación sigue en primera persona como si fueras vos.`
+    : (assistantName
+      ? `Te llamás ${assistantName}. Presentáte con ese nombre si el paciente te pregunta cómo te llamás, o de forma natural al saludar por primera vez en la conversación — no hace falta repetirlo en cada mensaje.`
+      : `No tenés un nombre propio asignado: presentate genéricamente como "la asistente virtual del consultorio" si te preguntan cómo te llamás.`);
   const systemPrompt = `${objectivePrompt}\n\n${tonePrompt}\n\n${nameBlock}`;
   const model = bot.model && bot.model !== "automatic" ? bot.model : undefined;
   // Cuánto esperar antes de mandar la respuesta por WhatsApp, configurable por el

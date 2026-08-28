@@ -44,7 +44,7 @@ function parseTimeToDate(date, time) {
 }
 
 // Principio y fin del día (00:00:00.000 y 23:59:59.999) en horario argentino.
-function argentinaDayBounds(date) {
+export function argentinaDayBounds(date) {
   const ymd = argentinaYMD(date);
   return {
     start: new Date(`${ymd}T00:00:00.000-03:00`),

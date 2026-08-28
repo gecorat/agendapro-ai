@@ -293,7 +293,7 @@ function FullAssistant({ settings, reloadSettings, save }) {
     }
     result.sort((a, b) => new Date(b.lastDate) - new Date(a.lastDate));
     return result;
-  }, [allMsgs, pauseByPhone, patientByPhone]);
+  }, [allMsgs, pauseByPhone, patientByPhone, lastReadMap]);
 
   const filteredConversations = useMemo(() => {
     let list = conversations;
@@ -437,6 +437,7 @@ function FullAssistant({ settings, reloadSettings, save }) {
   const handleSelect = (phone) => {
     setActivePhone(phone);
     setMobileView("chat");
+    markPhoneRead(phone);
   };
 
   const handleSend = async (textOverride) => {

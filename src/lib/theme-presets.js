@@ -263,6 +263,9 @@ export function resolveTheme(presetKey, pageColor, options = {}) {
     googleFont: font?.googleFont || null,
     radiusClass,
     radiusPx,
+    avatarRadiusClass,
+    avatarRadiusPx,
+    isDark,
   };
 }
 

@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
-import { Loader2, Bot, RotateCcw, Save, Target, Sparkles, Timer, MessageSquareText, UserCircle2, Power } from "lucide-react";
+import { Loader2, Bot, RotateCcw, Save, Target, Sparkles, Timer, MessageSquareText, UserCircle2, Power, IdCard, Users } from "lucide-react";
 import { getBotPauseStatus } from "@/lib/bot-status";
 import BotPauseButton from "@/components/BotPauseButton";
 import BotPauseBanner from "@/components/BotPauseBanner";
@@ -34,6 +34,8 @@ export default function BotSettingsPanel() {
   const [objective, setObjective] = useState("");
   const [tone, setTone] = useState("");
   const [assistantName, setAssistantName] = useState("");
+  const [personaMode, setPersonaMode] = useState("assistant");
+  const [requiredFields, setRequiredFields] = useState(["last_name"]);
   const [delaySeconds, setDelaySeconds] = useState(15);
   const [initialized, setInitialized] = useState(false);
   const botPauseStatus = getBotPauseStatus(settings);
@@ -58,6 +60,8 @@ export default function BotSettingsPanel() {
     setObjective(settings.bot_objective_prompt || defaults.objectivePrompt || "");
     setTone(settings.bot_tone_prompt || defaults.tonePrompt || "");
     setAssistantName(settings.bot_assistant_name || "");
+    setPersonaMode(settings.bot_persona_mode === "professional" ? "professional" : "assistant");
+    setRequiredFields(Array.isArray(settings.bot_required_patient_fields) ? settings.bot_required_patient_fields : ["last_name"]);
     setDelaySeconds(settings.bot_response_delay_seconds || defaults.responseDelaySeconds || 15);
     setInitialized(true);
   }, [settings, defaults, initialized]);
@@ -69,6 +73,8 @@ export default function BotSettingsPanel() {
         bot_objective_prompt: objective.trim(),
         bot_tone_prompt: tone.trim(),
         bot_assistant_name: assistantName.trim(),
+        bot_persona_mode: personaMode,
+        bot_required_patient_fields: requiredFields,
         bot_response_delay_seconds: delaySeconds,
       });
       toast({ title: "Configuración del bot guardada", description: "Los próximos mensajes por WhatsApp ya usan estos cambios." });

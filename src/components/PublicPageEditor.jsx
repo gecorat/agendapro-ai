@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import {
   Loader2, Upload, Check, Copy, ExternalLink, Share2, Smartphone,
   AlignLeft, AlignCenter, Circle, Square, MapPin, PenLine,
-  ChevronLeft, ChevronRight, Maximize2, X, Star, ChevronRight as ChevronRightIcon,
+  ChevronLeft, ChevronRight, Maximize2, X,
 } from "lucide-react";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import {

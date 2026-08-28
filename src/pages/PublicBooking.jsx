@@ -224,7 +224,7 @@ function ContactBlock({ theme, settings, igUrl, fbUrl, webUrl, waUrl, mapsUrl, c
             </a>
           )}
           {webUrl && (
-            <a href={webUrl} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-3 py-3.5 hover:opacity-70 transition-opacity ${settings?.address ? "" : ""}`} style={settings?.address ? rowStyle : undefined}>
+            <a href={webUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 py-3.5 hover:opacity-70 transition-opacity" style={settings?.address ? rowStyle : undefined}>
               <Globe className="w-4 h-4 shrink-0" style={{ color: theme.muted }} />
               <p className="text-sm truncate" style={{ color: theme.text }}>Sitio web</p>
             </a>

@@ -135,6 +135,19 @@ function LivePreview({ form, fullbleed = false }) {
                 <ChevronRight className="w-3.5 h-3.5" style={{ color: theme.muted }} />
               </div>
             </div>
+
+            {form.show_reviews_public !== false && (
+              <div className="mt-5 pt-4" style={{ borderTop: `1px solid ${theme.cardBorder}` }}>
+                <p className="text-[11px] font-semibold uppercase tracking-wide mb-1.5" style={{ color: theme.muted, opacity: 0.8 }}>Reseñas de pacientes</p>
+                <p className="text-[10.5px]" style={{ color: theme.muted }}>Acá se muestran las reseñas reales que te vayan dejando tus pacientes.</p>
+              </div>
+            )}
+          </div>
+        </div>
+        {/* Botón flotante "Agendar cita", igual al de la página pública real */}
+        <div className="sticky bottom-0 left-0 right-0 px-5 pt-6 pb-4" style={{ background: `linear-gradient(180deg, transparent 0%, ${theme.bg && theme.bg.startsWith("linear") ? "#0F172A" : theme.bg} 55%)` }}>
+          <div className={`w-full text-center py-3 text-xs font-bold ${theme.radiusClass}`} style={{ background: theme.accentCss, color: theme.accentText, boxShadow: theme.neon ? theme.neonGlow : "0 8px 20px rgba(0,0,0,0.18)" }}>
+            Agendar cita
           </div>
         </div>
       </div>

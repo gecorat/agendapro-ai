@@ -9,11 +9,22 @@ export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
     const now = new Date();
-    // Se sacó el recordatorio de 24hs: la ventana "hasta 24hs antes" atrapaba CUALQUIER
-    // cita del mismo día apenas se creaba (no solo las que realmente faltaban ~24hs), y el
-    // texto quedó hardcodeado como "mañana" sin comparar contra la fecha real — mandaba
-    // "recordás tu cita de mañana" para una cita de HOY. Ahora solo queda un recordatorio,
-    // 3 horas antes, que es una ventana chica y no tiene ese problema.
+
+    // Base44 guarda created_date en UTC pero SIN el sufijo "Z" (confirmado en vivo con la
+    // hora del chat) — sin forzarla acá, `new Date(...)` la interpretaría mal.
+    function parseServerDate(dateStr) {
+      if (!dateStr) return new Date(NaN);
+      const hasTz = /[zZ]$|[+-]\d{2}:?\d{2}$/.test(dateStr);
+      return new Date(hasTz ? dateStr : `${dateStr}Z`);
+    }
+
+    // Recordatorio de 24hs: vuelve a existir, pero SOLO para citas reservadas con al menos
+    // 48hs de anticipación (diferencia entre cuándo se reservó la cita y cuándo es). Si se
+    // reservó con menos margen que eso, un aviso de "24hs antes" no tiene sentido real (a
+    // veces ni pasan 24hs entre que se reserva y la cita en sí) y esas citas solo reciben
+    // el recordatorio de 3hs. Esto evita además el bug viejo: antes la ventana de 24hs
+    // atrapaba CUALQUIER cita del día apenas se creaba, con el texto mal etiquetado.
+    const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
     const in3h = new Date(now.getTime() + 3 * 60 * 60 * 1000);
     const appUrl = await getAppUrl(base44, req);
 
@@ -21,7 +32,15 @@ export default async function(req) {
     const toRemind = (all || []).filter((a) => {
       if (a.is_demo) return false; // cita de prueba del simulador /bot — nunca recordatorios reales
       const start = new Date(a.start_datetime);
+      const created = parseServerDate(a.created_date);
       const reminders = a.reminders_sent || 0;
+      const bookedWithMargin = !isNaN(created.getTime()) && (start.getTime() - created.getTime()) >= 48 * 60 * 60 * 1000;
+      if (bookedWithMargin) {
+        const in24Window = reminders === 0 && start >= now && start <= in24h;
+        const in3Window = reminders === 1 && start >= now && start <= in3h;
+        return in24Window || in3Window;
+      }
+      // Reservada con menos de 48hs de anticipación: sin recordatorio de 24hs, directo al de 3hs.
       return reminders === 0 && start >= now && start <= in3h;
     });
 
@@ -60,6 +79,16 @@ export default async function(req) {
         const dateStr = startDate.toLocaleString("es-AR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "America/Argentina/Buenos_Aires" });
         const serviceName = appt.service_name || "consulta";
 
+        // Misma cuenta que en el filtro de arriba: si esta cita se reservó con al menos
+        // 48hs de anticipación Y todavía no se mandó ningún recordatorio, este es el de
+        // 24hs (el primero de dos); si no, es directamente el de 3hs (único o segundo).
+        // Usamos "en 24 horas" en vez de "mañana" a propósito: es relativo a AHORA, no a un
+        // cálculo de fecha que pueda desalinearse con la hora real en la que corre el cron.
+        const createdAt = parseServerDate(appt.created_date);
+        const bookedWithMargin = !isNaN(createdAt.getTime()) && (startDate.getTime() - createdAt.getTime()) >= 48 * 60 * 60 * 1000;
+        const is24hReminder = bookedWithMargin && (appt.reminders_sent || 0) === 0;
+        const windowLabel = is24hReminder ? "24 horas" : "3 horas";
+
         const practice = await getPracticeFor(appt);
         const { professionalName, address } = await getAppointmentContext(base44, appt, practice);
         const mapsLink = buildMapsLink(practice);
@@ -75,9 +104,9 @@ export default async function(req) {
         const rescheduleUrl = practice?.handle ? `${appUrl}/reschedule/${cancelToken}` : null;
         const cancelUrl = `${appUrl}/x/${cancelToken}`;
 
-        const subject = `Tu cita es en 3 horas — ${serviceName}`;
+        const subject = `Tu cita es en ${windowLabel} — ${serviceName}`;
         const emailBody = buildEmailHtml({
-          title: "Tu cita es en 3 horas",
+          title: `Tu cita es en ${windowLabel}`,
           greeting: `Hola ${patientName}`,
           lines: [
             `Tu cita fue confirmada. ¡Te esperamos!`,
@@ -99,18 +128,18 @@ export default async function(req) {
         // conversación se sienta en dos tiempos naturales — igual que hace el bot cuando
         // agenda o reagenda un turno (buildBookAckMessage/buildRescheduleAckMessage en
         // zernio.ts) — en vez de tirarle al paciente un bloque grande de una.
-        const waIntroText = `Hola${patientName ? ` ${patientName}` : ""}! Quería recordarte que en 3 horas es tu cita programada${professionalName ? ` con ${professionalName}` : ""}. Te paso los detalles...`;
+        const waIntroText = `Hola${patientName ? ` ${patientName}` : ""}! Quería recordarte que en ${windowLabel} es tu cita programada${professionalName ? ` con ${professionalName}` : ""}. Te paso los detalles...`;
 
         // Mismo formato enriquecido (negrita nativa de WhatsApp + emojis) que el mensaje de
-        // confirmación del bot. Ya no lleva los links de reagendar/cancelar — ahora se pide
-        // que avisen por el mismo medio en vez de mandar un link aparte.
+        // confirmación del bot. Sin link de reagendar/cancelar (se pide avisar por el mismo
+        // medio) y SIN el link de Google Maps — ese va solo en la confirmación inicial de la
+        // cita; acá alcanza con la dirección completa en texto.
         const waReminderText = [
-          `⏰ *Tu cita es en 3 horas*`,
+          `⏰ *Tu cita es en ${windowLabel}*`,
           `📅 *Día y horario:* ${dateStr}`,
           `🩺 *Servicio:* ${serviceName}`,
           professionalName ? `👤 *Profesional:* ${professionalName}` : null,
           address ? `📍 *Dirección:* ${address}` : null,
-          mapsLink ? `🗺️ ${mapsLink}` : null,
           "",
           "🔁 *Si necesitás reagendar o cancelar, avisanos por este mismo medio* 😊",
         ].filter(Boolean).join("\n");

@@ -741,7 +741,7 @@ export default function PublicBooking() {
           columnas separadas). En mobile ocupa el 100%, sin margen visible. */}
       <div className="relative flex-1 w-full lg:w-[70%] lg:mx-[15%]" style={{ background: theme.bg }}>
         <ProfileHeader settings={settings} theme={theme} brand={brand} cardClass={cardClass} glassStyle={glassStyle} align={settings?.photo_align} size={148} headingFontStyle={headingFontStyle} bleed />
-        <div className="px-5 lg:px-10 pb-28 pt-5 max-w-xl mx-auto space-y-7">
+        <div className="px-5 pb-28 pt-5 max-w-xl mx-auto space-y-7">
           <DescriptionBlock theme={theme} settings={settings} headingFontStyle={headingFontStyle} />
           <div ref={bookingRef} style={{ scrollMarginTop: 24 }}>
             {BookingSteps}

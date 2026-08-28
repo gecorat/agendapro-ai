@@ -195,36 +195,36 @@ function ContactBlock({ theme, settings, igUrl, fbUrl, webUrl, waUrl, mapsUrl, c
   const hasAny = settings?.address || settings?.phone || settings?.professional_email || fbUrl || igUrl || webUrl;
   const rowStyle = { borderBottom: `1px solid ${theme.cardBorder}` };
   return (
-    <div className="space-y-3">
-      <h2 className="text-base font-heading font-semibold" style={{ color: theme.text, ...headingFontStyle }}>Contacto y ubicación</h2>
+    <div className="space-y-1">
+      <h2 className="text-base font-heading font-semibold mb-2" style={{ color: theme.text, ...headingFontStyle }}>Contacto y ubicación</h2>
       {(settings?.phone || settings?.professional_email || fbUrl || igUrl || webUrl) && (
-        <div className={`border overflow-hidden ${cardClass}`} style={{ background: theme.cardBg, borderColor: theme.cardBorder, ...glassStyle }}>
+        <div>
           {waUrl && (
-            <a href={waUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-3.5 hover:opacity-80 transition-opacity" style={rowStyle}>
+            <a href={waUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 py-3.5 hover:opacity-70 transition-opacity" style={rowStyle}>
               <MessageCircle className="w-4 h-4 shrink-0" style={{ color: theme.muted }} />
               <p className="text-sm" style={{ color: theme.text }}>{settings.phone} · WhatsApp</p>
             </a>
           )}
           {settings?.professional_email && (
-            <a href={`mailto:${settings.professional_email}`} className="flex items-center gap-3 px-4 py-3.5 hover:opacity-80 transition-opacity" style={rowStyle}>
+            <a href={`mailto:${settings.professional_email}`} className="flex items-center gap-3 py-3.5 hover:opacity-70 transition-opacity" style={rowStyle}>
               <Mail className="w-4 h-4 shrink-0" style={{ color: theme.muted }} />
               <p className="text-sm truncate" style={{ color: theme.text }}>{settings.professional_email}</p>
             </a>
           )}
           {igUrl && (
-            <a href={igUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-3.5 hover:opacity-80 transition-opacity" style={rowStyle}>
+            <a href={igUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 py-3.5 hover:opacity-70 transition-opacity" style={rowStyle}>
               <Instagram className="w-4 h-4 shrink-0" style={{ color: theme.muted }} />
               <p className="text-sm" style={{ color: theme.text }}>Instagram</p>
             </a>
           )}
           {fbUrl && (
-            <a href={fbUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-3.5 hover:opacity-80 transition-opacity" style={rowStyle}>
+            <a href={fbUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 py-3.5 hover:opacity-70 transition-opacity" style={rowStyle}>
               <Facebook className="w-4 h-4 shrink-0" style={{ color: theme.muted }} />
               <p className="text-sm" style={{ color: theme.text }}>Facebook</p>
             </a>
           )}
           {webUrl && (
-            <a href={webUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-3.5 hover:opacity-80 transition-opacity">
+            <a href={webUrl} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-3 py-3.5 hover:opacity-70 transition-opacity ${settings?.address ? "" : ""}`} style={settings?.address ? rowStyle : undefined}>
               <Globe className="w-4 h-4 shrink-0" style={{ color: theme.muted }} />
               <p className="text-sm truncate" style={{ color: theme.text }}>Sitio web</p>
             </a>
@@ -232,18 +232,18 @@ function ContactBlock({ theme, settings, igUrl, fbUrl, webUrl, waUrl, mapsUrl, c
         </div>
       )}
       {settings?.address && (
-        <div className={`border overflow-hidden ${cardClass}`} style={{ background: theme.cardBg, borderColor: theme.cardBorder, ...glassStyle }}>
-          <div className="px-4 py-3.5 flex items-start gap-3">
+        <div className="pt-1">
+          <div className="py-3.5 flex items-start gap-3">
             <MapPin className="w-4 h-4 shrink-0 mt-0.5" style={{ color: theme.muted }} />
             <p className="text-sm" style={{ color: theme.text }}>{[settings.address, settings.address_city, settings.address_province].filter(Boolean).join(", ")}</p>
           </div>
           <iframe
             title="Ubicación"
-            className="w-full h-44 border-0"
+            className={`w-full h-44 border-0 ${theme.radiusClass}`}
             loading="lazy"
             src={googleMapsEmbedSrc({ address: settings.address, city: settings.address_city, province: settings.address_province, lat: settings.address_lat, lng: settings.address_lng })}
           />
-          <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 px-4 py-3 text-sm font-semibold hover:opacity-80 transition-opacity" style={{ borderTop: `1px solid ${theme.cardBorder}`, color: theme.accent }}>
+          <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 py-3 mt-1 text-sm font-semibold hover:opacity-70 transition-opacity" style={{ color: theme.accent }}>
             <Navigation className="w-3.5 h-3.5" /> Cómo llegar <ExternalLink className="w-3.5 h-3.5" />
           </a>
         </div>

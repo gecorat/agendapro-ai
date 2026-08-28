@@ -7,8 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import {
   Loader2, Upload, Check, Copy, ExternalLink, Share2, Smartphone,
-  AlignLeft, AlignCenter, PanelTop, Circle, Square, MapPin, PenLine,
-  ChevronLeft, ChevronRight, Maximize2, X,
+  AlignLeft, AlignCenter, Circle, Square, MapPin, PenLine,
+  ChevronLeft, ChevronRight, Maximize2, X, Star, ChevronRight as ChevronRightIcon,
 } from "lucide-react";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import {

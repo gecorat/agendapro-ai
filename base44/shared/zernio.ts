@@ -604,8 +604,10 @@ REGLAS ADICIONALES:
           || myServices.find((s) => s.name.trim().toLowerCase() === (target.service_name || "").trim().toLowerCase())
           || { name: target.service_name, duration_minutes: Math.max(5, Math.round((durationMs > 0 ? durationMs : 30 * 60000) / 60000)), margin_minutes: 0 };
 
-        const dayStart = new Date(start); dayStart.setHours(0, 0, 0, 0);
-        const dayEnd = new Date(start); dayEnd.setHours(23, 59, 59, 999);
+        // OJO ZONA HORARIA: mismo fix que en el flujo de "book" — argentinaDayBounds en vez
+        // de `.setHours()` crudo, para no calcular mal la ventana del día cerca del filo de
+        // las 21hs-23:59hs ART.
+        const { start: dayStart, end: dayEnd } = argentinaDayBounds(start);
         let googleBusy = [];
         try {
           googleBusy = await getGoogleBusyRanges(base44, professionalId, target.professional_ref_id || undefined, dayStart.toISOString(), dayEnd.toISOString());

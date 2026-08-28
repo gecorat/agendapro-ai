@@ -48,13 +48,17 @@ function SegButton({ active, onClick, children, title }) {
 function LivePreview({ form, fullbleed = false }) {
   const theme = resolveTheme(form.theme_preset, form.page_color, {
     fontOverride: form.heading_font_override,
-    custom: { borderRadius: form.custom_border_radius },
+    custom: { borderRadius: form.custom_border_radius, avatarBorderRadius: form.avatar_border_radius },
   });
-  const frameClass = avatarShapeClass(theme.radiusClass);
+  const frameClass = avatarShapeClass(theme.avatarRadiusClass);
+  // Banner Top se sacó de la UI (paso 1), pero se sigue resolviendo acá por si una
+  // cuenta vieja quedó con photo_align="banner" guardado — no rompe su preview.
   const isBanner = form.photo_align === "banner";
   const hasCover = !!form.cover_image_url || isBanner;
   const photoJustify = form.photo_align === "left" ? "justify-start" : "justify-center";
-  const size = fullbleed ? 88 : 64;
+  // Avatar más grande: antes 64/88px, ahora 96/132px — pedido explícito de que se vea
+  // más protagonista en el mockup.
+  const size = fullbleed ? 132 : 96;
   const half = size / 2;
   const coverHeight = isBanner ? (fullbleed ? "h-40" : "h-32") : (fullbleed ? "h-28" : "h-24");
   const photoTop = (isBanner ? (fullbleed ? 160 : 128) : (fullbleed ? 112 : 96));

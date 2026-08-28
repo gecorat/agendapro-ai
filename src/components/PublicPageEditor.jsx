@@ -169,6 +169,7 @@ export default function PublicPageEditor() {
     heading_font_override: "default", published: true,
     custom_bg_pattern: "none", custom_bg_image_url: "", custom_bg_overlay_opacity: 40,
     custom_border_radius: "auto", custom_card_opacity: 100, custom_blur_enabled: false,
+    avatar_border_radius: "auto", show_reviews_public: true,
   });
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);

@@ -462,7 +462,7 @@ export default function PublicBooking() {
 
   const theme = resolveTheme(settings?.theme_preset, settings?.page_color, {
     fontOverride: settings?.heading_font_override,
-    custom: { borderRadius: settings?.custom_border_radius },
+    custom: { borderRadius: settings?.custom_border_radius, avatarBorderRadius: settings?.avatar_border_radius },
   });
 
   if (loading) {

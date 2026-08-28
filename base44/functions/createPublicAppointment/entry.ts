@@ -5,6 +5,7 @@ import { sendPushToUsers, getPracticeRecipientUserIds } from '../../shared/push.
 import { sendWhatsAppMessage } from '../../shared/whatsapp-providers.ts';
 import { buildConfirmationMessage } from '../../shared/zernio.ts';
 import { getAppointmentContext } from '../../shared/appointment-context.ts';
+import { argentinaDayBounds } from '../../shared/scheduling.ts';
 
 export default async function (req: Request): Promise<Response> {
   try {
@@ -41,8 +42,13 @@ export default async function (req: Request): Promise<Response> {
     // un profesional PUNTUAL del equipo (plan Clinic), el choque se chequea SOLO contra
     // las citas de ESE profesional — dos personas del mismo equipo pueden tener citas a
     // la misma hora sin problema, cada uno con su propia agenda.
-    const dayStart = new Date(start); dayStart.setHours(0, 0, 0, 0);
-    const dayEnd = new Date(start); dayEnd.setHours(23, 59, 59, 999);
+    // OJO ZONA HORARIA: usamos argentinaDayBounds (mismo helper que ya usa scheduling.ts
+    // para el bot) en vez de `.setHours()` directo sobre el Date — `.setHours()` corre en
+    // el huso horario del PROCESO (Deno, probablemente UTC), no en el de Argentina. Con
+    // `.setHours()` crudo, una reserva entre las 21:00 y 23:59 hora Argentina calculaba mal
+    // la ventana del día (desplazada ~3hs) y podía no traer una cita cercana ya existente
+    // para el chequeo de solapamiento — riesgo real de doble reserva en ese horario.
+    const { start: dayStart, end: dayEnd } = argentinaDayBounds(start);
     const existingAppts = await base44.asServiceRole.entities.Appointment.filter({
       professional_id,
       status: { $ne: 'cancelled' },

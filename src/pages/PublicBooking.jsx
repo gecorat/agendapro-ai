@@ -270,11 +270,11 @@ function ReviewStars({ rating, color }) {
 function ReviewsBlock({ theme, reviews, cardClass, glassStyle, headingFontStyle }) {
   if (!reviews?.length) return null;
   return (
-    <div className="space-y-3">
-      <h2 className="text-base font-heading font-semibold" style={{ color: theme.text, ...headingFontStyle }}>Reseñas de pacientes</h2>
-      <div className="space-y-2.5">
-        {reviews.map((r) => (
-          <div key={r.id} className={`border p-4 flex gap-3 ${cardClass}`} style={{ background: theme.cardBg, borderColor: theme.cardBorder, ...glassStyle }}>
+    <div>
+      <h2 className="text-base font-heading font-semibold mb-2" style={{ color: theme.text, ...headingFontStyle }}>Reseñas de pacientes</h2>
+      <div>
+        {reviews.map((r, i) => (
+          <div key={r.id} className="flex gap-3 py-4" style={i < reviews.length - 1 ? { borderBottom: `1px solid ${theme.cardBorder}` } : undefined}>
             <div className="w-9 h-9 rounded-full flex items-center justify-center font-heading font-bold text-sm shrink-0" style={{ background: theme.accentCss, color: theme.accentText }}>
               {(r.name || "?")[0]?.toUpperCase()}
             </div>

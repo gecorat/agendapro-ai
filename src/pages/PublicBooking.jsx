@@ -638,14 +638,22 @@ export default function PublicBooking() {
         const waNumber = (settings?.zernio_phone || settings?.phone || "").replace(/\D/g, "");
         const waMsg = buildWaMessage(service, date, slot, form);
         const confirmWaUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(waMsg)}`;
+        // Si la cita ya vino CONFIRMADA (planes Pro/Clinic con WhatsApp conectado: el
+        // backend ya le mandó la confirmación por WhatsApp al paciente), no tiene sentido
+        // pedirle ADEMÁS que aprete un botón para escribirle al profesional — ya le queda
+        // abierta la conversación para responder ese mismo mensaje si necesita algo. El
+        // botón manual solo se muestra cuando la cita queda pendiente de confirmación.
+        const isAutoConfirmed = created.appointment?.status === "confirmed";
         return (
           <div className={`border p-6 text-center space-y-3 ${cardClass}`} style={cardStyle}>
             <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center mx-auto"><Check className="w-7 h-7 text-emerald-600" /></div>
-            <h2 className="font-heading font-semibold text-lg" style={{ color: theme.text }}>¡Solicitud registrada!</h2>
+            <h2 className="font-heading font-semibold text-lg" style={{ color: theme.text }}>{isAutoConfirmed ? "¡Turno confirmado!" : "¡Solicitud registrada!"}</h2>
             <p className="text-sm" style={{ color: theme.muted }}>{service?.name}{selectedPro ? ` con ${selectedPro.first_name}` : ""}</p>
             <p className="font-medium capitalize" style={{ color: theme.text }}>{date && formatLongDate(date)} · {slot && formatSlot(slot)}</p>
             <p className="text-sm" style={{ color: theme.muted }}>{settings?.practice_name || "Consultorio"}{settings?.address ? ` · ${settings.address}` : ""}</p>
-            {waNumber ? (
+            {isAutoConfirmed ? (
+              <p className="text-sm pt-1" style={{ color: theme.muted }}>Te mandamos los detalles de tu cita por WhatsApp. Si necesitás reagendar o cancelar, respondé ese mismo mensaje.</p>
+            ) : waNumber ? (
               <>
                 <p className="text-sm pt-1" style={{ color: theme.muted }}>Escribile al profesional por WhatsApp para confirmar tu turno cuanto antes. Si no se abrió solo, usá este botón:</p>
                 <a href={confirmWaUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 w-full rounded-md bg-[#25D366] hover:bg-[#1ebe5d] text-white font-semibold text-sm h-11 px-4 py-2 transition-colors shadow-sm">

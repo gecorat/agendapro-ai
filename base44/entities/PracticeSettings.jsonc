@@ -225,6 +225,24 @@
       "title": "Efecto vidrio (blur) en tarjetas",
       "default": false
     },
+    "avatar_border_radius": {
+      "type": "string",
+      "title": "Forma del avatar (anula el radio del preset)",
+      "enum": [
+        "auto",
+        "none",
+        "soft",
+        "full"
+      ],
+      "default": "auto",
+      "description": "Control independiente de custom_border_radius (ese ahora solo afecta a los botones). 'auto' = usar el radio propio del preset visual elegido."
+    },
+    "show_reviews_public": {
+      "type": "boolean",
+      "title": "Mostrar rese\u00f1as de pacientes en la p\u00e1gina p\u00fablica",
+      "default": true,
+      "description": "Si hay rese\u00f1as recibidas (ReviewRequest.status='received'), se muestran al final de la p\u00e1gina p\u00fablica salvo que se desactive ac\u00e1."
+    },
     "page_color": {
       "type": "string",
       "title": "Color de la p\u00e1gina p\u00fablica",

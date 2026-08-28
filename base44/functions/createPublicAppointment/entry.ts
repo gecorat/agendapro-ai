@@ -2,6 +2,8 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { findPatientByCanonicalPhone } from '../../shared/phone-utils.ts';
 import { pushAppointmentToGoogle } from '../../shared/google-calendar.ts';
 import { sendPushToUsers, getPracticeRecipientUserIds } from '../../shared/push.ts';
+import { sendWhatsAppMessage } from '../../shared/whatsapp-providers.ts';
+import { buildConfirmationMessage } from '../../shared/zernio.ts';
 
 export default async function (req: Request): Promise<Response> {
   try {

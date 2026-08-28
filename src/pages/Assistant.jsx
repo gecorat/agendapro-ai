@@ -434,6 +434,13 @@ function FullAssistant({ settings, reloadSettings, save }) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [activeMessages.length, sending]);
 
+  // Si llega un mensaje nuevo mientras el chat ya está abierto (activePhone === ese
+  // teléfono), lo marcamos leído al toque — si no, apenas llega quedaría marcado como "no
+  // leído" en la lista aunque lo estés viendo en pantalla en ese mismo momento.
+  useEffect(() => {
+    if (activePhone) markPhoneRead(activePhone);
+  }, [activeMessages.length, activePhone]);
+
   const handleSelect = (phone) => {
     setActivePhone(phone);
     setMobileView("chat");

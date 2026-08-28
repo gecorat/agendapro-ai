@@ -374,7 +374,7 @@ export default function PublicPageEditor() {
                       <input type="file" accept="image/*" className="hidden" onChange={(e) => handleUpload(e, "photo_url", setUploadingPhoto)} disabled={uploadingPhoto} />
                     </label>
                   </div>
-                  <p className="text-xs text-muted-foreground">Sin foto se muestra la inicial del nombre. La forma la define el tema (paso 2).</p>
+                  <p className="text-xs text-muted-foreground">Sin foto se muestra la inicial del nombre. La forma del avatar se ajusta en el paso 3.</p>
                 </div>
 
                 <div className="space-y-1.5">

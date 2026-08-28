@@ -553,6 +553,14 @@ export default function PublicPageEditor() {
 
                 <div className="flex items-center justify-between p-3 rounded-lg border border-border">
                   <div>
+                    <p className="text-sm font-medium">Mostrar reseñas de pacientes</p>
+                    <p className="text-xs text-muted-foreground">Se muestran, al final de tu página, las reseñas reales que tus pacientes te van dejando.</p>
+                  </div>
+                  <Switch checked={form.show_reviews_public} onCheckedChange={(v) => set("show_reviews_public", v)} />
+                </div>
+
+                <div className="flex items-center justify-between p-3 rounded-lg border border-border">
+                  <div>
                     <p className="text-sm font-medium">Página pública publicada</p>
                     <p className="text-xs text-muted-foreground">Si la desactivás, nadie podrá reservar por tu enlace.</p>
                   </div>

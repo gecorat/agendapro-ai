@@ -732,54 +732,43 @@ export default function PublicBooking() {
     </>
   );
 
-  const NavButtons = ({ className = "" }) => (
-    <div className={`flex items-center gap-2 ${className}`}>
-      <button
-        onClick={() => setTab("agendar")}
-        className={`flex-1 px-4 py-2 text-sm font-semibold transition-all ${theme.radiusClass}`}
-        style={tab === "agendar" ? { background: theme.accentCss, color: theme.accentText, boxShadow: theme.neon ? theme.neonGlow : "0 2px 8px rgba(0,0,0,0.15)" } : { background: "transparent", color: theme.muted, border: `1px solid ${theme.cardBorder}` }}
-      >
-        Agendar cita
-      </button>
-      <button
-        onClick={() => setTab("info")}
-        className={`flex-1 px-4 py-2 text-sm font-medium transition-all border ${theme.radiusClass}`}
-        style={tab === "info" ? { borderColor: brand, color: brand, background: `${brand}10` } : { borderColor: theme.cardBorder, color: theme.muted, background: "transparent" }}
-      >
-        Información
-      </button>
-    </div>
-  );
+  const NEUTRAL_MARGIN = theme.isDark ? "#0B0B0D" : "#EDEDEF";
 
   return (
-    <div className="min-h-screen w-full flex flex-col" style={{ background: theme.bg }}>
-      <div className="relative flex-1">
-      <div className="hidden lg:block max-w-6xl mx-auto px-8 py-10">
-        <div className="grid gap-8 items-start" style={{ gridTemplateColumns: "55% 45%" }}>
-          <div className="space-y-4 lg:sticky lg:top-8">
-            <ProfileHeader settings={settings} theme={theme} brand={brand} cardClass={cardClass} glassStyle={glassStyle} align={settings?.photo_align} size={104} headingFontStyle={headingFontStyle} />
-            <NavButtons />
-            {tab === "info" && <InfoBlock theme={theme} settings={settings} igUrl={igUrl} fbUrl={fbUrl} webUrl={webUrl} waUrl={waUrl} mapsUrl={mapsUrl} cardClass={cardClass} glassStyle={glassStyle} />}
+    <div className="min-h-screen w-full flex flex-col" style={{ background: NEUTRAL_MARGIN }}>
+      {/* Columna central única: en escritorio ocupa 70% del ancho con 15% de margen
+          neutro de cada lado (antes era un grid de 55%/45% info | agendar en dos
+          columnas separadas). En mobile ocupa el 100%, sin margen visible. */}
+      <div className="relative flex-1 w-full lg:w-[70%] lg:mx-[15%]" style={{ background: theme.bg }}>
+        <ProfileHeader settings={settings} theme={theme} brand={brand} cardClass={cardClass} glassStyle={glassStyle} align={settings?.photo_align} size={148} headingFontStyle={headingFontStyle} bleed />
+        <div className="px-5 lg:px-10 pb-28 pt-5 max-w-xl mx-auto space-y-7">
+          <DescriptionBlock theme={theme} settings={settings} headingFontStyle={headingFontStyle} />
+          <div ref={bookingRef} style={{ scrollMarginTop: 24 }}>
+            {BookingSteps}
           </div>
-          <div>{BookingSteps}</div>
+          <ContactBlock theme={theme} settings={settings} igUrl={igUrl} fbUrl={fbUrl} webUrl={webUrl} waUrl={waUrl} mapsUrl={mapsUrl} cardClass={cardClass} glassStyle={glassStyle} headingFontStyle={headingFontStyle} />
+          <ReviewsBlock theme={theme} reviews={reviews} cardClass={cardClass} glassStyle={glassStyle} headingFontStyle={headingFontStyle} />
         </div>
       </div>
 
-      {/* Mobile: 100% full-width, 0 padding lateral en el contenedor raíz. El header/portada
-          sangra borde a borde (bleed) y solo el contenido interior (nav + secciones) recibe
-          padding propio, para que no quede el aspecto "encajonado" de tarjeta con margen. */}
-      <div className="lg:hidden w-full pb-6">
-        <ProfileHeader settings={settings} theme={theme} brand={brand} cardClass={cardClass} glassStyle={glassStyle} align={settings?.photo_align} size={112} headingFontStyle={headingFontStyle} bleed />
-        <div className="px-4 space-y-4 mt-4">
-          <NavButtons />
-          {tab === "info" ? (
-            <InfoBlock theme={theme} settings={settings} igUrl={igUrl} fbUrl={fbUrl} webUrl={webUrl} waUrl={waUrl} mapsUrl={mapsUrl} cardClass={cardClass} glassStyle={glassStyle} />
-          ) : BookingSteps}
+      {/* Botón flotante "Agendar cita": fijo a la ventana (no al contenedor con margen),
+          centrado dentro del mismo ancho de columna que el contenido. Lleva directo al
+          flujo de reserva en vez de depender de una pestaña. Se oculta ya reservado el
+          turno (SUCCESS_STEP), donde no aporta nada más. */}
+      {step !== SUCCESS_STEP && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-4 pb-4" style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }}>
+          <div className="w-full max-w-xl lg:w-[calc(70%-5rem)] lg:max-w-xl">
+            <button
+              onClick={scrollToBooking}
+              className={`w-full flex items-center justify-center gap-2 py-3.5 text-sm font-bold transition-transform hover:scale-[1.01] ${theme.radiusClass}`}
+              style={{ background: theme.accentCss, color: theme.accentText, boxShadow: theme.neon ? theme.neonGlow : "0 10px 28px rgba(0,0,0,0.22)" }}
+            >
+              <Calendar className="w-4 h-4" /> Agendar cita
+            </button>
+          </div>
         </div>
-      </div>
-      </div>
-      {/* Fuera del área de contenido (flex-1): con esto, en páginas cortas queda pegado al
-          fondo real de la pantalla en vez de justo después del último paso. */}
+      )}
+
       <a
         href="https://kameagenda.com"
         target="_blank"

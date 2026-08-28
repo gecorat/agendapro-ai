@@ -230,6 +230,15 @@ export function resolveTheme(presetKey, pageColor, options = {}) {
   const radiusClass = BORDER_RADIUS_CLASS[radiusKey] || BORDER_RADIUS_CLASS.soft;
   const radiusPx = BORDER_RADIUS_PX[radiusKey] ?? 12;
 
+  let avatarRadiusKey = preset.forceRadius || "soft";
+  if (custom.avatarBorderRadius && custom.avatarBorderRadius !== "auto") {
+    avatarRadiusKey = custom.avatarBorderRadius;
+  }
+  const avatarRadiusClass = BORDER_RADIUS_CLASS[avatarRadiusKey] || BORDER_RADIUS_CLASS.soft;
+  const avatarRadiusPx = BORDER_RADIUS_PX[avatarRadiusKey] ?? 12;
+
+  const isDark = isLightColor(preset.text);
+
   return {
     key,
     label: preset.label,

@@ -757,7 +757,7 @@ export default function PublicBooking() {
           turno (SUCCESS_STEP), donde no aporta nada más. */}
       {step !== SUCCESS_STEP && (
         <div className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-4 pb-4" style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }}>
-          <div className="w-full max-w-xl lg:w-[calc(70%-5rem)] lg:max-w-xl">
+          <div className="w-full max-w-xl">
             <button
               onClick={scrollToBooking}
               className={`w-full flex items-center justify-center gap-2 py-3.5 text-sm font-bold transition-transform hover:scale-[1.01] ${theme.radiusClass}`}

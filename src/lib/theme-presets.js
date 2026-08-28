@@ -271,7 +271,9 @@ export function resolveTheme(presetKey, pageColor, options = {}) {
   };
 }
 
-// Forma del avatar derivada del radio del tema (reemplaza el selector manual de "marco").
+// Forma del avatar. Recibe theme.avatarRadiusClass (radio independiente del de los
+// botones desde el rediseño de Personalización fina — antes reemplazaba el viejo
+// selector manual de "marco" reusando el radio de los botones).
 export function avatarShapeClass(radiusClass) {
   if (radiusClass === "rounded-full") return "rounded-full";
   if (radiusClass === "rounded-none") return "rounded-none";

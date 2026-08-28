@@ -1,7 +1,7 @@
 import { findPatientByCanonicalPhone } from "./phone-utils.ts";
 import { sendEmail } from "./email-sender.ts";
 import { buildEmailHtml } from "./email-template.ts";
-import { generateSlotsForDay, findNextAvailableDaySlots, pickClosestSlots, isTimeAvailable } from "./scheduling.ts";
+import { generateSlotsForDay, findNextAvailableDaySlots, pickClosestSlots, isTimeAvailable, argentinaDayBounds } from "./scheduling.ts";
 import { getGoogleBusyRanges } from "./google-calendar.ts";
 import { DEFAULT_OBJECTIVE_PROMPT, DEFAULT_TONE_PROMPT, DEFAULT_RESPONSE_DELAY_SECONDS } from "./bot-defaults.ts";
 
@@ -432,8 +432,12 @@ REGLAS ADICIONALES:
           ? (assignedProfessionalRefId ? [assignedProfessionalRefId] : professionals.map((p) => p.id))
           : [null]; // null = el dueño de la cuenta (planes sin equipo)
 
-        const dayStart = new Date(start); dayStart.setHours(0, 0, 0, 0);
-        const dayEnd = new Date(start); dayEnd.setHours(23, 59, 59, 999);
+        // OJO ZONA HORARIA: argentinaDayBounds en vez de `.setHours()` crudo — el proceso
+        // (Deno) no corre necesariamente en huso horario argentino, así que `.setHours()`
+        // podía calcular mal la ventana del día cerca de las 21hs-23:59hs ART y dejar afuera
+        // un evento de Google Calendar cercano al filo (falso "disponible" cerca de esa
+        // franja horaria).
+        const { start: dayStart, end: dayEnd } = argentinaDayBounds(start);
 
         let matched = null;
         let referenceSlots = [];

@@ -42,7 +42,7 @@ export default async function(req: Request): Promise<Response> {
     const conv = payload.conversation || {};
     const account = payload.account || {};
 
-    const text = msg.text || msg.body || msg.content || "";
+    let text = msg.text || msg.body || msg.content || "";
     // Confirmado con un payload real capturado en producción: el teléfono viene en
     // message.sender.phoneNumber, no en message.from como asumíamos antes — por eso
     // fromPhone quedaba vacío y el mensaje se descartaba en silencio ("no_text_or_phone"),
@@ -56,7 +56,47 @@ export default async function(req: Request): Promise<Response> {
     const conversationId = conv.id || conv.conversationId || "";
     const accountId = account.id || account.accountId || "";
 
+    // Notas de voz: a diferencia del campo de texto/teléfono de arriba (confirmados con un
+    // payload real en producción), el nombre EXACTO del campo de audio en el payload de
+    // Zernio todavía no está confirmado — no hubo un audio real para verificarlo. Probamos
+    // los nombres más probables; si ninguno matchea, no rompe nada, se comporta igual que
+    // antes (se ignora). El payload completo queda igual guardado en
+    // PlatformConfig.debug_last_webhook_payload más arriba, por si hay que ajustar el
+    // nombre real del campo una vez que llegue un audio de verdad.
+    const audioUrl = msg.audioUrl || msg.audio?.url || msg.media?.url || msg.attachmentUrl || msg.mediaUrl
+      || (String(msg.type || "").toLowerCase() === "audio" ? (msg.url || msg.content) : null) || null;
+    if (!text && audioUrl) {
+      try {
+        const audioRes = await fetch(audioUrl);
+        if (audioRes.ok) {
+          const buf = new Uint8Array(await audioRes.arrayBuffer());
+          let binary = "";
+          for (let i = 0; i < buf.length; i++) binary += String.fromCharCode(buf[i]);
+          const base64 = btoa(binary);
+          const mimetype = audioRes.headers.get("content-type") || msg.audio?.mimetype || "audio/ogg";
+          const { transcribeAudioMessage } = await import("../../shared/audio-transcription.ts");
+          const transcribed = await transcribeAudioMessage(base44, base64, mimetype);
+          if (transcribed) text = transcribed;
+        }
+      } catch (e) {
+        console.error("audio transcription error (zernio):", e?.message || e);
+      }
+    }
+
     if (!text || !fromPhone) {
+      // Había audio pero no se pudo transcribir (o no encontramos el campo correcto):
+      // avisamos al paciente en vez de dejarlo en silencio total como antes.
+      if (audioUrl && fromPhone) {
+        waitUntil(
+          sendWhatsApp(base44, {
+            apiKey: plat?.zernio_api_key,
+            accountId,
+            conversationId,
+            phone: fromPhone,
+            message: "Uy, no pude escuchar bien tu audio 🙏 ¿Me lo podés escribir en texto, por favor?",
+          }).catch((e) => console.error("audio fallback send error (zernio):", e?.message || e))
+        );
+      }
       return Response.json({ ok: true, skipped: "no_text_or_phone" });
     }
 

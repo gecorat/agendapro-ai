@@ -5,7 +5,7 @@ import {
   MessageSquare, Send, Loader2, MessageCircle, ChevronLeft, LogOut, Search,
   Bot, User, Plus, X, Calendar, Phone, Mail, Tag, StickyNote, Clock,
   Smile, Paperclip, ListPlus, ChevronDown, Lock, Sparkles, Crown, Check,
-  Pencil, XCircle,
+  Pencil, XCircle, IdCard,
 } from "lucide-react";
 import DemoChat from "@/components/assistant/DemoChat";
 import WhatsAppConnectCard from "@/components/WhatsAppConnectCard";
@@ -788,6 +788,12 @@ function FullAssistant({ settings, reloadSettings, save }) {
             <div className="flex items-center gap-2 text-sm">
               <Mail className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
               <span className="truncate">{activePatient.email}</span>
+            </div>
+          )}
+          {activePatient?.dni && (
+            <div className="flex items-center gap-2 text-sm">
+              <IdCard className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+              <span className="truncate">DNI {activePatient.dni}</span>
             </div>
           )}
         </div>

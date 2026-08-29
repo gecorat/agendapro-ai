@@ -503,8 +503,32 @@ REGLAS ADICIONALES:
           // así sirve también para "pedirlo más adelante en la sesión", no solo al agendar.
           const suppliedEmail = (reply.appointment.patient_email || "").trim();
           const suppliedDni = (reply.appointment.patient_dni || "").trim();
-          let patientName = existingPatient
-            ? `${existingPatient.first_name} ${existingPatient.last_name || ""}`.trim()
+
+          // ¿Está agendando para OTRA persona? Pasa cuando quien escribe YA tiene ficha
+          // propia, pero el nombre que dio para ESTA cita no coincide con el de su propia
+          // ficha (ej. "quiero un turno para mi hija Sofía"). Antes esto se ignoraba por
+          // completo en este caso: el código siempre usaba la ficha de quien escribe sin
+          // importar qué nombre hubiera dado la IA, así que la cita quedaba mal atribuida.
+          const bookingForSomeoneElse = !!existingPatient && !!suppliedFirstName
+            && suppliedFirstName.toLowerCase() !== (existingPatient.first_name || "").trim().toLowerCase();
+
+          let targetPatient = existingPatient;
+          if (bookingForSomeoneElse) {
+            // Buscamos, entre TODAS las fichas que ya comparten este mismo teléfono (ej. un
+            // familiar ya cargado en una cita anterior), una que coincida por nombre — así
+            // no se duplica la ficha del familiar cada vez que le piden un turno nuevo.
+            const samePhonePatients = (patients || []).filter((p) =>
+              p.professional_id === professionalId && canonicalPhone(p.phone) === canonicalPhone(fromPhone)
+            );
+            targetPatient = samePhonePatients.find((p) =>
+              (p.first_name || "").trim().toLowerCase() === suppliedFirstName.toLowerCase()
+              && (!suppliedLastName || (p.last_name || "").trim().toLowerCase() === suppliedLastName.toLowerCase())
+            ) || null;
+          }
+
+          let patientId = targetPatient?.id;
+          let patientName = targetPatient
+            ? `${targetPatient.first_name} ${targetPatient.last_name || ""}`.trim()
             : (suppliedFirstName ? `${suppliedFirstName} ${suppliedLastName}`.trim() : "Paciente WhatsApp");
           try {
             if (!patientId) {
@@ -519,11 +543,12 @@ REGLAS ADICIONALES:
               patientId = newPatient.id;
               patientName = `${newPatient.first_name} ${newPatient.last_name || ""}`.trim();
             } else {
-              // Paciente ya registrado: si en ESTA conversación dio un email/DNI que todavía
-              // no tenía cargado, lo completamos sin pisar datos existentes.
+              // Ficha ya resuelta (propia de quien escribe, o de un familiar ya cargado): si
+              // en ESTA conversación dio un email/DNI que todavía no tenía cargado, lo
+              // completamos sin pisar datos existentes.
               const patientUpdates = {};
-              if (suppliedEmail && !existingPatient.email) patientUpdates.email = suppliedEmail;
-              if (suppliedDni && !existingPatient.dni) patientUpdates.dni = suppliedDni;
+              if (suppliedEmail && !targetPatient.email) patientUpdates.email = suppliedEmail;
+              if (suppliedDni && !targetPatient.dni) patientUpdates.dni = suppliedDni;
               if (Object.keys(patientUpdates).length) {
                 await base44.asServiceRole.entities.Patient.update(patientId, patientUpdates);
               }

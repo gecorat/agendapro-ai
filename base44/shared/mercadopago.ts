@@ -69,6 +69,9 @@ export async function syncSubscriptionStatus(base44, accessToken, resourceId) {
   if (!res.ok) return { synced: false, reason: "fetch_failed" };
   const preapproval = await res.json();
 
+  const platformCfg = await base44.asServiceRole.entities.PlatformConfig.filter({});
+  const platform = platformCfg?.[0];
+
   let ref = {};
   try {
     ref = JSON.parse(preapproval.external_reference || "{}");
@@ -88,8 +91,19 @@ export async function syncSubscriptionStatus(base44, accessToken, resourceId) {
     return { synced: true, changed: false, status: preapproval.status, practice_id: practice.id, reason: "admin_override" };
   }
 
+  // El checkout "con plan asociado" no manda external_reference (es un link público
+  // compartido por todos los suscriptores de ese plan, no lo generamos por request), así
+  // que ref.plan viene vacío en ese caso. Como fallback, resolvemos el plan mirando a qué
+  // preapproval_plan_id de Mercado Pago corresponde (cacheados en PlatformConfig).
+  let targetPlan = ref.plan;
+  if (!targetPlan && preapproval.preapproval_plan_id) {
+    let planIds = {};
+    try { planIds = JSON.parse(platform?.mercadopago_plan_ids || "{}"); } catch { /* ignore */ }
+    targetPlan = Object.keys(planIds).find((p) => planIds[p]?.id === preapproval.preapproval_plan_id);
+  }
+  targetPlan = targetPlan || practice.plan;
+
   if (preapproval.status === "authorized") {
-    const targetPlan = ref.plan || practice.plan;
     if (practice.plan !== targetPlan || practice.suspended) {
       await base44.asServiceRole.entities.PracticeSettings.update(practice.id, {
         plan: targetPlan,

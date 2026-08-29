@@ -487,7 +487,6 @@ REGLAS ADICIONALES:
             : `Che, disculpá — no encontré horarios disponibles cerca de esa fecha. ¿Podés decirme otro día que te venga bien?`;
         } else {
           assignedProfessionalRefId = matched.professionalRefId;
-          let patientId = existingPatient?.id;
           // Si es un paciente NUEVO y la IA logró sacarle nombre Y apellido en la
           // conversación (appointment.patient_first_name / patient_last_name), los usamos
           // acá en vez de guardarlo como "Paciente" genérico para siempre. Antes esto NUNCA

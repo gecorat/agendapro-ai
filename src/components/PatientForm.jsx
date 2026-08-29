@@ -31,6 +31,7 @@ export default function PatientForm({ open, onClose, onSaved, patient }) {
     last_name: "",
     phone: "",
     email: "",
+    dni: "",
     notes: "",
     contact_preference: "whatsapp",
     consent_reminders: true,
@@ -46,6 +47,7 @@ export default function PatientForm({ open, onClose, onSaved, patient }) {
           last_name: patient.last_name || "",
           phone: patient.phone || "",
           email: patient.email || "",
+          dni: patient.dni || "",
           notes: patient.notes || "",
           contact_preference: patient.contact_preference || "whatsapp",
           consent_reminders: patient.consent_reminders !== false,
@@ -58,6 +60,7 @@ export default function PatientForm({ open, onClose, onSaved, patient }) {
           last_name: "",
           phone: "",
           email: "",
+          dni: "",
           notes: "",
           contact_preference: "whatsapp",
           consent_reminders: true,
@@ -137,6 +140,15 @@ export default function PatientForm({ open, onClose, onSaved, patient }) {
               type="email"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="dni">DNI</Label>
+            <Input
+              id="dni"
+              value={form.dni}
+              onChange={(e) => setForm({ ...form, dni: e.target.value })}
+              placeholder="Opcional"
             />
           </div>
           <div className="space-y-2">

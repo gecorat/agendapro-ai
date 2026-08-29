@@ -5,6 +5,19 @@
 // o si el audio no se entiende, esta función devuelve null y quien la llama decide qué
 // avisarle al paciente — nunca rompe el flujo ni deja todo en silencio como pasaba antes.
 export async function transcribeAudioMessage(base44, base64Audio, mimeType) {
+  // DESACTIVADO TEMPORALMENTE: confirmado en vivo que InvokeLLM (el motor gratis del bot)
+  // NO transcribe el audio real — alucina un texto plausible que no tiene relación con lo
+  // que la persona realmente dijo (ej. inventó una "reunión de mañana a las diez" que
+  // nunca se dijo). Usar ese texto inventado como si fuera un pedido real del paciente es
+  // peligroso (podría disparar un reagendado/cancelación que nadie pidió), así que hasta
+  // sumar un motor de transcripción confiable (ej. Whisper) esta función no intenta
+  // transcribir nada — devuelve null siempre, y quien llama manda el mensaje de "no pude
+  // escuchar tu audio, escribime por favor" en su lugar. Dejamos el código de abajo ya
+  // armado (comentado) para cuando se decida el motor de reemplazo.
+  return null;
+
+  /* CÓDIGO ORIGINAL — no funcionó en la prueba real, dejarlo desactivado hasta reemplazar
+     el motor de transcripción por uno confiable:
   if (!base64Audio) return null;
   try {
     const cleanBase64 = base64Audio.includes(",") ? base64Audio.split(",").pop() : base64Audio;
@@ -34,4 +47,5 @@ export async function transcribeAudioMessage(base44, base64Audio, mimeType) {
     console.error("transcribeAudioMessage error:", e?.message || e);
     return null;
   }
+  */
 }

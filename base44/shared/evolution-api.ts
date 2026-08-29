@@ -136,6 +136,31 @@ export async function sendText(baseUrl, apiKey, instanceName, phone, text) {
   return data;
 }
 
+// Pide el contenido de un mensaje multimedia (audio, imagen, etc.) ya decodificado en
+// base64 — los medios de WhatsApp viajan cifrados extremo a extremo, así que no se puede
+// simplemente hacer fetch() a la URL que viene en el mensaje: Evolution tiene la clave de
+// sesión y lo descifra de su lado, este endpoint es la forma oficial de pedirle el
+// resultado ya legible. `messageKey` es el objeto `key` tal cual viene en el mensaje
+// original del webhook (remoteJid/id/fromMe).
+export async function getBase64Media(baseUrl, apiKey, instanceName, messageKey) {
+  try {
+    const res = await fetch(`${baseUrl}/chat/getBase64FromMediaMessage/${instanceName}`, {
+      method: 'POST',
+      headers: authHeaders(apiKey),
+      body: JSON.stringify({ message: { key: messageKey }, convertToMp4: false }),
+    });
+    const data = await safeJson(res);
+    if (!res.ok) {
+      console.error(`[evolution-api] fallo al pedir base64 de media — status ${res.status}:`, data?.message || JSON.stringify(data));
+      return null;
+    }
+    return { base64: data?.base64 || null, mimetype: data?.mimetype || null };
+  } catch (e) {
+    console.error('[evolution-api] error de red al pedir base64 de media:', e?.message || e);
+    return null;
+  }
+}
+
 export async function fetchProfilePicture(baseUrl, apiKey, instanceName, phone) {
   try {
     const res = await fetch(`${baseUrl}/chat/fetchProfilePictureUrl/${instanceName}`, {

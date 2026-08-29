@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { PLAN_PRICES, PLAN_LABELS } from '../../shared/plan.ts';
+import { getOrCreateMpPlanLinks } from '../../shared/mercadopago.ts';
 
 // Antes, CADA cambio de plan (incluso pasar de Pro a Clinic) creaba una suscripción
 // NUEVA en Mercado Pago y pisaba el mercadopago_subscription_id guardado — la
@@ -17,8 +18,7 @@ export default async function(req) {
 
     const body = await req.json();
     const plan = body?.plan;
-    const origin = body?.origin || 'https://agendate.base44.app';
-    const payerEmail = body?.payer_email || user.email;
+    const origin = body?.origin || 'https://kameagenda.com';
     if (!plan || !PLAN_PRICES[plan]) {
       return Response.json({ error: 'Plan inválido' }, { status: 400 });
     }
@@ -64,35 +64,23 @@ export default async function(req) {
       // si no está authorized (cancelada, pausada, etc.), seguimos abajo y creamos una nueva
     }
 
-    const preapprovalBody = {
-      reason: `Kame Agenda — Plan ${PLAN_LABELS[plan]}`,
-      auto_recurring: {
-        frequency: 1,
-        frequency_type: 'months',
-        transaction_amount: PLAN_PRICES[plan],
-        currency_id: 'ARS',
-      },
-      back_url: `${origin}/upgrade-plan?status=success`,
-      payer_email: payerEmail,
-      notification_url: 'https://base44.app/api/apps/6a726ce53f9d0f63f3816283/functions/mercadopagoWebhook',
-      external_reference: JSON.stringify({ practice_id: practice.id, plan }),
-    };
-
-    const res = await fetch('https://api.mercadopago.com/preapproval', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(preapprovalBody),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      return Response.json({ error: data.message || 'Error al crear la suscripción' }, { status: 400 });
+    // Suscripción nueva con plan asociado: NO llamamos a POST /preapproval nosotros (eso
+    // exigiría mandar payer_email, que es lo que queríamos sacar del flujo). En cambio,
+    // mandamos al usuario directo al checkout público del plan — ahí Mercado Pago le pide
+    // que inicie sesión con su propia cuenta, sin que nosotros le preguntemos nada antes.
+    // Guardamos qué plan está intentando suscribir para poder vincular el preapproval_id
+    // real apenas vuelva (ver función linkMpSubscription).
+    const planLinks = await getOrCreateMpPlanLinks(base44, accessToken, origin);
+    const planLink = planLinks[plan];
+    if (!planLink?.init_point) {
+      return Response.json({ error: 'No se pudo generar el link de pago para este plan' }, { status: 502 });
     }
 
     await base44.asServiceRole.entities.PracticeSettings.update(practice.id, {
-      mercadopago_subscription_id: data.id,
+      mercadopago_pending_plan: plan,
     });
 
-    return Response.json({ init_point: data.init_point });
+    return Response.json({ init_point: planLink.init_point });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

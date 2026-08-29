@@ -8,7 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Phone, Mail, Loader2, Save, CalendarClock } from "lucide-react";
+import { Phone, Mail, Loader2, Save, CalendarClock, IdCard } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { base44 } from "@/api/base44Client";
 
@@ -90,6 +90,11 @@ export default function PatientDetail({ open, onClose, patient, appointments, on
           {patient?.email && (
             <p className="flex items-center gap-2 text-muted-foreground">
               <Mail className="w-3.5 h-3.5" /> {patient.email}
+            </p>
+          )}
+          {patient?.dni && (
+            <p className="flex items-center gap-2 text-muted-foreground">
+              <IdCard className="w-3.5 h-3.5" /> DNI {patient.dni}
             </p>
           )}
         </div>

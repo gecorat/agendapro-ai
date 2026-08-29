@@ -93,8 +93,7 @@ export default function UpgradePlan() {
   const status = getPlanStatus(settings);
   const [paying, setPaying] = useState(null);
   const [mpStatus, setMpStatus] = useState(null);
-  const [emailDialogPlan, setEmailDialogPlan] = useState(null);
-  const [mpEmail, setMpEmail] = useState("");
+  const [linkingReturn, setLinkingReturn] = useState(false);
   const [subscription, setSubscription] = useState(null);
   const [loadingSub, setLoadingSub] = useState(true);
   const [cancelling, setCancelling] = useState(false);
@@ -105,12 +104,31 @@ export default function UpgradePlan() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const s = params.get("status");
+    const preapprovalId = params.get("preapproval_id");
     if (s) {
       setMpStatus(s);
       if (s === "success") {
         toast({ title: "¡Suscripción iniciada!", description: "En cuanto Mercado Pago confirme el pago, tu plan se activa solo." });
       }
     }
+    // Mercado Pago agrega el preapproval_id real a la URL al volver del checkout con plan
+    // asociado — lo vinculamos a esta cuenta acá, sin haber tenido que pedir el email antes.
+    if (preapprovalId) {
+      setLinkingReturn(true);
+      base44.functions.invoke("linkMpSubscription", { preapproval_id: preapprovalId })
+        .then(async () => {
+          await reload();
+          await refreshSubscription();
+        })
+        .catch(() => {})
+        .finally(() => {
+          setLinkingReturn(false);
+          const url = new URL(window.location.href);
+          url.searchParams.delete("preapproval_id");
+          window.history.replaceState({}, "", url.toString());
+        });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toast]);
 
   const refreshSubscription = async () => {
@@ -132,13 +150,23 @@ export default function UpgradePlan() {
   // suscripción en Mercado Pago al instante — no hace falta pasar por el checkout de
   // nuevo (el medio de pago ya está cargado), y así nunca queda una suscripción vieja
   // huérfana cobrando en paralelo.
-  const handlePay = (plan) => {
+  const handlePay = async (plan) => {
     if (subscription?.status === "authorized") {
       setSwitchConfirmPlan(plan);
       return;
     }
-    setMpEmail(settings?.professional_email || "");
-    setEmailDialogPlan(plan);
+    setPaying(plan);
+    try {
+      const res = await base44.functions.invoke("createMpPreference", { plan, origin: window.location.origin });
+      if (res?.data?.init_point) {
+        window.location.href = res.data.init_point;
+      } else {
+        throw new Error(res?.data?.error || "No se pudo iniciar el pago");
+      }
+    } catch (err) {
+      toast({ title: "No se pudo iniciar el pago", description: err.message, variant: "destructive" });
+      setPaying(null);
+    }
   };
 
   const confirmSwitchPlan = async () => {
@@ -160,29 +188,6 @@ export default function UpgradePlan() {
     } finally {
       setPaying(null);
       setSwitchConfirmPlan(null);
-    }
-  };
-
-  const confirmPay = async () => {
-    const plan = emailDialogPlan;
-    if (!mpEmail || !mpEmail.includes("@")) return;
-    setPaying(plan);
-    try {
-      const res = await base44.functions.invoke("createMpPreference", { plan, origin: window.location.origin, payer_email: mpEmail });
-      if (res?.data?.applied_immediately) {
-        toast({ title: `Listo, ya estás en el plan ${PLAN_LABELS[plan]}`, description: "Se actualizó tu suscripción existente, sin generar un cobro duplicado." });
-        setEmailDialogPlan(null);
-        await reload();
-        await refreshSubscription();
-      } else if (res?.data?.init_point) {
-        window.location.href = res.data.init_point;
-      } else {
-        throw new Error(res?.data?.error || "No se pudo iniciar el pago");
-      }
-    } catch (err) {
-      toast({ title: "No se pudo iniciar el pago", description: err.message, variant: "destructive" });
-    } finally {
-      setPaying(null);
     }
   };
 

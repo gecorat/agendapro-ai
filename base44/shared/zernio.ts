@@ -1,4 +1,4 @@
-import { findPatientByCanonicalPhone } from "./phone-utils.ts";
+import { findPatientByCanonicalPhone, canonicalPhone } from "./phone-utils.ts";
 import { sendEmail } from "./email-sender.ts";
 import { buildEmailHtml } from "./email-template.ts";
 import { generateSlotsForDay, findNextAvailableDaySlots, pickClosestSlots, isTimeAvailable, argentinaDayBounds } from "./scheduling.ts";

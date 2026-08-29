@@ -215,7 +215,9 @@ export default function UpgradePlan() {
 
       {mpStatus === "success" && (
         <Card className="p-4 border-emerald-500 bg-emerald-50">
-          <p className="text-sm font-medium text-emerald-700">✓ Suscripción iniciada</p>
+          <p className="text-sm font-medium text-emerald-700 flex items-center gap-1.5">
+            {linkingReturn && <Loader2 className="w-3.5 h-3.5 animate-spin" />} ✓ Suscripción iniciada
+          </p>
           <p className="text-sm text-emerald-600 mt-0.5">Mercado Pago va a confirmar el pago automáticamente y tu plan se activa solo, sin que tengas que hacer nada más.</p>
         </Card>
       )}
@@ -288,27 +290,6 @@ export default function UpgradePlan() {
           </p>
         </div>
       </Card>
-
-      <Dialog open={!!emailDialogPlan} onOpenChange={(open) => !open && setEmailDialogPlan(null)}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>¿Con qué cuenta de Mercado Pago vas a pagar?</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 pt-1">
-            <p className="text-sm text-muted-foreground">
-              Mercado Pago exige que el email coincida exactamente con la cuenta que usás para pagar (aunque sea distinta a la que usaste para registrarte acá).
-            </p>
-            <div className="space-y-1.5">
-              <Label htmlFor="mp-email">Email de tu cuenta de Mercado Pago</Label>
-              <Input id="mp-email" type="email" value={mpEmail} onChange={(e) => setMpEmail(e.target.value)} placeholder="tu-email@mercadopago.com" />
-            </div>
-            <Button className="w-full" onClick={confirmPay} disabled={!mpEmail.includes("@") || paying === emailDialogPlan}>
-              {paying === emailDialogPlan ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <CreditCard className="w-4 h-4 mr-1" />}
-              Continuar a Mercado Pago
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={!!switchConfirmPlan} onOpenChange={(open) => !open && setSwitchConfirmPlan(null)}>
         <DialogContent className="max-w-sm">

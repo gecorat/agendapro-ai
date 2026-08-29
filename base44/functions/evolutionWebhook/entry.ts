@@ -57,12 +57,54 @@ export default async function (req: Request): Promise<Response> {
       return Response.json({ ok: true, skipped: "no_message_or_from_me" });
     }
 
-    const text = msgData.message?.conversation || msgData.message?.extendedTextMessage?.text || "";
     const remoteJid = msgData.key?.remoteJid || "";
     const fromPhone = remoteJid.split("@")[0] || "";
     const conversationId = remoteJid || fromPhone;
 
-    if (!text || !fromPhone) {
+    let text = msgData.message?.conversation || msgData.message?.extendedTextMessage?.text || "";
+
+    // Notas de voz: antes esto se ignoraba por completo (ni se guardaba, ni se avisaba al
+    // paciente ni al profesional) porque solo se leía el texto plano del mensaje, que en un
+    // audio viene vacío. Los medios de WhatsApp viajan cifrados extremo a extremo, así que
+    // no alcanza con el link que viene en el mensaje — Evolution lo descifra de su lado y
+    // lo entrega en base64 a través de este endpoint dedicado.
+    if (!text && msgData.message?.audioMessage) {
+      try {
+        let base64 = msgData.message?.base64 || msgData.base64 || null;
+        const mimetype = msgData.message.audioMessage.mimetype || "audio/ogg";
+        if (!base64) {
+          const cfg = await base44.asServiceRole.entities.PlatformConfig.filter({});
+          const evoBaseUrl = (cfg?.[0]?.evolution_base_url || "").replace(/\/$/, "");
+          const evoApiKey = cfg?.[0]?.evolution_api_key;
+          if (evoBaseUrl && evoApiKey && practice.evolution_instance_name) {
+            const { getBase64Media } = await import("../../shared/evolution-api.ts");
+            const media = await getBase64Media(evoBaseUrl, evoApiKey, practice.evolution_instance_name, msgData.key);
+            base64 = media?.base64 || null;
+          }
+        }
+        if (base64) {
+          const { transcribeAudioMessage } = await import("../../shared/audio-transcription.ts");
+          const transcribed = await transcribeAudioMessage(base44, base64, mimetype);
+          if (transcribed) text = transcribed;
+        }
+      } catch (e) {
+        console.error("audio transcription error (evolution):", e?.message || e);
+      }
+    }
+
+    if (!fromPhone) {
+      return Response.json({ ok: true, skipped: "no_phone" });
+    }
+
+    if (!text) {
+      // Era un audio y no se pudo transcribir (o no soportado): avisamos al paciente en vez
+      // de dejarlo en silencio total como antes.
+      if (msgData.message?.audioMessage) {
+        waitUntil(
+          sendWhatsAppMessage(base44, practice, fromPhone, "Uy, no pude escuchar bien tu audio 🙏 ¿Me lo podés escribir en texto, por favor?")
+            .catch((e) => console.error("audio fallback send error (evolution):", e?.message || e))
+        );
+      }
       return Response.json({ ok: true, skipped: "no_text_or_phone" });
     }
 

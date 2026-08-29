@@ -1,3 +1,62 @@
+import { PLAN_PRICES, PLAN_LABELS } from './plan.ts';
+
+// Suscripción "con plan asociado": en vez de crear una preapproval por usuario (lo que
+// obliga a mandar payer_email en el POST — Mercado Pago lo exige siempre, es un campo
+// REQUERIDO de su API, no hay forma de saltearlo llamando /preapproval directamente),
+// creamos UN plan por tier (basic/pro/clinic) una sola vez, y usamos el init_point
+// público del plan como link de checkout para cualquier usuario. Ahí es Mercado Pago
+// quien le pide al usuario que inicie sesión con SU cuenta (o pague como invitado) — no
+// nosotros. Los ids se cachean en PlatformConfig para no crear planes duplicados.
+export async function getOrCreateMpPlanLinks(base44, accessToken, origin) {
+  const cfg = await base44.asServiceRole.entities.PlatformConfig.filter({});
+  const platformConfig = cfg?.[0];
+  let planIds = {};
+  try {
+    planIds = JSON.parse(platformConfig?.mercadopago_plan_ids || '{}');
+  } catch { /* ignore */ }
+
+  const backUrl = `${origin || 'https://kameagenda.com'}/upgrade-plan?status=success`;
+  let changed = false;
+
+  for (const plan of Object.keys(PLAN_PRICES)) {
+    if (planIds[plan]?.id && planIds[plan]?.init_point) continue;
+
+    const res = await fetch('https://api.mercadopago.com/preapproval_plan', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        reason: `Kame Agenda — Plan ${PLAN_LABELS[plan]}`,
+        auto_recurring: {
+          frequency: 1,
+          frequency_type: 'months',
+          transaction_amount: PLAN_PRICES[plan],
+          currency_id: 'ARS',
+        },
+        back_url: backUrl,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || `No se pudo crear el plan de Mercado Pago para "${plan}"`);
+
+    planIds[plan] = { id: data.id, init_point: data.init_point };
+    changed = true;
+  }
+
+  if (changed) {
+    if (platformConfig?.id) {
+      await base44.asServiceRole.entities.PlatformConfig.update(platformConfig.id, {
+        mercadopago_plan_ids: JSON.stringify(planIds),
+      });
+    } else {
+      await base44.asServiceRole.entities.PlatformConfig.create({
+        mercadopago_plan_ids: JSON.stringify(planIds),
+      });
+    }
+  }
+
+  return planIds;
+}
+
 // Lógica compartida entre el webhook de Mercado Pago (reacciona al toque, cuando llega el
 // aviso) y el chequeo periódico (red de seguridad, por si el aviso nunca llega — confirmado
 // en vivo que puede pasar: un pago se acreditó y Mercado Pago nunca mandó la notificación).

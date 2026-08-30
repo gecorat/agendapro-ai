@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { buildEmailHtml } from "../../shared/email-template.ts";
 import { deleteGoogleEvent } from "../../shared/google-calendar.ts";
 import { sendWhatsAppMessage } from "../../shared/whatsapp-providers.ts";
+import { sendPushToUsers, getPracticeRecipientUserIds } from "../../shared/push.ts";
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -87,6 +88,22 @@ export default async function(req: Request): Promise<Response> {
             }),
           });
         } catch { /* notificación no interrumpe la cancelación */ }
+      }
+
+      // Push al profesional (y al equipo en plan Clinic): una cancelación libera un
+      // horario y conviene enterarse en el momento, no al abrir la Agenda. El resto de los
+      // avisos (nueva reserva, el bot agendó) ya mandaban push; este flujo se había
+      // quedado solo con email + WhatsApp.
+      try {
+        const recipients = await getPracticeRecipientUserIds(base44, practice);
+        await sendPushToUsers(base44, recipients, {
+          title: 'Cita cancelada por el paciente',
+          body: `${patientName} — ${serviceName}`,
+          url: '/agenda',
+          tag: `appt-${appt.id}`,
+        });
+      } catch (e) {
+        console.error('push cancelAppointmentByToken error:', e?.message || e);
       }
 
       // Antes solo chequeaba zernio_phone + zernio_account_id — nunca le llegaba este

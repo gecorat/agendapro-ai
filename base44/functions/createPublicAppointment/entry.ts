@@ -100,15 +100,18 @@ export default async function (req: Request): Promise<Response> {
       }
     }
 
-    // En planes Pro/Clinic con WhatsApp conectado, la reserva por la página pública queda
-    // CONFIRMADA directo (no "pending") — ya le avisamos al paciente por WhatsApp al toque
-    // (más abajo), así que no hace falta el paso manual de "vos la confirmás desde la
-    // Agenda" que sí sigue existiendo en planes sin WhatsApp. Antes esto SIEMPRE quedaba
-    // pending y al paciente no le llegaba ningún aviso automático de la reserva.
+    // Cuándo la reserva de la página pública queda CONFIRMADA al instante en vez de
+    // "pending" (esperando que el profesional la apruebe a mano):
+    //  - Pro/Clinic: siempre automático.
+    //  - Basic/Trial: según lo que haya elegido el profesional en Configuración
+    //    (auto_confirm_public_bookings), con aprobación manual como predeterminado.
+    // OJO: antes esto exigía ADEMÁS tener WhatsApp conectado, porque el único aviso al
+    // paciente era por ese canal. Ya no hace falta: si no hay WhatsApp, igual le llega la
+    // confirmación por email (sendAppointmentConfirmation, más abajo).
     const practices = await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: professional_id });
     const practice = practices?.[0];
     const isProOrClinic = practice?.plan === 'pro' || practice?.plan === 'clinic';
-    const autoConfirm = isProOrClinic && !!practice?.whatsapp_connected;
+    const autoConfirm = isProOrClinic || practice?.auto_confirm_public_bookings === true;
 
     const appointment = await base44.asServiceRole.entities.Appointment.create({
       patient_id: patient.id,
@@ -143,14 +146,17 @@ export default async function (req: Request): Promise<Response> {
       // WhatsApp: mismo formato de DOS mensajes (aviso corto + tarjeta con los detalles)
       // que ya usa el bot al agendar por chat — antes esto venía todo junto en un solo
       // mensaje cuando se reservaba desde la página, a diferencia de la experiencia por
-      // WhatsApp.
-      try {
-        const { professionalName } = await getAppointmentContext(base44, appointment, practice);
-        await sendWhatsAppMessage(base44, practice, patient.phone, buildBookAckMessage());
-        const waText = buildConfirmationMessage({ practice, service, start, professionalName });
-        await sendWhatsAppMessage(base44, practice, patient.phone, waText);
-      } catch (e) {
-        console.error('sendWhatsAppMessage error (createPublicAppointment):', e?.message || e);
+      // WhatsApp. Solo si hay WhatsApp conectado: sin él, el paciente ya recibió la
+      // confirmación por email arriba.
+      if (practice?.whatsapp_connected) {
+        try {
+          const { professionalName } = await getAppointmentContext(base44, appointment, practice);
+          await sendWhatsAppMessage(base44, practice, patient.phone, buildBookAckMessage());
+          const waText = buildConfirmationMessage({ practice, service, start, professionalName });
+          await sendWhatsAppMessage(base44, practice, patient.phone, waText);
+        } catch (e) {
+          console.error('sendWhatsAppMessage error (createPublicAppointment):', e?.message || e);
+        }
       }
 
       // Si la cita quedó a menos de 3hs de distancia (poca anticipación), mandamos el

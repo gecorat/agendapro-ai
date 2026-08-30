@@ -730,6 +730,22 @@ REGLAS ADICIONALES:
               verb: "reagendó",
               appt: { ...target, start_datetime: start.toISOString(), ...(newService ? { service_name: newService.name } : {}) },
             });
+
+            // Mismo criterio que al agendar: si el nuevo horario quedó a menos de 3hs,
+            // mandamos el recordatorio de una en vez de esperar al cron.
+            try {
+              const reschedPatient = (patients || []).find((p) => p.id === target.patient_id) || null;
+              const sentNow = await maybeSendImmediateReminder(
+                base44, practice,
+                { start_datetime: start.toISOString(), service_name: (newService ? newService.name : target.service_name), professional_name: professionalName },
+                reschedPatient
+              );
+              if (sentNow) {
+                await base44.asServiceRole.entities.Appointment.update(target.id, { reminders_sent: 1 });
+              }
+            } catch (e) {
+              console.error("maybeSendImmediateReminder error (reschedule):", e?.message || e);
+            }
           } catch (e) {
             console.error("Appointment.update error (reschedule):", e?.message || e);
             finalReplyText = "Uy, tuve un problema técnico al reagendar tu turno. ¿Podés confirmarme de nuevo el nuevo día y horario?";

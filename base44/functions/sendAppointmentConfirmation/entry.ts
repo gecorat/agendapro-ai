@@ -2,13 +2,18 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { buildEmailHtml, getAppUrl } from "../../shared/email-template.ts";
 import { sendEmail } from "../../shared/email-sender.ts";
 import { getAppointmentContext } from "../../shared/appointment-context.ts";
-import { buildMapsLink } from "../../shared/zernio.ts";
+import { buildMapsLink, buildConfirmationMessage, buildBookAckMessage } from "../../shared/zernio.ts";
+import { sendWhatsAppMessage } from "../../shared/whatsapp-providers.ts";
+import { maybeSendImmediateReminder } from "../../shared/reminders.ts";
 
 export default async function(req: Request): Promise<Response> {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
-    const { appointment_id } = body;
+    // skip_whatsapp: lo pasan los flujos que YA le mandaron su propia confirmación por
+    // WhatsApp al paciente (el bot al agendar, y la reserva pública auto-confirmada), para
+    // no mandarle el mismo mensaje dos veces.
+    const { appointment_id, skip_whatsapp } = body;
 
     if (!appointment_id) {
       return Response.json({ error: 'appointment_id required' }, { status: 400 });

@@ -303,7 +303,20 @@ export default function NotificationsBell({ user }) {
     navigate(dateStr ? `/agenda?date=${dateStr}` : "/agenda");
   };
 
-  const pendingCount = items.filter((a) => a.status === "pending").length;
+  // El contador rojo cuenta las citas que son NOVEDAD para el profesional: las pendientes
+  // de confirmar (como siempre) y ADEMÁS las reservas externas (link público / WhatsApp)
+  // que ya nacieron confirmadas en las últimas 24hs. Antes solo contaba las 'pending', así
+  // que al auto-confirmar las reservas de planes Pro/Clinic la campanita se quedó siempre
+  // en cero — confirmado en vivo: la cita aparecía al abrir el panel, pero sin globito que
+  // avisara que había algo nuevo.
+  const RECENT_MS = 24 * 60 * 60 * 1000;
+  const isNewExternalConfirmed = (a) => (
+    a.status === "confirmed"
+    && EXTERNAL_ORIGINS.includes(a.origin)
+    && a.created_date
+    && (Date.now() - new Date(`${a.created_date}${/[zZ]$|[+-]\d{2}:?\d{2}$/.test(a.created_date) ? "" : "Z"}`).getTime()) <= RECENT_MS
+  );
+  const pendingCount = items.filter((a) => a.status === "pending" || isNewExternalConfirmed(a)).length;
 
   const BellButton = (
     <button

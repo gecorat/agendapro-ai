@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { sendEmail } from '../../shared/email-sender.ts';
 import { buildEmailHtml } from '../../shared/email-template.ts';
 import { sendWhatsAppMessage } from '../../shared/whatsapp-providers.ts';
+import { canSendWhatsApp } from '../../shared/plan.ts';
 
 // Avisa al PACIENTE por WhatsApp y/o email cuando el PROFESIONAL reagenda o cancela una
 // cita a mano desde la Agenda (DayDetailSheet, AppointmentForm, etc.). Antes esto solo
@@ -54,7 +55,7 @@ export default async function (req: Request): Promise<Response> {
       : `Hola ${patientName}, te escribimos de ${practiceName} para avisarte que tu turno de ${serviceName} del ${newDateStr} fue cancelado. Si querés reagendar, avisanos por acá.`;
 
     let whatsappSent = false;
-    if (practice?.whatsapp_connected && patient.phone) {
+    if (canSendWhatsApp(practice) && patient.phone) {
       try {
         await sendWhatsAppMessage(base44, practice, patient.phone, waText);
         whatsappSent = true;

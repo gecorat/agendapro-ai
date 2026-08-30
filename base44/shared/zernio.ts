@@ -70,7 +70,7 @@ export function buildConfirmationMessage({ practice, service, start, professiona
 // mirando la pantalla. Antes esto no existía: el bot le confirmaba todo al paciente por
 // WhatsApp, pero el profesional se enteraba recién al abrir la Agenda — sin ningún aviso.
 // Best-effort: si falla el envío, no debe romper la respuesta al paciente.
-async function notifyProfessionalOfBotAction(base44, practice, { verb, appt }) {
+export async function notifyProfessionalOfBotAction(base44, practice, { verb, appt, actorLabel = "El bot", channelLabel = "El bot de WhatsApp" }) {
   // Push primero: no depende de que professional_email esté cargado (el email sí lo
   // necesita, ver el early-return de abajo) y no bloquea nada si falla o si todavía no hay
   // VAPID configurado.
@@ -78,7 +78,7 @@ async function notifyProfessionalOfBotAction(base44, practice, { verb, appt }) {
     const { sendPushToUsers, getPracticeRecipientUserIds } = await import('./push.ts');
     const recipients = await getPracticeRecipientUserIds(base44, practice);
     await sendPushToUsers(base44, recipients, {
-      title: `El bot ${verb} un turno`,
+      title: `${actorLabel} ${verb} un turno`,
       body: `${appt.patient_name || 'Un paciente'} — ${appt.service_name || 'Consulta'}`,
       url: '/agenda',
       tag: `appt-${appt.id}`,

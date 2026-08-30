@@ -52,6 +52,17 @@ export function canUseWhatsApp(practice) {
   return plan === "pro" || plan === "clinic";
 }
 
+// Criterio ÚNICO para "¿puedo mandarle un WhatsApp a esta persona ahora mismo?": el plan
+// tiene que habilitarlo Y el número tiene que estar efectivamente conectado. Antes cada
+// flujo chequeaba una cosa distinta — los recordatorios miraban el plan, pero las
+// confirmaciones solo miraban whatsapp_connected. La diferencia importa en un downgrade:
+// al bajar de Pro a Basic el flag whatsapp_connected queda en true (nadie lo apaga al
+// cambiar de plan), así que las confirmaciones seguían saliendo por WhatsApp aunque el
+// plan ya no lo incluyera, mientras los recordatorios de esa misma cita sí lo bloqueaban.
+export function canSendWhatsApp(practice) {
+  return canUseWhatsApp(practice) && !!practice?.whatsapp_connected;
+}
+
 export function canUseMultiProfessional(practice) {
   return isPlanActive(practice) && practice?.plan === "clinic";
 }

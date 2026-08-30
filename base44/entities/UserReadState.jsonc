@@ -1,0 +1,39 @@
+{
+  "description": "Estado de \"visto/le\u00eddo\" de cada usuario logueado, guardado del lado del servidor para que se sincronice entre sus dispositivos (antes viv\u00eda solo en el localStorage de cada navegador, as\u00ed que abrir algo en la PC no lo marcaba como visto en el celular). Un \u00fanico registro por usuario.",
+  "name": "UserReadState",
+  "properties": {
+    "bell_last_seen_at": {
+      "description": "\u00daltima vez que abri\u00f3 la campanita de notificaciones. Las reservas externas ya confirmadas creadas antes de esta fecha dejan de contarse como novedad.",
+      "format": "date-time",
+      "title": "Campanita \u2014 vista por \u00faltima vez",
+      "type": "string"
+    },
+    "chat_last_read_json": {
+      "description": "JSON serializado { \"<telefono>\": \"<ISO date>\" } con la \u00faltima vez que abri\u00f3 cada conversaci\u00f3n de WhatsApp. Se guarda como texto para no necesitar un esquema por tel\u00e9fono.",
+      "title": "Chats \u2014 \u00faltima lectura por conversaci\u00f3n",
+      "type": "string"
+    },
+    "user_id": {
+      "title": "Usuario (auth) due\u00f1o de este estado",
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    }
+  },
+  "type": "object"
+}

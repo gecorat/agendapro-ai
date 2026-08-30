@@ -171,17 +171,28 @@ Instrucciones sobre la reserva: si el paciente eligió un servicio y un día/hor
             professional_id: professionalId,
             is_demo: true,
           });
+          // Los datos que la IA logró juntar en esta simulación se reflejan en la ficha de
+          // prueba, para que el profesional vea en la Agenda exactamente lo que habría
+          // quedado guardado en una conversación real (y no un "Prueba (simulador)" fijo).
+          const demoFields = {
+            first_name: (parsed.patient_first_name || '').trim() || 'Prueba',
+            last_name: (parsed.patient_last_name || '').trim() || '(simulador)',
+            ...(parsed.patient_email ? { email: String(parsed.patient_email).trim() } : {}),
+            ...(parsed.patient_dni ? { dni: String(parsed.patient_dni).trim() } : {}),
+          };
           let patient = demoPatients?.[0];
           if (!patient) {
-            const firstName = (parsed.patient_first_name || '').trim() || 'Prueba';
             patient = await base44.asServiceRole.entities.Patient.create({
-              first_name: firstName,
-              last_name: '(simulador)',
+              ...demoFields,
               phone: '000000000',
               professional_id: professionalId,
               is_demo: true,
               consent_reminders: false,
             });
+          } else {
+            try {
+              patient = await base44.asServiceRole.entities.Patient.update(patient.id, demoFields);
+            } catch { /* si falla, seguimos con la ficha de prueba tal cual estaba */ }
           }
 
           const demoExpiresAt = new Date(Date.now() + DEMO_TTL_MS).toISOString();

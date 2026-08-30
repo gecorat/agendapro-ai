@@ -364,9 +364,16 @@ export default function NotificationsBell({ user }) {
 
   const listProps = { pending: items, onConfirm: handleConfirm, onConfirmWhatsApp: handleConfirmWhatsApp, onCancel: handleCancel, onOpenAppt: handleOpenAppt, busyId };
 
+  // Al abrir el panel (en cualquiera de las dos variantes, móvil o escritorio) marcamos
+  // las novedades como vistas — es lo que hace que el globito baje.
+  const handleOpenChange = (next) => {
+    setOpen(next);
+    if (next) markBellSeen();
+  };
+
   if (isMobile) {
     return (
-      <Sheet open={open} onOpenChange={setOpen}>
+      <Sheet open={open} onOpenChange={handleOpenChange}>
         <SheetTrigger asChild>{BellButton}</SheetTrigger>
         <SheetContent side="bottom" className="max-h-[80vh] flex flex-col">
           <SheetHeader className="text-left">
@@ -384,7 +391,7 @@ export default function NotificationsBell({ user }) {
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>{BellButton}</PopoverTrigger>
       <PopoverContent align="end" className="w-80 p-3">
         <div className="flex items-center gap-2 px-1 pb-2 mb-1 border-b border-border">

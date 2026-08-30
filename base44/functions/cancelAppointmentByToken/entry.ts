@@ -3,6 +3,7 @@ import { buildEmailHtml } from "../../shared/email-template.ts";
 import { deleteGoogleEvent } from "../../shared/google-calendar.ts";
 import { sendWhatsAppMessage } from "../../shared/whatsapp-providers.ts";
 import { sendPushToUsers, getPracticeRecipientUserIds } from "../../shared/push.ts";
+import { canSendWhatsApp } from "../../shared/plan.ts";
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -109,7 +110,7 @@ export default async function(req: Request): Promise<Response> {
       // Antes solo chequeaba zernio_phone + zernio_account_id — nunca le llegaba este
       // aviso al profesional si estaba conectado por QR (Evolution API). Usamos el mismo
       // patrón genérico que en sendPendingAppointmentAlert.
-      if (practice.whatsapp_connected && practice.whatsapp_phone_number) {
+      if (canSendWhatsApp(practice) && practice.whatsapp_phone_number) {
         try {
           await sendWhatsAppMessage(base44, practice, practice.whatsapp_phone_number, `❌ Cita cancelada por el paciente\n\nPaciente: ${patientName}\nServicio: ${serviceName}\nFecha: ${dateStr}`);
         } catch { /* notificación no interrumpe la cancelación */ }

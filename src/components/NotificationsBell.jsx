@@ -169,10 +169,13 @@ export default function NotificationsBell({ user }) {
   useEffect(() => {
     loadPending();
     const unsubscribe = base44.entities.Appointment.subscribe((event) => {
+      // Aviso en vivo (pestaña abierta) tanto para reservas que quedan pendientes de
+      // confirmar como para las que ya nacen confirmadas (planes Pro/Clinic) — antes solo
+      // avisaba de las 'pending', así que con el auto-confirmado no saltaba ningún aviso.
       if (
         event.type === "create" &&
-        event.data?.status === "pending" &&
-        EXTERNAL_ORIGINS.includes(event.data?.origin)
+        EXTERNAL_ORIGINS.includes(event.data?.origin) &&
+        (event.data?.status === "pending" || event.data?.status === "confirmed")
       ) {
         showBrowserNotification(event.data);
       }
@@ -210,10 +213,13 @@ export default function NotificationsBell({ user }) {
   const showBrowserNotification = (appt) => {
     if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
     try {
-      const n = new Notification("Nueva cita pendiente de confirmar", {
-        body: `${appt.patient_name || "Paciente"} — ${appt.service_name || "Consulta"}`,
-        tag: appt.id,
-      });
+      const n = new Notification(
+        appt.status === "confirmed" ? "Nueva reserva confirmada" : "Nueva cita pendiente de confirmar",
+        {
+          body: `${appt.patient_name || "Paciente"} — ${appt.service_name || "Consulta"}`,
+          tag: appt.id,
+        }
+      );
       n.onclick = () => {
         window.focus();
         navigate("/agenda");

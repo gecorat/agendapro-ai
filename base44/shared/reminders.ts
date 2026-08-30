@@ -1,6 +1,7 @@
 import { sendWhatsAppMessage } from "./whatsapp-providers.ts";
 import { sendEmail } from "./email-sender.ts";
 import { buildEmailHtml } from "./email-template.ts";
+import { canSendWhatsApp } from "./plan.ts";
 
 // Si una cita queda confirmada con MENOS de 3 horas de anticipación, el cron de
 // recordatorios (que corre una vez por hora, en punto) puede llegar a agarrarla recién en
@@ -39,11 +40,9 @@ export async function maybeSendImmediateReminder(base44, practice, appointment, 
     const patientName = (patient.first_name || "").trim();
 
     const pref = patient?.contact_preference || "email";
-    const plan = practice?.plan || "trial";
-    const whatsappAllowed = plan === "pro" || plan === "clinic";
     const wantsWhatsApp = pref === "whatsapp" || pref === "both";
 
-    if (whatsappAllowed && wantsWhatsApp && patient?.phone && practice?.whatsapp_connected) {
+    if (canSendWhatsApp(practice) && wantsWhatsApp && patient?.phone) {
       const waIntroText = `Hola${patientName ? ` ${patientName}` : ""}! Quería recordarte que en 3 horas es tu cita programada${professionalName ? ` con ${professionalName}` : ""}. Te paso los detalles...`;
       // Mismo formato (sin link de maps, con dirección completa) que el recordatorio
       // normal del cron — para que sea indistinguible del que hubiera mandado más tarde.

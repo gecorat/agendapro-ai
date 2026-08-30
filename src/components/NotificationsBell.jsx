@@ -329,13 +329,22 @@ export default function NotificationsBell({ user }) {
   // que al auto-confirmar las reservas de planes Pro/Clinic la campanita se quedó siempre
   // en cero — confirmado en vivo: la cita aparecía al abrir el panel, pero sin globito que
   // avisara que había algo nuevo.
+  //
+  // Diferencia importante entre las dos: las 'pending' REQUIEREN una acción del profesional
+  // (confirmarlas o cancelarlas), así que se siguen contando aunque ya haya abierto la
+  // campanita — el globito solo baja cuando las resuelve de verdad. Las ya confirmadas son
+  // solo un aviso (no hay nada que hacer con ellas), así que dejan de contarse apenas abre
+  // el panel.
   const RECENT_MS = 24 * 60 * 60 * 1000;
-  const isNewExternalConfirmed = (a) => (
-    a.status === "confirmed"
-    && EXTERNAL_ORIGINS.includes(a.origin)
-    && a.created_date
-    && (Date.now() - new Date(`${a.created_date}${/[zZ]$|[+-]\d{2}:?\d{2}$/.test(a.created_date) ? "" : "Z"}`).getTime()) <= RECENT_MS
-  );
+  const parseCreated = (s) => new Date(`${s}${/[zZ]$|[+-]\d{2}:?\d{2}$/.test(s) ? "" : "Z"}`);
+  const isNewExternalConfirmed = (a) => {
+    if (a.status !== "confirmed" || !EXTERNAL_ORIGINS.includes(a.origin) || !a.created_date) return false;
+    const created = parseCreated(a.created_date);
+    if (Date.now() - created.getTime() > RECENT_MS) return false;
+    // Ya vista: se creó antes de la última vez que abrió la campanita.
+    if (lastSeenAt && created <= new Date(lastSeenAt)) return false;
+    return true;
+  };
   const pendingCount = items.filter((a) => a.status === "pending" || isNewExternalConfirmed(a)).length;
 
   const BellButton = (

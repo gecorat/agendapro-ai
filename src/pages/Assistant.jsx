@@ -163,20 +163,38 @@ function FullAssistant({ settings, reloadSettings, save }) {
   // nuestra después) sin ningún registro de si vos ya abriste ese chat — confirmado en
   // vivo: abrir el chat no lo marcaba como leído, se quedaba marcado hasta que alguien
   // (vos o el bot) mandaba una respuesta. Ahora guardamos, por teléfono, la última vez que
-  // abriste esa conversación (en este navegador) y la cruzamos con esa heurística.
-  const LAST_READ_KEY = "kameagenda_chat_last_read";
-  const [lastReadMap, setLastReadMap] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(LAST_READ_KEY) || "{}"); } catch { return {}; }
-  });
-  const markPhoneRead = (phone) => {
+  // abriste esa conversación, en el servidor (UserReadState) para que valga en todos tus
+  // dispositivos, con el localStorage como caché para pintar bien al instante.
+  const [lastReadMap, setLastReadMap] = useState(() => getLocalChatLastRead());
+  const [readStateRowId, setReadStateRowId] = useState(null);
+  const readStateRowIdRef = useRef(null);
+  const lastReadMapRef = useRef(lastReadMap);
+  useEffect(() => { lastReadMapRef.current = lastReadMap; }, [lastReadMap]);
+  useEffect(() => { readStateRowIdRef.current = readStateRowId; }, [readStateRowId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadReadState().then(({ chatLastRead, rowId }) => {
+      if (cancelled) return;
+      setReadStateRowId(rowId);
+      if (chatLastRead) setLastReadMap(chatLastRead);
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  const markPhoneRead = useCallback((phone) => {
     if (!phone) return;
     const now = new Date().toISOString();
-    setLastReadMap((prev) => {
-      const next = { ...prev, [phone]: now };
-      try { localStorage.setItem(LAST_READ_KEY, JSON.stringify(next)); } catch { /* localStorage puede fallar en modo privado; no es crítico */ }
-      return next;
+    const next = { ...lastReadMapRef.current, [phone]: now };
+    lastReadMapRef.current = next;
+    setLastReadMap(next);
+    saveChatLastRead(readStateRowIdRef.current, next).then((id) => {
+      if (id && id !== readStateRowIdRef.current) {
+        readStateRowIdRef.current = id;
+        setReadStateRowId(id);
+      }
     });
-  };
+  }, []);
   const messagesEndRef = useRef(null);
 
   const connected = !!settings?.whatsapp_connected;

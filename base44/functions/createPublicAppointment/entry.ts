@@ -139,7 +139,10 @@ export default async function (req: Request): Promise<Response> {
       // de status a "confirmed", no en un CREATE que ya nace confirmado — así que acá lo
       // invocamos a mano, igual que hace el bot de WhatsApp al agendar.
       try {
-        await base44.asServiceRole.functions.invoke('sendAppointmentConfirmation', { appointment_id: appointment.id });
+        // skip_whatsapp: unas líneas más abajo mandamos nosotros la confirmación por
+        // WhatsApp (en dos mensajes), así que sendAppointmentConfirmation solo debe
+        // encargarse del email — si no, al paciente le llegaría todo duplicado.
+        await base44.asServiceRole.functions.invoke('sendAppointmentConfirmation', { appointment_id: appointment.id, skip_whatsapp: true });
       } catch (e) {
         console.error('sendAppointmentConfirmation invoke error (createPublicAppointment):', e?.message || e);
       }

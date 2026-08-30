@@ -69,7 +69,7 @@ export async function maybeSendImmediateReminder(base44, practice, appointment, 
         ],
         footer: practice?.practice_name || "Kame Agenda",
       });
-      await sendEmail(base44, { to: patient.email, subject: `Tu cita es en 3 horas — ${serviceName}`, body: emailBody });
+      await sendEmail(base44, { to: patient.email, subject: patientName ? `${patientName}, tu cita es en 3 horas` : `Tu cita es en 3 horas — ${serviceName}`, body: emailBody });
       return true;
     }
 

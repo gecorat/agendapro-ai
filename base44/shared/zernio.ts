@@ -596,7 +596,10 @@ REGLAS ADICIONALES:
             secondaryReplyText = buildConfirmationMessage({ practice, service, start, professionalName });
 
             try {
-              await base44.asServiceRole.functions.invoke("sendAppointmentConfirmation", { appointment_id: newAppt.id });
+              // skip_whatsapp: el bot ya le mandó al paciente la confirmación por WhatsApp
+              // (finalReplyText + secondaryReplyText, unas líneas arriba), así que acá solo
+              // hace falta el email — si no, le llegaría el mismo mensaje dos veces.
+              await base44.asServiceRole.functions.invoke("sendAppointmentConfirmation", { appointment_id: newAppt.id, skip_whatsapp: true });
             } catch (e) {
               console.error("sendAppointmentConfirmation invoke error:", e?.message || e);
             }

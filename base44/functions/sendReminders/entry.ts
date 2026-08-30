@@ -4,6 +4,7 @@ import { sendWhatsAppMessage } from "../../shared/whatsapp-providers.ts";
 import { buildEmailHtml, getAppUrl } from "../../shared/email-template.ts";
 import { getAppointmentContext } from "../../shared/appointment-context.ts";
 import { buildMapsLink } from "../../shared/zernio.ts";
+import { canSendWhatsApp } from "../../shared/plan.ts";
 
 export default async function(req) {
   try {

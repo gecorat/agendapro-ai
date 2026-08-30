@@ -1,4 +1,5 @@
 import { findPatientByCanonicalPhone, canonicalPhone } from "./phone-utils.ts";
+import { maybeSendImmediateReminder } from "./reminders.ts";
 import { sendEmail } from "./email-sender.ts";
 import { buildEmailHtml } from "./email-template.ts";
 import { generateSlotsForDay, findNextAvailableDaySlots, pickClosestSlots, isTimeAvailable, argentinaDayBounds } from "./scheduling.ts";
@@ -602,6 +603,19 @@ REGLAS ADICIONALES:
             // Aviso al PROFESIONAL de que el bot agendó solo un turno nuevo — antes esto
             // no pasaba y el consultorio se enteraba recién al abrir la Agenda a mano.
             await notifyProfessionalOfBotAction(base44, practice, { verb: "agendó", appt: newAppt });
+
+            // Si la cita quedó a menos de 3hs de distancia (poca anticipación), mandamos
+            // el recordatorio de una en vez de esperar a que el cron horario la agarre
+            // — puede pasar hasta una hora hasta la próxima pasada, dejando mucho menos
+            // margen real del que sugiere el "3 horas" del mensaje.
+            try {
+              const sentNow = await maybeSendImmediateReminder(base44, practice, { ...newAppt, professional_name: professionalName }, targetPatient || { id: patientId, first_name: suppliedFirstName, phone: fromPhone, email: suppliedEmail, contact_preference: "whatsapp" });
+              if (sentNow) {
+                await base44.asServiceRole.entities.Appointment.update(newAppt.id, { reminders_sent: 1 });
+              }
+            } catch (e) {
+              console.error("maybeSendImmediateReminder error (book):", e?.message || e);
+            }
           } catch (e) {
             console.error("Appointment.create error:", e?.message || e);
             finalReplyText = "Uy, tuve un problema técnico al guardar tu turno. ¿Podés confirmarme de nuevo el día y horario para intentarlo otra vez?";

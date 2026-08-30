@@ -16,6 +16,11 @@ import { buildEmailHtml } from "./email-template.ts";
 export async function maybeSendImmediateReminder(base44, practice, appointment, patient) {
   try {
     if (!patient) return false;
+    // Anti-duplicado: si esta cita ya recibió un recordatorio (sea del cron o de otro
+    // envio inmediato), no mandamos otro. Hace falta porque varios flujos llaman a esta
+    // función para la MISMA cita — por ejemplo la reserva pública auto-confirmada la
+    // llama directo y además invoca sendAppointmentConfirmation, que también la llama.
+    if ((appointment.reminders_sent || 0) > 0) return false;
     const start = new Date(appointment.start_datetime);
     const now = new Date();
     const hoursUntil = (start.getTime() - now.getTime()) / 3600000;

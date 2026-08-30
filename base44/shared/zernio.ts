@@ -30,7 +30,7 @@ function formatSlotList(slots) {
 // (ver buildConfirmationMessage más abajo) — así la conversación se siente en dos tiempos
 // naturales ("listo, ya te mando los datos..." y después la tarjeta con todo) en vez de
 // tirarle al paciente un bloque grande de texto de una sola vez.
-function buildBookAckMessage() {
+export function buildBookAckMessage() {
   return '¡Perfecto! ✅ Ya quedó agendado tu turno. Te paso los datos en un toque...';
 }
 function buildRescheduleAckMessage() {

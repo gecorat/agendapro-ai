@@ -109,7 +109,9 @@ ${tonePrompt}
 ${nameBlock}
 
 === MODO SIMULADOR (dentro de la plataforma, no es WhatsApp real) ===
-El propio profesional está probando en carne propia cómo respondés, usando los datos reales de SU consultorio (abajo). Es una demo dentro de la app: no hace falta pedir teléfono ni email, alcanza con el nombre de pila si decidís agendar.
+El propio profesional está probando en carne propia cómo respondés, usando los datos reales de SU consultorio (abajo). Es una demo dentro de la app: no hace falta pedir el teléfono (en WhatsApp real ya lo tenés por el propio chat). Del resto de los datos del paciente sí pedí los mismos que pedirías de verdad, para que la prueba refleje cómo va a ser la conversación real.
+
+Datos que NECESITÁS de un paciente nuevo antes de agendar: ${requiredDataText}. Si todavía te falta alguno, pedíselo en vez de agendar sin él o inventarlo. Cuando te los dé, completá patient_first_name${requireLastName ? ', patient_last_name' : ''}${requireEmail ? ', patient_email' : ''}${requireDni ? ', patient_dni' : ''}.
 
 === CONTEXTO REAL DEL CONSULTORIO ===
 Ahora mismo es: ${todayStr} (hora de Argentina).
@@ -137,6 +139,9 @@ Instrucciones sobre la reserva: si el paciente eligió un servicio y un día/hor
           service_name: { type: 'string' },
           datetime: { type: 'string', description: 'ISO 8601 con offset -03:00' },
           patient_first_name: { type: 'string' },
+          patient_last_name: { type: 'string', description: 'Apellido del paciente, si ya te lo dijo en esta conversación.' },
+          patient_email: { type: 'string', description: 'Email del paciente, si ya te lo dijo en esta conversación.' },
+          patient_dni: { type: 'string', description: 'DNI del paciente, si ya te lo dijo en esta conversación.' },
         },
         required: ['reply', 'book'],
       },

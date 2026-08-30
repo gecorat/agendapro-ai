@@ -6,6 +6,7 @@ import { sendWhatsAppMessage } from '../../shared/whatsapp-providers.ts';
 import { buildConfirmationMessage, buildBookAckMessage, notifyProfessionalOfBotAction } from '../../shared/zernio.ts';
 import { getAppointmentContext } from '../../shared/appointment-context.ts';
 import { argentinaDayBounds } from '../../shared/scheduling.ts';
+import { canSendWhatsApp } from '../../shared/plan.ts';
 
 export default async function (req: Request): Promise<Response> {
   try {
@@ -150,7 +151,7 @@ export default async function (req: Request): Promise<Response> {
       // mensaje cuando se reservaba desde la página, a diferencia de la experiencia por
       // WhatsApp. Solo si hay WhatsApp conectado: sin él, el paciente ya recibió la
       // confirmación por email arriba.
-      if (practice?.whatsapp_connected) {
+      if (canSendWhatsApp(practice)) {
         try {
           const { professionalName } = await getAppointmentContext(base44, appointment, practice);
           await sendWhatsAppMessage(base44, practice, patient.phone, buildBookAckMessage());

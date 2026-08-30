@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { buildEmailHtml, getAppUrl } from "../../shared/email-template.ts";
 import { sendEmail } from "../../shared/email-sender.ts";
 import { sendWhatsAppMessage } from "../../shared/whatsapp-providers.ts";
+import { canSendWhatsApp } from "../../shared/plan.ts";
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -86,7 +87,7 @@ export default async function(req: Request): Promise<Response> {
     // camino recomendado). Usamos whatsapp_phone_number (genérico, lo llenan los dos
     // proveedores) y la función de envío genérica, para que mande el mensaje a la propia
     // cuenta conectada sea cual sea el proveedor.
-    if (practice.whatsapp_connected && practice.whatsapp_phone_number) {
+    if (canSendWhatsApp(practice) && practice.whatsapp_phone_number) {
       try {
         await sendWhatsAppMessage(base44, practice, practice.whatsapp_phone_number, `🔔 Nueva cita pendiente
 

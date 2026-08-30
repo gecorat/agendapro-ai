@@ -104,7 +104,7 @@ export default async function(req) {
         const rescheduleUrl = practice?.handle ? `${appUrl}/reschedule/${cancelToken}` : null;
         const cancelUrl = `${appUrl}/x/${cancelToken}`;
 
-        const subject = `Tu cita es en ${windowLabel} — ${serviceName}`;
+        const subject = patientName ? `${patientName}, tu cita es en ${windowLabel}` : `Tu cita es en ${windowLabel} — ${serviceName}`;
         const emailBody = buildEmailHtml({
           title: `Tu cita es en ${windowLabel}`,
           greeting: `Hola ${patientName}`,

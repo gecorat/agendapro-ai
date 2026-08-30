@@ -133,6 +133,20 @@ export default function NotificationsBell({ user }) {
   const [items, setItems] = useState([]);
   const [open, setOpen] = useState(false);
   const [busyId, setBusyId] = useState(null);
+  // El contador se calculaba SOLO a partir del estado de las citas, sin registrar en
+  // ningún lado que el profesional ya había abierto la campanita — así que una reserva
+  // externa ya confirmada (que no requiere ninguna acción suya) quedaba contada por 24hs
+  // aunque la hubiera visto. Guardamos acá cuándo abrió el panel por última vez, igual que
+  // hacemos con las conversaciones leídas en la bandeja de chats.
+  const LAST_SEEN_KEY = "kameagenda_bell_last_seen";
+  const [lastSeenAt, setLastSeenAt] = useState(() => {
+    try { return localStorage.getItem(LAST_SEEN_KEY) || null; } catch { return null; }
+  });
+  const markBellSeen = () => {
+    const now = new Date().toISOString();
+    try { localStorage.setItem(LAST_SEEN_KEY, now); } catch { /* modo privado; no es crítico */ }
+    setLastSeenAt(now);
+  };
 
   const loadPending = useCallback(async () => {
     try {

@@ -58,9 +58,28 @@ export default async function (req: Request): Promise<Response> {
     const objectivePrompt = practice.bot_objective_prompt || DEFAULT_OBJECTIVE_PROMPT;
     const tonePrompt = practice.bot_tone_prompt || DEFAULT_TONE_PROMPT;
     const assistantName = (practice.bot_assistant_name || '').trim();
-    const nameBlock = assistantName
-      ? `Te llamás ${assistantName}. Presentáte con ese nombre si te preguntan cómo te llamás, o de forma natural al saludar.`
-      : `No tenés un nombre propio: presentate como "la asistente virtual del consultorio" si te preguntan.`;
+    // Mismo criterio que el bot real (ver zernio.ts): el modo de personalidad y los datos
+    // obligatorios salen de PracticeSettings, no están fijos acá. Antes este simulador los
+    // ignoraba por completo, así que probabas en /bot y respondía distinto de como iba a
+    // responder en WhatsApp real.
+    const personaMode = practice.bot_persona_mode === 'professional' ? 'professional' : 'assistant';
+    const nameBlock = personaMode === 'professional'
+      ? `Hablás en PRIMERA PERSONA, como si vos mismo fueras ${practice.practice_name || 'el profesional'} respondiendo directamente por WhatsApp — NO te presentes como "la asistente virtual" ni como un bot aparte, y no uses ningún nombre de asistente distinto. Si te preguntan si sos una IA o un bot, respondé con naturalidad y sin dar vueltas, pero el resto de la conversación sigue en primera persona como si fueras vos.`
+      : (assistantName
+        ? `Te llamás ${assistantName}. Presentáte con ese nombre si te preguntan cómo te llamás, o de forma natural al saludar.`
+        : `No tenés un nombre propio: presentate como "la asistente virtual del consultorio" si te preguntan.`);
+
+    const requiredPatientFields = Array.isArray(practice.bot_required_patient_fields)
+      ? practice.bot_required_patient_fields
+      : ['last_name'];
+    const requireLastName = requiredPatientFields.includes('last_name');
+    const requireEmail = requiredPatientFields.includes('email');
+    const requireDni = requiredPatientFields.includes('dni');
+    const requiredDataLabels = ['nombre'];
+    if (requireLastName) requiredDataLabels.push('apellido');
+    if (requireEmail) requiredDataLabels.push('email');
+    if (requireDni) requiredDataLabels.push('DNI');
+    const requiredDataText = requiredDataLabels.join(', ');
 
     const myServices = services || [];
     const servicesText = myServices.length

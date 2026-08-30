@@ -170,6 +170,7 @@ export default function PublicPageEditor() {
     custom_bg_pattern: "none", custom_bg_image_url: "", custom_bg_overlay_opacity: 40,
     custom_border_radius: "auto", custom_card_opacity: 100, custom_blur_enabled: false,
     avatar_border_radius: "auto", show_reviews_public: true,
+    auto_confirm_public_bookings: false,
   });
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -226,6 +227,7 @@ export default function PublicPageEditor() {
         custom_blur_enabled: !!settings.custom_blur_enabled,
         avatar_border_radius: settings.avatar_border_radius || "auto",
         show_reviews_public: settings.show_reviews_public !== false,
+        auto_confirm_public_bookings: settings.auto_confirm_public_bookings === true,
       });
     }
   }, [settings]);
@@ -558,6 +560,22 @@ export default function PublicPageEditor() {
                   </div>
                   <Switch checked={form.show_reviews_public} onCheckedChange={(v) => set("show_reviews_public", v)} />
                 </div>
+
+                {/* Solo Basic/Trial: en Pro/Clinic el auto-confirmado está siempre activo
+                    (no tiene sentido ofrecer la opción si no se puede desactivar). */}
+                {(settings?.plan === "basic" || settings?.plan === "trial") && (
+                  <div className="flex items-center justify-between p-3 rounded-lg border border-border">
+                    <div className="pr-3">
+                      <p className="text-sm font-medium">Confirmar reservas automáticamente</p>
+                      <p className="text-xs text-muted-foreground">
+                        {form.auto_confirm_public_bookings
+                          ? "Las reservas de tu página quedan confirmadas al instante y el paciente recibe el aviso solo."
+                          : "Las reservas de tu página quedan pendientes hasta que las aprobés desde la campanita o la Agenda."}
+                      </p>
+                    </div>
+                    <Switch checked={form.auto_confirm_public_bookings} onCheckedChange={(v) => set("auto_confirm_public_bookings", v)} />
+                  </div>
+                )}
 
                 <div className="flex items-center justify-between p-3 rounded-lg border border-border">
                   <div>

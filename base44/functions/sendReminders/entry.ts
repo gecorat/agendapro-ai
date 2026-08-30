@@ -145,23 +145,18 @@ export default async function(req) {
         ].filter(Boolean).join("\n");
 
         // Decidir canal
-        const plan = practice?.plan || "trial";
         const pref = patient?.contact_preference || "email";
-        // Bug corregido: comparaba contra "premium", que ya no existe (el plan se llama
-        // "clinic" desde el rediseño de precios) — los recordatorios por WhatsApp nunca se
-        // disparaban para cuentas Clinic.
-        const whatsappAllowed = plan === "pro" || plan === "clinic";
         const wantsWhatsApp = pref === "whatsapp" || pref === "both";
 
         let channelUsed = "email";
-        if (whatsappAllowed && wantsWhatsApp && patient?.phone) {
-          // Antes esto solo chequeaba `zernio_account_id` para decidir si había WhatsApp
-          // conectado — una cuenta conectada por QR (Evolution API) nunca tiene ese campo
-          // cargado, así que NUNCA le llegaban recordatorios por WhatsApp a sus pacientes,
-          // sin ningún error visible (caía derecho al fallback de email en silencio). Ahora
-          // usamos la misma función genérica que ya sabe elegir Zernio o Evolution según
-          // corresponda, igual que el bot y las respuestas manuales.
-          const whatsAppConnected = !!practice?.whatsapp_connected;
+        if (wantsWhatsApp && patient?.phone) {
+          // Un único criterio compartido (canSendWhatsApp) para plan + conexión. Antes acá
+          // se comparaba el plan a mano contra "premium", que ya no existe (se llama
+          // "clinic" desde el rediseño de precios), y la conexión se chequeaba mirando solo
+          // `zernio_account_id` — campo que una cuenta conectada por QR (Evolution API)
+          // nunca tiene cargado, así que NUNCA le llegaban recordatorios por WhatsApp a sus
+          // pacientes, sin ningún error visible (caía derecho al fallback de email).
+          const whatsAppConnected = canSendWhatsApp(practice);
           if (whatsAppConnected) {
             try {
               // Dos mensajes seguidos (intro + detalles), igual que el flujo de agendamiento

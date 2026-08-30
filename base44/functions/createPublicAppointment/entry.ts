@@ -3,7 +3,7 @@ import { findPatientByCanonicalPhone } from '../../shared/phone-utils.ts';
 import { pushAppointmentToGoogle } from '../../shared/google-calendar.ts';
 import { sendPushToUsers, getPracticeRecipientUserIds } from '../../shared/push.ts';
 import { sendWhatsAppMessage } from '../../shared/whatsapp-providers.ts';
-import { buildConfirmationMessage } from '../../shared/zernio.ts';
+import { buildConfirmationMessage, buildBookAckMessage } from '../../shared/zernio.ts';
 import { getAppointmentContext } from '../../shared/appointment-context.ts';
 import { argentinaDayBounds } from '../../shared/scheduling.ts';
 import { maybeSendImmediateReminder } from '../../shared/reminders.ts';
@@ -143,8 +143,13 @@ export default async function (req: Request): Promise<Response> {
       // WhatsApp: mismo formato (negrita + emojis) que usa el bot al confirmar un turno,
       // para que el paciente reciba exactamente el mismo tipo de mensaje sin importar si
       // reservó charlando con el bot o solo desde la página.
+      // WhatsApp: mismo formato de DOS mensajes (aviso corto + tarjeta con los detalles)
+      // que ya usa el bot al agendar por chat — antes esto venía todo junto en un solo
+      // mensaje cuando se reservaba desde la página, a diferencia de la experiencia por
+      // WhatsApp.
       try {
         const { professionalName } = await getAppointmentContext(base44, appointment, practice);
+        await sendWhatsAppMessage(base44, practice, patient.phone, buildBookAckMessage());
         const waText = buildConfirmationMessage({ practice, service, start, professionalName });
         await sendWhatsAppMessage(base44, practice, patient.phone, waText);
       } catch (e) {

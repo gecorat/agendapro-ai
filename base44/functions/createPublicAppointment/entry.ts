@@ -6,6 +6,7 @@ import { sendWhatsAppMessage } from '../../shared/whatsapp-providers.ts';
 import { buildConfirmationMessage } from '../../shared/zernio.ts';
 import { getAppointmentContext } from '../../shared/appointment-context.ts';
 import { argentinaDayBounds } from '../../shared/scheduling.ts';
+import { maybeSendImmediateReminder } from '../../shared/reminders.ts';
 
 export default async function (req: Request): Promise<Response> {
   try {
@@ -148,6 +149,21 @@ export default async function (req: Request): Promise<Response> {
         await sendWhatsAppMessage(base44, practice, patient.phone, waText);
       } catch (e) {
         console.error('sendWhatsAppMessage error (createPublicAppointment):', e?.message || e);
+      }
+
+      // Si la cita quedó a menos de 3hs de distancia (poca anticipación), mandamos el
+      // recordatorio de una en vez de esperar al próximo tick del cron horario.
+      try {
+        const sentNow = await maybeSendImmediateReminder(
+          base44, practice,
+          { start_datetime: appointment.start_datetime, service_name: service.name, professional_name: undefined },
+          patient
+        );
+        if (sentNow) {
+          await base44.asServiceRole.entities.Appointment.update(appointment.id, { reminders_sent: 1 });
+        }
+      } catch (e) {
+        console.error('maybeSendImmediateReminder error (createPublicAppointment):', e?.message || e);
       }
     }
 

@@ -8,6 +8,7 @@ import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from "@/co
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { registerServiceWorker, subscribeToPush } from "@/lib/push-notifications";
+import { loadReadState, saveBellLastSeen, getLocalBellLastSeen } from "@/lib/read-state";
 
 const EXTERNAL_ORIGINS = ["whatsapp", "public_link"];
 
@@ -136,16 +137,26 @@ export default function NotificationsBell({ user }) {
   // El contador se calculaba SOLO a partir del estado de las citas, sin registrar en
   // ningún lado que el profesional ya había abierto la campanita — así que una reserva
   // externa ya confirmada (que no requiere ninguna acción suya) quedaba contada por 24hs
-  // aunque la hubiera visto. Guardamos acá cuándo abrió el panel por última vez, igual que
-  // hacemos con las conversaciones leídas en la bandeja de chats.
-  const LAST_SEEN_KEY = "kameagenda_bell_last_seen";
-  const [lastSeenAt, setLastSeenAt] = useState(() => {
-    try { return localStorage.getItem(LAST_SEEN_KEY) || null; } catch { return null; }
-  });
-  const markBellSeen = () => {
+  // aunque la hubiera visto. Se guarda en el servidor (UserReadState) para que valga en
+  // todos sus dispositivos, con el localStorage como caché para pintar bien al instante.
+  const [lastSeenAt, setLastSeenAt] = useState(() => getLocalBellLastSeen());
+  const [readStateRowId, setReadStateRowId] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadReadState().then(({ bellLastSeen, rowId }) => {
+      if (cancelled) return;
+      setReadStateRowId(rowId);
+      if (bellLastSeen) setLastSeenAt(bellLastSeen);
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  const markBellSeen = async () => {
     const now = new Date().toISOString();
-    try { localStorage.setItem(LAST_SEEN_KEY, now); } catch { /* modo privado; no es crítico */ }
     setLastSeenAt(now);
+    const id = await saveBellLastSeen(readStateRowId, now);
+    if (id && id !== readStateRowId) setReadStateRowId(id);
   };
 
   const loadPending = useCallback(async () => {

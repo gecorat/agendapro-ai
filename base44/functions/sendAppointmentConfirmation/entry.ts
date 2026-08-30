@@ -5,6 +5,7 @@ import { getAppointmentContext } from "../../shared/appointment-context.ts";
 import { buildMapsLink, buildConfirmationMessage, buildBookAckMessage } from "../../shared/zernio.ts";
 import { sendWhatsAppMessage } from "../../shared/whatsapp-providers.ts";
 import { maybeSendImmediateReminder } from "../../shared/reminders.ts";
+import { canSendWhatsApp } from "../../shared/plan.ts";
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -71,7 +72,7 @@ export default async function(req: Request): Promise<Response> {
     // que cuando el profesional confirmaba una cita a mano desde la campanita, al paciente
     // no le llegaba nada por WhatsApp — solo un mail (o nada, si no tenía mail cargado).
     let waSent = false;
-    if (!skip_whatsapp && practice?.whatsapp_connected && patient?.phone) {
+    if (!skip_whatsapp && canSendWhatsApp(practice) && patient?.phone) {
       try {
         await sendWhatsAppMessage(base44, practice, patient.phone, buildBookAckMessage());
         await sendWhatsAppMessage(base44, practice, patient.phone, buildConfirmationMessage({

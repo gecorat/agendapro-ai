@@ -104,11 +104,11 @@ export async function notifyProfessionalOfBotAction(base44, practice, { verb, ap
     } catch {}
     await sendEmail(base44, {
       to: practice.professional_email,
-      subject: `El bot de WhatsApp ${verb} un turno — ${appt.service_name || "Consulta"}`,
+      subject: `${channelLabel} ${verb} un turno — ${appt.service_name || "Consulta"}`,
       body: buildEmailHtml({
-        title: `Turno ${verb} por el bot`,
+        title: `Turno ${verb}`,
         greeting: `Hola ${practice.practice_name || ""}`.trim(),
-        lines: [`El bot de WhatsApp acaba de ${verb} un turno con ${appt.patient_name || "un paciente"}, sin que hiciera falta que lo atiendas vos.`],
+        lines: [`${channelLabel} acaba de ${verb} un turno con ${appt.patient_name || "un paciente"}, sin que hiciera falta que lo atiendas vos.`],
         details: [
           { label: "Paciente", value: appt.patient_name || "—" },
           { label: "Servicio", value: appt.service_name || "—" },

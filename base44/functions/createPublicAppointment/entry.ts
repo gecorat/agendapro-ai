@@ -140,9 +140,6 @@ export default async function (req: Request): Promise<Response> {
       } catch (e) {
         console.error('sendAppointmentConfirmation invoke error (createPublicAppointment):', e?.message || e);
       }
-      // WhatsApp: mismo formato (negrita + emojis) que usa el bot al confirmar un turno,
-      // para que el paciente reciba exactamente el mismo tipo de mensaje sin importar si
-      // reservó charlando con el bot o solo desde la página.
       // WhatsApp: mismo formato de DOS mensajes (aviso corto + tarjeta con los detalles)
       // que ya usa el bot al agendar por chat — antes esto venía todo junto en un solo
       // mensaje cuando se reservaba desde la página, a diferencia de la experiencia por

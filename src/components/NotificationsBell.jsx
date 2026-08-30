@@ -343,7 +343,7 @@ export default function NotificationsBell({ user }) {
           <SheetHeader className="text-left">
             <SheetTitle className="flex items-center gap-2">
               <Bell className="w-4 h-4" />
-              Citas {pendingCount > 0 && <span className="text-sm font-normal text-muted-foreground">({pendingCount} pendientes)</span>}
+              Citas {pendingCount > 0 && <span className="text-sm font-normal text-muted-foreground">({pendingCount} sin ver)</span>}
             </SheetTitle>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto mt-2">
@@ -361,7 +361,7 @@ export default function NotificationsBell({ user }) {
         <div className="flex items-center gap-2 px-1 pb-2 mb-1 border-b border-border">
           <Bell className="w-4 h-4" />
           <span className="text-sm font-semibold">Citas</span>
-          {pendingCount > 0 && <span className="ml-auto text-xs text-muted-foreground">{pendingCount} pendientes</span>}
+          {pendingCount > 0 && <span className="ml-auto text-xs text-muted-foreground">{pendingCount} sin ver</span>}
         </div>
         <div className="max-h-[60vh] overflow-y-auto">
           <PendingList {...listProps} />

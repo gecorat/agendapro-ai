@@ -94,7 +94,7 @@ export default async function(req: Request): Promise<Response> {
       if (patient) {
         const sentNow = await maybeSendImmediateReminder(
           base44, practice,
-          { start_datetime: appt.start_datetime, service_name: appt.service_name, professional_name: professionalName },
+          { start_datetime: appt.start_datetime, service_name: appt.service_name, professional_name: professionalName, reminders_sent: appt.reminders_sent },
           patient
         );
         if (sentNow) {

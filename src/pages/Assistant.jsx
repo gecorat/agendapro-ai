@@ -8,6 +8,7 @@ import {
   Pencil, XCircle, IdCard,
 } from "lucide-react";
 import DemoChat from "@/components/assistant/DemoChat";
+import { loadReadState, saveChatLastRead, getLocalChatLastRead } from "@/lib/read-state";
 import WhatsAppConnectCard from "@/components/WhatsAppConnectCard";
 import BotPauseButton from "@/components/BotPauseButton";
 import BotPauseBanner from "@/components/BotPauseBanner";

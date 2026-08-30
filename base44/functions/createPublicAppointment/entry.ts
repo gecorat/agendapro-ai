@@ -3,7 +3,7 @@ import { findPatientByCanonicalPhone } from '../../shared/phone-utils.ts';
 import { pushAppointmentToGoogle } from '../../shared/google-calendar.ts';
 import { sendPushToUsers, getPracticeRecipientUserIds } from '../../shared/push.ts';
 import { sendWhatsAppMessage } from '../../shared/whatsapp-providers.ts';
-import { buildConfirmationMessage, buildBookAckMessage } from '../../shared/zernio.ts';
+import { buildConfirmationMessage, buildBookAckMessage, notifyProfessionalOfBotAction } from '../../shared/zernio.ts';
 import { getAppointmentContext } from '../../shared/appointment-context.ts';
 import { argentinaDayBounds } from '../../shared/scheduling.ts';
 import { maybeSendImmediateReminder } from '../../shared/reminders.ts';
@@ -183,6 +183,25 @@ export default async function (req: Request): Promise<Response> {
       }
     } catch (e) {
       console.error('push createPublicAppointment error:', e?.message || e);
+    }
+
+    // Aviso por EMAIL al profesional cuando la cita nace ya confirmada. El workflow
+    // "Alerta de cita pendiente" (sendPendingAppointmentAlert) solo dispara para citas en
+    // estado 'pending', así que al auto-confirmar las reservas de planes Pro/Clinic el
+    // profesional dejó de recibir cualquier aviso por mail de una reserva nueva —
+    // confirmado en vivo. Reusamos el mismo aviso que ya manda el bot al agendar (email +
+    // push), etiquetado como reserva desde la página en vez de "el bot".
+    if (autoConfirm && practice) {
+      try {
+        await notifyProfessionalOfBotAction(base44, practice, {
+          verb: 'agendó',
+          appt: appointment,
+          actorLabel: 'Un paciente',
+          channelLabel: 'Un paciente, desde tu página de reservas,',
+        });
+      } catch (e) {
+        console.error('notifyProfessionalOfBotAction error (createPublicAppointment):', e?.message || e);
+      }
     }
 
     return Response.json({ appointment, patient });

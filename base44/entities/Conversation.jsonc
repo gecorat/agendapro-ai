@@ -4,7 +4,7 @@
   "properties": {
     "phone": {
       "type": "string",
-      "title": "Teléfono del paciente"
+      "title": "Tel\u00e9fono del paciente"
     },
     "professional_id": {
       "type": "string",
@@ -24,7 +24,7 @@
     },
     "conversation_id": {
       "type": "string",
-      "title": "ID de conversación en Zernio"
+      "title": "ID de conversaci\u00f3n en Zernio"
     },
     "account_id": {
       "type": "string",
@@ -32,7 +32,7 @@
     },
     "delivery_failed": {
       "type": "boolean",
-      "title": "El envío por WhatsApp falló tras reintentos",
+      "title": "El env\u00edo por WhatsApp fall\u00f3 tras reintentos",
       "default": false
     },
     "wasender_msg_id": {
@@ -42,9 +42,11 @@
     "sent_by": {
       "type": "string",
       "title": "Quien mando este mensaje",
+      "description": "bot = respuesta del asistente de IA. human = escrito a mano por el profesional. system = aviso automatico de la plataforma (confirmacion de turno, recordatorio, reprogramacion, cancelacion). 'system' faltaba en este enum aunque notifyPatientOfAppointmentChange ya lo escribia.",
       "enum": [
         "bot",
-        "human"
+        "human",
+        "system"
       ],
       "default": "bot"
     }

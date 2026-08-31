@@ -38,6 +38,21 @@ export default async function(req: Request): Promise<Response> {
       return Response.json({ skipped: true, reason: 'no patient' });
     }
 
+    // RESERVA el envío antes de mandar nada. Esta función la pueden invocar dos caminos
+    // casi al mismo tiempo para la misma cita: el formulario de la Agenda la llama directo
+    // al crear el turno, y el workflow "Email de confirmación al paciente" se dispara ante
+    // cualquier `update` de Appointment — y syncAppointmentGoogle escribe google_event_id
+    // justo ahí en el medio. Marcando el flag ARRIBA, el segundo en entrar lee
+    // confirmation_email_sent = true y sale por la guarda de más arriba. Antes el flag se
+    // escribía recién al final, después de mandar los WhatsApp (decenas de segundos de
+    // ventana), y el paciente podía recibir la confirmación dos veces.
+    // Si al final no sale absolutamente nada, se libera abajo.
+    try {
+      await base44.asServiceRole.entities.Appointment.update(appt.id, { confirmation_email_sent: true });
+    } catch (e) {
+      console.error('sendAppointmentConfirmation claim error:', e?.message || e);
+    }
+
     // Datos del paciente (email + nombre)
     let email = null;
     let patient = null;
@@ -74,14 +89,16 @@ export default async function(req: Request): Promise<Response> {
 
     let waSent = false;
     if (!skip_whatsapp && canSendWhatsApp(practice) && patient?.phone) {
-      const ackText = buildBookAckMessage();
-      const confirmText = buildConfirmationMessage({
-        practice,
-        service: { name: appt.service_name || "Consulta" },
-        start: startDate,
-        professionalName,
-      });
       try {
+        // Se arman DENTRO del try a propósito: si alguna tirara, el catch local lo absorbe y
+        // el email de confirmación igual sale.
+        const ackText = buildBookAckMessage();
+        const confirmText = buildConfirmationMessage({
+          practice,
+          service: { name: appt.service_name || "Consulta" },
+          start: startDate,
+          professionalName,
+        });
         await sendWhatsAppMessage(base44, practice, patient.phone, ackText);
         await sendWhatsAppMessage(base44, practice, patient.phone, confirmText);
         waSent = true;

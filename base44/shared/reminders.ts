@@ -1,5 +1,5 @@
 import { sendWhatsAppMessage } from "./whatsapp-providers.ts";
-import { sendEmail } from "./email-sender.ts";
+import { sendEmail, replyToFor } from "./email-sender.ts";
 import { buildEmailHtml } from "./email-template.ts";
 import { canSendWhatsApp } from "./plan.ts";
 
@@ -126,6 +126,9 @@ export async function maybeSendImmediateReminder(base44, practice, appointment, 
       ],
     });
 
+    // Si el paciente responde el recordatorio, que le llegue al profesional.
+    const replyTo = replyToFor(practice);
+
     let waOk = false;
     let mailOk = false;
 
@@ -141,7 +144,7 @@ export async function maybeSendImmediateReminder(base44, practice, appointment, 
 
     if (channels.email) {
       try {
-        await sendEmail(base44, { to: patient.email, subject: emailSubject, body: emailBody });
+        await sendEmail(base44, { to: patient.email, subject: emailSubject, body: emailBody, replyTo });
         mailOk = true;
       } catch (e) {
         console.error("maybeSendImmediateReminder email error:", e?.message || e);
@@ -151,7 +154,7 @@ export async function maybeSendImmediateReminder(base44, practice, appointment, 
     // Último recurso: no salió por ningún canal pero hay un email cargado.
     if (!waOk && !mailOk && channels.emailFallback) {
       try {
-        await sendEmail(base44, { to: patient.email, subject: emailSubject, body: emailBody });
+        await sendEmail(base44, { to: patient.email, subject: emailSubject, body: emailBody, replyTo });
         mailOk = true;
       } catch (e) {
         console.error("maybeSendImmediateReminder email fallback error:", e?.message || e);

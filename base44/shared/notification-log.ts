@@ -1,5 +1,10 @@
-import { sendPushToUsers, getPracticeRecipientUserIds } from "./push.ts";
 import { normalizePhone } from "./whatsapp-providers.ts";
+
+// OJO: `push.ts` importa `npm:web-push`, que es pesado y solo hace falta en el camino de
+// "falló todo". Se carga con `await import(...)` DENTRO de la función, no arriba: al
+// importarlo a nivel de módulo, esta cadena entraba en sendAppointmentConfirmation y en
+// sendReminders, y una confirmación de turno pasó a no dispararse más. Mismo criterio que
+// usa whatsapp-providers.ts con zernio/evolution.
 
 // Registro de avisos al paciente. Existe por dos razones:
 //
@@ -41,7 +46,8 @@ export async function logNotification(base44, { appointment, practice, patient, 
 // Deja el mensaje automático en el historial del chat de WhatsApp, igual que cualquier
 // mensaje del bot, para que la bandeja del profesional no tenga un hueco donde en
 // realidad SÍ le hablamos al paciente. `sent_by: "system"` lo distingue del bot ("IA") y
-// de los mensajes escritos a mano por el profesional ("Vos").
+// de los mensajes escritos a mano por el profesional ("Vos") — y además hace que estos
+// mensajes se salteen al armar el contexto del bot y al contar los no leídos.
 export async function logWhatsAppToConversation(base44, { practice, phone, text }) {
   try {
     const normalized = normalizePhone(phone);
@@ -63,11 +69,29 @@ export async function logWhatsAppToConversation(base44, { practice, phone, text 
 }
 
 // Push al profesional cuando un aviso no salió por NINGÚN canal. Es el caso que más
-// importa y el único que hoy pasaba en absoluto silencio: el paciente se queda sin saber
-// de su turno y nadie se entera hasta que no aparece.
+// importa y el único que antes pasaba en absoluto silencio: el paciente se queda sin
+// saber de su turno y nadie se entera hasta que no aparece.
+//
+// UN SOLO push por turno, no uno por intento. El cron corre cada 15 minutos y una cita
+// puede reintentar durante horas: sin este control, un turno con un teléfono mal cargado
+// producía decenas de pushes idénticos. Si ya hay un fallo registrado para esta cita,
+// asumimos que el profesional ya fue avisado.
 export async function notifyProfessionalOfDeliveryFailure(base44, { practice, appointment, patientName, kind }) {
   try {
     if (!practice) return;
+
+    if (appointment?.id) {
+      try {
+        const previos = await base44.asServiceRole.entities.NotificationLog.filter({
+          appointment_id: appointment.id,
+          status: "failed",
+        });
+        // > 0 y no >= 1 a propósito: el fallo de ESTA corrida ya se registró antes de
+        // llamar acá, así que "1" es el primero y recién a partir del segundo repetimos.
+        if ((previos || []).length > 1) return;
+      } catch { /* si no se puede chequear, mejor avisar de más que de menos */ }
+    }
+
     const start = new Date(appointment?.start_datetime);
     const when = isNaN(start.getTime())
       ? ""
@@ -75,6 +99,8 @@ export async function notifyProfessionalOfDeliveryFailure(base44, { practice, ap
           day: "numeric", month: "long", hour: "2-digit", minute: "2-digit",
           timeZone: "America/Argentina/Buenos_Aires",
         });
+
+    const { sendPushToUsers, getPracticeRecipientUserIds } = await import("./push.ts");
     const userIds = await getPracticeRecipientUserIds(base44, practice);
     await sendPushToUsers(base44, userIds, {
       title: "No se pudo avisar al paciente",

@@ -70,19 +70,28 @@ export default async function(req: Request): Promise<Response> {
     // recibir el aviso por el canal que sí usa. Antes esta función mandaba SOLO email, así
     // que cuando el profesional confirmaba una cita a mano desde la campanita, al paciente
     // no le llegaba nada por WhatsApp — solo un mail (o nada, si no tenía mail cargado).
+    const logArgs = { appointment: appt, practice, patient, kind: "confirmation" };
+
     let waSent = false;
     if (!skip_whatsapp && canSendWhatsApp(practice) && patient?.phone) {
+      const ackText = buildBookAckMessage();
+      const confirmText = buildConfirmationMessage({
+        practice,
+        service: { name: appt.service_name || "Consulta" },
+        start: startDate,
+        professionalName,
+      });
       try {
-        await sendWhatsAppMessage(base44, practice, patient.phone, buildBookAckMessage());
-        await sendWhatsAppMessage(base44, practice, patient.phone, buildConfirmationMessage({
-          practice,
-          service: { name: appt.service_name || "Consulta" },
-          start: startDate,
-          professionalName,
-        }));
+        await sendWhatsAppMessage(base44, practice, patient.phone, ackText);
+        await sendWhatsAppMessage(base44, practice, patient.phone, confirmText);
         waSent = true;
+        // Que la confirmación quede en el chat con el paciente, no solo en su WhatsApp.
+        await logWhatsAppToConversation(base44, { practice, phone: patient.phone, text: ackText });
+        await logWhatsAppToConversation(base44, { practice, phone: patient.phone, text: confirmText });
+        await logNotification(base44, { ...logArgs, channel: "whatsapp", status: "sent" });
       } catch (e) {
         console.error('sendWhatsAppMessage error (sendAppointmentConfirmation):', e?.message || e);
+        await logNotification(base44, { ...logArgs, channel: "whatsapp", status: "failed", error: e });
       }
     }
 
@@ -156,6 +165,8 @@ export default async function(req: Request): Promise<Response> {
         mapsButton: mapsLink ? { label: "Cómo llegar", url: mapsLink } : null,
       }),
     });
+
+    await logNotification(base44, { ...logArgs, channel: "email", status: "sent" });
 
     await base44.asServiceRole.entities.Appointment.update(appt.id, {
       confirmation_email_sent: true,

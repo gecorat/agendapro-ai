@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
-import { sendEmail } from "../../shared/email-sender.ts";
+import { sendEmail, replyToFor } from "../../shared/email-sender.ts";
 import { sendWhatsAppMessage } from "../../shared/whatsapp-providers.ts";
 import { buildEmailHtml, getAppUrl } from "../../shared/email-template.ts";
 import { getAppointmentContext } from "../../shared/appointment-context.ts";
@@ -97,6 +97,8 @@ export default async function(req) {
         const practice = await getPracticeFor(appt);
         const { professionalName, address } = await getAppointmentContext(base44, appt, practice);
         const mapsLink = buildMapsLink(practice);
+        // Si el paciente responde el recordatorio, que le llegue al profesional.
+        const replyTo = replyToFor(practice);
 
         // Aseguramos un cancel_token para poder ofrecer los mismos botones de la
         // confirmación (reagendar / cancelar) también acá, no solo texto plano. OJO: no lo
@@ -173,7 +175,7 @@ export default async function(req) {
 
         if (channels.email) {
           try {
-            await sendEmail(base44, { to: patient.email, subject, body: emailBody });
+            await sendEmail(base44, { to: patient.email, subject, body: emailBody, replyTo });
             mailOk = true;
           } catch (e) {
             console.error("sendReminders email error:", e?.message || e);
@@ -183,7 +185,7 @@ export default async function(req) {
         // Último recurso: el canal preferido no estaba disponible o falló, pero hay email
         // cargado. Mejor que le llegue por el otro medio a que no le llegue nada.
         if (!waOk && !mailOk && channels.emailFallback) {
-          await sendEmail(base44, { to: patient.email, subject, body: emailBody });
+          await sendEmail(base44, { to: patient.email, subject, body: emailBody, replyTo });
           mailOk = true;
         }
 

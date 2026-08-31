@@ -99,7 +99,10 @@ export default async function(req: Request): Promise<Response> {
           patient
         );
         if (sentNow) {
-          await base44.asServiceRole.entities.Appointment.update(appt.id, { reminders_sent: 1 });
+          // 2, no 1: con 1, una cita reservada con +48hs de anticipación que se confirma
+          // sobre la hora volvía a entrar en la ventana de 3hs del cron (que busca
+          // justamente reminders_sent === 1) y el paciente recibía el mismo aviso dos veces.
+          await base44.asServiceRole.entities.Appointment.update(appt.id, { reminders_sent: 2 });
         }
       }
     } catch (e) {

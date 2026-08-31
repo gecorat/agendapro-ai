@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
-import { sendEmail } from '../../shared/email-sender.ts';
+import { sendEmail, replyToFor } from '../../shared/email-sender.ts';
 import { buildEmailHtml } from '../../shared/email-template.ts';
 import { sendWhatsAppMessage } from '../../shared/whatsapp-providers.ts';
 import { canSendWhatsApp } from '../../shared/plan.ts';
@@ -91,6 +91,8 @@ export default async function (req: Request): Promise<Response> {
       try {
         await sendEmail(base44, {
           to: patient.email,
+          // Si el paciente responde el aviso de cambio, que le llegue al profesional.
+          replyTo: replyToFor(practice),
           subject: changeType === 'rescheduled' ? `Tu cita fue reagendada — ${serviceName}` : `Tu cita fue cancelada — ${serviceName}`,
           body: buildEmailHtml({
             title: changeType === 'rescheduled' ? 'Cita reagendada' : 'Cita cancelada',

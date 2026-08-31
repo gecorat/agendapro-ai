@@ -1,0 +1,107 @@
+{
+  "name": "NotificationLog",
+  "type": "object",
+  "description": "Registro de cada aviso enviado (o intentado) a un paciente. Es la fuente de verdad para el historial que se muestra en la Agenda y para diagnosticar por que un aviso no llego: antes, si el envio por WhatsApp fallaba, el error solo quedaba en un console.error que nadie miraba.",
+  "properties": {
+    "appointment_id": {
+      "type": "string",
+      "title": "Cita"
+    },
+    "patient_id": {
+      "type": "string",
+      "title": "Paciente"
+    },
+    "professional_id": {
+      "type": "string",
+      "title": "Consultorio (dueno de la cuenta)"
+    },
+    "kind": {
+      "type": "string",
+      "title": "Tipo de aviso",
+      "enum": [
+        "confirmation",
+        "reminder_24h",
+        "reminder_3h",
+        "rescheduled",
+        "cancelled"
+      ]
+    },
+    "channel": {
+      "type": "string",
+      "title": "Canal",
+      "enum": [
+        "whatsapp",
+        "email"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "title": "Resultado",
+      "enum": [
+        "sent",
+        "failed",
+        "skipped"
+      ]
+    },
+    "to": {
+      "type": "string",
+      "title": "Destino (telefono o email)"
+    },
+    "error": {
+      "type": "string",
+      "title": "Detalle del error, si fallo"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Momento del envio"
+    }
+  },
+  "required": [
+    "kind",
+    "channel",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.professional_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {},
+    "update": {
+      "$or": [
+        {
+          "data.professional_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.professional_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

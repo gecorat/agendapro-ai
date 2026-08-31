@@ -115,7 +115,6 @@ export async function notifyProfessionalOfBotAction(base44, practice, { verb, ap
           { label: "Día y horario", value: dateStr },
         ],
         primaryButton: appUrl ? { label: "Ver en la Agenda", url: `${appUrl}/agenda?edit=${appt.id}` } : null,
-        footer: practice.practice_name || "Kame Agenda",
       }),
     });
   } catch (e) {

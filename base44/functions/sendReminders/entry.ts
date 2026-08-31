@@ -4,7 +4,7 @@ import { sendWhatsAppMessage } from "../../shared/whatsapp-providers.ts";
 import { buildEmailHtml, getAppUrl } from "../../shared/email-template.ts";
 import { getAppointmentContext } from "../../shared/appointment-context.ts";
 import { buildMapsLink } from "../../shared/zernio.ts";
-import { buildWhenLabel, formatApptDate, resolveChannels } from "../../shared/reminders.ts";
+import { buildWhenLabel, formatApptDate, resolveChannels, bookedOnEarlierDay, buildReminderWhatsAppMessage } from "../../shared/reminders.ts";
 import { logNotification, logWhatsAppToConversation, notifyProfessionalOfDeliveryFailure } from "../../shared/notification-log.ts";
 
 export default async function(req) {
@@ -39,6 +39,11 @@ export default async function(req) {
       if (hoursUntil <= 0) return null;
 
       const created = parseServerDate(appt.created_date);
+      // Regla base: los recordatorios son SOLO para lo que se reservó antes del día del
+      // turno. Si el paciente reservó hoy para hoy, ya recibió la confirmación con todos
+      // los datos hace unas horas — un recordatorio encima es el mismo mensaje dos veces.
+      if (!bookedOnEarlierDay(created, start)) return null;
+
       const bookedWithMargin = !isNaN(created.getTime())
         && (start.getTime() - created.getTime()) >= 48 * 60 * 60 * 1000;
       const reminders = appt.reminders_sent || 0;
@@ -130,28 +135,17 @@ export default async function(req) {
           ],
           primaryButton: rescheduleUrl ? { label: "Reagendar", url: rescheduleUrl } : null,
           secondaryButton: { label: "Cancelar cita", url: cancelUrl },
-          mapsButton: mapsLink ? { label: "Cómo llegar", url: mapsLink } : null,
+          // Sin botón de Google Maps: ese va en la confirmación inicial del turno, que es
+          // cuando el paciente necesita ubicar el lugar. En el recordatorio suma ruido.
         });
 
-        // Mensaje de entrada corto que se manda ANTES de los datos completos, para que la
-        // conversación se sienta en dos tiempos naturales — igual que hace el bot cuando
-        // agenda o reagenda un turno (buildBookAckMessage/buildRescheduleAckMessage en
-        // zernio.ts) — en vez de tirarle al paciente un bloque grande de una.
-        const waIntroText = `Hola${patientName ? ` ${patientName}` : ""}! Quería recordarte que tu cita es ${whenLabel}${professionalName ? `, con ${professionalName}` : ""}. Te paso los detalles...`;
-
-        // Mismo formato enriquecido (negrita nativa de WhatsApp + emojis) que el mensaje de
-        // confirmación del bot. Sin link de reagendar/cancelar (se pide avisar por el mismo
-        // medio) y SIN el link de Google Maps — ese va solo en la confirmación inicial de la
-        // cita; acá alcanza con la dirección completa en texto.
-        const waReminderText = [
-          `⏰ *Tu cita es ${whenLabel}*`,
-          `📅 *Día y horario:* ${dateStr}`,
-          `🩺 *Servicio:* ${serviceName}`,
-          professionalName ? `👤 *Profesional:* ${professionalName}` : null,
-          address ? `📍 *Dirección:* ${address}` : null,
-          "",
-          "🔁 *Si necesitás reagendar o cancelar, avisanos por este mismo medio* 😊",
-        ].filter(Boolean).join("\n");
+        // UN SOLO mensaje, cordial y sin link de Maps. Antes eran dos seguidos (un
+        // "Te paso los detalles..." y después el bloque de datos), copiando el ritmo
+        // conversacional del bot; en un aviso automático eso se lee como dos notificaciones
+        // para la misma cosa, no como una conversación.
+        const waReminderText = buildReminderWhatsAppMessage({
+          patientName, whenLabel, dateStr, serviceName, professionalName, address,
+        });
 
         // Canales. "both" ahora manda por LOS DOS. Antes era un if/else: si el consultorio
         // tenía WhatsApp conectado se mandaba solo WhatsApp y el email no salía nunca,
@@ -166,14 +160,10 @@ export default async function(req) {
 
         if (channels.whatsapp) {
           try {
-            // Dos mensajes seguidos (intro + detalles), igual que el flujo de agendamiento
-            // del bot, en vez de un único bloque grande de texto.
-            await sendWhatsAppMessage(base44, practice, patient.phone, waIntroText);
             await sendWhatsAppMessage(base44, practice, patient.phone, waReminderText);
             waOk = true;
             // Que el recordatorio quede visible en el chat con el paciente: el profesional
             // veía la conversación sin rastro de los avisos automáticos que sí se mandaron.
-            await logWhatsAppToConversation(base44, { practice, phone: patient.phone, text: waIntroText });
             await logWhatsAppToConversation(base44, { practice, phone: patient.phone, text: waReminderText });
           } catch (e) {
             console.error("sendReminders WhatsApp error:", e?.message || e);

@@ -4,7 +4,7 @@ import { sendWhatsAppMessage } from "../../shared/whatsapp-providers.ts";
 import { buildEmailHtml, getAppUrl } from "../../shared/email-template.ts";
 import { getAppointmentContext } from "../../shared/appointment-context.ts";
 import { buildMapsLink } from "../../shared/zernio.ts";
-import { canSendWhatsApp } from "../../shared/plan.ts";
+import { buildWhenLabel, formatApptDate, resolveChannels } from "../../shared/reminders.ts";
 
 export default async function(req) {
   try {
@@ -19,31 +19,38 @@ export default async function(req) {
       return new Date(hasTz ? dateStr : `${dateStr}Z`);
     }
 
-    // Recordatorio de 24hs: vuelve a existir, pero SOLO para citas reservadas con al menos
-    // 48hs de anticipación (diferencia entre cuándo se reservó la cita y cuándo es). Si se
-    // reservó con menos margen que eso, un aviso de "24hs antes" no tiene sentido real (a
-    // veces ni pasan 24hs entre que se reserva y la cita en sí) y esas citas solo reciben
-    // el recordatorio de 3hs. Esto evita además el bug viejo: antes la ventana de 24hs
-    // atrapaba CUALQUIER cita del día apenas se creaba, con el texto mal etiquetado.
-    const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    const in3h = new Date(now.getTime() + 3 * 60 * 60 * 1000);
     const appUrl = await getAppUrl(base44, req);
 
+    // Qué recordatorio le toca a esta cita AHORA, o null si ninguno.
+    //
+    //  - "24h": solo para citas reservadas con al menos 48hs de anticipación (si se reservó
+    //    con menos margen que eso, un aviso de "24hs antes" no tiene sentido real). Exige
+    //    ADEMÁS que falten más de 3hs: antes esta ventana era solo `start <= now + 24h`, así
+    //    que una cita reservada con mucha anticipación pero confirmada recién sobre la hora
+    //    recibía un mail diciendo "tu cita es en 24 horas" cuando faltaba 1.
+    //  - "3h": el aviso final. Lo recibe toda cita confirmada, haya tenido el de 24hs o no
+    //    (incluido el caso de la confirmación tardía, que entra directo acá).
+    function reminderStage(appt) {
+      if (appt.is_demo) return null; // cita de prueba del simulador /bot — nunca recordatorios reales
+      const start = new Date(appt.start_datetime);
+      if (isNaN(start.getTime())) return null;
+      const hoursUntil = (start.getTime() - now.getTime()) / 3600000;
+      if (hoursUntil <= 0) return null;
+
+      const created = parseServerDate(appt.created_date);
+      const bookedWithMargin = !isNaN(created.getTime())
+        && (start.getTime() - created.getTime()) >= 48 * 60 * 60 * 1000;
+      const reminders = appt.reminders_sent || 0;
+
+      if (bookedWithMargin && reminders === 0 && hoursUntil > 3 && hoursUntil <= 24) return "24h";
+      if (hoursUntil <= 3 && (reminders === 0 || (bookedWithMargin && reminders === 1))) return "3h";
+      return null;
+    }
+
     const all = await base44.asServiceRole.entities.Appointment.filter({ status: "confirmed" });
-    const toRemind = (all || []).filter((a) => {
-      if (a.is_demo) return false; // cita de prueba del simulador /bot — nunca recordatorios reales
-      const start = new Date(a.start_datetime);
-      const created = parseServerDate(a.created_date);
-      const reminders = a.reminders_sent || 0;
-      const bookedWithMargin = !isNaN(created.getTime()) && (start.getTime() - created.getTime()) >= 48 * 60 * 60 * 1000;
-      if (bookedWithMargin) {
-        const in24Window = reminders === 0 && start >= now && start <= in24h;
-        const in3Window = reminders === 1 && start >= now && start <= in3h;
-        return in24Window || in3Window;
-      }
-      // Reservada con menos de 48hs de anticipación: sin recordatorio de 24hs, directo al de 3hs.
-      return reminders === 0 && start >= now && start <= in3h;
-    });
+    const toRemind = (all || [])
+      .map((a) => ({ appt: a, stage: reminderStage(a) }))
+      .filter((x) => x.stage !== null);
 
     // Cache de PracticeSettings para evitar consultas repetidas
     let practices = null;
@@ -58,8 +65,9 @@ export default async function(req) {
     let sent = 0;
     let skipped = 0;
     const errors = [];
+    const sentDetail = [];
 
-    for (const appt of toRemind) {
+    for (const { appt, stage } of toRemind) {
       try {
         // Paciente
         let patient = null;
@@ -77,18 +85,14 @@ export default async function(req) {
           : appt.patient_name || "";
 
         const startDate = new Date(appt.start_datetime);
-        const dateStr = startDate.toLocaleString("es-AR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "America/Argentina/Buenos_Aires" });
+        const dateStr = formatApptDate(startDate);
         const serviceName = appt.service_name || "consulta";
 
-        // Misma cuenta que en el filtro de arriba: si esta cita se reservó con al menos
-        // 48hs de anticipación Y todavía no se mandó ningún recordatorio, este es el de
-        // 24hs (el primero de dos); si no, es directamente el de 3hs (único o segundo).
-        // Usamos "en 24 horas" en vez de "mañana" a propósito: es relativo a AHORA, no a un
-        // cálculo de fecha que pueda desalinearse con la hora real en la que corre el cron.
-        const createdAt = parseServerDate(appt.created_date);
-        const bookedWithMargin = !isNaN(createdAt.getTime()) && (startDate.getTime() - createdAt.getTime()) >= 48 * 60 * 60 * 1000;
-        const is24hReminder = bookedWithMargin && (appt.reminders_sent || 0) === 0;
-        const windowLabel = is24hReminder ? "24 horas" : "3 horas";
+        // El texto se ancla a la HORA REAL de la cita ("hoy a las 09:30"), no a un margen
+        // relativo hardcodeado. El cron corre cada 15 minutos, así que el margen efectivo
+        // nunca es exactamente 3hs ni 24hs — decirlo en horas relativas garantizaba un
+        // mensaje desfasado (llegaba 2h30 antes diciendo "en 3 horas").
+        const whenLabel = buildWhenLabel(startDate, now);
 
         const practice = await getPracticeFor(appt);
         const { professionalName, address } = await getAppointmentContext(base44, appt, practice);
@@ -105,9 +109,11 @@ export default async function(req) {
         const rescheduleUrl = practice?.handle ? `${appUrl}/reschedule/${cancelToken}` : null;
         const cancelUrl = `${appUrl}/x/${cancelToken}`;
 
-        const subject = patientName ? `${patientName}, tu cita es en ${windowLabel}` : `Tu cita es en ${windowLabel} — ${serviceName}`;
+        const subject = patientName
+          ? `${patientName}, tu cita es ${whenLabel}`
+          : `Tu cita es ${whenLabel} — ${serviceName}`;
         const emailBody = buildEmailHtml({
-          title: `Tu cita es en ${windowLabel}`,
+          title: `Tu cita es ${whenLabel}`,
           greeting: `Hola ${patientName}`,
           lines: [
             `Tu cita fue confirmada. ¡Te esperamos!`,
@@ -122,21 +128,20 @@ export default async function(req) {
           primaryButton: rescheduleUrl ? { label: "Reagendar", url: rescheduleUrl } : null,
           secondaryButton: { label: "Cancelar cita", url: cancelUrl },
           mapsButton: mapsLink ? { label: "Cómo llegar", url: mapsLink } : null,
-          footer: practice?.practice_name || "Kame Agenda",
         });
 
         // Mensaje de entrada corto que se manda ANTES de los datos completos, para que la
         // conversación se sienta en dos tiempos naturales — igual que hace el bot cuando
         // agenda o reagenda un turno (buildBookAckMessage/buildRescheduleAckMessage en
         // zernio.ts) — en vez de tirarle al paciente un bloque grande de una.
-        const waIntroText = `Hola${patientName ? ` ${patientName}` : ""}! Quería recordarte que en ${windowLabel} es tu cita programada${professionalName ? ` con ${professionalName}` : ""}. Te paso los detalles...`;
+        const waIntroText = `Hola${patientName ? ` ${patientName}` : ""}! Quería recordarte que tu cita es ${whenLabel}${professionalName ? `, con ${professionalName}` : ""}. Te paso los detalles...`;
 
         // Mismo formato enriquecido (negrita nativa de WhatsApp + emojis) que el mensaje de
         // confirmación del bot. Sin link de reagendar/cancelar (se pide avisar por el mismo
         // medio) y SIN el link de Google Maps — ese va solo en la confirmación inicial de la
         // cita; acá alcanza con la dirección completa en texto.
         const waReminderText = [
-          `⏰ *Tu cita es en ${windowLabel}*`,
+          `⏰ *Tu cita es ${whenLabel}*`,
           `📅 *Día y horario:* ${dateStr}`,
           `🩺 *Servicio:* ${serviceName}`,
           professionalName ? `👤 *Profesional:* ${professionalName}` : null,
@@ -145,57 +150,63 @@ export default async function(req) {
           "🔁 *Si necesitás reagendar o cancelar, avisanos por este mismo medio* 😊",
         ].filter(Boolean).join("\n");
 
-        // Decidir canal
-        const pref = patient?.contact_preference || "email";
-        const wantsWhatsApp = pref === "whatsapp" || pref === "both";
+        // Canales. "both" ahora manda por LOS DOS. Antes era un if/else: si el consultorio
+        // tenía WhatsApp conectado se mandaba solo WhatsApp y el email no salía nunca,
+        // aunque el paciente hubiera elegido "ambos" — el mail solo aparecía como fallback
+        // si WhatsApp fallaba.
+        const channels = resolveChannels(practice, patient);
 
-        let channelUsed = "email";
-        if (wantsWhatsApp && patient?.phone) {
-          // Un único criterio compartido (canSendWhatsApp) para plan + conexión. Antes acá
-          // se comparaba el plan a mano contra "premium", que ya no existe (se llama
-          // "clinic" desde el rediseño de precios), y la conexión se chequeaba mirando solo
-          // `zernio_account_id` — campo que una cuenta conectada por QR (Evolution API)
-          // nunca tiene cargado, así que NUNCA le llegaban recordatorios por WhatsApp a sus
-          // pacientes, sin ningún error visible (caía derecho al fallback de email).
-          const whatsAppConnected = canSendWhatsApp(practice);
-          if (whatsAppConnected) {
-            try {
-              // Dos mensajes seguidos (intro + detalles), igual que el flujo de agendamiento
-              // del bot, en vez de un único bloque grande de texto.
-              await sendWhatsAppMessage(base44, practice, patient.phone, waIntroText);
-              await sendWhatsAppMessage(base44, practice, patient.phone, waReminderText);
-              channelUsed = "whatsapp";
-            } catch (e) {
-              // Fallback a email si WhatsApp falla y el paciente acepta email
-              if (pref === "both" && patient.email) {
-                await sendEmail(base44, { to: patient.email, subject, body: emailBody });
-                channelUsed = "email";
-              } else {
-                throw e;
-              }
-            }
-          } else if (patient.email) {
-            await sendEmail(base44, { to: patient.email, subject, body: emailBody });
-          } else {
-            skipped++; continue;
+        let waOk = false;
+        let mailOk = false;
+
+        if (channels.whatsapp) {
+          try {
+            // Dos mensajes seguidos (intro + detalles), igual que el flujo de agendamiento
+            // del bot, en vez de un único bloque grande de texto.
+            await sendWhatsAppMessage(base44, practice, patient.phone, waIntroText);
+            await sendWhatsAppMessage(base44, practice, patient.phone, waReminderText);
+            waOk = true;
+          } catch (e) {
+            console.error("sendReminders WhatsApp error:", e?.message || e);
           }
-        } else if (patient?.email) {
-          await sendEmail(base44, { to: patient.email, subject, body: emailBody });
-        } else {
-          skipped++; continue;
         }
 
+        if (channels.email) {
+          try {
+            await sendEmail(base44, { to: patient.email, subject, body: emailBody });
+            mailOk = true;
+          } catch (e) {
+            console.error("sendReminders email error:", e?.message || e);
+          }
+        }
+
+        // Último recurso: el canal preferido no estaba disponible o falló, pero hay email
+        // cargado. Mejor que le llegue por el otro medio a que no le llegue nada.
+        if (!waOk && !mailOk && channels.emailFallback) {
+          await sendEmail(base44, { to: patient.email, subject, body: emailBody });
+          mailOk = true;
+        }
+
+        if (!waOk && !mailOk) { skipped++; continue; }
+
         await base44.asServiceRole.entities.Appointment.update(appt.id, {
-          reminders_sent: (appt.reminders_sent || 0) + 1,
+          // 1 = ya salió el de 24hs (falta el de 3hs). 2 = esta cita agotó sus recordatorios.
+          reminders_sent: stage === "24h" ? 1 : 2,
           ...(needsTokenSave ? { cancel_token: cancelToken } : {}),
         });
         sent++;
+        sentDetail.push({
+          appointment_id: appt.id,
+          stage,
+          when: whenLabel,
+          channels: [waOk ? "whatsapp" : null, mailOk ? "email" : null].filter(Boolean),
+        });
       } catch (e) {
         errors.push({ appointment_id: appt.id, error: e?.message || String(e) });
       }
     }
 
-    return Response.json({ sent, skipped, total: toRemind.length, errors });
+    return Response.json({ sent, skipped, total: toRemind.length, sentDetail, errors });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

@@ -5,7 +5,7 @@ import {
   MessageSquare, Send, Loader2, MessageCircle, ChevronLeft, LogOut, Search,
   Bot, User, Plus, X, Calendar, Phone, Mail, Tag, StickyNote, Clock,
   Smile, Paperclip, ListPlus, ChevronDown, Lock, Sparkles, Crown, Check,
-  Pencil, XCircle, IdCard,
+  Pencil, XCircle, IdCard, BellRing,
 } from "lucide-react";
 import DemoChat from "@/components/assistant/DemoChat";
 import { loadReadState, saveChatLastRead, getLocalChatLastRead } from "@/lib/read-state";
@@ -701,9 +701,16 @@ function FullAssistant({ settings, reloadSettings, save }) {
                       <p className="text-sm whitespace-pre-wrap break-words">{msg.text}</p>
                       <div className={cn("flex items-center gap-1 mt-1", isPatient ? "justify-start" : "justify-end")}>
                         {!isPatient && (
+                          // Tres orígenes distintos, no dos: "system" son los avisos
+                          // automáticos de la plataforma (confirmación, recordatorio,
+                          // reprogramación, cancelación). Antes ni siquiera se guardaban acá,
+                          // así que el chat mostraba un hueco donde sí le habíamos hablado al
+                          // paciente — y los pocos que se guardaban aparecían como "IA".
                           <span className="inline-flex items-center gap-0.5 text-[10px]" style={{ color: "#667781" }}>
-                            {msg.sent_by === "human" ? <User className="w-2.5 h-2.5" /> : <Bot className="w-2.5 h-2.5" />}
-                            {msg.sent_by === "human" ? "Vos" : "IA"}
+                            {msg.sent_by === "human" ? <User className="w-2.5 h-2.5" />
+                              : msg.sent_by === "system" ? <BellRing className="w-2.5 h-2.5" />
+                              : <Bot className="w-2.5 h-2.5" />}
+                            {msg.sent_by === "human" ? "Vos" : msg.sent_by === "system" ? "Automático" : "IA"}
                           </span>
                         )}
                         <span className="text-[10px]" style={{ color: "#667781" }}>{parseServerDate(msg.created_date).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", timeZone: AR_TZ })}</span>

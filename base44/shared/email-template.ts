@@ -89,7 +89,13 @@ ${details
       ? `<div style="margin:20px 0 8px;">${primaryHtml}${secondaryHtml}${whatsappHtml}${mapsHtml}</div>`
       : "";
 
-  const footerText = footer || "Kame Agenda";
+  // El pie SIEMPRE dice "Kame Agenda", igual que el encabezado. Antes cada llamada pasaba
+  // el practice_name del consultorio, asi que el mismo mail mostraba "Kame Agenda" arriba y
+  // el nombre del profesional abajo — leia como si fueran dos remitentes distintos.
+  // El parametro `footer` se mantiene por compatibilidad con las llamadas existentes, pero
+  // solo se usa si alguien pasa algo distinto del nombre de un consultorio (ej. la campana
+  // de trial, que manda "Kame Agenda · Tu recepcionista virtual").
+  const footerText = footer && footer.includes("Kame Agenda") ? footer : "Kame Agenda";
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -119,7 +125,7 @@ ${buttonsHtml}
 <tr>
 <td style="padding:20px 32px;border-top:1px solid #f1f5f9;">
 <p style="margin:0;font-size:13px;color:#94a3b8;text-align:center;">${escapeHtml(footerText)}</p>
-${showReferralFooter ? `<p style="margin:10px 0 0;font-size:11px;color:#cbd5e1;text-align:center;">PD: ¿Sos profesional? Ofrecé este mismo sistema de agendamiento automático a tus pacientes. <a href="https://kameagenda.com" style="color:#94a3b8;">Probá 14 días gratis en kameagenda.com</a></p>` : ""}
+${showReferralFooter ? `<p style="margin:10px 0 0;font-size:12px;line-height:1.5;color:#64748b;text-align:center;">PD: ¿Sos profesional? Ofrecé este mismo sistema de agendamiento automático a tus pacientes. <a href="https://kameagenda.com" style="color:#334155;font-weight:600;text-decoration:underline;">Probá 14 días gratis en kameagenda.com</a></p>` : ""}
 </td>
 </tr>
 </table>

@@ -2,6 +2,7 @@ import { sendWhatsAppMessage } from "./whatsapp-providers.ts";
 import { sendEmail, replyToFor } from "./email-sender.ts";
 import { buildEmailHtml } from "./email-template.ts";
 import { canSendWhatsApp } from "./plan.ts";
+import { logNotification, logWhatsAppToConversation, notifyProfessionalOfDeliveryFailure } from "./notification-log.ts";
 
 export const PRACTICE_TZ = "America/Argentina/Buenos_Aires";
 
@@ -132,13 +133,19 @@ export async function maybeSendImmediateReminder(base44, practice, appointment, 
     let waOk = false;
     let mailOk = false;
 
+    const logArgs = { appointment, practice, patient, kind: "reminder_3h" };
+
     if (channels.whatsapp) {
       try {
         await sendWhatsAppMessage(base44, practice, patient.phone, waIntroText);
         await sendWhatsAppMessage(base44, practice, patient.phone, waReminderText);
         waOk = true;
+        await logWhatsAppToConversation(base44, { practice, phone: patient.phone, text: waIntroText });
+        await logWhatsAppToConversation(base44, { practice, phone: patient.phone, text: waReminderText });
+        await logNotification(base44, { ...logArgs, channel: "whatsapp", status: "sent" });
       } catch (e) {
         console.error("maybeSendImmediateReminder WhatsApp error:", e?.message || e);
+        await logNotification(base44, { ...logArgs, channel: "whatsapp", status: "failed", error: e });
       }
     }
 
@@ -146,8 +153,10 @@ export async function maybeSendImmediateReminder(base44, practice, appointment, 
       try {
         await sendEmail(base44, { to: patient.email, subject: emailSubject, body: emailBody, replyTo });
         mailOk = true;
+        await logNotification(base44, { ...logArgs, channel: "email", status: "sent" });
       } catch (e) {
         console.error("maybeSendImmediateReminder email error:", e?.message || e);
+        await logNotification(base44, { ...logArgs, channel: "email", status: "failed", error: e });
       }
     }
 
@@ -156,9 +165,17 @@ export async function maybeSendImmediateReminder(base44, practice, appointment, 
       try {
         await sendEmail(base44, { to: patient.email, subject: emailSubject, body: emailBody, replyTo });
         mailOk = true;
+        await logNotification(base44, { ...logArgs, channel: "email", status: "sent" });
       } catch (e) {
         console.error("maybeSendImmediateReminder email fallback error:", e?.message || e);
+        await logNotification(base44, { ...logArgs, channel: "email", status: "failed", error: e });
       }
+    }
+
+    if (!waOk && !mailOk) {
+      await notifyProfessionalOfDeliveryFailure(base44, {
+        practice, appointment, patientName, kind: "reminder_3h",
+      });
     }
 
     return waOk || mailOk;

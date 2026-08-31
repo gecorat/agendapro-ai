@@ -1,5 +1,5 @@
 import { findPatientByCanonicalPhone, canonicalPhone } from "./phone-utils.ts";
-import { maybeSendImmediateReminder } from "./reminders.ts";
+import { remindersCoveredByNotice } from "./reminders.ts";
 import { sendEmail } from "./email-sender.ts";
 import { buildEmailHtml } from "./email-template.ts";
 import { generateSlotsForDay, findNextAvailableDaySlots, pickClosestSlots, isTimeAvailable, argentinaDayBounds } from "./scheduling.ts";
@@ -730,23 +730,16 @@ REGLAS ADICIONALES:
               appt: { ...target, start_datetime: start.toISOString(), ...(newService ? { service_name: newService.name } : {}) },
             });
 
-            // Mismo criterio que al agendar: si el nuevo horario quedó a menos de 3hs,
-            // mandamos el recordatorio de una en vez de esperar al cron.
+            // El mensaje de reagendado que acaba de salir ya lleva día, hora, servicio y
+            // dirección del nuevo horario. Si además cae dentro de las próximas 3hs, el
+            // recordatorio del cron diría exactamente lo mismo minutos después: lo damos
+            // por cubierto en vez de mandarlo.
             try {
-              const reschedPatient = (patients || []).find((p) => p.id === target.patient_id) || null;
-              const sentNow = await maybeSendImmediateReminder(
-                base44, practice,
-                // id y professional_id van sí o sí: sin ellos el NotificationLog queda
-                // huérfano y el historial de avisos del turno no lo muestra.
-                { id: target.id, professional_id: target.professional_id, start_datetime: start.toISOString(), service_name: (newService ? newService.name : target.service_name), professional_name: professionalName, reminders_sent: 0 },
-                reschedPatient
-              );
-              if (sentNow) {
-                // 2 = esta cita ya agotó sus recordatorios (ver nota en reminders.ts).
+              if (remindersCoveredByNotice({ start_datetime: start.toISOString(), reminders_sent: 0 })) {
                 await base44.asServiceRole.entities.Appointment.update(target.id, { reminders_sent: 2 });
               }
             } catch (e) {
-              console.error("maybeSendImmediateReminder error (reschedule):", e?.message || e);
+              console.error("remindersCoveredByNotice error (reschedule):", e?.message || e);
             }
           } catch (e) {
             console.error("Appointment.update error (reschedule):", e?.message || e);

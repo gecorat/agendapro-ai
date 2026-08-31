@@ -1,9 +1,29 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { Plus, CalendarX2, Eye, CalendarClock, XCircle, Loader2, Phone, Mail } from "lucide-react";
+import { Plus, CalendarX2, Eye, CalendarClock, XCircle, Loader2, Phone, Mail, BellRing, MessageCircle, CheckCircle2, AlertTriangle } from "lucide-react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { statusConfig, apptsForDay, formatTime, formatDayHeading } from "@/lib/agenda-utils";
+
+// Historial de avisos al paciente. El profesional no tenía NINGUNA forma de saber si la
+// confirmación o el recordatorio habían salido: el chat solo mostraba los mensajes del bot
+// y del email no quedaba rastro en ningún lado. Cuando un envío fallaba, el error moría en
+// un console.error del backend.
+const KIND_LABELS = {
+  confirmation: "Confirmación",
+  reminder_24h: "Recordatorio 24hs",
+  reminder_3h: "Recordatorio 3hs",
+  rescheduled: "Aviso de reprogramación",
+  cancelled: "Aviso de cancelación",
+};
+
+const AR_TZ = "America/Argentina/Buenos_Aires";
+
+// Base44 guarda las fechas del servidor en UTC pero sin el sufijo "Z".
+function parseServerDate(s) {
+  if (!s) return new Date(NaN);
+  return new Date(/[zZ]$|[+-]\d{2}:?\d{2}$/.test(s) ? s : `${s}Z`);
+}
 
 // Panel lateral desde la DERECHA (antes era desde abajo) con la lista completa de turnos
 // del día y acciones rápidas por turno: Ver Paciente (datos de contacto sin salir de acá),
@@ -16,6 +36,28 @@ export default function DayDetailSheet({ date, appts, onClose, onNew, onEdit, on
   const [loadingPatient, setLoadingPatient] = useState(false);
   const [cancellingId, setCancellingId] = useState(null);
   const [confirmCancelId, setConfirmCancelId] = useState(null);
+  const [notifId, setNotifId] = useState(null);
+  const [notifRows, setNotifRows] = useState([]);
+  const [loadingNotif, setLoadingNotif] = useState(false);
+
+  async function toggleNotifications(a) {
+    if (notifId === a.id) { setNotifId(null); return; }
+    setNotifId(a.id);
+    setNotifRows([]);
+    setLoadingNotif(true);
+    try {
+      const rows = await base44.entities.NotificationLog.filter({ appointment_id: a.id });
+      setNotifRows(
+        (rows || []).sort(
+          (x, y) => parseServerDate(x.sent_at || x.created_date) - parseServerDate(y.sent_at || y.created_date)
+        )
+      );
+    } catch {
+      setNotifRows([]);
+    } finally {
+      setLoadingNotif(false);
+    }
+  }
 
   async function toggleViewPatient(a) {
     if (expandedId === a.id) { setExpandedId(null); return; }

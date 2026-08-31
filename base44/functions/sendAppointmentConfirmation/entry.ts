@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { buildEmailHtml, getAppUrl } from "../../shared/email-template.ts";
-import { sendEmail } from "../../shared/email-sender.ts";
+import { sendEmail, replyToFor } from "../../shared/email-sender.ts";
 import { getAppointmentContext } from "../../shared/appointment-context.ts";
 import { buildMapsLink, buildConfirmationMessage, buildBookAckMessage } from "../../shared/zernio.ts";
 import { sendWhatsAppMessage } from "../../shared/whatsapp-providers.ts";
@@ -132,6 +132,8 @@ export default async function(req: Request): Promise<Response> {
 
     await sendEmail(base44, {
       to: email,
+      // Si el paciente responde la confirmación, que le llegue al profesional.
+      replyTo: replyToFor(practice),
       subject: `Tu cita fue confirmada — ${serviceName}`,
       body: buildEmailHtml({
         title: "Cita confirmada",

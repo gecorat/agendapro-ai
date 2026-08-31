@@ -137,10 +137,15 @@ export default async function(req: Request): Promise<Response> {
     }
 
     if (!email) {
-      // Sin mail no hay nada más que mandar, pero si ya avisamos por WhatsApp marcamos la
-      // confirmación como enviada igual, para no reintentar en cada update posterior.
-      if (waSent) {
-        await base44.asServiceRole.entities.Appointment.update(appt.id, { confirmation_email_sent: true });
+      // Sin mail no hay nada más que mandar. Si tampoco salió el WhatsApp, LIBERAMOS la
+      // reserva de arriba: no se avisó nada, así que si el turno se vuelve a tocar (o el
+      // paciente carga un email después) tiene que poder intentarse de nuevo.
+      if (!waSent) {
+        try {
+          await base44.asServiceRole.entities.Appointment.update(appt.id, { confirmation_email_sent: false });
+        } catch (e) {
+          console.error('sendAppointmentConfirmation release error:', e?.message || e);
+        }
       }
       return Response.json({ skipped: !waSent, reason: waSent ? undefined : 'no patient email', waSent });
     }
@@ -185,10 +190,11 @@ export default async function(req: Request): Promise<Response> {
 
     await logNotification(base44, { ...logArgs, channel: "email", status: "sent" });
 
-    await base44.asServiceRole.entities.Appointment.update(appt.id, {
-      confirmation_email_sent: true,
-      ...(needsTokenSave ? { cancel_token: cancelToken } : {}),
-    });
+    // confirmation_email_sent ya quedó en true arriba (la reserva); acá solo falta guardar
+    // el cancel_token si hubo que generarlo.
+    if (needsTokenSave) {
+      await base44.asServiceRole.entities.Appointment.update(appt.id, { cancel_token: cancelToken });
+    }
 
     return Response.json({ ok: true, sent: true });
   } catch (error) {

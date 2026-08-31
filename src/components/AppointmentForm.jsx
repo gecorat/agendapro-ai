@@ -62,7 +62,11 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
     patient_id: "",
     service_id: "",
     start_datetime: "",
-    status: "pending",
+    // Un turno que carga el profesional desde su propia Agenda nace CONFIRMADO: lo está
+    // agendando él mismo, no es una solicitud que tenga que aprobar después. "pending" es
+    // para lo que entra por el link público o por el bot. Sigue siendo editable desde el
+    // selector de estado del formulario.
+    status: "confirmed",
     notes: "",
     professional_ref_id: "",
   });
@@ -89,7 +93,7 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
           patient_id: "",
           service_id: "",
           start_datetime: toLocalInput(base),
-          status: "pending",
+          status: "confirmed",
           notes: "",
           professional_ref_id: "",
         });

@@ -184,6 +184,21 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
         await base44.functions.invoke("syncAppointmentGoogle", { appointmentId: apptId });
       } catch { /* no romper el flujo si Google falla */ }
 
+      // Aviso al paciente cuando el profesional carga una cita NUEVA ya confirmada desde la
+      // Agenda. Hacía falta invocarlo explícitamente: el workflow "Email de confirmación al
+      // paciente" dispara solo con el evento `update` de Appointment, así que una cita
+      // creada a mano (origin: "manual") nunca lo activaba y al paciente no le llegaba NADA
+      // — ni email, ni WhatsApp, ni el recordatorio inmediato para las citas de hoy.
+      // Confirmado en vivo: cita creada 31/08 17:20Z para las 18:30Z, con
+      // confirmation_email_sent en false y sin un solo envío.
+      // Los otros caminos de creación (link público y bot de WhatsApp) ya invocan esta
+      // función por su cuenta con skip_whatsapp, así que no se duplica nada.
+      if (!appointment && payload.status === "confirmed") {
+        try {
+          await base44.functions.invoke("sendAppointmentConfirmation", { appointment_id: apptId });
+        } catch { /* no romper el flujo si el aviso falla */ }
+      }
+
       // Avisa al paciente por WhatsApp/email cuando el PROFESIONAL reagenda o cancela a
       // mano — antes esto solo pasaba cuando la acción venía del bot. Best-effort: nunca
       // debe bloquear el guardado, que ya terminó arriba.

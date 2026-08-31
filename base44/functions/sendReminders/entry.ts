@@ -206,6 +206,18 @@ export default async function(req) {
           }
         }
 
+        // El contador avanza IGUAL si el envío falló. Es clave: `reminderStage` decide solo
+        // con `reminders_sent` y las horas restantes, así que una cita que no puede
+        // notificarse (sin WhatsApp conectado y sin email, por ejemplo) volvía a calificar
+        // en cada tick — y con el cron cada 15 minutos eso son ~84 reintentos y ~84 pushes
+        // entre las 24hs y las 3hs previas. Avanzando el contador, la cita reintenta a lo
+        // sumo una vez más (en la etapa de 3hs) y después queda quieta.
+        await base44.asServiceRole.entities.Appointment.update(appt.id, {
+          // 1 = ya salió el de 24hs (falta el de 3hs). 2 = esta cita agotó sus recordatorios.
+          reminders_sent: stage === "24h" ? 1 : 2,
+          ...(needsTokenSave ? { cancel_token: cancelToken } : {}),
+        });
+
         if (!waOk && !mailOk) {
           // No salió por ningún lado. Este es EL caso que antes pasaba en silencio total:
           // el paciente se queda sin saber de su turno y nadie se entera hasta que falta.
@@ -215,11 +227,6 @@ export default async function(req) {
           skipped++; continue;
         }
 
-        await base44.asServiceRole.entities.Appointment.update(appt.id, {
-          // 1 = ya salió el de 24hs (falta el de 3hs). 2 = esta cita agotó sus recordatorios.
-          reminders_sent: stage === "24h" ? 1 : 2,
-          ...(needsTokenSave ? { cancel_token: cancelToken } : {}),
-        });
         sent++;
         sentDetail.push({
           appointment_id: appt.id,

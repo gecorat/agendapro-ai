@@ -252,7 +252,13 @@ export async function orchestrateConversation(base44, ctx) {
           a.status !== "cancelled"
       )
     : [];
+  // Los avisos automáticos (confirmaciones y recordatorios) se guardan en Conversation
+  // para que el profesional los vea en el chat, pero NO son parte de la conversación del
+  // bot con el paciente: si entran acá, se comen el contexto (son bloques largos) y el bot
+  // "cree" haber dicho cosas que en realidad mandó el cron. Con la confirmación más los dos
+  // recordatorios ya son 6 de los 10 mensajes de memoria.
   const history = (allHistory || [])
+    .filter((m) => m.sent_by !== "system")
     .sort((a, b) => new Date(b.created_date) - new Date(a.created_date))
     .slice(0, 10)
     .reverse();

@@ -730,7 +730,9 @@ REGLAS ADICIONALES:
               const reschedPatient = (patients || []).find((p) => p.id === target.patient_id) || null;
               const sentNow = await maybeSendImmediateReminder(
                 base44, practice,
-                { start_datetime: start.toISOString(), service_name: (newService ? newService.name : target.service_name), professional_name: professionalName, reminders_sent: 0 },
+                // id y professional_id van sí o sí: sin ellos el NotificationLog queda
+                // huérfano y el historial de avisos del turno no lo muestra.
+                { id: target.id, professional_id: target.professional_id, start_datetime: start.toISOString(), service_name: (newService ? newService.name : target.service_name), professional_name: professionalName, reminders_sent: 0 },
                 reschedPatient
               );
               if (sentNow) {

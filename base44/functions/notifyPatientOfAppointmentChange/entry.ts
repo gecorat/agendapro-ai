@@ -3,6 +3,7 @@ import { sendEmail, replyToFor } from '../../shared/email-sender.ts';
 import { buildEmailHtml } from '../../shared/email-template.ts';
 import { sendWhatsAppMessage } from '../../shared/whatsapp-providers.ts';
 import { canSendWhatsApp } from '../../shared/plan.ts';
+import { logNotification } from '../../shared/notification-log.ts';
 
 // Avisa al PACIENTE por WhatsApp y/o email cuando el PROFESIONAL reagenda o cancela una
 // cita a mano desde la Agenda (DayDetailSheet, AppointmentForm, etc.). Antes esto solo
@@ -65,6 +66,8 @@ export default async function (req: Request): Promise<Response> {
       ? `Hola ${patientName}, te escribimos de ${practiceName} para avisarte que tu turno de ${serviceName}${oldDateStr ? ` (antes ${oldDateStr})` : ''} fue reagendado para el ${newDateStr}. Cualquier consulta, avisanos por acá.`
       : `Hola ${patientName}, te escribimos de ${practiceName} para avisarte que tu turno de ${serviceName} del ${newDateStr} fue cancelado. Si querés reagendar, avisanos por acá.`;
 
+    const logArgs = { appointment: appt, practice, patient, kind: changeType === 'rescheduled' ? 'rescheduled' : 'cancelled' };
+
     let whatsappSent = false;
     if (canSendWhatsApp(practice) && patient.phone) {
       try {
@@ -81,8 +84,10 @@ export default async function (req: Request): Promise<Response> {
           account_id: practice.whatsapp_connection_type === 'qr' ? practice.evolution_instance_name : practice.zernio_account_id,
           sent_by: 'system',
         });
+        await logNotification(base44, { ...logArgs, channel: 'whatsapp', status: 'sent' });
       } catch (e) {
         console.error('notifyPatientOfAppointmentChange WhatsApp error:', e?.message || e);
+        await logNotification(base44, { ...logArgs, channel: 'whatsapp', status: 'failed', error: e });
       }
     }
 
@@ -106,8 +111,10 @@ export default async function (req: Request): Promise<Response> {
           }),
         });
         emailSent = true;
+        await logNotification(base44, { ...logArgs, channel: 'email', status: 'sent' });
       } catch (e) {
         console.error('notifyPatientOfAppointmentChange email error:', e?.message || e);
+        await logNotification(base44, { ...logArgs, channel: 'email', status: 'failed', error: e });
       }
     }
 

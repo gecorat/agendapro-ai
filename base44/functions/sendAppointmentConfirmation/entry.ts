@@ -6,6 +6,7 @@ import { buildMapsLink, buildConfirmationMessage, buildBookAckMessage } from "..
 import { sendWhatsAppMessage } from "../../shared/whatsapp-providers.ts";
 import { maybeSendImmediateReminder } from "../../shared/reminders.ts";
 import { canSendWhatsApp } from "../../shared/plan.ts";
+import { logNotification, logWhatsAppToConversation } from "../../shared/notification-log.ts";
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -93,7 +94,9 @@ export default async function(req: Request): Promise<Response> {
       if (patient) {
         const sentNow = await maybeSendImmediateReminder(
           base44, practice,
-          { start_datetime: appt.start_datetime, service_name: appt.service_name, professional_name: professionalName, reminders_sent: appt.reminders_sent },
+          // id y professional_id van sí o sí: sin ellos el NotificationLog queda huérfano
+          // y el historial de avisos del turno no lo muestra.
+          { id: appt.id, professional_id: appt.professional_id, start_datetime: appt.start_datetime, service_name: appt.service_name, professional_name: professionalName, reminders_sent: appt.reminders_sent },
           patient
         );
         if (sentNow) {

@@ -128,7 +128,6 @@ export default async function(req: Request): Promise<Response> {
     const appUrl = await getAppUrl(base44, req);
     const dateStr = startDate.toLocaleString("es-AR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "America/Argentina/Buenos_Aires" });
     const serviceName = appt.service_name || "Consulta";
-    const signature = practiceName ? practiceName : "Kame Agenda";
 
     const rescheduleUrl = handle ? `${appUrl}/reschedule/${cancelToken}` : null;
     const cancelUrl = `${appUrl}/x/${cancelToken}`;
@@ -152,7 +151,6 @@ export default async function(req: Request): Promise<Response> {
         primaryButton: rescheduleUrl ? { label: "Reagendar", url: rescheduleUrl } : null,
         secondaryButton: { label: "Cancelar cita", url: cancelUrl },
         mapsButton: mapsLink ? { label: "Cómo llegar", url: mapsLink } : null,
-        footer: signature,
       }),
     });
 

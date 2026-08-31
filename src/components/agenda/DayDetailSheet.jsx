@@ -119,6 +119,7 @@ export default function DayDetailSheet({ date, appts, onClose, onNew, onEdit, on
                     const start = new Date(a.start_datetime);
                     const end = new Date(a.end_datetime);
                     const isExpanded = expandedId === a.id;
+                    const showNotif = notifId === a.id;
                     return (
                       <div key={a.id} className="rounded-xl border border-border bg-card overflow-hidden">
                         <div className="px-3 py-2.5 flex items-start gap-3">
@@ -149,6 +150,51 @@ export default function DayDetailSheet({ date, appts, onClose, onNew, onEdit, on
                           </div>
                         )}
 
+                        {showNotif && (
+                          <div className="px-3 pb-2.5 -mt-1">
+                            {loadingNotif ? (
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground py-1"><Loader2 className="w-3 h-3 animate-spin" /> Cargando avisos...</div>
+                            ) : notifRows.length === 0 ? (
+                              <div className="rounded-lg bg-muted/50 p-2.5">
+                                <p className="text-xs text-muted-foreground">Todavía no se envió ningún aviso para este turno.</p>
+                              </div>
+                            ) : (
+                              <div className="rounded-lg bg-muted/50 p-2.5 space-y-1.5">
+                                {notifRows.map((n) => {
+                                  const failed = n.status === "failed";
+                                  return (
+                                    <div key={n.id} className="flex items-start gap-1.5">
+                                      {failed
+                                        ? <AlertTriangle className="w-3 h-3 text-rose-500 shrink-0 mt-0.5" />
+                                        : <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0 mt-0.5" />}
+                                      <div className="min-w-0 flex-1">
+                                        <p className="text-xs flex items-center gap-1.5 flex-wrap">
+                                          <span className={failed ? "text-rose-600 font-medium" : "text-foreground"}>
+                                            {KIND_LABELS[n.kind] || n.kind}
+                                          </span>
+                                          <span className="inline-flex items-center gap-0.5 text-muted-foreground">
+                                            {n.channel === "whatsapp"
+                                              ? <><MessageCircle className="w-3 h-3" /> WhatsApp</>
+                                              : <><Mail className="w-3 h-3" /> Email</>}
+                                          </span>
+                                          <span className="text-muted-foreground tabular-nums">
+                                            {parseServerDate(n.sent_at || n.created_date).toLocaleString("es-AR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: AR_TZ })}
+                                          </span>
+                                        </p>
+                                        {failed && (
+                                          <p className="text-[11px] text-rose-600/80 break-words">
+                                            No se pudo enviar{n.error ? `: ${n.error}` : ""}
+                                          </p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
                         <div className="px-3 pb-2.5 flex items-center gap-1.5">
                           {a.is_google ? (
                             <span className="text-[11px] font-medium text-violet-500 px-2 py-1">
@@ -161,6 +207,9 @@ export default function DayDetailSheet({ date, appts, onClose, onNew, onEdit, on
                               </button>
                               <button onClick={() => onEdit(a)} className="flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md border border-border hover:bg-accent transition-colors">
                                 <CalendarClock className="w-3 h-3" /> Reagendar
+                              </button>
+                              <button onClick={() => toggleNotifications(a)} className="flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md border border-border hover:bg-accent transition-colors">
+                                <BellRing className="w-3 h-3" /> Avisos
                               </button>
                               {a.status !== "cancelled" && (
                                 confirmCancelId === a.id ? (

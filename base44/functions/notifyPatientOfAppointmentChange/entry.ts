@@ -31,6 +31,17 @@ export default async function (req: Request): Promise<Response> {
       const pats = await base44.asServiceRole.entities.Patient.filter({ id: appt.patient_id });
       patient = pats?.[0] || null;
     }
+    // Los recordatorios ya enviados corresponden al horario VIEJO: al reagendar hay que
+    // resetear el contador para que sendReminders vuelva a avisar sobre el horario nuevo.
+    // Sin esto, un turno reagendado desde el panel se quedaba sin recordatorio.
+    if (changeType === 'rescheduled' && (appt.reminders_sent || 0) > 0) {
+      try {
+        await base44.asServiceRole.entities.Appointment.update(appt.id, { reminders_sent: 0 });
+      } catch (e) {
+        console.error('notifyPatientOfAppointmentChange reset reminders_sent error:', e?.message || e);
+      }
+    }
+
     if (!patient) return Response.json({ notified: false, reason: 'no_patient' });
 
     const practices = await base44.asServiceRole.entities.PracticeSettings.filter({});
@@ -90,7 +101,6 @@ export default async function (req: Request): Promise<Response> {
             details: [
               { label: changeType === 'rescheduled' ? 'Nuevo día y horario' : 'Día y horario', value: newDateStr },
             ],
-            footer: practiceName,
           }),
         });
         emailSent = true;

@@ -4,7 +4,7 @@ import { sendEmail, replyToFor } from "../../shared/email-sender.ts";
 import { getAppointmentContext } from "../../shared/appointment-context.ts";
 import { buildMapsLink, buildConfirmationMessage, buildBookAckMessage } from "../../shared/zernio.ts";
 import { sendWhatsAppMessage } from "../../shared/whatsapp-providers.ts";
-import { maybeSendImmediateReminder } from "../../shared/reminders.ts";
+import { remindersCoveredByNotice } from "../../shared/reminders.ts";
 import { canSendWhatsApp } from "../../shared/plan.ts";
 import { logNotification, logWhatsAppToConversation } from "../../shared/notification-log.ts";
 
@@ -113,27 +113,20 @@ export default async function(req: Request): Promise<Response> {
     }
 
     // Si la cita queda confirmada faltando menos de 3hs (típico cuando el profesional la
-    // aprueba a mano recién sobre la fecha), el cron de recordatorios ya no llega a
-    // avisarle con margen — y si estuvo en "pending" hasta ahora, nunca recibió ninguno,
-    // porque sendReminders solo mira citas confirmadas. Mandamos el recordatorio de una.
+    // aprueba a mano recién sobre la fecha), esta confirmación ES el aviso: ya lleva día,
+    // hora, servicio y dirección. Damos los recordatorios por cubiertos para que el cron no
+    // mande, minutos después, un segundo mensaje diciendo lo mismo.
     try {
-      if (patient) {
-        const sentNow = await maybeSendImmediateReminder(
-          base44, practice,
-          // id y professional_id van sí o sí: sin ellos el NotificationLog queda huérfano
-          // y el historial de avisos del turno no lo muestra.
-          { id: appt.id, professional_id: appt.professional_id, start_datetime: appt.start_datetime, service_name: appt.service_name, professional_name: professionalName, reminders_sent: appt.reminders_sent },
-          patient
-        );
-        if (sentNow) {
-          // 2, no 1: con 1, una cita reservada con +48hs de anticipación que se confirma
-          // sobre la hora volvía a entrar en la ventana de 3hs del cron (que busca
-          // justamente reminders_sent === 1) y el paciente recibía el mismo aviso dos veces.
-          await base44.asServiceRole.entities.Appointment.update(appt.id, { reminders_sent: 2 });
-        }
+      if (patient && remindersCoveredByNotice(appt)) {
+        // 2 = esta cita agotó sus recordatorios (ver nota en reminders.ts).
+        await base44.asServiceRole.entities.Appointment.update(appt.id, { reminders_sent: 2 });
+        await logNotification(base44, {
+          ...logArgs, kind: "reminder_3h", channel: "whatsapp", status: "skipped",
+          error: "Cubierto por la confirmación, que salió con menos de 3hs de anticipación",
+        });
       }
     } catch (e) {
-      console.error('maybeSendImmediateReminder error (sendAppointmentConfirmation):', e?.message || e);
+      console.error('remindersCoveredByNotice error (sendAppointmentConfirmation):', e?.message || e);
     }
 
     if (!email) {

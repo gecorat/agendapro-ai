@@ -189,8 +189,8 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
       // paciente" dispara solo con el evento `update` de Appointment, así que una cita
       // creada a mano (origin: "manual") nunca lo activaba y al paciente no le llegaba NADA
       // — ni email, ni WhatsApp, ni el recordatorio inmediato para las citas de hoy.
-      // Confirmado en vivo: cita creada 31/08 17:20Z para las 18:30Z, con
-      // confirmation_email_sent en false y sin un solo envío.
+      // Confirmado en vivo: cita creada el 31/08 a las 14:20 para las 15:30 (hora
+      // Argentina), con confirmation_email_sent en false y sin un solo envío.
       // Los otros caminos de creación (link público y bot de WhatsApp) ya invocan esta
       // función por su cuenta con skip_whatsapp, así que no se duplica nada.
       if (!appointment && payload.status === "confirmed") {

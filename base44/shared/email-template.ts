@@ -124,7 +124,7 @@ ${buttonsHtml}
 </tr>
 <tr>
 <td style="padding:20px 32px;border-top:1px solid #f1f5f9;">
-<p style="margin:0;font-size:13px;color:#94a3b8;text-align:center;">${escapeHtml(footerText)}</p>
+<p style="margin:0;font-size:13px;font-weight:600;color:#64748b;text-align:center;">${escapeHtml(footerText)}</p>
 ${showReferralFooter ? `<p style="margin:10px 0 0;font-size:12px;line-height:1.5;color:#64748b;text-align:center;">PD: ¿Sos profesional? Ofrecé este mismo sistema de agendamiento automático a tus pacientes. <a href="https://kameagenda.com" style="color:#334155;font-weight:600;text-decoration:underline;">Probá 14 días gratis en kameagenda.com</a></p>` : ""}
 </td>
 </tr>

@@ -52,13 +52,11 @@ export default async function(req: Request): Promise<Response> {
 
     // Configuración del profesional (nombre del consultorio + handle + teléfono/dirección)
     const professionalId = appt.professional_id || appt.created_by_id;
-    let practiceName = "";
     let handle = "";
     let practice = null;
     try {
       const practices = await base44.asServiceRole.entities.PracticeSettings.filter({});
       practice = practices?.find((p) => p.created_by_id === professionalId) || null;
-      if (practice?.practice_name) practiceName = practice.practice_name;
       if (practice?.handle) handle = practice.handle;
     } catch {}
 

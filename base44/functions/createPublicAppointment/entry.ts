@@ -80,7 +80,11 @@ export default async function (req: Request): Promise<Response> {
         last_name: last_name || '',
         phone,
         email,
-        contact_preference: 'whatsapp',
+        // Si el paciente dejó su email en el formulario público, es porque quiere recibir
+        // cosas ahí: "both" para que le lleguen confirmaciones y recordatorios por los dos
+        // canales. Antes esto era 'whatsapp' fijo, así que a nadie que reservara por el link
+        // público le llegaba jamás un email, por más que lo hubiera cargado.
+        contact_preference: email ? 'both' : 'whatsapp',
         consent_reminders: true,
         professional_id,
         professional_ref_id: professional_ref_id || undefined,

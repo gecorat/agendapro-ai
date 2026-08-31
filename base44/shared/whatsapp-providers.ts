@@ -48,10 +48,19 @@ export async function sendWhatsAppMessage(base44, practice, phone, text) {
 async function sendViaEvolution(base44, practice, phone, text) {
   const instanceName = practice?.evolution_instance_name;
   if (!instanceName) throw new Error("evolution_instance_name faltante para este consultorio");
+  // Evolution arma el JID de WhatsApp como `${number}@s.whatsapp.net`, así que el número
+  // tiene que ir SOLO con dígitos. Acá estaba el agujero: los mensajes del bot funcionaban
+  // porque su teléfono viene del webhook ya normalizado ("5493425526816"), pero las
+  // confirmaciones y recordatorios usan Patient.phone, que se carga a mano y queda con "+"
+  // y a veces con espacios o guiones ("+54 9 342 552-6816"). Ese "+" producía un JID
+  // inválido y el envío fallaba sin que se viera nada: el error se logueaba y el flujo
+  // caía al email. Por eso llegaba el mail pero nunca el WhatsApp.
+  const number = normalizePhone(phone);
+  if (!number) throw new Error(`número de WhatsApp inválido: "${phone}"`);
   const { sendText } = await import("./evolution-api.ts");
   const cfg = await base44.asServiceRole.entities.PlatformConfig.filter({});
   const baseUrl = (cfg?.[0]?.evolution_base_url || "").replace(/\/$/, "");
   const apiKey = cfg?.[0]?.evolution_api_key;
   if (!baseUrl || !apiKey) throw new Error("Evolution API no está configurada en la plataforma");
-  return sendText(baseUrl, apiKey, instanceName, phone, text);
+  return sendText(baseUrl, apiKey, instanceName, number, text);
 }

@@ -3,7 +3,6 @@ import { sendEmail, replyToFor } from "../../shared/email-sender.ts";
 import { sendWhatsAppMessage } from "../../shared/whatsapp-providers.ts";
 import { buildEmailHtml, getAppUrl } from "../../shared/email-template.ts";
 import { getAppointmentContext } from "../../shared/appointment-context.ts";
-import { buildMapsLink } from "../../shared/zernio.ts";
 import { buildWhenLabel, formatApptDate, resolveChannels, bookedOnEarlierDay, buildReminderWhatsAppMessage } from "../../shared/reminders.ts";
 import { logNotification, logWhatsAppToConversation, notifyProfessionalOfDeliveryFailure } from "../../shared/notification-log.ts";
 
@@ -102,7 +101,6 @@ export default async function(req) {
 
         const practice = await getPracticeFor(appt);
         const { professionalName, address } = await getAppointmentContext(base44, appt, practice);
-        const mapsLink = buildMapsLink(practice);
         // Si el paciente responde el recordatorio, que le llegue al profesional.
         const replyTo = replyToFor(practice);
 
@@ -122,9 +120,9 @@ export default async function(req) {
           : `Tu cita es ${whenLabel} — ${serviceName}`;
         const emailBody = buildEmailHtml({
           title: `Tu cita es ${whenLabel}`,
-          greeting: `Hola ${patientName}`,
+          greeting: `Hola ${(patientName || "").trim().split(/\s+/)[0] || ""}`.trim(),
           lines: [
-            `Tu cita fue confirmada. ¡Te esperamos!`,
+            `Quería recordarte tu cita. ¡Te esperamos!`,
             "Si necesitás reagendar o cancelar, usá los botones de abajo.",
           ],
           details: [

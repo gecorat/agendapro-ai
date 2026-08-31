@@ -5,6 +5,7 @@ import { buildEmailHtml, getAppUrl } from "../../shared/email-template.ts";
 import { getAppointmentContext } from "../../shared/appointment-context.ts";
 import { buildMapsLink } from "../../shared/zernio.ts";
 import { buildWhenLabel, formatApptDate, resolveChannels } from "../../shared/reminders.ts";
+import { logNotification, logWhatsAppToConversation, notifyProfessionalOfDeliveryFailure } from "../../shared/notification-log.ts";
 
 export default async function(req) {
   try {
@@ -157,6 +158,8 @@ export default async function(req) {
         // aunque el paciente hubiera elegido "ambos" — el mail solo aparecía como fallback
         // si WhatsApp fallaba.
         const channels = resolveChannels(practice, patient);
+        const kind = stage === "24h" ? "reminder_24h" : "reminder_3h";
+        const logArgs = { appointment: appt, practice, patient, kind };
 
         let waOk = false;
         let mailOk = false;
@@ -168,28 +171,49 @@ export default async function(req) {
             await sendWhatsAppMessage(base44, practice, patient.phone, waIntroText);
             await sendWhatsAppMessage(base44, practice, patient.phone, waReminderText);
             waOk = true;
+            // Que el recordatorio quede visible en el chat con el paciente: el profesional
+            // veía la conversación sin rastro de los avisos automáticos que sí se mandaron.
+            await logWhatsAppToConversation(base44, { practice, phone: patient.phone, text: waIntroText });
+            await logWhatsAppToConversation(base44, { practice, phone: patient.phone, text: waReminderText });
           } catch (e) {
             console.error("sendReminders WhatsApp error:", e?.message || e);
+            await logNotification(base44, { ...logArgs, channel: "whatsapp", status: "failed", error: e });
           }
+          if (waOk) await logNotification(base44, { ...logArgs, channel: "whatsapp", status: "sent" });
         }
 
         if (channels.email) {
           try {
             await sendEmail(base44, { to: patient.email, subject, body: emailBody, replyTo });
             mailOk = true;
+            await logNotification(base44, { ...logArgs, channel: "email", status: "sent" });
           } catch (e) {
             console.error("sendReminders email error:", e?.message || e);
+            await logNotification(base44, { ...logArgs, channel: "email", status: "failed", error: e });
           }
         }
 
         // Último recurso: el canal preferido no estaba disponible o falló, pero hay email
         // cargado. Mejor que le llegue por el otro medio a que no le llegue nada.
         if (!waOk && !mailOk && channels.emailFallback) {
-          await sendEmail(base44, { to: patient.email, subject, body: emailBody, replyTo });
-          mailOk = true;
+          try {
+            await sendEmail(base44, { to: patient.email, subject, body: emailBody, replyTo });
+            mailOk = true;
+            await logNotification(base44, { ...logArgs, channel: "email", status: "sent" });
+          } catch (e) {
+            console.error("sendReminders email fallback error:", e?.message || e);
+            await logNotification(base44, { ...logArgs, channel: "email", status: "failed", error: e });
+          }
         }
 
-        if (!waOk && !mailOk) { skipped++; continue; }
+        if (!waOk && !mailOk) {
+          // No salió por ningún lado. Este es EL caso que antes pasaba en silencio total:
+          // el paciente se queda sin saber de su turno y nadie se entera hasta que falta.
+          await notifyProfessionalOfDeliveryFailure(base44, {
+            practice, appointment: appt, patientName, kind,
+          });
+          skipped++; continue;
+        }
 
         await base44.asServiceRole.entities.Appointment.update(appt.id, {
           // 1 = ya salió el de 24hs (falta el de 3hs). 2 = esta cita agotó sus recordatorios.

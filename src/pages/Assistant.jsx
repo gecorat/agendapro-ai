@@ -285,6 +285,13 @@ function FullAssistant({ settings, reloadSettings, save }) {
       const readAt = lastReadMap[phone] ? new Date(lastReadMap[phone]) : null;
       let unread = 0;
       for (let i = sorted.length - 1; i >= 0; i--) {
+        // Los avisos automáticos (recordatorios, confirmaciones) NO cuentan como "te
+        // respondimos": los dispara el reloj, no una lectura del mensaje del paciente. Sin
+        // este `continue`, un paciente que escribe "necesito cancelar" y después recibe su
+        // recordatorio de 3hs quedaba con el chat en cero sin leer, y el profesional no se
+        // enteraba nunca. Los mensajes del bot y los tuyos sí cortan la cuenta, porque ahí
+        // la conversación efectivamente siguió.
+        if (sorted[i].sent_by === "system") continue;
         if (sorted[i].role !== "user") break;
         if (readAt && parseServerDate(sorted[i].created_date) <= readAt) break;
         unread++;

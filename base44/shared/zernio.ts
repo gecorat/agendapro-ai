@@ -702,6 +702,10 @@ REGLAS ADICIONALES:
               start_datetime: start.toISOString(),
               end_datetime: end.toISOString(),
               ...(newService ? { service_name: newService.name } : {}),
+              // Los recordatorios ya enviados corresponden al horario VIEJO. Sin este
+              // reset, una cita que ya había recibido su aviso y se reagenda para otro día
+              // se quedaba sin ningún recordatorio del horario nuevo.
+              reminders_sent: 0,
             });
             try {
               await base44.asServiceRole.functions.invoke("syncAppointmentGoogle", { appointmentId: target.id });
@@ -727,11 +731,12 @@ REGLAS ADICIONALES:
               const reschedPatient = (patients || []).find((p) => p.id === target.patient_id) || null;
               const sentNow = await maybeSendImmediateReminder(
                 base44, practice,
-                { start_datetime: start.toISOString(), service_name: (newService ? newService.name : target.service_name), professional_name: professionalName, reminders_sent: target.reminders_sent },
+                { start_datetime: start.toISOString(), service_name: (newService ? newService.name : target.service_name), professional_name: professionalName, reminders_sent: 0 },
                 reschedPatient
               );
               if (sentNow) {
-                await base44.asServiceRole.entities.Appointment.update(target.id, { reminders_sent: 1 });
+                // 2 = esta cita ya agotó sus recordatorios (ver nota en reminders.ts).
+                await base44.asServiceRole.entities.Appointment.update(target.id, { reminders_sent: 2 });
               }
             } catch (e) {
               console.error("maybeSendImmediateReminder error (reschedule):", e?.message || e);

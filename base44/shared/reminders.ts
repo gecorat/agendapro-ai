@@ -56,6 +56,20 @@ export function bookedOnEarlierDay(created: Date, start: Date): boolean {
   return localDayKey(created) < localDayKey(start);
 }
 
+// Margen minimo entre la reserva y el turno para que tenga sentido mandar recordatorios.
+// Reemplaza a la regla de "dia calendario anterior": esa dejaba sin aviso a quien reservaba
+// a las 08:00 para las 20:00 del mismo dia (12 horas, tiempo de sobra para olvidarse) y en
+// cambio si le avisaba a quien reservaba a las 23:00 para las 09:00 del dia siguiente (10
+// horas). Contar horas reales es mas fiel a la idea de fondo: recordar lo que uno se puede
+// llegar a olvidar. Aplica igual a email y a WhatsApp: la regla vive en reminderStage, que
+// decide ANTES de elegir canal.
+export const MIN_HOURS_BEFORE_FOR_REMINDERS = 12;
+
+export function bookedWithEnoughMargin(created: Date, start: Date): boolean {
+  if (isNaN(created.getTime()) || isNaN(start.getTime())) return false;
+  return (start.getTime() - created.getTime()) >= MIN_HOURS_BEFORE_FOR_REMINDERS * 3600000;
+}
+
 // Un aviso que acaba de salir (confirmación de turno, aviso de reprogramación) ya lleva
 // día, hora, servicio y dirección. Si el turno además cae dentro de la ventana de 3hs, el
 // recordatorio que mandaría el cron minutos después dice exactamente lo mismo.

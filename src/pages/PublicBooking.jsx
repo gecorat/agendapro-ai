@@ -324,6 +324,32 @@ export default function PublicBooking() {
   const professionalId = settings?.created_by_id || null;
   const hasProfessionals = professionals.length > 0;
 
+  // El dueño del consultorio NO tiene ficha en Professional (vive en PracticeSettings), así
+  // que el selector mostraba solo al equipo invitado y él quedaba afuera de su propia
+  // página de reservas. Acá se lo antepone como PRIMERA opción, con su nombre.
+  //
+  // No es una ficha real: es una opción de la lista que se mapea a professional_ref_id
+  // vacío, que es exactamente como el sistema representa al dueño en todos lados (agenda,
+  // horarios, servicios, disponibilidad). Crear una ficha de verdad habría sumado al
+  // conteo de profesionales que decide el adicional de $10.000/mes y habría creado dos
+  // formas distintas de decir "el dueño" en los selectores internos.
+  const bookableProfessionals = useMemo(() => {
+    if (professionals.length === 0) return [];
+    return [
+      {
+        id: OWNER_OPTION_ID,
+        first_name: (settings?.practice_name || "").trim() || "Titular",
+        last_name: "",
+        specialty: settings?.specialty || "",
+      },
+      ...professionals,
+    ];
+  }, [professionals, settings]);
+
+  // null = el dueño de la cuenta. Es el valor que entienden generateSlots,
+  // createPublicAppointment y toda la lógica de disponibilidad.
+  const selectedProRefId = selectedPro && selectedPro.id !== OWNER_OPTION_ID ? selectedPro.id : null;
+
   // Numeración de pasos dinámica: si hay equipo, "Elegí profesional" se inserta después
   // del servicio y todo lo demás se corre un lugar.
   const STEPS = hasProfessionals
@@ -389,7 +415,7 @@ export default function PublicBooking() {
   const upcomingDays = useMemo(() => {
     const days = [];
     const base = new Date(); base.setHours(0, 0, 0, 0);
-    const proId = selectedPro?.id || null;
+    const proId = selectedProRefId;
     for (let i = 0; i < 21; i++) {
       const d = new Date(base.getTime() + i * 86400000);
       if (getWorkRanges(availability, d.getDay(), proId).length && !isBlockedDate(availability, d)) days.push(d);
@@ -399,7 +425,7 @@ export default function PublicBooking() {
 
   const slots = useMemo(() => {
     if (!date || !service) return [];
-    return generateSlots(date, service, availability, appointments, selectedPro?.id || null, googleBusy);
+    return generateSlots(date, service, availability, appointments, selectedProRefId, googleBusy);
   }, [date, service, availability, appointments, selectedPro, googleBusy]);
 
   useEffect(() => {
@@ -410,7 +436,7 @@ export default function PublicBooking() {
         const toDate = new Date(now.getTime() + 21 * 86400000);
         const res = await base44.functions.invoke('getGoogleBusySlots', {
           professional_id: professionalId,
-          professional_ref_id: selectedPro?.id || undefined,
+          professional_ref_id: selectedProRefId || undefined,
           date_from: now.toISOString(),
           date_to: toDate.toISOString(),
         });
@@ -428,7 +454,7 @@ export default function PublicBooking() {
     try {
       const res = await base44.functions.invoke("createPublicAppointment", {
         professional_id: professionalId,
-        professional_ref_id: selectedPro?.id || undefined,
+        professional_ref_id: selectedProRefId || undefined,
         service_id: service.id,
         start_datetime: slot.toISOString(),
         first_name: form.first_name,

@@ -47,7 +47,7 @@ export default function Agenda() {
 
   useEffect(() => {
     if (!isClinic) return;
-    base44.entities.Professional.filter({ active: true }).then((list) => setProfessionals(list || []));
+    fetchScopedProfessionals().then(setProfessionals).catch(() => setProfessionals([]));
   }, [isClinic]);
 
   useEffect(() => {

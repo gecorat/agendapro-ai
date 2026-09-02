@@ -41,7 +41,7 @@ export default function AvailabilityEditor() {
 
       const [res, pros] = await Promise.all([
         base44.functions.invoke("getScopedAvailability", {}),
-        isClinic ? base44.entities.Professional.filter({ active: true }) : Promise.resolve([]),
+        isClinic ? fetchScopedProfessionals() : Promise.resolve([]),
       ]);
       setProfessionals(pros || []);
       const list = res?.data?.availability || [];

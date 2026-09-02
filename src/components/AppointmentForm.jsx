@@ -107,7 +107,7 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
       const [patsRes, servsRes, pros] = await Promise.all([
         base44.functions.invoke("getScopedPatients", {}),
         base44.functions.invoke("getScopedServices", {}),
-        isClinic ? base44.entities.Professional.filter({ active: true }) : Promise.resolve([]),
+        isClinic ? fetchScopedProfessionals() : Promise.resolve([]),
       ]);
       setPatients(patsRes?.data?.patients || []);
       setServices((servsRes?.data?.services || []).filter((s) => s.active !== false));

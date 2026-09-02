@@ -41,7 +41,7 @@ export default function ServiceManagerPanel({ showHeader = true }) {
       // en vivo, y era la causa de que a veces no se pudiera borrar (no eran tuyos).
       const [svcsRes, pros] = await Promise.all([
         base44.functions.invoke("getScopedServices", {}),
-        isClinic ? base44.entities.Professional.filter({ active: true }) : Promise.resolve([]),
+        isClinic ? fetchScopedProfessionals() : Promise.resolve([]),
       ]);
       setServices(svcsRes?.data?.services || []);
       setProfessionals(pros || []);

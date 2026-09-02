@@ -293,6 +293,10 @@ function ReviewsBlock({ theme, reviews, cardClass, glassStyle, headingFontStyle 
   );
 }
 
+// Id sintético de la opción "el dueño del consultorio" en el selector de profesional. No
+// existe como ficha en Professional: al agendar se traduce a professional_ref_id vacío.
+const OWNER_OPTION_ID = "__owner__";
+
 export default function PublicBooking() {
   const { handle } = useParams();
   const cleanHandle = (handle || "").replace(/^@/, "");
@@ -603,7 +607,7 @@ export default function PublicBooking() {
             <button className="text-sm hover:underline" style={{ color: theme.muted }} onClick={() => setStep(1)}>Cambiar servicio</button>
           </div>
           <div className="space-y-2">
-            {professionals.map((p) => (
+            {bookableProfessionals.map((p) => (
               <button
                 key={p.id}
                 onClick={() => { setSelectedPro(p); setDate(null); setSlot(null); setStep(DATE_STEP); }}
@@ -619,14 +623,10 @@ export default function PublicBooking() {
                 </div>
               </button>
             ))}
-            <button
-              onClick={() => { setSelectedPro(null); setDate(null); setSlot(null); setStep(DATE_STEP); }}
-              className={`w-full text-left p-3.5 border-2 border-dashed flex items-center gap-3 transition-all ${theme.radiusClass}`}
-              style={{ borderColor: theme.cardBorder, color: theme.muted }}
-            >
-              <User className="w-5 h-5 shrink-0" />
-              <p className="text-sm font-medium">No tengo preferencia</p>
-            </button>
+            {/* Antes acá había un botón "No tengo preferencia" que agendaba con
+                professional_ref_id vacío — o sea, exactamente con el dueño. Ahora que el
+                dueño figura arriba con su nombre, ese botón hacía literalmente lo mismo que
+                la primera opción de la lista y solo confundía. */}
           </div>
         </div>
       )}

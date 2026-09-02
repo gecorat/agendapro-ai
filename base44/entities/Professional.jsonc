@@ -115,9 +115,6 @@
           "data.practice_owner_id": "{{user.id}}"
         },
         {
-          "data.user_id": "{{user.id}}"
-        },
-        {
           "user_condition": {
             "role": "admin"
           }

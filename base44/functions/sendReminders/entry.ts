@@ -3,7 +3,7 @@ import { sendEmail, replyToFor } from "../../shared/email-sender.ts";
 import { sendWhatsAppMessage } from "../../shared/whatsapp-providers.ts";
 import { buildEmailHtml, getAppUrl } from "../../shared/email-template.ts";
 import { getAppointmentContext } from "../../shared/appointment-context.ts";
-import { buildWhenLabel, formatApptDate, resolveChannels, bookedOnEarlierDay, buildReminderWhatsAppMessage } from "../../shared/reminders.ts";
+import { buildWhenLabel, formatApptDate, resolveChannels, bookedWithEnoughMargin, MIN_HOURS_BEFORE_FOR_REMINDERS, buildReminderWhatsAppMessage } from "../../shared/reminders.ts";
 import { logNotification, logWhatsAppToConversation, notifyProfessionalOfDeliveryFailure } from "../../shared/notification-log.ts";
 
 export default async function(req) {
@@ -38,10 +38,11 @@ export default async function(req) {
       if (hoursUntil <= 0) return null;
 
       const created = parseServerDate(appt.created_date);
-      // Regla base: los recordatorios son SOLO para lo que se reservó antes del día del
-      // turno. Si el paciente reservó hoy para hoy, ya recibió la confirmación con todos
-      // los datos hace unas horas — un recordatorio encima es el mismo mensaje dos veces.
-      if (!bookedOnEarlierDay(created, start)) return null;
+      // Regla base: los recordatorios son SOLO para lo que se reservó con al menos
+      // MIN_HOURS_BEFORE_FOR_REMINDERS (12hs) de anticipación. Si se reservó sobre la hora,
+      // el paciente ya recibió la confirmación con todos los datos recién — un recordatorio
+      // encima es el mismo mensaje dos veces. Vale para los dos canales por igual.
+      if (!bookedWithEnoughMargin(created, start)) return null;
 
       const bookedWithMargin = !isNaN(created.getTime())
         && (start.getTime() - created.getTime()) >= 48 * 60 * 60 * 1000;

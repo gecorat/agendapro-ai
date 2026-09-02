@@ -9,33 +9,18 @@ export function usePracticeSettings() {
 
   const load = useCallback(async (attempt = 1) => {
     try {
-      const me = await base44.auth.me();
-      const list = await base44.entities.PracticeSettings.filter(
-        { created_by_id: me.id },
-        "-created_date",
-        1
-      );
-      let resolved = list?.[0] || null;
-      let myProfessional = null;
-
-      // Si no soy dueño de ningún consultorio, puede ser que me hayan invitado a formar
-      // parte del equipo de otro (plan Clinic) — en ese caso mi propio Professional.user_id
-      // me asocia al consultorio del que soy invitado, y ESE es el que tengo que cargar.
-      if (!resolved) {
-        const profs = await base44.entities.Professional.filter({ user_id: me.id });
-        myProfessional = profs?.[0] || null;
-        if (myProfessional) {
-          const ownerList = await base44.entities.PracticeSettings.filter(
-            { created_by_id: myProfessional.practice_owner_id },
-            "-created_date",
-            1
-          );
-          resolved = ownerList?.[0] || null;
-        }
-      }
-
-      setSettings(resolved);
-      setProfessional(myProfessional);
+      // Antes esto resolvía el consultorio leyendo PracticeSettings directo desde el
+      // cliente, en dos pasos: primero el propio (created_by_id = yo) y, si no había, el
+      // del dueño que me invitó. Ese segundo caso es justamente el que obligaba a que la
+      // entidad tuviera lectura pública: una regla RLS solo sabe comparar campos contra el
+      // usuario logueado, y "soy Professional de ese consultorio" no se puede escribir ahí.
+      //
+      // getMyPractice hace esa misma resolución en el backend con resolveScope (el mismo
+      // criterio que ya usan getScopedPatients, getScopedAppointments, getScopedServices y
+      // getScopedAvailability), y devuelve también mi propia ficha si soy invitado.
+      const res = await base44.functions.invoke("getMyPractice", {});
+      setSettings(res?.data?.practice || null);
+      setProfessional(res?.data?.professional || null);
       setLoading(false);
     } catch (e) {
       // Antes esto tragaba el error en silencio y dejaba "settings" en null para

@@ -262,6 +262,23 @@ export default function ProfessionalsPanel() {
                   {p.specialty && <p className="text-sm text-muted-foreground mt-0.5">{p.specialty}</p>}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
+                  {/* Un profesional cargado a mano existe como opción para agendar pero no
+                      tiene cuenta ni panel propio. Este botón le genera el enlace para que
+                      se cree la suya SIN borrarlo ni volver a cargarlo: conserva su ficha,
+                      sus turnos ya agendados y su horario. Mismo permiso que "Invitar"
+                      (dueño o co-admin), validado en el backend. */}
+                  {isManual && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-xs gap-1"
+                      onClick={() => handleInviteExisting(p)}
+                      disabled={invitingId === p.id}
+                    >
+                      {invitingId === p.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
+                      {linkAlreadySent ? "Nuevo enlace" : "Dar acceso"}
+                    </Button>
+                  )}
                   {/* Promover/degradar a co-admin: exclusivo del dueño real, y solo tiene
                       sentido una vez que la persona ya tiene su propia cuenta activa. */}
                   {isOwner && hasOwnAccount && (

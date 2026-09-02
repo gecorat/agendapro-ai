@@ -139,7 +139,9 @@ export default function UpgradePlan() {
     setLoadingSub(true);
     refreshSubscription().finally(() => setLoadingSub(false));
     if (status.plan === "clinic") {
-      base44.entities.Professional.list().then((rows) => setProfessionalCount((rows || []).length)).catch(() => {});
+      // activeOnly: false a propósito — el adicional pago se calcula sobre el total de
+      // fichas del consultorio (así lo hace inviteProfessional), no solo las activas.
+      fetchScopedProfessionals({ activeOnly: false }).then((rows) => setProfessionalCount(rows.length)).catch(() => {});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings?.id, settings?.plan]);

@@ -33,6 +33,15 @@ function formatSlotList(slots) {
 export function buildBookAckMessage() {
   return '¡Perfecto! ✅ Ya quedó agendado tu turno. Te paso los datos en un toque...';
 }
+
+// Variante para las reservas hechas desde la PÁGINA PÚBLICA. Ahí no hubo ninguna
+// conversación previa por WhatsApp: el mensaje le llega al paciente de la nada, así que un
+// "¡Perfecto!" suena a respuesta a algo que nadie dijo. Se presenta y saluda por el nombre.
+// El texto del bot (buildBookAckMessage) queda igual: ahí sí viene de una charla.
+export function buildPublicBookAckMessage(patientName?: string) {
+  const first = (patientName || '').trim().split(/\s+/)[0] || '';
+  return `Hola${first ? ` ${first}` : ''}, te escribo para avisarte que tu turno ya está agendado ✅. Te paso los datos en un momento...`;
+}
 function buildRescheduleAckMessage() {
   return '¡Listo! 🔁 Ya reagendé tu turno. Te paso los datos actualizados en un toque...';
 }

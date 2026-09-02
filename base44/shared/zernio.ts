@@ -286,9 +286,16 @@ export async function orchestrateConversation(base44, ctx) {
   // consultorio en plan Clinic pero sin nadie cargado igual preguntaba "¿con qué
   // profesional preferis?" sin sentido, ya que no hay ninguno entre quien elegir.
   const hasProfessionals = isClinic && (professionals || []).length > 0;
-  const professionalsText = (professionals || [])
-    .map((p) => `- ${p.first_name} ${p.last_name || ""}${p.specialty ? ` (${p.specialty})` : ""}`.trim())
-    .join("\n");
+  // El dueño del consultorio no tiene ficha en Professional (vive en PracticeSettings), así
+  // que no aparecía en esta lista y el bot NUNCA le asignaba turnos en un consultorio
+  // Clinic: al pasar a ese plan, el titular dejaba de ser candidato de su propio bot. Va
+  // primero, como opción por defecto. Internamente se representa con professional_ref_id
+  // vacío, igual que en el resto de la app.
+  const ownerDisplayName = (practice?.practice_name || "").trim();
+  const professionalsText = [
+    ownerDisplayName ? `- ${ownerDisplayName}${practice?.specialty ? ` (${practice.specialty})` : ""}` : null,
+    ...(professionals || []).map((p) => `- ${p.first_name} ${p.last_name || ""}${p.specialty ? ` (${p.specialty})` : ""}`.trim()),
+  ].filter(Boolean).join("\n");
   const professionalsBlock = hasProfessionals
     ? `\n=== PROFESIONALES DISPONIBLES ===\n${professionalsText}\nEste consultorio tiene varios profesionales. Si el paciente todavía no dijo con quién o qué especialidad prefiere, PREGUNTASELO antes de agendar. Si dice que no tiene preferencia, se lo asigna automáticamente. Cuando agendes, completá appointment.professional_name con el nombre elegido (o dejalo vacío si no tiene preferencia).\n`
     : "";
@@ -444,15 +451,30 @@ REGLAS ADICIONALES:
         // duración del servicio, confirmado en vivo). La grilla (generateSlotsForDay) se
         // usa sólo para OFRECER alternativas cuando hace falta, no para aceptar o no.
         let assignedProfessionalRefId;
+        let ownerExplicitlyChosen = false;
         if (isClinic && professionals?.length) {
           const chosenName = (reply.appointment.professional_name || "").toLowerCase().trim();
+          // Primero el equipo, con el MISMO criterio de siempre — así ninguna asignación
+          // que hoy funciona cambia de resultado.
           const candidate = chosenName
             ? professionals.find((p) => `${p.first_name} ${p.last_name || ""}`.toLowerCase().includes(chosenName))
             : null;
-          assignedProfessionalRefId = candidate ? candidate.id : null; // null = sin preferencia, probamos con todos
+          if (candidate) {
+            assignedProfessionalRefId = candidate.id;
+          } else {
+            // Nadie del equipo matchea: ¿nombró al titular? El dueño se representa con null
+            // porque no tiene ficha en Professional.
+            const ownerName = (practice?.practice_name || "").toLowerCase().trim();
+            ownerExplicitlyChosen = !!(chosenName && ownerName && ownerName.includes(chosenName));
+            assignedProfessionalRefId = null;
+          }
         }
         const candidateProfessionalIds = isClinic && professionals?.length
-          ? (assignedProfessionalRefId ? [assignedProfessionalRefId] : professionals.map((p) => p.id))
+          ? (assignedProfessionalRefId
+              ? [assignedProfessionalRefId]
+              // Sin preferencia: se prueba primero con el titular (null) y después con el
+              // equipo. Antes el dueño ni siquiera entraba en la lista de candidatos.
+              : (ownerExplicitlyChosen ? [null] : [null, ...professionals.map((p) => p.id)]))
           : [null]; // null = el dueño de la cuenta (planes sin equipo)
 
         // OJO ZONA HORARIA: argentinaDayBounds en vez de `.setHours()` crudo — el proceso

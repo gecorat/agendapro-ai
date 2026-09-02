@@ -38,6 +38,17 @@ export default async function (req: Request): Promise<Response> {
     // segun quien hace la llamada (aca, asServiceRole) - no se puede forzar a mano, asi
     // que la forma correcta de buscar "el horario de ESTE profesional" en el futuro es
     // siempre por professional_ref_id, nunca por created_by_id.
+    // Solo se siembra el horario si esta persona todavia no tiene ninguno. Hace falta
+    // porque ahora se puede invitar a un profesional que ya estaba cargado a mano y que
+    // quizas ya tenia sus franjas configuradas: sin este chequeo, aceptar la invitacion le
+    // duplicaba el horario encima del que ya tenia.
+    const existingAvailability = await base44.asServiceRole.entities.Availability.filter({
+      professional_ref_id: professional.id,
+    });
+    if ((existingAvailability || []).length > 0) {
+      return Response.json({ ok: true, professional: updated, seededAvailability: false });
+    }
+
     const start = work_start || '09:00';
     const end = work_end || '18:00';
     const days = [1, 2, 3, 4, 5];

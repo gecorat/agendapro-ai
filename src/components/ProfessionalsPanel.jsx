@@ -90,22 +90,19 @@ export default function ProfessionalsPanel() {
     setSaving(true);
     try {
       if (editing) {
-        // Editar MI PROPIA ficha (caso de un profesional invitado) va por el backend: la
-        // RLS ya no permite auto-editarse en directo, porque esa misma regla dejaba
-        // escalar privilegios cambiando practice_owner_id / is_team_admin a mano. La
-        // función solo deja tocar los campos del formulario. El dueño editando a alguien
-        // de su equipo sigue por el camino de siempre, sin cambios.
-        if (myProfessional && editing.id === myProfessional.id) {
-          await base44.functions.invoke("updateOwnProfessionalProfile", {
-            first_name: form.first_name,
-            last_name: form.last_name,
-            specialty: form.specialty,
-            color: form.color,
-            active: form.active,
-          });
-        } else {
-          await base44.entities.Professional.update(editing.id, form);
-        }
+        // Toda edición pasa ahora por el backend. La RLS de Professional quedó en
+        // solo-admin porque la regla anterior permitía escalar privilegios editando
+        // practice_owner_id / is_team_admin a mano desde la consola del navegador (ver el
+        // comentario largo en updateProfessionalProfile). Los permisos son exactamente los
+        // mismos que antes: cada uno edita su propia ficha, y el dueño edita a su equipo.
+        await base44.functions.invoke("updateProfessionalProfile", {
+          professionalId: editing.id,
+          first_name: form.first_name,
+          last_name: form.last_name,
+          specialty: form.specialty,
+          color: form.color,
+          active: form.active,
+        });
       } else {
         const me = await base44.auth.me();
         const ownerId = isOwner ? me.id : (myProfessional?.practice_owner_id || me.id);

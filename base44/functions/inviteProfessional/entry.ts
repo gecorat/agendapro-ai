@@ -20,6 +20,9 @@ export default async function (req: Request): Promise<Response> {
 
     const body = await req.json().catch(() => ({}));
     const origin = body?.origin || 'https://kameagenda.com';
+    // professionalId opcional: invitar a alguien que YA existe, cargado con "Agregar
+    // manual". Sin el, se crea una ficha nueva como siempre.
+    const { professionalId } = body || {};
 
     const practices = await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: scope.practiceOwnerId });
     const practice = practices?.[0];
@@ -27,10 +30,41 @@ export default async function (req: Request): Promise<Response> {
       return Response.json({ error: 'Esta funcion es solo para cuentas con plan Clinic' }, { status: 400 });
     }
 
+    const token = crypto.randomUUID().replace(/-/g, '');
+
+    // CASO A: darle acceso propio a un profesional que ya estaba cargado a mano.
+    //
+    // Ojo con lo que NO se toca aca:
+    //  - is_paid_addon: ya se decidio cuando se lo creo. Recalcularlo podria cobrarle al
+    //    dueno un adicional por alguien que ya estaba contado.
+    //  - active: ya es agendable. Ponerlo en false (como si fuera una invitacion nueva) lo
+    //    sacaria de la pagina publica y del bot mientras la invitacion esta pendiente.
+    //  - invite_status: se deja en 'none'. PublicBooking descarta a los 'pending'
+    //    (src/pages/PublicBooking.jsx), asi que marcarlo lo haria desaparecer del selector
+    //    hasta que acepte. El token alcanza para que claimInvite lo encuentre.
+    if (professionalId) {
+      const rows = await base44.asServiceRole.entities.Professional.filter({ id: professionalId });
+      const target = rows?.[0];
+      if (!target || target.practice_owner_id !== scope.practiceOwnerId) {
+        return Response.json({ error: 'Ese profesional no es de tu consultorio' }, { status: 404 });
+      }
+      if (target.user_id) {
+        return Response.json({ error: `${target.first_name || 'Ese profesional'} ya tiene su cuenta activa` }, { status: 400 });
+      }
+      await base44.asServiceRole.entities.Professional.update(professionalId, { invite_token: token });
+      return Response.json({
+        link: `${origin}/invitacion/${token}`,
+        professionalId,
+        isAddon: !!target.is_paid_addon,
+        addonPrice: PROFESSIONAL_ADDON_PRICE,
+        billing: null,
+        reinvited: true,
+      });
+    }
+
+    // CASO B: invitacion nueva (comportamiento de siempre).
     const existing = await base44.asServiceRole.entities.Professional.filter({ practice_owner_id: scope.practiceOwnerId });
     const isAddon = (existing || []).length >= CLINIC_FREE_PROFESSIONALS;
-
-    const token = crypto.randomUUID().replace(/-/g, '');
     const professional = await base44.asServiceRole.entities.Professional.create({
       practice_owner_id: scope.practiceOwnerId,
       first_name: '',

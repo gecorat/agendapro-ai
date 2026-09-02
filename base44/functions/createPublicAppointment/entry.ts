@@ -3,7 +3,7 @@ import { findPatientByCanonicalPhone } from '../../shared/phone-utils.ts';
 import { pushAppointmentToGoogle } from '../../shared/google-calendar.ts';
 import { sendPushToUsers, getPracticeRecipientUserIds } from '../../shared/push.ts';
 import { sendWhatsAppMessage } from '../../shared/whatsapp-providers.ts';
-import { buildConfirmationMessage, buildBookAckMessage, notifyProfessionalOfBotAction } from '../../shared/zernio.ts';
+import { buildConfirmationMessage, buildPublicBookAckMessage, notifyProfessionalOfBotAction } from '../../shared/zernio.ts';
 import { getAppointmentContext } from '../../shared/appointment-context.ts';
 import { argentinaDayBounds } from '../../shared/scheduling.ts';
 import { canSendWhatsApp } from '../../shared/plan.ts';
@@ -158,7 +158,7 @@ export default async function (req: Request): Promise<Response> {
       if (canSendWhatsApp(practice)) {
         try {
           const { professionalName } = await getAppointmentContext(base44, appointment, practice);
-          await sendWhatsAppMessage(base44, practice, patient.phone, buildBookAckMessage());
+          await sendWhatsAppMessage(base44, practice, patient.phone, buildPublicBookAckMessage(patient.first_name));
           const waText = buildConfirmationMessage({ practice, service, start, professionalName });
           await sendWhatsAppMessage(base44, practice, patient.phone, waText);
         } catch (e) {

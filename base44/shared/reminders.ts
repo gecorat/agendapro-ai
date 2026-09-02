@@ -45,17 +45,6 @@ export function formatApptDate(d: Date): string {
   });
 }
 
-// ¿La cita se reservó ANTES del día en que ocurre?
-//
-// Es la condición para mandar recordatorios. Si el paciente reservó el mismo día del
-// turno, ya recibió la confirmación con todos los datos hace unas horas: un recordatorio
-// encima es repetir lo mismo dos veces. Los recordatorios existen para lo que se reservó
-// con antelación y uno se puede llegar a olvidar.
-export function bookedOnEarlierDay(created: Date, start: Date): boolean {
-  if (isNaN(created.getTime()) || isNaN(start.getTime())) return false;
-  return localDayKey(created) < localDayKey(start);
-}
-
 // Margen minimo entre la reserva y el turno para que tenga sentido mandar recordatorios.
 // Reemplaza a la regla de "dia calendario anterior": esa dejaba sin aviso a quien reservaba
 // a las 08:00 para las 20:00 del mismo dia (12 horas, tiempo de sobra para olvidarse) y en

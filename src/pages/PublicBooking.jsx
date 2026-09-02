@@ -375,9 +375,14 @@ export default function PublicBooking() {
   useEffect(() => {
     (async () => {
       try {
-        const settingsList = await base44.entities.PracticeSettings.filter({ handle: cleanHandle });
-        const s = settingsList?.[0];
-        if (!s || s.published === false) { setNotFound(true); return; }
+        // Antes esto leía la entidad PracticeSettings directo. Como esa entidad tiene
+        // lectura pública, ese mismo permiso dejaba que cualquiera pidiera la tabla entera:
+        // los 68 campos de TODOS los consultorios, con emails, teléfonos, plan contratado y
+        // el id de suscripción de Mercado Pago. getPublicProfile devuelve solo los campos
+        // que esta página pinta, y solo de un consultorio publicado.
+        const profRes = await base44.functions.invoke("getPublicProfile", { handle: cleanHandle });
+        const s = profRes?.data?.profile;
+        if (!s) { setNotFound(true); return; }
         setSettings(s);
         const pid = s.created_by_id;
         const [servs, avail, profs] = await Promise.all([

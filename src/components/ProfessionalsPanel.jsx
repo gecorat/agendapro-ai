@@ -32,6 +32,7 @@ export default function ProfessionalsPanel() {
   const [inviteLink, setInviteLink] = useState(null);
   const [linkCopied, setLinkCopied] = useState(false);
   const [togglingAdminId, setTogglingAdminId] = useState(null);
+  const [invitingId, setInvitingId] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -67,6 +68,35 @@ export default function ProfessionalsPanel() {
       toast({ title: "Error al generar la invitación", description: err.message, variant: "destructive" });
     } finally {
       setInviting(false);
+    }
+  };
+
+  // Darle acceso propio a alguien que ya estaba cargado con "Agregar manual". No pasa por
+  // confirmAddonIfNeeded a propósito: no se está sumando un profesional nuevo, así que no
+  // hay ningún cobro adicional que confirmar — esta persona ya estaba contada desde que se
+  // la creó.
+  const handleInviteExisting = async (p) => {
+    setInvitingId(p.id);
+    setInviteLink(null);
+    try {
+      const res = await base44.functions.invoke("inviteProfessional", {
+        origin: window.location.origin,
+        professionalId: p.id,
+      });
+      setInviteLink(res?.data?.link);
+      toast({
+        title: `Enlace generado para ${p.first_name || "el profesional"}`,
+        description: "Copíalo y mandáselo. Mientras tanto sigue apareciendo normalmente para agendar.",
+      });
+      load();
+    } catch (err) {
+      toast({
+        title: "No se pudo generar el enlace",
+        description: err?.response?.data?.error || err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setInvitingId(null);
     }
   };
 
@@ -202,6 +232,10 @@ export default function ProfessionalsPanel() {
           {list.map((p) => {
             const isPending = p.invite_status === "pending";
             const hasOwnAccount = p.invite_status === "accepted";
+            // Cargado a mano: existe como opción para agendar, pero no tiene cuenta propia.
+            // A estos se les puede generar un enlace de acceso después de haberlos creado.
+            const isManual = !isPending && !hasOwnAccount && !p.user_id;
+            const linkAlreadySent = isManual && !!p.invite_token;
             return (
               <div key={p.id} className="bg-card rounded-2xl border border-border p-4 flex items-center gap-3">
                 <div className="w-1.5 self-stretch rounded-full shrink-0" style={{ background: p.color || "#3b82f6" }} />
@@ -219,6 +253,9 @@ export default function ProfessionalsPanel() {
                     )}
                     {p.is_paid_addon && (
                       <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">+${ADDON_PRICE.toLocaleString("es-AR")}/mes</span>
+                    )}
+                    {linkAlreadySent && (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-sky-100 text-sky-700"><Mail className="w-3 h-3" /> Enlace de acceso enviado</span>
                     )}
                     {!p.active && !isPending && <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">Inactivo</span>}
                   </div>

@@ -18,8 +18,7 @@ export const CLINIC_PLAN_VISIBLE = false;
 
 // Se mantiene la firma con `plan` para no tocar los llamadores, pero hoy el plan Premium
 // no se muestra a nadie, tenga el plan que tenga.
-// eslint-disable-next-line no-unused-vars
-export function showClinicPlan(plan) {
+export function showClinicPlan(_plan) {
   return CLINIC_PLAN_VISIBLE;
 }
 

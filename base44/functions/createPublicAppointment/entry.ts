@@ -32,7 +32,13 @@ export default async function (req: Request): Promise<Response> {
     // aceptaba cualquier texto y despues se le mandaba el WhatsApp a esa cadena tal cual:
     // un numero sin codigo de pais ("3425902123") lo resuelve WhatsApp como puede y la
     // confirmacion termina en el telefono de otra persona real. Confirmado en vivo el 03/09.
-    const waPhone = toWhatsAppNumber(phone);
+    // Excepcion: si YA viene con el 54 y largo completo, se respeta tal cual. Ahi no se
+    // puede distinguir un movil (549 + 10) de un FIJO con WhatsApp Business (54 + 10), y
+    // normalizarlo le agregaria un 9 que el fijo no tiene, guardando el numero de otro.
+    const rawDigits = String(phone || '').replace(/\D/g, '');
+    const waPhone = (rawDigits.startsWith('54') && rawDigits.length >= 12)
+      ? rawDigits
+      : toWhatsAppNumber(phone);
     if (!waPhone) {
       return Response.json(
         { error: 'telefono_invalido', message: 'Revisá el teléfono: escribilo con código de área, por ejemplo 342 590 2123.' },

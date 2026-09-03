@@ -5,6 +5,7 @@ import { buildEmailHtml } from "./email-template.ts";
 import { generateSlotsForDay, findNextAvailableDaySlots, pickClosestSlots, isTimeAvailable, argentinaDayBounds } from "./scheduling.ts";
 import { getGoogleBusyRanges } from "./google-calendar.ts";
 import { DEFAULT_OBJECTIVE_PROMPT, DEFAULT_TONE_PROMPT, DEFAULT_RESPONSE_DELAY_SECONDS } from "./bot-defaults.ts";
+import { findPracticeByOwner, rowBelongsTo } from "./ownership.ts";
 
 // Link corto de Google Maps para la dirección del consultorio. Si hay coordenadas
 // guardadas (address_lat/lng, las carga el autocompletado de dirección del perfil) el

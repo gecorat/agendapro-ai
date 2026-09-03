@@ -686,7 +686,7 @@ export default function PublicBooking() {
                 return (
                   <button key={d.toISOString()} onClick={() => { setDate(d); setSlot(null); setBookingError(null); }} className={`p-2 border text-center transition-colors ${theme.radiusClass}`} style={selected ? { background: theme.accentCss, borderColor: brand, color: theme.accentText } : { borderColor: theme.cardBorder, color: theme.text }}>
                     <p className="text-xs capitalize opacity-70">{d.toLocaleDateString("es-AR", { weekday: "short", timeZone: AR_TZ })}</p>
-                    <p className="font-medium text-sm">{d.getDate()}</p>
+                    <p className="font-medium text-sm">{Number(toDateStr(d).slice(-2))}</p>
                   </button>
                 );
               })}

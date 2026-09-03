@@ -27,7 +27,7 @@ export default async function(req: Request): Promise<Response> {
 
     const result = await orchestrateConversation(base44, {
       fromPhone: phone,
-      professionalId: practice.created_by_id,
+      professionalId: ownerIdOf(practice),
       conversationId: conversationId || "",
       accountId: practice.evolution_instance_name,
       practice,

@@ -28,7 +28,14 @@ export default function AppLayout() {
   // del árbol de React, sin depender de que ninguna cadena de herencia CSS esté perfecta.
   // AppLayout SOLO se monta en pantallas autenticadas de la app, nunca en /u/:handle (la
   // página pública), así que esto no le afecta a esa ruta.
+  //
+  // EXCEPCIÓN: el onboarding. Se renderiza desde acá (abajo) pero NO usa el shell con
+  // <main overflow-y-auto>, así que este bloqueo lo dejaba sin ninguna forma de scrollear:
+  // con la lista de especialidades no entraba en pantalla y no había manera de llegar al
+  // botón Continuar salvo achicando el zoom del navegador.
+  const showOnboarding = !loadingSettings && !userLoading && !settings && user?.role !== "admin";
   useEffect(() => {
+    if (showOnboarding) return;
     const prevBodyOverflow = document.body.style.overflow;
     const prevHtmlOverflow = document.documentElement.style.overflow;
     document.body.style.overflow = "hidden";
@@ -37,7 +44,7 @@ export default function AppLayout() {
       document.body.style.overflow = prevBodyOverflow;
       document.documentElement.style.overflow = prevHtmlOverflow;
     };
-  }, []);
+  }, [showOnboarding]);
 
   const handleLogout = async () => {
     await base44.auth.logout();
@@ -52,7 +59,7 @@ export default function AppLayout() {
     );
   }
 
-  if (!settings && user?.role !== "admin") {
+  if (showOnboarding) {
     return <Onboarding onConfigured={reload} />;
   }
 

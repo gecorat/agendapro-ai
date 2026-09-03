@@ -1,8 +1,27 @@
 // Agregados del panel de admin (planes, trials y facturación). Se mantienen como
 // funciones puras, separadas del componente, para poder probarlas sin renderizar nada.
 import { PLAN_PRICES, getCycleEnd, getCycleAnchor } from "@/lib/plan-utils";
+import { ownerIdOf } from "@/lib/ownership";
 
 export const PLAN_ORDER = ["trial", "basic", "pro", "clinic"];
+
+// Separa los consultorios REALES de las fichas huérfanas: filas cuyo usuario dueño ya no
+// existe (se borró la cuenta y quedó el consultorio). Contarlas infla los totales y los
+// trials con gente que no está — pero tampoco se ocultan: se devuelven aparte para poder
+// avisar y limpiarlas.
+export function splitOrphanPractices(practices, users) {
+  const validIds = new Set((users || []).map((u) => u?.id).filter(Boolean));
+  // Sin lista de usuarios (por ejemplo si esa consulta falló) no se descarta nada: es
+  // preferible un total de más antes que esconder cuentas reales por un error de red.
+  if (validIds.size === 0) return { real: practices || [], orphans: [] };
+
+  const real = [];
+  const orphans = [];
+  for (const p of practices || []) {
+    (validIds.has(ownerIdOf(p)) ? real : orphans).push(p);
+  }
+  return { real, orphans };
+}
 
 // Colores de los planes. En hex porque recharts necesita un color real, no una clase de
 // Tailwind (mismo criterio que Analytics.jsx). Validados como paleta categórica: la

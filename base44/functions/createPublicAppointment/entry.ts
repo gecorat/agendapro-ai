@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { findPatientByCanonicalPhone, toWhatsAppNumber } from '../../shared/phone-utils.ts';
+import { findPracticeByOwner, rowBelongsTo } from '../../shared/ownership.ts';
 import { pushAppointmentToGoogle } from '../../shared/google-calendar.ts';
 import { sendPushToUsers, getPracticeRecipientUserIds } from '../../shared/push.ts';
 import { sendWhatsAppMessage } from '../../shared/whatsapp-providers.ts';

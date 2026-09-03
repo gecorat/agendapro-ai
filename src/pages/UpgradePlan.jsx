@@ -7,25 +7,60 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
-import { getPlanStatus, getWhatsAppUsage, PLAN_PRICES, PLAN_LABELS, CLINIC_MAX_PROFESSIONALS, showClinicPlan } from "@/lib/plan-utils";
-import { Check, Loader2, Sparkles, CreditCard, Lock, MessageCircle, Users, Calendar, XCircle, ShieldCheck, ArrowRightLeft } from "lucide-react";
+import { getPlanStatus, getWhatsAppUsage, getUsagePeriod, formatDate, PLAN_PRICES, PLAN_LABELS, PLAN_INCLUDES, CLINIC_MAX_PROFESSIONALS, showClinicPlan } from "@/lib/plan-utils";
+import { Check, Loader2, Sparkles, CreditCard, Lock, MessageCircle, Users, Calendar, XCircle, ShieldCheck, ArrowRightLeft, RefreshCw, Wallet, CalendarCheck, Clock, Package, Repeat } from "lucide-react";
 
 const BASIC_FEATURES = ["Página pública de reservas", "Agenda manual + calendario", "Gestión de pacientes", "Confirmaciones por email", "Envío manual por WhatsApp"];
 const PRO_FEATURES = ["Bot de WhatsApp con IA 24/7", "Conexión de tu propio número", "Recordatorios automáticos por WhatsApp", "Hasta 300 conversaciones mensuales"];
 const CLINIC_FEATURES = ["Hasta 3 profesionales con agendas independientes", "Un WhatsApp centralizado que reparte turnos", "Hasta 1.000 conversaciones mensuales", "Reportes por profesional"];
 
+// Etiquetas en castellano de los estados que devuelve Mercado Pago, para no mostrarle al
+// usuario el string crudo de la API.
+const MP_STATUS = {
+  authorized: { label: "Activa", className: "bg-emerald-100 text-emerald-700" },
+  pending: { label: "Pendiente de aprobación", className: "bg-amber-100 text-amber-700" },
+  paused: { label: "Pausada", className: "bg-amber-100 text-amber-700" },
+  cancelled: { label: "Cancelada", className: "bg-destructive/10 text-destructive" },
+};
+
+const FREQUENCY_LABELS = { months: "mes", days: "día" };
+
+function DetailRow({ icon: Icon, label, value, hint }) {
+  return (
+    <div className="flex items-start justify-between gap-3 py-2 border-b border-border/50 last:border-0 last:pb-0">
+      <span className="flex items-center gap-1.5 text-sm text-muted-foreground shrink-0">
+        <Icon className="w-3.5 h-3.5" /> {label}
+      </span>
+      <span className="text-sm font-medium text-right min-w-0">
+        {value}
+        {hint && <span className="block text-xs font-normal text-muted-foreground mt-0.5">{hint}</span>}
+      </span>
+    </div>
+  );
+}
+
 function CurrentPlanCard({ settings, status, subscription, loadingSub, onCancel, cancelling, professionalCount }) {
   const usage = getWhatsAppUsage(settings);
+  const period = getUsagePeriod(settings);
   const hasWhatsAppLimit = status.plan === "pro" || status.plan === "clinic";
+  const includes = PLAN_INCLUDES[status.plan] || [];
+  const pct = Math.min(100, Math.round(usage.ratio * 100));
+  const barColor = pct >= 100 ? "bg-red-500" : pct >= 90 ? "bg-amber-500" : "bg-primary";
+  const mp = subscription ? MP_STATUS[subscription.status] : null;
 
   return (
-    <Card className="p-5 space-y-4">
+    <Card className="p-5 space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-sm text-muted-foreground">Plan actual</p>
-          <p className="font-heading font-bold text-2xl">{PLAN_LABELS[status.plan] || "—"}</p>
+          <div className="flex items-baseline gap-2 flex-wrap">
+            <p className="font-heading font-bold text-2xl">{PLAN_LABELS[status.plan] || "—"}</p>
+            {PLAN_PRICES[status.plan] && (
+              <span className="text-sm text-muted-foreground">{PLAN_PRICES[status.plan]} ARS / mes</span>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {settings?.plan_granted_by_admin && (
             <Badge className="bg-primary/10 text-primary gap-1"><ShieldCheck className="w-3 h-3" /> Asignado por admin</Badge>
           )}
@@ -34,18 +69,64 @@ function CurrentPlanCard({ settings, status, subscription, loadingSub, onCancel,
               {status.trialExpired ? "Prueba expirada" : `${status.daysLeft} días de prueba`}
             </Badge>
           )}
-          {status.suspended && <Badge className="bg-destructive/10 text-destructive">Suspendido</Badge>}
+          {status.suspended
+            ? <Badge className="bg-destructive/10 text-destructive">Suspendido</Badge>
+            : <Badge className="bg-emerald-100 text-emerald-700">Cuenta activa</Badge>}
         </div>
       </div>
 
+      {includes.length > 0 && (
+        <div className="rounded-xl border border-border/60 p-3">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Tu plan incluye</p>
+          <ul className="grid sm:grid-cols-2 gap-x-4 gap-y-1.5">
+            {includes.map((f) => (
+              <li key={f} className="flex items-start gap-2 text-sm">
+                <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-1" /> {f}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {status.isTrial && (
+        <div className="rounded-xl bg-muted/50 p-3">
+          <DetailRow
+            icon={Clock}
+            label="Tu prueba termina"
+            value={formatDate(settings?.trial_ends_at, { day: "numeric", month: "long", year: "numeric" })}
+            hint={status.trialExpired ? "Ya venció — elegí un plan para reactivar la cuenta" : `Te quedan ${status.daysLeft} días`}
+          />
+        </div>
+      )}
+
       {hasWhatsAppLimit && (
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="flex items-center gap-1.5 text-muted-foreground"><MessageCircle className="w-3.5 h-3.5" /> Conversaciones de WhatsApp este mes</span>
-            <span className="font-medium">{usage.used} / {usage.total}</span>
+            <span className="flex items-center gap-1.5 text-muted-foreground"><MessageCircle className="w-3.5 h-3.5" /> Conversaciones de WhatsApp</span>
+            <span className="font-medium">{usage.used} / {usage.total} <span className={pct >= 90 ? "text-amber-600" : "text-muted-foreground"}>({pct}%)</span></span>
           </div>
           <div className="h-2 rounded-full bg-muted overflow-hidden">
-            <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${Math.min(100, usage.ratio * 100)}%` }} />
+            <div className={`h-full rounded-full transition-all ${barColor}`} style={{ width: `${pct}%` }} />
+          </div>
+          <div className="rounded-xl bg-muted/50 px-3 py-1">
+            <DetailRow
+              icon={Package}
+              label="Cupo del período"
+              value={`${usage.total} conversaciones`}
+              hint={usage.addon > 0 ? `${usage.base} del plan + ${usage.addon} de packs adicionales` : `Incluidas en el plan ${PLAN_LABELS[status.plan]}`}
+            />
+            <DetailRow
+              icon={Calendar}
+              label="Período en curso"
+              value={`Desde el ${formatDate(period.start)}`}
+              hint={`Te quedan ${usage.remaining} conversaciones disponibles`}
+            />
+            <DetailRow
+              icon={RefreshCw}
+              label="Se reinicia el contador"
+              value={formatDate(period.resetsAt, { day: "numeric", month: "long", year: "numeric" })}
+              hint={period.daysToReset === 1 ? "Mañana" : `En ${period.daysToReset} días`}
+            />
           </div>
         </div>
       )}
@@ -57,28 +138,64 @@ function CurrentPlanCard({ settings, status, subscription, loadingSub, onCancel,
         </div>
       )}
 
-      {!settings?.plan_granted_by_admin && (
-        <div className="rounded-xl bg-muted/50 p-3 text-sm">
+      {settings?.plan_granted_by_admin ? (
+        <div className="rounded-xl bg-muted/50 p-3 text-sm text-muted-foreground">
+          Este plan te lo asignó un administrador de Kame Agenda: no hay suscripción de Mercado Pago detrás, así que no se te cobra nada.
+        </div>
+      ) : (
+        <div className="rounded-xl bg-muted/50 p-3">
+          <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Facturación</p>
+            {mp && <Badge className={mp.className}>Suscripción {mp.label.toLowerCase()}</Badge>}
+          </div>
+
           {loadingSub ? (
-            <span className="text-muted-foreground flex items-center gap-1.5"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Consultando tu suscripción en Mercado Pago...</span>
+            <span className="text-sm text-muted-foreground flex items-center gap-1.5 py-2">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" /> Consultando tu suscripción en Mercado Pago...
+            </span>
           ) : subscription ? (
-            <div className="flex items-center justify-between gap-2 flex-wrap">
-              <span className="flex items-center gap-1.5 text-muted-foreground">
-                <Calendar className="w-3.5 h-3.5" />
-                {subscription.status === "authorized"
-                  ? `Próximo cobro: ${subscription.next_payment_date ? new Date(subscription.next_payment_date).toLocaleDateString("es-AR") : "—"} · $${(subscription.amount || 0).toLocaleString("es-AR")}`
-                  : `Estado en Mercado Pago: ${subscription.status}`}
-              </span>
+            <>
+              <DetailRow
+                icon={Wallet}
+                label="Monto mensual"
+                value={`$${(subscription.amount || 0).toLocaleString("es-AR")} ARS`}
+                hint={subscription.frequency ? `Cobro automático cada ${subscription.frequency} ${FREQUENCY_LABELS[subscription.frequency_type] || subscription.frequency_type || "mes"}${subscription.frequency > 1 ? "es" : ""}` : "Cobro automático mensual"}
+              />
               {subscription.status === "authorized" && (
-                <Button size="sm" variant="outline" className="gap-1.5 text-destructive hover:text-destructive" onClick={onCancel} disabled={cancelling}>
-                  {cancelling ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5" />} Cancelar suscripción
-                </Button>
+                <DetailRow
+                  icon={Calendar}
+                  label="Próximo cobro"
+                  value={formatDate(subscription.next_payment_date, { day: "numeric", month: "long", year: "numeric" })}
+                />
               )}
-            </div>
+              {subscription.last_charged_date && (
+                <DetailRow
+                  icon={CalendarCheck}
+                  label="Último cobro"
+                  value={formatDate(subscription.last_charged_date, { day: "numeric", month: "long", year: "numeric" })}
+                  hint={subscription.last_charged_amount ? `$${Number(subscription.last_charged_amount).toLocaleString("es-AR")} ARS` : null}
+                />
+              )}
+              {subscription.created_at && (
+                <DetailRow
+                  icon={Repeat}
+                  label="Suscripción activa desde"
+                  value={formatDate(subscription.created_at, { day: "numeric", month: "long", year: "numeric" })}
+                  hint={subscription.charged_quantity ? `${subscription.charged_quantity} cobro${subscription.charged_quantity > 1 ? "s" : ""} realizado${subscription.charged_quantity > 1 ? "s" : ""}` : null}
+                />
+              )}
+              {subscription.status === "authorized" && (
+                <div className="pt-3">
+                  <Button size="sm" variant="outline" className="gap-1.5 text-destructive hover:text-destructive" onClick={onCancel} disabled={cancelling}>
+                    {cancelling ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5" />} Cancelar suscripción
+                  </Button>
+                </div>
+              )}
+            </>
           ) : status.hasPaidPlan ? (
-            <span className="text-muted-foreground">No encontramos una suscripción de Mercado Pago activa para esta cuenta.</span>
+            <p className="text-sm text-muted-foreground py-2">No encontramos una suscripción de Mercado Pago activa para esta cuenta.</p>
           ) : (
-            <span className="text-muted-foreground">Todavía no tenés una suscripción paga.</span>
+            <p className="text-sm text-muted-foreground py-2">Todavía no tenés una suscripción paga. Cuando elijas un plan acá abajo vas a ver el detalle de tus cobros.</p>
           )}
         </div>
       )}

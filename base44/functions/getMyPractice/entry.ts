@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { resolveScope } from '../../shared/team-scope.ts';
+import { findPracticeByOwner } from '../../shared/ownership.ts';
 
 // El consultorio del usuario logueado, sea el dueno o un profesional invitado, mas su
 // propia ficha de Professional si es invitado.
@@ -17,9 +18,12 @@ export default async function (req: Request): Promise<Response> {
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     // Camino del dueno primero, igual que resolveScope: si tiene consultorio propio, ese es.
-    const practices = await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: user.id });
-    if (practices?.[0]) {
-      return Response.json({ practice: practices[0], professional: null, isOwner: true });
+    // La busqueda va por owner_user_id con respaldo a created_by_id (ver ownership.ts):
+    // filtrar solo por created_by_id dejaba a todo consultorio creado por el onboarding
+    // sin dueno reconocible, y la pantalla lo mandaba de vuelta al onboarding en loop.
+    const ownPractice = await findPracticeByOwner(base44, user.id);
+    if (ownPractice) {
+      return Response.json({ practice: ownPractice, professional: null, isOwner: true });
     }
 
     // Invitado: su consultorio es el de quien lo invito.
@@ -30,7 +34,7 @@ export default async function (req: Request): Promise<Response> {
       return Response.json({ practice: null, professional: null, isOwner: false });
     }
 
-    const ownerPractices = await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: scope.practiceOwnerId });
+    const ownerPractice = await findPracticeByOwner(base44, scope.practiceOwnerId);
     let professional = null;
     if (scope.professionalRefId) {
       const rows = await base44.asServiceRole.entities.Professional.filter({ id: scope.professionalRefId });
@@ -38,7 +42,7 @@ export default async function (req: Request): Promise<Response> {
     }
 
     return Response.json({
-      practice: ownerPractices?.[0] || null,
+      practice: ownerPractice || null,
       professional,
       isOwner: false,
     });

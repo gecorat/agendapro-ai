@@ -53,6 +53,23 @@ export default async function (req: Request): Promise<Response> {
       return Response.json({ error: 'El servicio no está disponible.' }, { status: 400 });
     }
 
+    // A que profesional del equipo va la cita. Se valida que exista, que sea de ESTE
+    // consultorio y que este activo.
+    //
+    // Por que importa: este campo es la CLAVE con la que se filtran las citas para el
+    // chequeo de solapamiento y la disponibilidad. Se tomaba del body sin verificar nada, asi
+    // que mandando un valor cualquiera el filtro quedaba vacio, no chocaba con ninguna cita
+    // ni con ningun horario de atencion, y un turno ya vendido se volvia a vender.
+    if (professional_ref_id) {
+      const prof = (await base44.asServiceRole.entities.Professional.filter({ id: professional_ref_id }))?.[0];
+      if (!prof || prof.practice_owner_id !== professional_id || prof.active === false) {
+        return Response.json(
+          { error: 'profesional_invalido', message: 'Ese profesional no está disponible. Actualizá la página y probá de nuevo.' },
+          { status: 400 }
+        );
+      }
+    }
+
     const start = new Date(start_datetime);
     if (isNaN(start.getTime()) || start.getTime() < Date.now()) {
       return Response.json({ error: 'El horario seleccionado ya no es válido.' }, { status: 400 });

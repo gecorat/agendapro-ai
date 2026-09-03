@@ -48,12 +48,13 @@ export function toWhatsAppNumber(raw) {
   // 10 digitos nacionales (codigo de area + abonado) y rearmarlo siempre igual.
   let national = digits;
   if (national.startsWith("54")) national = national.slice(2);
-  // Ningun codigo de area argentino empieza con 9, asi que un 9 adelante solo puede ser el
-  // prefijo de movil.
+  // El 0 de larga distancia (0342...). Ningun codigo de area empieza con 0, asi que si esta
+  // adelante solo puede ser el prefijo nacional.
+  if (national.startsWith("0")) national = national.slice(1);
+  // Ningun codigo de area argentino empieza con 9 tampoco, asi que un 9 adelante solo puede
+  // ser el prefijo de movil.
   if (national.length === 11 && national.startsWith("9")) national = national.slice(1);
-  // Algunos lo escriben con el 0 de larga distancia (0342...) o con el 15 del viejo
-  // formato de celular (342 15 5902123).
-  if (national.length === 11 && national.startsWith("0")) national = national.slice(1);
+  // El 15 del viejo formato de celular (342 15 590 2123).
   national = national.replace(/^(\d{2,4})15(\d{6,8})$/, "$1$2");
 
   if (national.length !== 10) return null;

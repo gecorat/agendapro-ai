@@ -786,6 +786,7 @@ export default function PublicBooking() {
               <p className="text-sm pt-1" style={{ color: theme.muted }}>El profesional confirmará tu turno. Guardá esta referencia: <span className="font-mono">{created.appointment.id.slice(-8)}</span></p>
             )}
             <Button variant="outline" className="mt-2" onClick={() => { setStep(1); setService(null); setSelectedPro(null); setDate(null); setSlot(null); setForm({ first_name: "", last_name: "", phone: "", email: "" }); setCreated(null); }}>Reservar otro turno</Button>
+            <PoweredByKame variant="card" utm="booking_success" className="mt-5 text-left sm:text-center" />
           </div>
         );
       })()}
@@ -829,15 +830,12 @@ export default function PublicBooking() {
         </div>
       )}
 
-      <a
-        href="https://kameagenda.com"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="block text-center text-xs py-4 shrink-0 hover:opacity-80 transition-opacity"
-        style={{ color: theme.muted, opacity: 0.7 }}
-      >
-        ⚡ Powered by <span className="font-semibold">kameagenda.com</span>
-      </a>
+      {/* El botón flotante "Agendar cita" es fixed y ocupa los últimos ~64px de la
+          pantalla, así que sin este espacio extra el pie queda TAPADO por el botón y no se
+          ve nunca (salvo en SUCCESS_STEP, donde el botón desaparece). */}
+      <div className="shrink-0" style={{ paddingBottom: step !== SUCCESS_STEP ? "calc(4.5rem + env(safe-area-inset-bottom, 0px))" : 0 }}>
+        <PoweredByKame utm="booking_footer" color={theme.muted} />
+      </div>
     </div>
   );
 }

@@ -33,7 +33,11 @@ export async function findPracticeByOwner(base44, ownerId) {
   const byOwn = await base44.asServiceRole.entities.PracticeSettings.filter({ owner_user_id: ownerId });
   if (byOwn?.[0]) return byOwn[0];
   const byCreated = await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: ownerId });
-  return byCreated?.[0] || null;
+  // Del respaldo se descartan las filas que YA declaran otro dueño: si una fila tiene
+  // owner_user_id de otra persona, que created_by_id coincida es una casualidad (el mismo
+  // servicio o admin la creó), no propiedad. Sin este filtro, una fila así podía
+  // devolverse como el consultorio de alguien que no es su dueño.
+  return (byCreated || []).find((p) => !p.owner_user_id || p.owner_user_id === ownerId) || null;
 }
 
 // Igual que findPracticeByOwner pero devolviendo ARRAY. Existe para poder reemplazar de

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Star, Check, Loader2, CalendarClock, ExternalLink } from "lucide-react";
+import PoweredByKame from "@/components/PoweredByKame";
 
 export default function PublicReview() {
   const { id } = useParams();

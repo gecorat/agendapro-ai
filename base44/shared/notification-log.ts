@@ -30,7 +30,7 @@ export async function logNotification(base44, { appointment, practice, patient, 
     await base44.asServiceRole.entities.NotificationLog.create({
       appointment_id: appointment?.id || undefined,
       patient_id: patient?.id || undefined,
-      professional_id: practice?.created_by_id || appointment?.professional_id || undefined,
+      professional_id: ownerIdOf(practice) || appointment?.professional_id || undefined,
       kind,
       channel,
       status,
@@ -54,7 +54,7 @@ export async function logWhatsAppToConversation(base44, { practice, phone, text 
     if (!normalized) return;
     await base44.asServiceRole.entities.Conversation.create({
       phone: normalized,
-      professional_id: practice?.created_by_id,
+      professional_id: ownerIdOf(practice),
       role: "assistant",
       text,
       conversation_id: normalized,

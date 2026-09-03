@@ -38,20 +38,22 @@ export async function isChatPaused(base44, professionalId, phone) {
 // aceptaba como texto libre. WhatsApp resuelve ese numero incompleto como puede, y ahi es
 // donde una confirmacion termino en el telefono de otra persona (03/09).
 //
-// CRITERIO CONSERVADOR a proposito:
-//  - Si se puede resolver como argentino, se manda al numero completo (arregla las fichas
-//    viejas sin tener que tocarlas una por una).
-//  - Si no se puede resolver pero ya trae 11 digitos o mas, se manda tal cual: es un numero
-//    con codigo de pais (un paciente del exterior, o el numero que ya viene normalizado del
-//    webhook) y no queremos romper lo que hoy funciona.
-//  - Si no se puede resolver y tiene 10 digitos o menos, NO se manda: le falta el codigo de
-//    pais y no hay forma de saber a quien iria a parar.
+// CRITERIO CONSERVADOR a proposito. El orden importa:
+//
+//  1. Si ya trae 11 digitos o mas, se manda TAL CUAL, sin tocar nada. Un numero de ese
+//     largo ya tiene codigo de pais: puede ser un movil argentino (549...), un FIJO
+//     argentino con WhatsApp Business (54 + area + abonado, SIN el 9), un paciente del
+//     exterior, o el numero que ya viene normalizado del webhook. Reescribirlo era una
+//     regresion: a un fijo 541143216543 le metia el 9 y lo mandaba a 5491143216543, que es
+//     un destino distinto — y ahi se rompian los avisos al profesional.
+//  2. Recien si tiene 10 digitos o menos se intenta completarlo como argentino. Ese es el
+//     unico caso roto de verdad: le falta el codigo de pais y WhatsApp lo resuelve como se
+//     le antoja (asi una confirmacion termino en el telefono de otra persona el 03/09).
+//  3. Si tampoco se puede completar, NO se manda.
 function resolveDestination(phone) {
-  const ar = toWhatsAppNumber(phone);
-  if (ar) return ar;
   const digits = normalizePhone(phone);
   if (digits.length >= 11) return digits;
-  return null;
+  return toWhatsAppNumber(phone);
 }
 
 export async function sendWhatsAppMessage(base44, practice, phone, text) {

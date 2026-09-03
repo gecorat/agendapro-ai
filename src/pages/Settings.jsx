@@ -15,16 +15,20 @@ import MessageTemplatesPanel from "@/components/MessageTemplatesPanel";
 import BotSettingsPanel from "@/components/BotSettingsPanel";
 import PlanGate from "@/components/PlanGate";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
-import { getPlanStatus, PLAN_PRICES, PLAN_LABELS } from "@/lib/plan-utils";
+import { getPlanStatus, PLAN_PRICES, PLAN_LABELS, showClinicPlan } from "@/lib/plan-utils";
 
 export default function Settings() {
-  const { canManageBilling } = usePracticeSettings();
+  const { settings, canManageBilling } = usePracticeSettings();
+  // La pestaña Equipo es exclusiva del plan Premium: mientras el plan está oculto
+  // (ver CLINIC_PLAN_VISIBLE en plan-utils.js) tampoco se muestra la pestaña, salvo a
+  // una cuenta que ya lo tenga contratado.
+  const showTeamTab = showClinicPlan(getPlanStatus(settings).plan);
   // Permite abrir una pestaña puntual por URL (ej. /settings?tab=profile), usado por el
   // link "Editar" de la dirección en Página pública. Sin esto, ese link siempre caía en
   // la pestaña por defecto (Servicios) y el profesional tenía que buscar Perfil a mano.
   const [searchParams] = useSearchParams();
   const requestedTab = searchParams.get("tab");
-  const validTabs = ["profile", "services", "team", "hours", "templates", "bot", "integrations", ...(canManageBilling ? ["plan"] : [])];
+  const validTabs = ["profile", "services", ...(showTeamTab ? ["team"] : []), "hours", "templates", "bot", "integrations", ...(canManageBilling ? ["plan"] : [])];
   const initialTab = validTabs.includes(requestedTab) ? requestedTab : "services";
 
   return (
@@ -35,10 +39,10 @@ export default function Settings() {
       </div>
 
       <Tabs defaultValue={initialTab}>
-        <TabsList className={`grid w-full bg-muted/60 rounded-xl p-1 h-auto ${canManageBilling ? "grid-cols-8" : "grid-cols-7"}`}>
+        <TabsList className={`grid w-full bg-muted/60 rounded-xl p-1 h-auto grid-cols-${5 + (showTeamTab ? 1 : 0) + (canManageBilling ? 1 : 0)}`}>
           <TabsTrigger value="profile" className="rounded-lg text-xs sm:text-sm py-1.5">Perfil</TabsTrigger>
           <TabsTrigger value="services" className="rounded-lg text-xs sm:text-sm py-1.5">Servicios</TabsTrigger>
-          <TabsTrigger value="team" className="rounded-lg text-xs sm:text-sm py-1.5">Equipo</TabsTrigger>
+          {showTeamTab && <TabsTrigger value="team" className="rounded-lg text-xs sm:text-sm py-1.5">Equipo</TabsTrigger>}
           <TabsTrigger value="hours" className="rounded-lg text-xs sm:text-sm py-1.5">Horarios</TabsTrigger>
           <TabsTrigger value="templates" className="rounded-lg text-xs sm:text-sm py-1.5">Plantillas</TabsTrigger>
           <TabsTrigger value="bot" className="rounded-lg text-xs sm:text-sm py-1.5">Bot</TabsTrigger>
@@ -58,9 +62,11 @@ export default function Settings() {
           <ServiceManagerPanel />
         </TabsContent>
 
-        <TabsContent value="team" className="mt-4">
-          <PlanRequiredTeamTab />
-        </TabsContent>
+        {showTeamTab && (
+          <TabsContent value="team" className="mt-4">
+            <PlanRequiredTeamTab />
+          </TabsContent>
+        )}
 
         <TabsContent value="hours" className="mt-4">
           <AvailabilityEditor />
@@ -177,6 +183,8 @@ function PlanSection() {
             <li>· Hasta 300 conversaciones mensuales</li>
           </ul>
         </div>
+        {/* Plan Premium oculto temporalmente (ver CLINIC_PLAN_VISIBLE en plan-utils.js). */}
+        {showClinicPlan(status.plan) && (
         <div className={`bg-card rounded-2xl p-5 border ${status.plan === "clinic" ? "border-2 border-primary" : "border-border"}`}>
           <p className="font-heading font-semibold">{PLAN_LABELS.clinic}</p>
           <p className="text-2xl font-heading font-bold mt-1">{PLAN_PRICES.clinic}<span className="text-sm font-normal text-muted-foreground">/mes</span></p>
@@ -187,6 +195,7 @@ function PlanSection() {
             <li>· Hasta 1.000 conversaciones mensuales</li>
           </ul>
         </div>
+        )}
       </div>
       <div className="bg-muted/50 rounded-2xl p-4">
         <p className="text-sm text-muted-foreground">Suscripción con cobro automático mensual por Mercado Pago. Para cambiar de plan, andá a "Ver planes y suscribirme" arriba.</p>

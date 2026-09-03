@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { resolveScope } from '../../shared/team-scope.ts';
+import { findPracticeByOwner } from '../../shared/ownership.ts';
 
 // Único camino legítimo para que un profesional edite su propio perfil de consultorio.
 // PracticeSettings.update/create quedaron bloqueados por RLS para todos salvo admins

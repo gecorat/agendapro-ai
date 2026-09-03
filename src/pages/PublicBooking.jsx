@@ -415,12 +415,20 @@ export default function PublicBooking() {
         if (!s) { setNotFound(true); return; }
         setSettings(s);
         const pid = s.created_by_id;
-        const [servs, avail, profs] = await Promise.all([
+        // Los servicios se piden por los DOS campos de propiedad y se unen por id: los
+        // creados por el onboarding llevan practice_owner_id (created_by_id es el id del
+        // servidor, ver base44/shared/ownership.ts) y los anteriores solo created_by_id.
+        const [servsOwned, servsLegacy, avail, profs] = await Promise.all([
+          base44.entities.Service.filter({ practice_owner_id: pid, active: true }),
           base44.entities.Service.filter({ created_by_id: pid, active: true }),
           base44.entities.Availability.filter({ practice_owner_id: pid }),
           s.plan === "clinic" ? base44.entities.Professional.filter({ practice_owner_id: pid, active: true }) : Promise.resolve([]),
         ]);
-        setServices(servs || []);
+        const servsById = new Map();
+        for (const row of [...(servsOwned || []), ...(servsLegacy || [])]) {
+          if (row?.id && !servsById.has(row.id)) servsById.set(row.id, row);
+        }
+        setServices([...servsById.values()]);
         setAvailability(avail || []);
         setProfessionals((profs || []).filter((p) => p.invite_status !== "pending" && p.first_name));
         if (s.show_reviews_public !== false) {

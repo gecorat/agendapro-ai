@@ -14,6 +14,52 @@ export function canonicalPhone(phone) {
   return digits.slice(-10);
 }
 
+// Convierte lo que el paciente tipeo en un numero de WhatsApp completo y enviable.
+//
+// POR QUE HACE FALTA: la pagina publica aceptaba el telefono como texto libre y el backend
+// solo verificaba que no estuviera vacio. Despues se le manda el WhatsApp a esa cadena tal
+// cual, y Evolution arma el JID con lo que le des. Un numero de 10 digitos sin codigo de
+// pais ("3425902123", que es como lo escribe cualquiera en Argentina) no identifica a nadie
+// en particular: WhatsApp lo resuelve como puede y la confirmacion termina en el telefono
+// de OTRA persona real. Confirmado en vivo el 03/09.
+//
+// CRITERIO: si viene con "+" y un codigo de pais que no es 54, se respeta tal cual (puede
+// ser un paciente del exterior). Sin "+", se asume Argentina, que es donde opera la app y
+// donde nadie escribe ni el +54 ni el 9.
+//
+// Formato de salida: 549 + 10 digitos (area + abonado), que es el E.164 argentino de movil
+// sin el "+", tal como lo espera Evolution.
+// Devuelve null si no se puede resolver — en ese caso NO hay que mandar nada.
+export function toWhatsAppNumber(raw) {
+  const input = String(raw || "").trim();
+  if (!input) return null;
+
+  const digits = input.replace(/\D/g, "").replace(/^00/, "");
+  if (!digits) return null;
+
+  // Internacional explicito y no argentino: se respeta (ej. un paciente de Brasil que
+  // escribio +5511...). Solo cuando el usuario se tomo el trabajo de poner el "+".
+  const looksInternational = input.trim().startsWith("+") || input.trim().startsWith("00");
+  if (looksInternational && !digits.startsWith("54")) {
+    return digits.length >= 8 && digits.length <= 15 ? digits : null;
+  }
+
+  // Argentina: se saca el 54 de pais y el 9 de movil si vinieron, para quedarnos con los
+  // 10 digitos nacionales (codigo de area + abonado) y rearmarlo siempre igual.
+  let national = digits;
+  if (national.startsWith("54")) national = national.slice(2);
+  // Ningun codigo de area argentino empieza con 9, asi que un 9 adelante solo puede ser el
+  // prefijo de movil.
+  if (national.length === 11 && national.startsWith("9")) national = national.slice(1);
+  // Algunos lo escriben con el 0 de larga distancia (0342...) o con el 15 del viejo
+  // formato de celular (342 15 5902123).
+  if (national.length === 11 && national.startsWith("0")) national = national.slice(1);
+  national = national.replace(/^(\d{2,4})15(\d{6,8})$/, "$1$2");
+
+  if (national.length !== 10) return null;
+  return `549${national}`;
+}
+
 // Busca, entre los pacientes YA cargados de un profesional, el que tenga el mismo
 // teléfono canónico. Se hace en JS (no vía filtro de base de datos) porque el motor de
 // consultas no soporta "termina con" — hay que traer la lista y comparar acá.

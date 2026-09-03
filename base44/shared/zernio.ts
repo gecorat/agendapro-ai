@@ -875,16 +875,53 @@ REGLAS ADICIONALES:
   // ANTES del primer mensaje (como antes) y, si hay un segundo mensaje (los datos completos
   // de la cita después del mensaje corto de confirmación), TAMBIÉN antes de ese — así se
   // siente como dos tiempos naturales de conversación, no un bloque único de texto largo.
+  // ¿El bot TODAVÍA tiene permiso para responder?
+  //
+  // La pausa se chequea al ENTRAR el mensaje (en el webhook), pero entre ese momento y el
+  // envío real pasan la llamada al modelo y hasta dos esperas de bot_response_delay_seconds
+  // (5 a 60 segundos cada una). En esa ventana el profesional puede haber pausado la
+  // conversación desde la bandeja, y el bot contestaba igual porque el permiso ya estaba
+  // resuelto. Confirmado en vivo el 03/09: hubo que apagar el bot GENERAL porque pausar
+  // ese chat puntual no lo frenaba.
+  //
+  // Por eso se vuelve a chequear justo antes de cada mensaje: la pausa de esta conversación
+  // y también el interruptor general, releyendo el consultorio (el `practice` que tenemos
+  // acá es una foto de cuando entró el mensaje, no refleja una pausa posterior).
+  //
+  // Imports dinámicos a propósito: whatsapp-providers.ts importa este archivo de vuelta.
+  async function botStillAllowedToReply() {
+    try {
+      const { isChatPaused } = await import("./whatsapp-providers.ts");
+      if (await isChatPaused(base44, professionalId, fromPhone)) return false;
+      const { getBotPauseStatus } = await import("./bot-status.ts");
+      const fresh = await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: professionalId });
+      if (getBotPauseStatus(fresh?.[0] || practice).paused) return false;
+      return true;
+    } catch (e) {
+      // Si el chequeo falla, se mantiene el comportamiento anterior (enviar): el control del
+      // webhook ya se pasó, y un error transitorio de red no debería comerse la respuesta.
+      console.error("botStillAllowedToReply error:", e?.message || e);
+      return true;
+    }
+  }
+
   if (responseDelaySeconds > 0) {
     await new Promise((r) => setTimeout(r, responseDelaySeconds * 1000));
   }
-  await sendAndSaveBotMessage(finalReplyText);
 
-  if (secondaryReplyText) {
-    if (responseDelaySeconds > 0) {
-      await new Promise((r) => setTimeout(r, responseDelaySeconds * 1000));
+  if (await botStillAllowedToReply()) {
+    await sendAndSaveBotMessage(finalReplyText);
+
+    if (secondaryReplyText) {
+      if (responseDelaySeconds > 0) {
+        await new Promise((r) => setTimeout(r, responseDelaySeconds * 1000));
+      }
+      // Se re-chequea también antes del segundo mensaje: entre uno y otro hay otra espera
+      // completa, y es justo cuando el profesional ve llegar el primero y decide frenar.
+      if (await botStillAllowedToReply()) {
+        await sendAndSaveBotMessage(secondaryReplyText);
+      }
     }
-    await sendAndSaveBotMessage(secondaryReplyText);
   }
 
   return { ...reply, reply: finalReplyText, secondary_reply: secondaryReplyText, appointment_created: !!appointmentCreated };

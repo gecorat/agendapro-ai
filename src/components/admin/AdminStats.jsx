@@ -3,9 +3,12 @@ import { base44 } from "@/api/base44Client";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
-import { Loader2, Users, Wallet, Clock, AlertTriangle, TrendingUp, Info } from "lucide-react";
-import { PLAN_LABELS } from "@/lib/plan-utils";
-import { summarizePlans, bucketRevenue, revenueTotals, formatARS, PLAN_COLORS, PLAN_ORDER } from "@/lib/admin-stats";
+import { Loader2, Users, Wallet, Clock, AlertTriangle, TrendingUp, Info, CalendarClock } from "lucide-react";
+import { PLAN_LABELS, formatDate } from "@/lib/plan-utils";
+import {
+  summarizePlans, bucketRevenue, revenueTotals, planRevenue, upcomingCharges,
+  formatARS, PLAN_COLORS, PLAN_ORDER,
+} from "@/lib/admin-stats";
 
 const RANGES = {
   week: { label: "Semanal", count: 12, caption: "Últimas 12 semanas" },
@@ -31,16 +34,17 @@ function StatTile({ icon: Icon, label, value, hint, tone = "default" }) {
   );
 }
 
-// Barra de proporción de planes. El color va SIEMPRE acompañado del nombre y el número al
-// costado: los tonos de los planes no llegan a 3:1 contra el fondo claro, así que la
-// identidad nunca queda dependiendo del color solo.
-function PlanBreakdown({ stats }) {
+// Distribución de planes + cuánto factura cada uno. El color va SIEMPRE acompañado del
+// nombre y los números al costado: los tonos de los planes no llegan a 3:1 de contraste
+// contra el fondo claro, así que la identidad nunca queda dependiendo del color solo.
+function PlanBreakdown({ stats, revenue }) {
   const total = stats.total || 1;
   const present = PLAN_ORDER.filter((p) => (stats.byPlan[p] || 0) > 0);
+  const monthlyTotal = PLAN_ORDER.reduce((acc, p) => acc + (revenue[p]?.monthly || 0), 0);
 
   return (
     <Card className="p-4 space-y-3">
-      <p className="font-heading font-semibold text-sm">Distribución de planes</p>
+      <p className="font-heading font-semibold text-sm">Detalle por plan</p>
 
       {stats.total === 0 ? (
         <p className="text-sm text-muted-foreground">Todavía no hay cuentas registradas.</p>
@@ -55,21 +59,114 @@ function PlanBreakdown({ stats }) {
               />
             ))}
           </div>
-          <ul className="space-y-1.5">
-            {PLAN_ORDER.map((p) => {
-              const n = stats.byPlan[p] || 0;
-              const pct = stats.total ? Math.round((n / stats.total) * 100) : 0;
-              return (
-                <li key={p} className="flex items-center gap-2 text-sm">
-                  <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: PLAN_COLORS[p] }} />
-                  <span className="flex-1">{PLAN_LABELS[p]}</span>
-                  <span className="font-medium tabular-nums">{n}</span>
-                  <span className="text-muted-foreground text-xs w-10 text-right tabular-nums">{pct}%</span>
-                </li>
-              );
-            })}
-          </ul>
+
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-xs text-muted-foreground">
+                <th className="text-left font-normal pb-1">Plan</th>
+                <th className="text-right font-normal pb-1">Cuentas</th>
+                <th className="text-right font-normal pb-1">Facturan</th>
+                <th className="text-right font-normal pb-1">Por mes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {PLAN_ORDER.map((p) => {
+                const row = revenue[p] || { accounts: 0, billable: 0, monthly: 0 };
+                return (
+                  <tr key={p} className="border-t border-border/50">
+                    <td className="py-1.5">
+                      <span className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: PLAN_COLORS[p] }} />
+                        {PLAN_LABELS[p]}
+                      </span>
+                    </td>
+                    <td className="text-right tabular-nums">{row.accounts}</td>
+                    <td className="text-right tabular-nums text-muted-foreground">{row.billable}</td>
+                    <td className="text-right tabular-nums font-medium">{row.monthly ? formatARS(row.monthly) : "—"}</td>
+                  </tr>
+                );
+              })}
+              <tr className="border-t-2 border-border">
+                <td className="py-1.5 font-medium" colSpan={3}>Total mensual recurrente</td>
+                <td className="text-right tabular-nums font-heading font-bold">{formatARS(monthlyTotal)}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p className="text-xs text-muted-foreground">
+            "Facturan" excluye las cuentas suspendidas y las que un admin asignó a mano, que no tienen cobro detrás.
+          </p>
         </>
+      )}
+    </Card>
+  );
+}
+
+// Lo que falta cobrar en el mes en curso, con el detalle de cada cobro.
+function UpcomingCharges({ upcoming, collectedThisMonth }) {
+  const expected = collectedThisMonth + upcoming.total;
+
+  return (
+    <Card className="p-4 space-y-3">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="font-heading font-semibold text-sm">Por cobrar este mes</p>
+          <p className="text-xs text-muted-foreground">Según la fecha de cobro de cada suscripción</p>
+        </div>
+        <p className="font-heading font-bold text-xl tabular-nums">{formatARS(upcoming.total)}</p>
+      </div>
+
+      {upcoming.count === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          No queda ningún cobro pendiente en lo que resta del mes.
+        </p>
+      ) : (
+        <>
+          <ul className="space-y-1.5">
+            {Object.entries(upcoming.byPlan).map(([plan, row]) => (
+              <li key={plan} className="flex items-center gap-2 text-sm">
+                <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: PLAN_COLORS[plan] }} />
+                <span className="flex-1">{PLAN_LABELS[plan]}</span>
+                <span className="text-muted-foreground text-xs tabular-nums">{row.count} ×</span>
+                <span className="font-medium tabular-nums">{formatARS(row.amount)}</span>
+              </li>
+            ))}
+          </ul>
+
+          <div className="rounded-xl bg-muted/50 p-3 space-y-1.5">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Próximos cobros</p>
+            {upcoming.rows.slice(0, 6).map((r) => (
+              <div key={r.id} className="flex items-center justify-between gap-2 text-sm">
+                <span className="flex items-center gap-1.5 min-w-0">
+                  <CalendarClock className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                  <span className="truncate">{r.practice_name}</span>
+                  {r.estimated && <span className="text-xs text-amber-600 shrink-0">≈</span>}
+                </span>
+                <span className="text-muted-foreground text-xs shrink-0">
+                  {formatDate(r.date)} · <span className="text-foreground font-medium tabular-nums">{formatARS(r.amount)}</span>
+                </span>
+              </div>
+            ))}
+            {upcoming.rows.length > 6 && (
+              <p className="text-xs text-muted-foreground">y {upcoming.rows.length - 6} más</p>
+            )}
+          </div>
+        </>
+      )}
+
+      <div className="flex items-baseline justify-between text-sm border-t border-border/50 pt-2">
+        <span className="text-muted-foreground">Esperado del mes (cobrado + por cobrar)</span>
+        <span className="font-heading font-semibold tabular-nums">{formatARS(expected)}</span>
+      </div>
+
+      {upcoming.estimatedCount > 0 && (
+        <p className="text-xs text-amber-700 flex items-start gap-1.5">
+          <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+          <span>
+            {upcoming.estimatedCount} {upcoming.estimatedCount === 1 ? "fecha es estimada" : "fechas son estimadas"} (marcadas con ≈):
+            esas cuentas todavía no tienen guardada su fecha real de cobro. Se corrige sola con la sincronización horaria.
+          </span>
+        </p>
       )}
     </Card>
   );
@@ -114,6 +211,8 @@ export default function AdminStats() {
   }, []);
 
   const stats = useMemo(() => summarizePlans(practices), [practices]);
+  const revenue = useMemo(() => planRevenue(practices), [practices]);
+  const upcoming = useMemo(() => upcomingCharges(practices), [practices]);
   const totals = useMemo(() => revenueTotals(payments), [payments]);
   const series = useMemo(
     () => bucketRevenue(payments, range, new Date(), RANGES[range].count),
@@ -156,27 +255,28 @@ export default function AdminStats() {
       )}
 
       <div className="grid md:grid-cols-2 gap-3">
-        <PlanBreakdown stats={stats} />
-
-        <Card className="p-4 space-y-3">
-          <p className="font-heading font-semibold text-sm">Cobrado</p>
-          <div className="space-y-2">
-            {[
-              ["Esta semana", totals.week],
-              ["Este mes", totals.month],
-              ["Este año", totals.year],
-            ].map(([label, value]) => (
-              <div key={label} className="flex items-baseline justify-between border-b border-border/50 pb-1.5 last:border-0">
-                <span className="text-sm text-muted-foreground">{label}</span>
-                <span className="font-heading font-semibold tabular-nums">{formatARS(value)}</span>
-              </div>
-            ))}
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Histórico total: <span className="font-medium text-foreground">{formatARS(totals.all)}</span> en {payments.length} {payments.length === 1 ? "cobro" : "cobros"}
-          </p>
-        </Card>
+        <PlanBreakdown stats={stats} revenue={revenue} />
+        <UpcomingCharges upcoming={upcoming} collectedThisMonth={totals.month} />
       </div>
+
+      <Card className="p-4 space-y-3">
+        <p className="font-heading font-semibold text-sm">Cobrado</p>
+        <div className="grid sm:grid-cols-3 gap-3">
+          {[
+            ["Esta semana", totals.week],
+            ["Este mes", totals.month],
+            ["Este año", totals.year],
+          ].map(([label, value]) => (
+            <div key={label} className="rounded-xl bg-muted/50 p-3">
+              <p className="text-xs text-muted-foreground">{label}</p>
+              <p className="font-heading font-semibold text-lg tabular-nums">{formatARS(value)}</p>
+            </div>
+          ))}
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Histórico total: <span className="font-medium text-foreground">{formatARS(totals.all)}</span> en {payments.length} {payments.length === 1 ? "cobro" : "cobros"}
+        </p>
+      </Card>
 
       <Card className="p-4 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">

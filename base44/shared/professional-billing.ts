@@ -16,7 +16,7 @@ export async function syncProfessionalAddonBilling(base44, practice) {
   const accessToken = cfg?.[0]?.mercadopago_access_token;
   if (!accessToken) return { synced: false, reason: "sin_token" };
 
-  const professionals = await base44.asServiceRole.entities.Professional.filter({ practice_owner_id: practice.created_by_id });
+  const professionals = await base44.asServiceRole.entities.Professional.filter({ practice_owner_id: ownerIdOf(practice) });
   const addonCount = (professionals || []).filter((p) => p.is_paid_addon).length;
   const targetAmount = (PLAN_PRICES.clinic || 69000) + addonCount * PROFESSIONAL_ADDON_PRICE;
 

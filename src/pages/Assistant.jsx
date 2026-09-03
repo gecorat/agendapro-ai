@@ -232,18 +232,21 @@ function FullAssistant({ settings, reloadSettings, save }) {
       }
     };
     try {
-      const [msgs, pats, pausesList, tmpl, waContacts] = await Promise.all([
-        safeFetch(() => base44.entities.Conversation.filter({ professional_id: user.id }, "-created_date", 800), "conversaciones"),
-        safeFetch(() => base44.entities.Patient.filter({ professional_id: user.id }), "pacientes"),
-        safeFetch(() => base44.entities.ChatPause.filter({ professional_id: user.id }), "pausas"),
-        safeFetch(() => base44.entities.MessageTemplate.filter({ professional_id: user.id }), "plantillas"),
-        safeFetch(() => base44.entities.WhatsAppContact.filter({ professional_id: user.id }), "contactos de WhatsApp"),
+      // Todo por funciones con alcance de EQUIPO, no consultando las entidades directo.
+      // El webhook de WhatsApp guarda las conversaciones con el id del DUEÑO del
+      // consultorio, así que filtrar por `user.id` dejaba a los profesionales invitados con
+      // la bandeja completamente vacía — y sin ningún error: decía "No hay conversaciones
+      // todavía". Mismo patrón que ya usan la Agenda y Pacientes.
+      const [inboxRes, patsRes] = await Promise.all([
+        safeFetch(() => base44.functions.invoke("getScopedConversations", {}), "conversaciones"),
+        safeFetch(() => base44.functions.invoke("getScopedPatients", {}), "pacientes"),
       ]);
-      setAllMsgs(msgs || []);
-      setPatients(pats || []);
-      setPauses(pausesList || []);
-      setTemplates(tmpl || []);
-      setWaNames(waContacts || []);
+      const inbox = inboxRes?.data || {};
+      setAllMsgs(inbox.conversations || []);
+      setPatients(patsRes?.data?.patients || []);
+      setPauses(inbox.pauses || []);
+      setTemplates(inbox.templates || []);
+      setWaNames(inbox.contacts || []);
     } finally {
       setLoading(false);
     }
@@ -457,9 +460,15 @@ function FullAssistant({ settings, reloadSettings, save }) {
   };
 
   function applyPauseResult(res) {
+    // El backend guarda la pausa con el teléfono NORMALIZADO (solo dígitos) y ahora lo
+    // devuelve. Antes acá se comparaba contra `activePhone` crudo, que en las cuentas
+    // conectadas por Zernio trae "+": nunca matcheaba la fila existente y se agregaba una
+    // duplicada al estado local, así que el botón mostraba un estado que no era el real.
+    const key = res?.data?.phone || (activePhone || "").replace(/\D/g, "");
     setPauses((prev) => {
-      const idx = prev.findIndex((p) => p.phone === activePhone);
-      const next = { phone: activePhone, professional_id: user.id, paused: res?.data?.paused, paused_until: res?.data?.paused_until };
+      const idx = prev.findIndex((p) => (p.phone || "").replace(/\D/g, "") === key);
+      const base = idx >= 0 ? prev[idx] : { phone: key };
+      const next = { ...base, phone: key, paused: res?.data?.paused, paused_until: res?.data?.paused_until };
       if (idx >= 0) { const copy = [...prev]; copy[idx] = next; return copy; }
       return [...prev, next];
     });

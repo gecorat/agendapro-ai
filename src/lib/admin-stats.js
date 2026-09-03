@@ -38,6 +38,11 @@ export function startOfYear(d) { return new Date(d.getFullYear(), 0, 1); }
 // Estado de la cartera de cuentas. `suspended` y el vencimiento del trial se miran acá
 // igual que en getPlanStatus, para que el panel no cuente como activa una cuenta que la
 // app ya está bloqueando.
+//
+// OJO con el MRR y las "pagas activas": NO cuentan las cuentas con plan asignado a mano
+// por un admin (plan_granted_by_admin). Esas no tienen medio de pago adherido ni
+// suscripción detrás — son cortesías — y sumarlas daría un ingreso que no existe. Se
+// devuelven aparte en `adminGranted` para poder mostrarlas sin mezclarlas con la plata.
 export function summarizePlans(practices, now = new Date()) {
   const byPlan = { trial: 0, basic: 0, pro: 0, clinic: 0 };
   let suspended = 0;
@@ -45,6 +50,7 @@ export function summarizePlans(practices, now = new Date()) {
   let trialsExpiring = 0; // vencen dentro de 3 días
   let trialsExpired = 0;
   let activePaid = 0;
+  let adminGranted = 0;
   let mrr = 0;
 
   for (const p of practices || []) {
@@ -63,6 +69,8 @@ export function summarizePlans(practices, now = new Date()) {
         trialsActive++;
         if (ends && ends - now <= 3 * DAY) trialsExpiring++;
       }
+    } else if (p?.plan_granted_by_admin === true) {
+      adminGranted++;
     } else if (!isSuspended) {
       activePaid++;
       mrr += priceOf(plan);
@@ -77,6 +85,7 @@ export function summarizePlans(practices, now = new Date()) {
     trialsExpiring,
     trialsExpired,
     activePaid,
+    adminGranted,
     mrr,
   };
 }

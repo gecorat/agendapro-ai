@@ -1,6 +1,6 @@
 // Agregados del panel de admin (planes, trials y facturación). Se mantienen como
 // funciones puras, separadas del componente, para poder probarlas sin renderizar nada.
-import { PLAN_PRICES } from "@/lib/plan-utils";
+import { PLAN_PRICES, getCycleEnd } from "@/lib/plan-utils";
 
 export const PLAN_ORDER = ["trial", "basic", "pro", "clinic"];
 
@@ -79,6 +79,81 @@ export function summarizePlans(practices, now = new Date()) {
     activePaid,
     mrr,
   };
+}
+
+// ¿Esta cuenta genera un cobro real? Tienen que darse las tres condiciones:
+//  - plan pago (un trial no se cobra),
+//  - no suspendida,
+//  - no asignada a mano por un admin (esas no tienen suscripción de Mercado Pago detrás,
+//    así que contarlas inflaría lo esperado con plata que nunca va a entrar).
+export function isBillable(p) {
+  const plan = p?.plan;
+  if (plan !== "basic" && plan !== "pro" && plan !== "clinic") return false;
+  if (p?.suspended === true) return false;
+  if (p?.plan_granted_by_admin === true) return false;
+  return true;
+}
+
+// Detalle por plan: cuántas cuentas lo tienen y cuánto factura por mes. Separa el total de
+// cuentas (que incluye suspendidas y regaladas) de las que efectivamente facturan, para
+// que el detalle no prometa plata que no entra.
+export function planRevenue(practices) {
+  const out = {};
+  const ensure = (plan) => {
+    if (!out[plan]) out[plan] = { accounts: 0, billable: 0, monthly: 0, price: priceOf(plan) };
+    return out[plan];
+  };
+  for (const plan of PLAN_ORDER) ensure(plan);
+
+  for (const p of practices || []) {
+    const row = ensure(p?.plan || "trial");
+    row.accounts++;
+    if (isBillable(p)) {
+      row.billable++;
+      row.monthly += priceOf(p.plan);
+    }
+  }
+  return out;
+}
+
+// Cobros que todavía faltan en el mes en curso. La fecha sale de getCycleEnd (el próximo
+// aniversario de la suscripción), que es exactamente el día en que cobra Mercado Pago.
+//
+// Si la cuenta todavía no tiene plan_cycle_anchor, getCycleEnd cae en su fallback y la
+// fecha es una ESTIMACIÓN: se marca como tal (`estimated`) en vez de mostrarla como si
+// fuera certera. El sync horario completa el ancla sola, así que se corrige con el tiempo.
+export function upcomingCharges(practices, now = new Date()) {
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const rows = [];
+  const byPlan = {};
+  let total = 0;
+  let estimatedCount = 0;
+
+  for (const p of practices || []) {
+    if (!isBillable(p)) continue;
+    const next = getCycleEnd(p, now);
+    if (!(next < monthEnd)) continue; // el próximo cobro cae recién el mes que viene
+
+    const amount = priceOf(p.plan);
+    const estimated = !p?.plan_cycle_anchor;
+    if (estimated) estimatedCount++;
+
+    rows.push({
+      id: p.id,
+      practice_name: p.practice_name || "Sin nombre",
+      plan: p.plan,
+      amount,
+      date: next,
+      estimated,
+    });
+    total += amount;
+    if (!byPlan[p.plan]) byPlan[p.plan] = { count: 0, amount: 0 };
+    byPlan[p.plan].count++;
+    byPlan[p.plan].amount += amount;
+  }
+
+  rows.sort((a, b) => a.date - b.date);
+  return { rows, total, count: rows.length, byPlan, estimatedCount };
 }
 
 // Solo los cobros efectivamente acreditados entran en la facturación: un pago pendiente o

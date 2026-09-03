@@ -49,7 +49,11 @@ export default async function (req: Request): Promise<Response> {
 
     const services = await base44.asServiceRole.entities.Service.filter({ id: service_id });
     const service = services?.[0];
-    if (!service || service.created_by_id !== professional_id || service.active === false) {
+    // rowBelongsTo mira practice_owner_id y, si no lo tiene, created_by_id (ver
+    // ownership.ts). Comparar created_by_id a secas rechazaba todo servicio creado por el
+    // onboarding — y a la vez habría aceptado el de OTRA cuenta, porque Base44 les estampa
+    // a todas el mismo id de servicio.
+    if (!service || !rowBelongsTo(service, professional_id) || service.active === false) {
       return Response.json({ error: 'El servicio no está disponible.' }, { status: 400 });
     }
 
@@ -193,8 +197,7 @@ export default async function (req: Request): Promise<Response> {
     // OJO: antes esto exigía ADEMÁS tener WhatsApp conectado, porque el único aviso al
     // paciente era por ese canal. Ya no hace falta: si no hay WhatsApp, igual le llega la
     // confirmación por email (sendAppointmentConfirmation, más abajo).
-    const practices = await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: professional_id });
-    const practice = practices?.[0];
+    const practice = await findPracticeByOwner(base44, professional_id);
     const isProOrClinic = practice?.plan === 'pro' || practice?.plan === 'clinic';
     const autoConfirm = isProOrClinic || practice?.auto_confirm_public_bookings === true;
 

@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { fetchProfilePicture } from '../../shared/evolution-api.ts';
+import { resolveScope } from '../../shared/team-scope.ts';
 
 // Trae la foto de perfil REAL de WhatsApp del contacto vía Evolution API. La URL que
 // devuelve WhatsApp es temporal (vence), así que se pide fresca cada vez que se abre la
@@ -14,8 +15,18 @@ export default async function (req: Request): Promise<Response> {
     const phone = (body?.phone || '').replace(/\D/g, '');
     if (!phone) return Response.json({ error: 'phone requerido' }, { status: 400 });
 
-    const practices = await base44.asServiceRole.entities.PracticeSettings.filter({});
-    const practice = practices.find((p) => p.created_by_id === user.id);
+    // El consultorio se resuelve con el mismo criterio que el resto de la app: dueño
+    // primero, profesional invitado después. Antes se buscaba solo por
+    // `created_by_id === user.id`, y como un invitado no creó ninguna PracticeSettings esto
+    // quedaba en undefined: la ficha del contacto le mostraba siempre la inicial en vez de la
+    // foto, sin ningún error visible.
+    let practice = (await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: user.id }))?.[0] || null;
+    if (!practice) {
+      const scope = await resolveScope(base44, user);
+      if (scope?.practiceOwnerId) {
+        practice = (await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: scope.practiceOwnerId }))?.[0] || null;
+      }
+    }
     // Solo disponible para conexión por QR (Evolution API). La API oficial de Zernio/Meta
     // no expone este dato de la misma forma, así que devolvemos vacío y el frontend cae
     // al avatar con inicial.

@@ -104,11 +104,17 @@ export async function syncSubscriptionStatus(base44, accessToken, resourceId) {
   targetPlan = targetPlan || practice.plan;
 
   if (preapproval.status === "authorized") {
-    if (practice.plan !== targetPlan || practice.suspended) {
+    // El día de alta de la suscripción es el día en que Mercado Pago cobra todos los
+    // meses, así que es también el día en que se renueva el cupo de conversaciones (ver
+    // getCycleStart en plan.ts). Lo guardamos acá — el único lugar donde vemos el
+    // preapproval real — y así el chequeo horario también rellena las cuentas viejas.
+    const anchorChanged = !!preapproval.date_created && practice.plan_cycle_anchor !== preapproval.date_created;
+    if (practice.plan !== targetPlan || practice.suspended || anchorChanged) {
       await base44.asServiceRole.entities.PracticeSettings.update(practice.id, {
         plan: targetPlan,
         suspended: false,
         mercadopago_subscription_id: resourceId,
+        ...(anchorChanged ? { plan_cycle_anchor: preapproval.date_created } : {}),
       });
       return { synced: true, changed: true, status: preapproval.status, practice_id: practice.id };
     }

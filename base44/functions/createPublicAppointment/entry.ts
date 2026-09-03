@@ -5,7 +5,8 @@ import { sendPushToUsers, getPracticeRecipientUserIds } from '../../shared/push.
 import { sendWhatsAppMessage } from '../../shared/whatsapp-providers.ts';
 import { buildConfirmationMessage, buildPublicBookAckMessage, notifyProfessionalOfBotAction } from '../../shared/zernio.ts';
 import { getAppointmentContext } from '../../shared/appointment-context.ts';
-import { argentinaDayBounds } from '../../shared/scheduling.ts';
+import { argentinaDayBounds, isTimeAvailable } from '../../shared/scheduling.ts';
+import { getGoogleBusyRanges } from '../../shared/google-calendar.ts';
 import { canSendWhatsApp } from '../../shared/plan.ts';
 import { logNotification, logWhatsAppToConversation } from '../../shared/notification-log.ts';
 
@@ -87,6 +88,46 @@ export default async function (req: Request): Promise<Response> {
         { error: 'slot_taken', message: 'Ese horario ya fue reservado. Por favor elegí otro.' },
         { status: 409 }
       );
+    }
+
+    // Validacion real de disponibilidad, con el MISMO motor que usa el bot
+    // (shared/scheduling.ts). Hasta ahora este camino solo miraba si chocaba con otra cita:
+    // no miraba horario de atencion, ni descansos, ni dias bloqueados, ni el Google Calendar
+    // del profesional. O sea que un POST directo a esta funcion podia dejar un turno un
+    // domingo a las 3 de la manana, o en pleno horario de almuerzo.
+    //
+    // La pagina publica ya calcula los horarios con esta misma logica y con los mismos datos
+    // (Availability por practice_owner_id + getGoogleBusySlots), asi que una reserva hecha
+    // desde la pagina pasa por aca sin cambios. Esto atrapa lo que NO viene de la pagina:
+    // llamadas directas, y pestanas viejas cuyos horarios ya quedaron desactualizados.
+    //
+    // Si el chequeo falla por un error nuestro (no por el horario), se deja pasar: preferimos
+    // aceptar una reserva a perderla por una consulta que fallo.
+    try {
+      const availability = await base44.asServiceRole.entities.Availability.filter({ practice_owner_id: professional_id });
+      let googleBusy = [];
+      try {
+        googleBusy = await getGoogleBusyRanges(
+          base44,
+          professional_id,
+          professional_ref_id || null,
+          dayStart.toISOString(),
+          dayEnd.toISOString()
+        ) || [];
+      } catch (e) {
+        // Google caido no puede impedir una reserva: el resto de la validacion ya corrio.
+        console.error('getGoogleBusyRanges error (createPublicAppointment):', e?.message || e);
+      }
+
+      const ok = isTimeAvailable(start, end, service, availability || [], existingAppts || [], professional_ref_id || null, googleBusy);
+      if (!ok) {
+        return Response.json(
+          { error: 'horario_no_disponible', message: 'Ese horario ya no está disponible. Actualizá la página y elegí otro.' },
+          { status: 409 }
+        );
+      }
+    } catch (e) {
+      console.error('validacion de disponibilidad fallo (createPublicAppointment):', e?.message || e);
     }
 
     // Buscar paciente existente por teléfono, comparando por teléfono CANÓNICO (últimos

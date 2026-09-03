@@ -79,6 +79,28 @@ export default async function(req: Request): Promise<Response> {
             });
           }
         }
+
+        // Registro contable del pago único. Va DESPUÉS de acreditar el cupo a propósito:
+        // si algo falla acá, el profesional igual se quedó con las conversaciones que
+        // pagó — preferimos perder una fila de estadística antes que el servicio.
+        if (payment.metadata?.addon_pack) {
+          const practices = await base44.asServiceRole.entities.PracticeSettings.filter({ id: payment.metadata.practice_id });
+          const practice = practices?.[0];
+          await recordPayment(base44, {
+            provider: 'mercadopago',
+            provider_payment_id: String(payment.id),
+            practice_id: practice?.id,
+            practice_name: practice?.practice_name,
+            kind: 'addon_pack',
+            plan: practice?.plan,
+            amount: payment.transaction_amount,
+            currency: payment.currency_id || 'ARS',
+            status: normalizeMpStatus(payment.status),
+            provider_status_raw: String(payment.status || ''),
+            paid_at: payment.date_approved || payment.date_created,
+            description: `Pack adicional de ${payment.metadata.conversations || '?'} conversaciones`,
+          });
+        }
         return Response.json({ ok: true });
       }
       // Otros tópicos (merchant_order, etc.) no accionan nada por ahora.

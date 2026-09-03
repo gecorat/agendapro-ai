@@ -10,8 +10,28 @@ export default async function (req: Request): Promise<Response> {
     const base44 = createClientFromRequest(req);
     const now = new Date();
 
+    // Margen para las citas cargadas A MANO en la agenda. Las de la pagina publica y las del
+    // bot se completan apenas pasa el horario, como siempre: ahi no hay nadie manejando el
+    // estado, que es justo para lo que existe esta funcion.
+    //
+    // Las manuales son distintas: el profesional esta ahi y es el unico que sabe si el
+    // paciente vino o no. Desde que las citas manuales nacen 'confirmed', esta funcion las
+    // barria dentro de la hora siguiente, asi que una AUSENCIA quedaba marcada sola como
+    // 'completed' (existe el estado 'no_show' y ya no llegaba a usarse) y encima le mandaba
+    // al paciente el pedido de resena de una visita que nunca ocurrio.
+    //
+    // Con 12 horas de margen el profesional tiene el resto del dia para marcar la ausencia, y
+    // lo que se olvide de tocar igual se completa solo — no se acumula para siempre.
+    const MANUAL_GRACE_HOURS = 12;
+    const manualCutoff = new Date(now.getTime() - MANUAL_GRACE_HOURS * 60 * 60 * 1000);
+
     const appts = await base44.asServiceRole.entities.Appointment.filter({ status: 'confirmed' });
-    const due = (appts || []).filter((a) => !a.is_demo && a.end_datetime && new Date(a.end_datetime) < now);
+    const due = (appts || []).filter((a) => {
+      if (a.is_demo || !a.end_datetime) return false;
+      const end = new Date(a.end_datetime);
+      if (isNaN(end.getTime())) return false;
+      return a.origin === 'manual' ? end < manualCutoff : end < now;
+    });
 
     let completed = 0;
     let reviewRequestsCreated = 0;

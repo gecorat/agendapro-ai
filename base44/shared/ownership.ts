@@ -36,6 +36,14 @@ export async function findPracticeByOwner(base44, ownerId) {
   return byCreated?.[0] || null;
 }
 
+// Igual que findPracticeByOwner pero devolviendo ARRAY. Existe para poder reemplazar de
+// forma mecánica los viejos `entities.PracticeSettings.filter({ created_by_id: X })` sin
+// tocar el `?.[0]` / `.length` que viene después en cada llamador.
+export async function findPracticeRowsByOwner(base44, ownerId) {
+  const found = await findPracticeByOwner(base44, ownerId);
+  return found ? [found] : [];
+}
+
 // Filas de una entidad que pertenecen a un consultorio (Service / Availability), mirando
 // el campo propio y, como respaldo, el de la plataforma. Se deduplica por id porque una
 // fila vieja ya adoptada puede matchear las dos consultas.

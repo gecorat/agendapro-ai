@@ -40,7 +40,7 @@ const STEPS = [
 ];
 
 const FAQ = [
-  { q: "¿Qué incluye exactamente la prueba de 14 días?", a: "Las funciones del plan Básico (página de reservas, agenda, pacientes, recordatorios por email) más un simulador del bot de WhatsApp para que veas cómo respondería. El WhatsApp real con tus pacientes se activa al pasar a Pro o Premium." },
+  { q: "¿Qué incluye exactamente la prueba de 14 días?", a: "Las funciones del plan Básico (página de reservas, agenda, pacientes, recordatorios por email) más un simulador del bot de WhatsApp para que veas cómo respondería. El WhatsApp real con tus pacientes se activa al pasar a Pro." },
   { q: "¿Necesito tarjeta para probar?", a: "No. Los 14 días de prueba son sin tarjeta y sin compromiso. Solo necesitás tu email." },
   { q: "¿Me cobran algo si no hago nada al terminar la prueba?", a: "No. Como nunca pedimos una tarjeta, no hay nada que cobrar automáticamente. Si termina la prueba y todavía no elegiste un plan, tu cuenta queda pausada hasta que actives uno." },
   { q: "¿Funciona con mi WhatsApp actual?", a: "Sí. Usamos un proveedor que coexiste con tu WhatsApp personal. No perdés tu número." },
@@ -380,7 +380,7 @@ export default function Landing() {
             <h2 className="text-2xl md:text-3xl font-heading font-bold tracking-tight">Planes simples</h2>
             <p className="text-slate-600 mt-2 text-sm">Probás gratis 14 días. Después elegís.</p>
           </Reveal>
-          <div className="grid md:grid-cols-3 gap-5">
+          <div className={`grid ${CLINIC_PLAN_VISIBLE ? "md:grid-cols-3" : "md:grid-cols-2 max-w-2xl mx-auto"} gap-5`}>
             <Reveal delay={0}>
               <Card className="p-7 flex flex-col h-full border border-slate-300 bg-white">
                 <div className="flex items-center gap-2 mb-1">
@@ -407,6 +407,8 @@ export default function Landing() {
                 <Button className="mt-7 bg-slate-900 hover:bg-slate-800 h-11" asChild><Link to="/register">Probar gratis 14 días</Link></Button>
               </Card>
             </Reveal>
+            {/* Plan Premium oculto temporalmente (ver CLINIC_PLAN_VISIBLE en plan-utils.js). */}
+            {CLINIC_PLAN_VISIBLE && (
             <Reveal delay={0.2}>
               <Card className="p-7 flex flex-col h-full border-2 border-slate-900 bg-white relative">
                 <div className="flex items-center gap-2 mb-1">
@@ -421,8 +423,9 @@ export default function Landing() {
                 <Button className="mt-7 bg-slate-900 hover:bg-slate-800 h-11" asChild><Link to="/register">Probar gratis 14 días</Link></Button>
               </Card>
             </Reveal>
+            )}
           </div>
-          <p className="text-center text-sm text-slate-600 mt-6">La prueba de 14 días incluye las funciones del plan Básico + simulador del bot. Activás WhatsApp real con Pro o Premium cuando quieras.</p>
+          <p className="text-center text-sm text-slate-600 mt-6">La prueba de 14 días incluye las funciones del plan Básico + simulador del bot. Activás WhatsApp real con el plan Pro cuando quieras.</p>
         </div>
       </section>
 

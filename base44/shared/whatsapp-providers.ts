@@ -1,3 +1,5 @@
+import { toWhatsAppNumber } from "./phone-utils.ts";
+
 // Envío de WhatsApp agnóstico al proveedor: cada profesional puede estar conectado por
 // Zernio (API oficial de Meta) o por Evolution API (QR, self-hosted) — el resto del código
 // (el bot, los recordatorios) no necesita saber cuál es cuál, solo llama a esta función.
@@ -7,8 +9,6 @@
 export function normalizePhone(phone) {
   return (phone || "").replace(/[^\d]/g, "");
 }
-
-import { toWhatsAppNumber } from "./phone-utils.ts";
 
 // Consultado por los webhooks antes de invocar al bot. Si el profesional pausó esta
 // conversación puntual (a mano, o automáticamente al responder él mismo), el bot no debe

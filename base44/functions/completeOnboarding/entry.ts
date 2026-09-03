@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
+import { findPracticeByOwner } from '../../shared/ownership.ts';
 
 export default async function(req) {
   try {
@@ -27,12 +28,12 @@ export default async function(req) {
       } catch { /* si falla la validación, seguimos sin bloquear el alta */ }
     }
 
-    // Check if user already has PracticeSettings (avoid duplicates)
-    const existing = await base44.asServiceRole.entities.PracticeSettings.filter(
-      { created_by_id: user.id }
-    );
-    if (existing && existing.length > 0) {
-      return Response.json({ settings: existing[0], alreadyExists: true });
+    // ¿Ya tiene consultorio? Se busca por el criterio de propiedad real (owner_user_id
+    // con respaldo a created_by_id), no solo por created_by_id: si no, un usuario que ya
+    // completó el onboarding podía crear un segundo consultorio duplicado.
+    const existing = await findPracticeByOwner(base44, user.id);
+    if (existing) {
+      return Response.json({ settings: existing, alreadyExists: true });
     }
 
     // Create PracticeSettings con rol de servicio: PracticeSettings.create ahora está

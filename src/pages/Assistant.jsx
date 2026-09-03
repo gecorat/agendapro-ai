@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
-import { getPlanStatus, PLAN_PRICES, PLAN_LABELS } from "@/lib/plan-utils";
+import { getPlanStatus, PLAN_PRICES, PLAN_LABELS, CLINIC_PLAN_VISIBLE } from "@/lib/plan-utils";
 
 function UpgradeBlock({ plan }) {
   return (
@@ -35,7 +35,7 @@ function UpgradeBlock({ plan }) {
         <div className="flex-1 min-w-0">
           <p className="font-heading font-semibold text-sm">Conectá WhatsApp con un plan superior</p>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Tu plan {PLAN_LABELS[plan] || "actual"} permite probar el bot en la app. Para que la asistente atienda a tus pacientes por WhatsApp de forma automática, pasate a Pro o Premium.
+            Tu plan {PLAN_LABELS[plan] || "actual"} permite probar el bot en la app. Para que la asistente atienda a tus pacientes por WhatsApp de forma automática, pasate a Pro.
           </p>
           <div className="flex flex-col sm:flex-row gap-2 mt-3">
             <Button size="sm" asChild className="gap-1.5 bg-emerald-600 hover:bg-emerald-700">
@@ -50,11 +50,14 @@ function UpgradeBlock({ plan }) {
                 Pasar a Pro ({PLAN_PRICES.pro})
               </Link>
             </Button>
+            {/* Plan Premium oculto temporalmente (ver CLINIC_PLAN_VISIBLE en plan-utils.js). */}
+            {CLINIC_PLAN_VISIBLE && (
             <Button size="sm" variant="outline" asChild className="gap-1.5">
               <Link to="/upgrade-plan">
                 Ver {PLAN_LABELS.clinic} ({PLAN_PRICES.clinic})
               </Link>
             </Button>
+            )}
           </div>
         </div>
       </div>

@@ -10,9 +10,13 @@
 //   plan — eso queda exclusivo del dueño real.
 // - Un profesional invitado normal ve SOLO lo suyo (professional_ref_id = su propio
 //   registro de Professional).
+import { findPracticeByOwner } from "./ownership.ts";
 export async function resolveScope(base44, user) {
-  const practices = await base44.asServiceRole.entities.PracticeSettings.filter({});
-  const ownPractice = practices.find((p) => p.created_by_id === user.id);
+  // La búsqueda va por el criterio de propiedad real (owner_user_id con respaldo a
+  // created_by_id). Antes acá se comparaba created_by_id directo, y como Base44 lo
+  // estampa con el id del SERVICIO en todo lo que crea el onboarding, el dueño de una
+  // cuenta nueva no se encontraba a sí mismo. Ver base44/shared/ownership.ts.
+  const ownPractice = await findPracticeByOwner(base44, user.id);
   if (ownPractice) {
     return { practiceOwnerId: user.id, professionalRefId: null, isOwner: true, isTeamAdmin: false, canManageTeam: true, canManageBilling: true, isOwnerLike: true };
   }

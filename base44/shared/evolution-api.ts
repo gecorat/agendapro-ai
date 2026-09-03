@@ -169,10 +169,17 @@ export async function getBase64Media(baseUrl, apiKey, instanceName, messageKey) 
 // OJO: esto NO esta garantizado. WhatsApp fue restringiendo esa sincronizacion y hay
 // reportes de que el campo de nombre vuelve vacio (evolution-api issue #2004). Por eso todo
 // el que llame a esto tiene que tolerar una lista vacia o sin nombres, y nunca depender de
-// que haya datos.
+// que haya datos. Verificado contra la instancia real el 03/09: devolvio 1729 y 2385
+// contactos con nombre de agenda ("Cred - Moyano Carlos"), asi que hoy si viene.
 //
 // El nombre aparece con distintas claves segun la version de Evolution, por eso se prueban
 // varias en orden: primero el de agenda, despues el de perfil.
+//
+// SE DESCARTA TODO LO QUE NO SEA UNA PERSONA CON TELEFONO:
+//  - @g.us y broadcast: grupos y listas de difusion.
+//  - @lid: el identificador nuevo de privacidad de WhatsApp. Parece un numero pero NO lo
+//    es; tomarlo como telefono generaria contactos con numeros inventados.
+//  - 0@s.whatsapp.net: el contacto de sistema "WhatsApp Business".
 export async function findContacts(baseUrl, apiKey, instanceName) {
   const res = await fetch(`${baseUrl}/chat/findContacts/${instanceName}`, {
     method: 'POST',
@@ -186,14 +193,14 @@ export async function findContacts(baseUrl, apiKey, instanceName) {
   const data = await safeJson(res);
   const rows = Array.isArray(data) ? data : (data?.contacts || data?.data || []);
   return (rows || [])
+    .filter((c) => !c?.isGroup)
     .map((c) => {
       const jid = String(c?.remoteJid || c?.id || c?.jid || '');
       const phone = jid.split('@')[0].replace(/[^0-9]/g, '');
       const name = c?.name || c?.contactName || c?.verifiedName || c?.pushName || '';
       return { phone, name: String(name || '').trim(), jid };
     })
-    // Los grupos y las difusiones no son personas: se descartan.
-    .filter((c) => c.phone && c.name && !c.jid.includes('@g.us') && !c.jid.includes('broadcast'));
+    .filter((c) => c.jid.endsWith('@s.whatsapp.net') && c.name && c.phone.length >= 8);
 }
 
 export async function fetchProfilePicture(baseUrl, apiKey, instanceName, phone) {

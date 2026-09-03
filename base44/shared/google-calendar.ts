@@ -1,3 +1,5 @@
+import { findPracticeByOwner } from "./ownership.ts";
+
 // Integración con Google Calendar. Cada persona (el dueño de la cuenta, o cada
 // profesional invitado por separado) conecta SU PROPIO Google Calendar — los tokens se
 // guardan en su propio registro (PracticeSettings para el dueño, Professional para un
@@ -99,8 +101,7 @@ export async function resolveGoogleTarget(base44, practiceOwnerId, professionalR
     if (!secrets?.google_refresh_token) return null;
     return { kind: 'professional', record: { ...p, google_refresh_token: secrets.google_refresh_token } };
   }
-  const rows = await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: practiceOwnerId });
-  const s = rows?.[0];
+  const s = await findPracticeByOwner(base44, practiceOwnerId);
   if (!s || s.google_sync_enabled === false) return null;
   const secrets = await getPracticeSecrets(base44, s.id);
   if (!secrets?.google_refresh_token) return null;

@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
+import { findPracticeByOwner } from '../../shared/ownership.ts';
 
 export default async function(req) {
   try {
@@ -11,8 +12,10 @@ export default async function(req) {
 
     if (mode === "reminder") {
       // Only send reminder if the user hasn't configured their practice yet
-      const settings = await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: user_id });
-      if (settings && settings.length > 0) {
+      // Por owner_user_id con respaldo a created_by_id (ver ownership.ts): si no, a quien
+      // ya completó el onboarding igual le llegaba el mail de "configurá tu consultorio".
+      const settings = await findPracticeByOwner(base44, user_id);
+      if (settings) {
         return Response.json({ sent: false, reason: "already_configured" });
       }
       await base44.asServiceRole.integrations.Core.SendEmail({

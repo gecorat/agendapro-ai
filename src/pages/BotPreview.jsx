@@ -142,7 +142,7 @@ export default function BotPreview() {
       <div className="flex items-start gap-2 rounded-lg bg-primary/5 border border-primary/15 px-3 py-2.5 mb-3">
         <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
         <p className="text-xs text-muted-foreground leading-relaxed">
-          Responde con tu configuración real (servicios, horarios y personalidad del bot que cargaste en Configuración). Si en la charla llegás a confirmar un turno, se crea de verdad en tu <span className="font-medium text-foreground">Agenda</span> y se borra solo a los 5 minutos — así ves exactamente cómo se vería, sin ensuciar tus datos. Con el plan {PLAN_LABELS.pro} o {PLAN_LABELS.clinic}, el bot haría esto mismo automáticamente por WhatsApp con tus pacientes reales.
+          Responde con tu configuración real (servicios, horarios y personalidad del bot que cargaste en Configuración). Si en la charla llegás a confirmar un turno, se crea de verdad en tu <span className="font-medium text-foreground">Agenda</span> y se borra solo a los 5 minutos — así ves exactamente cómo se vería, sin ensuciar tus datos. Con el plan {PLAN_LABELS.pro}, el bot haría esto mismo automáticamente por WhatsApp con tus pacientes reales.
         </p>
       </div>
 

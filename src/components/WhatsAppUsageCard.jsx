@@ -38,7 +38,7 @@ export default function WhatsAppUsageCard() {
     <div className="bg-card rounded-2xl border border-border p-4 space-y-3">
       <div className="flex items-center gap-2">
         <Gauge className="w-4 h-4 text-muted-foreground" />
-        <p className="font-medium text-sm">Uso del bot este mes</p>
+        <p className="font-medium text-sm">Uso del bot en este ciclo</p>
         <span className="ml-auto text-xs text-muted-foreground">Plan {PLAN_LABELS[status.plan] || status.plan}</span>
       </div>
 
@@ -66,8 +66,9 @@ export default function WhatsAppUsageCard() {
         <p className="flex items-start gap-1.5">
           <RefreshCw className="w-3.5 h-3.5 shrink-0 mt-0.5" />
           <span>
-            Período desde el {formatDate(period.start)} · el contador se reinicia el{" "}
-            {formatDate(period.resetsAt)} ({period.daysToReset === 1 ? "mañana" : `en ${period.daysToReset} días`}).
+            Ciclo desde el {formatDate(period.start)} · tu cupo se renueva el{" "}
+            {formatDate(period.resetsAt)} ({period.daysToReset === 1 ? "mañana" : `en ${period.daysToReset} días`}),
+            el mismo día en que se te cobra.
           </span>
         </p>
       </div>

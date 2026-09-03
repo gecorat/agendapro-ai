@@ -96,20 +96,47 @@ export function getPlanStatus(settings) {
   return { plan, isTrial, trialExpired, hasPaidPlan, daysLeft, canUseWhatsApp, canUseMultiProfessional, active, suspended, loaded: true };
 }
 
-// Período de uso del bot. OJO: el backend reinicia el contador cuando cambia el MES
-// CALENDARIO, no en el aniversario de la suscripción (ver isNewBillingPeriod en
-// base44/shared/whatsapp-usage.ts), así que el período corriente siempre es el mes en
-// curso y el reinicio cae el 1º del mes que viene.
+// Ciclo de facturación. Espejo EXACTO de getCycleStart/getCycleEnd en
+// base44/shared/plan.ts — mantener ambos en sync. El cupo se renueva en el aniversario
+// de la suscripción (mismo día en que cobra Mercado Pago), no el 1º de cada mes.
+function cycleAnchor(settings) {
+  const raw = settings?.plan_cycle_anchor || settings?.whatsapp_usage_period_start || settings?.created_date;
+  const d = raw ? new Date(raw) : null;
+  return d && !Number.isNaN(d.getTime()) ? d : null;
+}
+
+// Día `day` del mes indicado, recortado al último día real de ese mes (un aniversario 31
+// cae el 28/29 en febrero y el 30 en abril).
+function onDayOfMonth(year, month, day, ref) {
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  const d = new Date(year, month, Math.min(day, lastDay));
+  d.setHours(ref.getHours(), ref.getMinutes(), ref.getSeconds(), 0);
+  return d;
+}
+
+export function getCycleStart(settings, now = new Date()) {
+  const anchor = cycleAnchor(settings);
+  if (!anchor) return now;
+  if (anchor >= now) return anchor;
+  const thisMonth = onDayOfMonth(now.getFullYear(), now.getMonth(), anchor.getDate(), anchor);
+  if (thisMonth <= now) return thisMonth;
+  return onDayOfMonth(now.getFullYear(), now.getMonth() - 1, anchor.getDate(), anchor);
+}
+
+export function getCycleEnd(settings, now = new Date()) {
+  const start = getCycleStart(settings, now);
+  const anchor = cycleAnchor(settings) || start;
+  return onDayOfMonth(start.getFullYear(), start.getMonth() + 1, anchor.getDate(), anchor);
+}
+
+// Período de uso vigente, listo para mostrar: desde cuándo corre, cuándo se renueva el
+// cupo y cuántos días faltan para eso.
 export function getUsagePeriod(settings) {
   const now = new Date();
-  const raw = settings?.whatsapp_usage_period_start ? new Date(settings.whatsapp_usage_period_start) : null;
-  const isCurrent = raw && raw.getMonth() === now.getMonth() && raw.getFullYear() === now.getFullYear();
-  // Si el período guardado es de un mes anterior, el contador se va a resetear con el
-  // próximo mensaje: para el usuario el período vigente ya es este mes.
-  const start = isCurrent ? raw : new Date(now.getFullYear(), now.getMonth(), 1);
-  const resetsAt = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const start = getCycleStart(settings, now);
+  const resetsAt = getCycleEnd(settings, now);
   const daysToReset = Math.max(0, Math.ceil((resetsAt - now) / (1000 * 60 * 60 * 24)));
-  return { start, resetsAt, daysToReset, isCurrent: !!isCurrent };
+  return { start, resetsAt, daysToReset };
 }
 
 // Fecha corta en formato es-AR (ej. "3 de septiembre"). Devuelve "—" si no hay fecha.

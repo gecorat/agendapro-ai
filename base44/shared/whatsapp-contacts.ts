@@ -43,7 +43,9 @@ export function planContactWrite(existingRow, { phone, name, source }) {
   // Un origen mas debil no puede pisar a uno mas fuerte. Sin esto, el boton "Contactos"
   // (que escribe con source "agenda") le borraba al profesional el nombre que el mismo
   // habia puesto a mano.
-  if (RANK[source] < RANK[existingRow.source]) return null;
+  // `?? -1` para las filas viejas que puedan no tener `source`: cuentan como el origen mas
+  // debil, asi que cualquier cosa nueva las puede corregir.
+  if ((RANK[source] ?? 0) < (RANK[existingRow.source] ?? -1)) return null;
   if (existingRow.name === clean && existingRow.source === source) return null;
   return { op: "update", id: existingRow.id, key, name: clean, source };
 }

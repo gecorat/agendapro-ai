@@ -84,14 +84,20 @@ export default async function (req: Request): Promise<Response> {
     const fromPhone = remoteJid.split("@")[0] || "";
     const conversationId = remoteJid || fromPhone;
 
-    let text = msgData.message?.conversation || msgData.message?.extendedTextMessage?.text || "";
+    // Lectura completa del mensaje (ver shared/incoming-message.ts). Antes acá solo se
+    // leían dos campos de texto plano y TODO lo demás se perdía sin dejar rastro.
+    //  - `text`    = lo que el bot debe interpretar (vacío = el bot no responde).
+    //  - `display` = lo que se guarda en la bandeja, nunca vacío si hubo algo.
+    const incoming = readIncomingMessage(msgData.message);
+    let text = incoming.text;
+    let display = incoming.display;
 
     // Notas de voz: antes esto se ignoraba por completo (ni se guardaba, ni se avisaba al
     // paciente ni al profesional) porque solo se leía el texto plano del mensaje, que en un
     // audio viene vacío. Los medios de WhatsApp viajan cifrados extremo a extremo, así que
     // no alcanza con el link que viene en el mensaje — Evolution lo descifra de su lado y
     // lo entrega en base64 a través de este endpoint dedicado.
-    if (!text && msgData.message?.audioMessage) {
+    if (!text && incoming.isAudio) {
       try {
         let base64 = msgData.message?.base64 || msgData.base64 || null;
         const mimetype = msgData.message.audioMessage.mimetype || "audio/ogg";
@@ -108,7 +114,10 @@ export default async function (req: Request): Promise<Response> {
         if (base64) {
           const { transcribeAudioMessage } = await import("../../shared/audio-transcription.ts");
           const transcribed = await transcribeAudioMessage(base44, base64, mimetype);
-          if (transcribed) text = transcribed;
+          if (transcribed) {
+            text = transcribed;
+            display = `\u{1F3A4} ${transcribed}`;
+          }
         }
       } catch (e) {
         console.error("audio transcription error (evolution):", e?.message || e);
@@ -119,16 +128,10 @@ export default async function (req: Request): Promise<Response> {
       return Response.json({ ok: true, skipped: "no_phone" });
     }
 
-    if (!text) {
-      // Era un audio y no se pudo transcribir (o no soportado): avisamos al paciente en vez
-      // de dejarlo en silencio total como antes.
-      if (msgData.message?.audioMessage) {
-        waitUntil(
-          sendWhatsAppMessage(base44, practice, fromPhone, "Uy, no pude escuchar bien tu audio 🙏 ¿Me lo podés escribir en texto, por favor?")
-            .catch((e) => console.error("audio fallback send error (evolution):", e?.message || e))
-        );
-      }
-      return Response.json({ ok: true, skipped: "no_text_or_phone" });
+    // Una reacción (un emoji sobre un mensaje anterior) no es un mensaje nuevo: no se guarda
+    // ni despierta al bot, para no marcar el chat como no leído por un pulgar arriba.
+    if (!display) {
+      return Response.json({ ok: true, skipped: `sin_contenido:${incoming.kind}` });
     }
 
     const professionalId = practice.created_by_id;

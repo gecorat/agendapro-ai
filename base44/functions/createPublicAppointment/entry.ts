@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
-import { findPatientByCanonicalPhone } from '../../shared/phone-utils.ts';
+import { findPatientByCanonicalPhone, toWhatsAppNumber } from '../../shared/phone-utils.ts';
 import { pushAppointmentToGoogle } from '../../shared/google-calendar.ts';
 import { sendPushToUsers, getPracticeRecipientUserIds } from '../../shared/push.ts';
 import { sendWhatsAppMessage } from '../../shared/whatsapp-providers.ts';
@@ -25,6 +25,18 @@ export default async function (req: Request): Promise<Response> {
 
     if (!professional_id || !service_id || !start_datetime || !first_name || !phone || !email) {
       return Response.json({ error: 'Faltan datos requeridos.' }, { status: 400 });
+    }
+
+    // El telefono se resuelve a un numero completo ANTES de hacer nada. Sin esto, el campo
+    // aceptaba cualquier texto y despues se le mandaba el WhatsApp a esa cadena tal cual:
+    // un numero sin codigo de pais ("3425902123") lo resuelve WhatsApp como puede y la
+    // confirmacion termina en el telefono de otra persona real. Confirmado en vivo el 03/09.
+    const waPhone = toWhatsAppNumber(phone);
+    if (!waPhone) {
+      return Response.json(
+        { error: 'telefono_invalido', message: 'Revisá el teléfono: escribilo con código de área, por ejemplo 342 590 2123.' },
+        { status: 400 }
+      );
     }
 
     const services = await base44.asServiceRole.entities.Service.filter({ id: service_id });
@@ -78,7 +90,7 @@ export default async function (req: Request): Promise<Response> {
       patient = await base44.asServiceRole.entities.Patient.create({
         first_name,
         last_name: last_name || '',
-        phone,
+        phone: waPhone,
         email,
         // Si el paciente dejó su email en el formulario público, es porque quiere recibir
         // cosas ahí: "both" para que le lleguen confirmaciones y recordatorios por los dos
@@ -94,6 +106,10 @@ export default async function (req: Request): Promise<Response> {
       if (first_name && first_name !== patient.first_name) updates.first_name = first_name;
       if ((last_name || '') !== (patient.last_name || '')) updates.last_name = last_name || '';
       if (email && email !== patient.email) updates.email = email;
+      // Repara sobre la marcha las fichas viejas que quedaron con el telefono a medias
+      // (sin codigo de pais). Es el mismo numero — findPatientByCanonicalPhone ya lo
+      // matcheo por los ultimos 10 digitos — solo que ahora queda enviable.
+      if (patient.phone !== waPhone) updates.phone = waPhone;
       // Si esta reserva puntual es con un profesional del equipo, el paciente "pasa a
       // ser" de ese profesional en la lista (el más reciente con quien reservó).
       if (professional_ref_id && professional_ref_id !== patient.professional_ref_id) {

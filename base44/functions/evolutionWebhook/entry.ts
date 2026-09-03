@@ -59,6 +59,24 @@ export default async function (req: Request): Promise<Response> {
     }
 
     const remoteJid = msgData.key?.remoteJid || "";
+
+    // Grupos, listas de difusión y el canal de estados NO son pacientes. Acá se cortan, antes
+    // de guardar nada y antes de invocar al bot.
+    //
+    // Por qué hacía falta: el teléfono sale de `remoteJid.split("@")[0]`, y para un grupo eso
+    // deja el ID del grupo ("120363428541821553"), que es una cadena no vacía — o sea que
+    // pasaba todos los chequeos como si fuera un teléfono real. Resultado confirmado en
+    // datos el 03/09: tres conversaciones de grupo en la bandeja del consultorio, con el bot
+    // respondiendo adentro del grupo y consumiendo cupo del plan.
+    if (
+      msgData.key?.participant ||
+      remoteJid.endsWith("@g.us") ||
+      remoteJid.endsWith("@broadcast") ||
+      remoteJid.endsWith("@newsletter")
+    ) {
+      return Response.json({ ok: true, skipped: "group_or_broadcast" });
+    }
+
     const fromPhone = remoteJid.split("@")[0] || "";
     const conversationId = remoteJid || fromPhone;
 

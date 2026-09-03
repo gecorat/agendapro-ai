@@ -1,5 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 
+import { ownerIdOf } from '../../shared/ownership.ts';
+
 // Datos de un consultorio para su PAGINA PUBLICA de reservas, por handle. Sin sesion.
 //
 // Existe para poder cerrar la lectura de PracticeSettings. Hoy esa entidad tiene
@@ -73,6 +75,13 @@ export default async function (req: Request): Promise<Response> {
     for (const field of PUBLIC_FIELDS) {
       if (practice[field] !== undefined) profile[field] = practice[field];
     }
+
+    // created_by_id sale NORMALIZADO al id del dueno real: la pagina publica lo usa como
+    // "professional_id" para pedir servicios, horarios y resenas, y para crear la cita.
+    // El created_by_id crudo de un consultorio creado por el onboarding es el id del
+    // SERVICIO, que ademas es el mismo para todas esas cuentas: devolverlo tal cual haria
+    // que una pagina publica mostrara los servicios de otro consultorio.
+    profile.created_by_id = ownerIdOf(practice);
 
     return Response.json({ profile });
   } catch (error) {

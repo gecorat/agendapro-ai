@@ -5,7 +5,7 @@ import {
   MessageSquare, Send, Loader2, MessageCircle, ChevronLeft, LogOut, Search,
   Bot, User, Plus, X, Calendar, Phone, Mail, Tag, StickyNote, Clock,
   Smile, Paperclip, ListPlus, ChevronDown, Lock, Sparkles, Crown, Check,
-  Pencil, XCircle, IdCard, BellRing,
+  Pencil, XCircle, IdCard, BellRing, RefreshCw,
 } from "lucide-react";
 import DemoChat from "@/components/assistant/DemoChat";
 import { loadReadState, saveChatLastRead, getLocalChatLastRead } from "@/lib/read-state";

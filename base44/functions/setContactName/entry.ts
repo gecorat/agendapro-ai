@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { resolveScope } from '../../shared/team-scope.ts';
 import { rememberWhatsAppContact } from '../../shared/whatsapp-contacts.ts';
 import { canonicalPhone } from '../../shared/phone-utils.ts';
+import { findPracticeRowsByOwner } from "../../shared/ownership.ts";
 
 // Renombrar un contacto de la bandeja de Chats a mano.
 //
@@ -27,11 +28,11 @@ export default async function (req: Request): Promise<Response> {
     if (!key) return Response.json({ error: 'phone requerido' }, { status: 400 });
 
     // Dueno primero, invitado despues: mismo criterio que getMyPractice.
-    let practice = (await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: user.id }))?.[0] || null;
+    let practice = (await findPracticeRowsByOwner(base44, user.id))?.[0] || null;
     if (!practice) {
       const scope = await resolveScope(base44, user);
       if (scope?.practiceOwnerId) {
-        practice = (await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: scope.practiceOwnerId }))?.[0] || null;
+        practice = (await findPracticeRowsByOwner(base44, scope.practiceOwnerId))?.[0] || null;
       }
     }
     if (!practice) return Response.json({ error: 'no_practice' }, { status: 404 });

@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { PLAN_PRICES, PLAN_LABELS } from '../../shared/plan.ts';
 import { getOrCreateMpPlanLinks } from '../../shared/mercadopago.ts';
+import { findPracticeRowsByOwner } from "../../shared/ownership.ts";
 
 // Antes, CADA cambio de plan (incluso pasar de Pro a Clinic) creaba una suscripción
 // NUEVA en Mercado Pago y pisaba el mercadopago_subscription_id guardado — la
@@ -29,7 +30,7 @@ export default async function(req) {
       return Response.json({ error: 'Mercado Pago no está configurado. Contactá al administrador.' }, { status: 400 });
     }
 
-    const practices = await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: user.id });
+    const practices = await findPracticeRowsByOwner(base44, user.id);
     const practice = practices?.[0];
     if (!practice) return Response.json({ error: 'No hay configuración de consultorio' }, { status: 400 });
 

@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { ADDON_PACKS } from '../../shared/plan.ts';
+import { findPracticeRowsByOwner } from "../../shared/ownership.ts";
 
 // A diferencia del plan (suscripción recurrente), un pack adicional es un cobro ÚNICO:
 // usamos Checkout Preferences (no Preapproval) para esto.
@@ -21,7 +22,7 @@ export default async function(req) {
       return Response.json({ error: 'Mercado Pago no está configurado. Contactá al administrador.' }, { status: 400 });
     }
 
-    const practices = await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: user.id });
+    const practices = await findPracticeRowsByOwner(base44, user.id);
     const practice = practices?.[0];
     if (!practice) return Response.json({ error: 'No hay configuración de consultorio' }, { status: 400 });
 

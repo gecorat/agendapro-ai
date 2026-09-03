@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { fetchProfilePicture } from '../../shared/evolution-api.ts';
 import { resolveScope } from '../../shared/team-scope.ts';
+import { findPracticeRowsByOwner } from "../../shared/ownership.ts";
 
 // Trae la foto de perfil REAL de WhatsApp del contacto vía Evolution API. La URL que
 // devuelve WhatsApp es temporal (vence), así que se pide fresca cada vez que se abre la
@@ -20,11 +21,11 @@ export default async function (req: Request): Promise<Response> {
     // `created_by_id === user.id`, y como un invitado no creó ninguna PracticeSettings esto
     // quedaba en undefined: la ficha del contacto le mostraba siempre la inicial en vez de la
     // foto, sin ningún error visible.
-    let practice = (await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: user.id }))?.[0] || null;
+    let practice = (await findPracticeRowsByOwner(base44, user.id))?.[0] || null;
     if (!practice) {
       const scope = await resolveScope(base44, user);
       if (scope?.practiceOwnerId) {
-        practice = (await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: scope.practiceOwnerId }))?.[0] || null;
+        practice = (await findPracticeRowsByOwner(base44, scope.practiceOwnerId))?.[0] || null;
       }
     }
     // Solo disponible para conexión por QR (Evolution API). La API oficial de Zernio/Meta

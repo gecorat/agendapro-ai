@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { buildEmailHtml, getAppUrl } from '../../shared/email-template.ts';
 import { sendEmail } from '../../shared/email-sender.ts';
 import { getTrialCampaignStep, getPatientLabel } from '../../shared/trial-campaign-content.ts';
+import { findPracticeRowsByOwner } from "../../shared/ownership.ts";
 
 // Un paso (email) de la campaña de conversión de trial. La invoca el workflow
 // "Trial Conversion Campaign" una vez por día programado (0, 2, 4, 6, 8, 10, 12, 14).
@@ -22,7 +23,7 @@ export default async function (req: Request): Promise<Response> {
     let professionalType = 'other';
     if (user_id) {
       try {
-        const settingsList = await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: user_id });
+        const settingsList = await findPracticeRowsByOwner(base44, user_id);
         const settings = settingsList?.[0];
         if (settings) {
           if (settings.suspended) {

@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
+import { findPracticeRowsByOwner } from "../../shared/ownership.ts";
 
 // Promueve o degrada a un profesional invitado a "co-admin" (ve y gestiona todo el
 // consultorio como el dueno, menos facturacion/plan). Exclusivo del DUENO REAL de la
@@ -10,7 +11,7 @@ export default async function (req: Request): Promise<Response> {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const practices = await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: user.id });
+    const practices = await findPracticeRowsByOwner(base44, user.id);
     if (!practices?.[0]) {
       return Response.json({ error: 'Solo el dueno de la cuenta puede hacer esto' }, { status: 403 });
     }

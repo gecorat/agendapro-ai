@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { deleteInstance } from '../../shared/evolution-api.ts';
 import { setPracticeSecrets } from '../../shared/secrets.ts';
+import { findPracticeRowsByOwner } from "../../shared/ownership.ts";
 
 // Acción explícita y auditable para desconectar WhatsApp, en vez de dejar que el cliente
 // escriba directo los campos de conexión de Zernio (bloqueados por RLS para no-admins).
@@ -10,7 +11,7 @@ export default async function (req: Request): Promise<Response> {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const existing = await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: user.id });
+    const existing = await findPracticeRowsByOwner(base44, user.id);
     const practice = existing?.[0];
     if (!practice) return Response.json({ error: 'No hay configuración de consultorio' }, { status: 400 });
 

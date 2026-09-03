@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
+import { findPracticeRowsByOwner } from "../../shared/ownership.ts";
 
 // Endpoint público (visitante anónimo) para la sección "Reseñas de pacientes" de la
 // página de reservas (/u/:handle). ReviewRequest tiene lectura restringida por RLS al
@@ -16,7 +17,7 @@ export default async function (req: Request): Promise<Response> {
       return Response.json({ error: 'professional_id required' }, { status: 400 });
     }
 
-    const settingsList = await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: professional_id });
+    const settingsList = await findPracticeRowsByOwner(base44, professional_id);
     const settings = settingsList?.[0];
     // Si el profesional desactivó la sección, no exponemos nada (ni aunque nos pidan
     // el endpoint directo con su professional_id).

@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { syncSubscriptionStatus } from '../../shared/mercadopago.ts';
+import { findPracticeRowsByOwner } from "../../shared/ownership.ts";
 
 // Se llama apenas el usuario vuelve del checkout de Mercado Pago (con plan asociado) a
 // /upgrade-plan?status=success — en ese momento Mercado Pago agrega el preapproval_id
@@ -20,7 +21,7 @@ export default async function (req: Request): Promise<Response> {
     const preapprovalId = body?.preapproval_id;
     if (!preapprovalId) return Response.json({ error: 'Falta preapproval_id' }, { status: 400 });
 
-    const practices = await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: user.id });
+    const practices = await findPracticeRowsByOwner(base44, user.id);
     const practice = practices?.[0];
     if (!practice) return Response.json({ error: 'No se encontró tu consultorio' }, { status: 404 });
 

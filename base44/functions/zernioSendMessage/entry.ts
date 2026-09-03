@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { sendWhatsAppMessage, normalizePhone } from "../../shared/whatsapp-providers.ts";
 import { resolveScope } from "../../shared/team-scope.ts";
+import { findPracticeRowsByOwner } from "../../shared/ownership.ts";
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -24,7 +25,7 @@ export default async function(req: Request): Promise<Response> {
       return Response.json({ error: 'No tenemos un consultorio asociado a tu cuenta.' }, { status: 400 });
     }
     const practiceOwnerId = scope.practiceOwnerId;
-    const practice = (await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: practiceOwnerId }))?.[0];
+    const practice = (await findPracticeRowsByOwner(base44, practiceOwnerId))?.[0];
     if (!practice?.whatsapp_connected) {
       return Response.json({ error: 'Tu WhatsApp no está conectado' }, { status: 400 });
     }

@@ -3,6 +3,7 @@ import { resolveScope } from '../../shared/team-scope.ts';
 import { findContacts } from '../../shared/evolution-api.ts';
 import { planContactWrite } from '../../shared/whatsapp-contacts.ts';
 import { canonicalPhone } from '../../shared/phone-utils.ts';
+import { findPracticeRowsByOwner } from "../../shared/ownership.ts";
 
 // Trae los nombres de contacto que WhatsApp le sincronizo a Evolution al vincular el QR, y
 // los guarda para que la bandeja de Chats muestre un nombre en vez de un numero pelado.
@@ -40,11 +41,11 @@ export default async function (req: Request): Promise<Response> {
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     // Mismo criterio de alcance que el resto: dueno primero, invitado despues.
-    let practice = (await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: user.id }))?.[0] || null;
+    let practice = (await findPracticeRowsByOwner(base44, user.id))?.[0] || null;
     if (!practice) {
       const scope = await resolveScope(base44, user);
       if (scope?.practiceOwnerId) {
-        practice = (await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: scope.practiceOwnerId }))?.[0] || null;
+        practice = (await findPracticeRowsByOwner(base44, scope.practiceOwnerId))?.[0] || null;
       }
     }
     if (!practice) return Response.json({ error: 'no_practice' }, { status: 404 });

@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { syncProfessionalAddonBilling, CLINIC_FREE_PROFESSIONALS, PROFESSIONAL_ADDON_PRICE } from '../../shared/professional-billing.ts';
 import { resolveScope } from '../../shared/team-scope.ts';
+import { findPracticeRowsByOwner } from "../../shared/ownership.ts";
 
 // Genera un enlace unico de invitacion para sumar un profesional al equipo. Los primeros
 // 3 (CLINIC_FREE_PROFESSIONALS) estan incluidos en el plan Clinic; del 4to en adelante se
@@ -24,7 +25,7 @@ export default async function (req: Request): Promise<Response> {
     // manual". Sin el, se crea una ficha nueva como siempre.
     const { professionalId } = body || {};
 
-    const practices = await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: scope.practiceOwnerId });
+    const practices = await findPracticeRowsByOwner(base44, scope.practiceOwnerId);
     const practice = practices?.[0];
     if (!practice || practice.plan !== 'clinic') {
       return Response.json({ error: 'Esta funcion es solo para cuentas con plan Clinic' }, { status: 400 });

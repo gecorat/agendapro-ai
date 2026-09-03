@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { syncProfessionalAddonBilling } from '../../shared/professional-billing.ts';
 import { resolveScope } from '../../shared/team-scope.ts';
+import { findPracticeRowsByOwner } from "../../shared/ownership.ts";
 
 // Eliminar un profesional del equipo. Si era un addon pago, recalcula y baja el monto
 // real de la suscripcion en Mercado Pago automaticamente. Puede hacerlo el dueno real O
@@ -30,7 +31,7 @@ export default async function (req: Request): Promise<Response> {
 
     let billing = null;
     if (professional.is_paid_addon) {
-      const practices = await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: scope.practiceOwnerId });
+      const practices = await findPracticeRowsByOwner(base44, scope.practiceOwnerId);
       const practice = practices?.[0];
       if (practice) billing = await syncProfessionalAddonBilling(base44, practice);
     }

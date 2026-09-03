@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
+import { findPracticeRowsByOwner } from "../../shared/ownership.ts";
 
 export default async function(req) {
   try {
@@ -35,7 +36,7 @@ export default async function(req) {
         // solicitudes creadas a mano desde el manager (esas sí tienen created_by_id
         // correcto, pero no professional_id).
         const ownerId = rev.professional_id || rev.created_by_id;
-        const settings = await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: ownerId });
+        const settings = await findPracticeRowsByOwner(base44, ownerId);
         const s = settings?.[0];
         practice_name = s?.practice_name || '';
         page_color = s?.page_color || '#0f172a';

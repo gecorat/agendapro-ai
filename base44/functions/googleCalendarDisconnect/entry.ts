@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { resolveScope } from '../../shared/team-scope.ts';
 import { setPracticeSecrets, setProfessionalSecrets } from '../../shared/secrets.ts';
+import { findPracticeRowsByOwner } from "../../shared/ownership.ts";
 
 // Desconecta el Google Calendar de ESTA persona (dueño o profesional invitado según
 // quién llame). Borra el refresh token guardado -- ya no se puede sincronizar hasta que
@@ -20,7 +21,7 @@ export default async function (req: Request): Promise<Response> {
       await base44.asServiceRole.entities.Professional.update(scope.professionalRefId, clearData);
       await setProfessionalSecrets(base44, scope.professionalRefId, { google_refresh_token: null });
     } else {
-      const practices = await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: user.id });
+      const practices = await findPracticeRowsByOwner(base44, user.id);
       const practice = practices?.[0];
       if (practice) {
         await base44.asServiceRole.entities.PracticeSettings.update(practice.id, clearData);

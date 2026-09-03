@@ -147,6 +147,11 @@ function FullAssistant({ settings, reloadSettings, save }) {
   const [waNames, setWaNames] = useState([]);
   const [syncingContacts, setSyncingContacts] = useState(false);
   const [syncResult, setSyncResult] = useState(null);
+  // Edición del nombre del contacto desde la ficha de la derecha. `null` = no se está
+  // editando; un string (aunque sea vacío) = hay un input abierto con ese valor.
+  const [editingName, setEditingName] = useState(null);
+  const [savingName, setSavingName] = useState(false);
+  const [newPatientOpen, setNewPatientOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activePhone, setActivePhone] = useState(null);
   const [input, setInput] = useState("");
@@ -582,6 +587,24 @@ function FullAssistant({ settings, reloadSettings, save }) {
     if (!convo.waName) return "";
     if (contactName(convo) === convo.waName) return "";
     return convo.waName;
+  };
+
+  // Guarda el nombre escrito a mano. Se manda al backend (y no se escribe la entidad desde
+  // acá) porque la fila se guarda con el id del DUEÑO del consultorio: un profesional
+  // invitado no podría crearla la primera vez. Queda con origen "manual", que ninguna
+  // sincronización de contactos pisa después.
+  const handleSaveName = async () => {
+    if (!activePhone) return;
+    setSavingName(true);
+    try {
+      await base44.functions.invoke("setContactName", { phone: activePhone, name: (editingName || "").trim() });
+      setEditingName(null);
+      await load();
+    } catch (err) {
+      console.error("No se pudo guardar el nombre", err);
+    } finally {
+      setSavingName(false);
+    }
   };
 
   const handleSyncContacts = async () => {

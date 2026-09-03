@@ -73,6 +73,14 @@ export default async function (req: Request): Promise<Response> {
 
     const professionalId = practice.created_by_id;
 
+    // Mismo criterio que en el webhook de Evolution: el nombre de perfil de WhatsApp viene
+    // en el mensaje entrante y sirve para que la bandeja no muestre un numero pelado.
+    const pushName = msgData.pushName || msgData.key?.pushName || "";
+    if (pushName) {
+      const { rememberWhatsAppContact } = await import("../../shared/whatsapp-contacts.ts");
+      waitUntil(rememberWhatsAppContact(base44, { professionalId, phone: fromPhone, name: pushName, source: "profile" }));
+    }
+
     await base44.asServiceRole.entities.Conversation.create({
       phone: fromPhone,
       professional_id: professionalId,

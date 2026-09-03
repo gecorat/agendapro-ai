@@ -535,9 +535,14 @@ function FullAssistant({ settings, reloadSettings, save }) {
         message: content,
         conversationId: activeConvo?.conversationId,
       });
+      // Responder a mano pausa el bot para esta conversación (lo hace el backend). Acá se
+      // refleja en pantalla usando la MISMA clave normalizada con la que se guarda, para no
+      // agregar una fila duplicada que muestre un estado que no es el real.
+      const key = (activePhone || "").replace(/\D/g, "");
       setPauses((prev) => {
-        const idx = prev.findIndex((p) => p.phone === activePhone);
-        const next = { phone: activePhone, professional_id: user.id, paused: true };
+        const idx = prev.findIndex((p) => (p.phone || "").replace(/\D/g, "") === key);
+        const base = idx >= 0 ? prev[idx] : { phone: key };
+        const next = { ...base, phone: key, paused: true, paused_until: null };
         if (idx >= 0) { const copy = [...prev]; copy[idx] = next; return copy; }
         return [...prev, next];
       });

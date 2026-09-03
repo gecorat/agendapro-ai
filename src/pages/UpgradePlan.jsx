@@ -117,15 +117,15 @@ function CurrentPlanCard({ settings, status, subscription, loadingSub, onCancel,
             />
             <DetailRow
               icon={Calendar}
-              label="Período en curso"
+              label="Ciclo en curso"
               value={`Desde el ${formatDate(period.start)}`}
               hint={`Te quedan ${usage.remaining} conversaciones disponibles`}
             />
             <DetailRow
               icon={RefreshCw}
-              label="Se reinicia el contador"
+              label="Se renueva el cupo"
               value={formatDate(period.resetsAt, { day: "numeric", month: "long", year: "numeric" })}
-              hint={period.daysToReset === 1 ? "Mañana" : `En ${period.daysToReset} días`}
+              hint={`${period.daysToReset === 1 ? "Mañana" : `En ${period.daysToReset} días`} · el mismo día de tu cobro`}
             />
           </div>
         </div>

@@ -40,20 +40,27 @@ export async function isChatPaused(base44, professionalId, phone) {
 //
 // CRITERIO CONSERVADOR a proposito. El orden importa:
 //
-//  1. Si ya trae 11 digitos o mas, se manda TAL CUAL, sin tocar nada. Un numero de ese
-//     largo ya tiene codigo de pais: puede ser un movil argentino (549...), un FIJO
-//     argentino con WhatsApp Business (54 + area + abonado, SIN el 9), un paciente del
-//     exterior, o el numero que ya viene normalizado del webhook. Reescribirlo era una
-//     regresion: a un fijo 541143216543 le metia el 9 y lo mandaba a 5491143216543, que es
-//     un destino distinto — y ahi se rompian los avisos al profesional.
-//  2. Recien si tiene 10 digitos o menos se intenta completarlo como argentino. Ese es el
-//     unico caso roto de verdad: le falta el codigo de pais y WhatsApp lo resuelve como se
-//     le antoja (asi una confirmacion termino en el telefono de otra persona el 03/09).
-//  3. Si tampoco se puede completar, NO se manda.
+//  1. Si ya empieza con 54 y tiene largo completo, se manda TAL CUAL, SIN TOCAR NADA. Ahi
+//     entran tanto el movil (549 + 10) como el FIJO argentino con WhatsApp Business
+//     (54 + 10, sin el 9). Distinguir uno de otro es imposible mirando el numero, asi que
+//     no se toca: normalizarlo le metia el 9 a los fijos y mandaba 541143216543 a
+//     5491143216543, que es OTRO destino — rompia los avisos al profesional.
+//  2. Si no, se intenta completarlo como argentino. Ese es el caso roto de verdad: le falta
+//     el codigo de pais y WhatsApp lo resuelve como se le antoja (asi una confirmacion
+//     termino en el telefono de otra persona el 03/09). Cubre "3425902123",
+//     "0342 15 590 2123" y demas formas locales.
+//  3. Si no se pudo leer como argentino pero ya trae 11 digitos o mas, se manda tal cual:
+//     es un numero con codigo de pais de otro lado (o el que ya viene normalizado del
+//     webhook, incluido un grupo). Mismo comportamiento que antes de este cambio.
+//  4. Si nada de eso aplica, NO se manda.
 function resolveDestination(phone) {
   const digits = normalizePhone(phone);
+  if (!digits) return null;
+  if (digits.startsWith("54") && digits.length >= 12) return digits;
+  const ar = toWhatsAppNumber(phone);
+  if (ar) return ar;
   if (digits.length >= 11) return digits;
-  return toWhatsAppNumber(phone);
+  return null;
 }
 
 export async function sendWhatsAppMessage(base44, practice, phone, text) {

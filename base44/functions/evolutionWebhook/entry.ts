@@ -249,16 +249,6 @@ export default async function (req: Request): Promise<Response> {
       return Response.json({ ok: true, skipped: "usage_or_plan_blocked" });
     }
 
-    // Sin texto que interpretar (una foto sin nada escrito, o un audio que no se pudo
-    // transcribir) el bot no tiene a qué responder. El mensaje YA quedó guardado arriba, así
-    // que el profesional lo ve en la bandeja y lo atiende a mano.
-    //
-    // Para las notas de voz se le avisa al paciente, que si no queda esperando una respuesta
-    // que nunca va a llegar. Este aviso ahora sale acá abajo A PROPÓSITO: antes se mandaba
-    // arriba de todo, y por eso seguía contestando con el bot pausado y sin consumir del
-    // cupo del plan. Acá ya pasó la pausa de la conversación, el interruptor general y el
-    // control de cupo, igual que cualquier otra respuesta del bot. Los recordatorios no
-    // pasan por este archivo, así que siguen saliendo como siempre.
     waitUntil(
       base44.asServiceRole.functions.invoke("evolutionConversation", {
         phone: fromPhone,

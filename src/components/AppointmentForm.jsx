@@ -131,6 +131,35 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
     return start.toISOString();
   }
 
+  // Busca otra cita que se pise con la que se está por guardar. Se consultan las citas
+  // frescas en el momento de guardar (y no al abrir el formulario) para que no se escape una
+  // reserva que entró por el link público o por el bot mientras el formulario estaba abierto.
+  //
+  // Solo cuentan las del MISMO profesional del equipo: en el plan Clinic dos personas
+  // distintas pueden atender a la misma hora sin problema. Se ignoran las canceladas y la
+  // propia cita cuando se está editando.
+  async function findOverlap(startISO, endISO) {
+    try {
+      const res = await base44.functions.invoke("getScopedAppointments", {});
+      const all = res?.data?.appointments || [];
+      const start = new Date(startISO).getTime();
+      const end = new Date(endISO).getTime();
+      const ref = form.professional_ref_id || null;
+      return all.find((a) => {
+        if (a.id === appointment?.id) return false;
+        if (a.status === "cancelled" || a.is_demo) return false;
+        if ((a.professional_ref_id || null) !== ref) return false;
+        const aStart = new Date(a.start_datetime).getTime();
+        const aEnd = new Date(a.end_datetime).getTime();
+        return start < aEnd && aStart < end;
+      }) || null;
+    } catch (err) {
+      // Si no se puede consultar, se deja guardar: el aviso es una ayuda, no un requisito.
+      console.error("No se pudo chequear superposición", err);
+      return null;
+    }
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     if (!form.patient_id || !form.service_id || !form.start_datetime) return;
@@ -139,6 +168,18 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
       const patient = patients.find((p) => p.id === form.patient_id);
       const service = services.find((s) => s.id === form.service_id);
       const end = calcEnd(form.start_datetime, service.duration_minutes);
+
+      // Primer intento: si se pisa con otra cita, se avisa y se corta acá. El segundo click
+      // (con el aviso ya en pantalla) guarda igual.
+      if (!conflict) {
+        const clash = await findOverlap(new Date(form.start_datetime).toISOString(), end);
+        if (clash) {
+          const hora = new Date(clash.start_datetime).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
+          setConflict(`Se superpone con ${clash.patient_name || "otro turno"} (${clash.service_name || "turno"}) a las ${hora}.`);
+          setSaving(false);
+          return;
+        }
+      }
 
       // professional_id identifica a QUÉ CONSULTORIO pertenece la cita (no quién la
       // atiende dentro del equipo, eso es professional_ref_id). Antes este campo nunca

@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
-import { getPlanStatus, getWhatsAppUsage, PLAN_PRICES, PLAN_LABELS, CLINIC_MAX_PROFESSIONALS } from "@/lib/plan-utils";
+import { getPlanStatus, getWhatsAppUsage, PLAN_PRICES, PLAN_LABELS, CLINIC_MAX_PROFESSIONALS, showClinicPlan } from "@/lib/plan-utils";
 import { Check, Loader2, Sparkles, CreditCard, Lock, MessageCircle, Users, Calendar, XCircle, ShieldCheck, ArrowRightLeft } from "lucide-react";
 
 const BASIC_FEATURES = ["Página pública de reservas", "Agenda manual + calendario", "Gestión de pacientes", "Confirmaciones por email", "Envío manual por WhatsApp"];
@@ -235,7 +235,7 @@ export default function UpgradePlan() {
 
       <div>
         <h2 className="font-heading font-semibold mb-3">Cambiar de plan</h2>
-        <div className="grid md:grid-cols-3 gap-4">
+        <div className={`grid ${showClinicPlan(status.plan) ? "md:grid-cols-3" : "md:grid-cols-2"} gap-4`}>
           <Card className={`p-6 flex flex-col ${status.plan === "basic" ? "border-2 border-primary" : ""}`}>
             <span className="font-heading font-semibold text-lg">Básico</span>
             <p className="text-3xl font-heading font-bold mt-2">{PLAN_PRICES.basic}<span className="text-sm font-normal text-muted-foreground"> ARS/mes</span></p>
@@ -264,6 +264,9 @@ export default function UpgradePlan() {
             </Button>
           </Card>
 
+          {/* Plan Premium oculto temporalmente: solo lo ve quien ya lo tiene contratado
+              (ver CLINIC_PLAN_VISIBLE en plan-utils.js). */}
+          {showClinicPlan(status.plan) && (
           <Card className={`p-6 flex flex-col ${status.plan === "clinic" ? "border-2 border-primary" : ""}`}>
             <div className="flex items-center gap-2">
               <span className="font-heading font-semibold text-lg">{PLAN_LABELS.clinic}</span>
@@ -280,6 +283,7 @@ export default function UpgradePlan() {
               {status.plan === "clinic" ? "Plan actual" : "Suscribirme"}
             </Button>
           </Card>
+          )}
         </div>
       </div>
 

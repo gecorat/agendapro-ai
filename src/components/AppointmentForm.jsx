@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Plus, Repeat } from "lucide-react";
+import { Loader2, Plus, Repeat, AlertTriangle } from "lucide-react";
 import PatientForm from "@/components/PatientForm";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import { getPlanStatus } from "@/lib/plan-utils";
@@ -348,7 +348,7 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
 
             <div className="space-y-2">
               <Label>Servicio</Label>
-              <Select value={form.service_id} onValueChange={(v) => setForm({ ...form, service_id: v })}>
+              <Select value={form.service_id} onValueChange={(v) => { setConflict(null); setForm({ ...form, service_id: v }); }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar servicio" />
                 </SelectTrigger>
@@ -365,7 +365,7 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
             {isClinic && professionals.length > 0 && (
               <div className="space-y-2">
                 <Label>Profesional</Label>
-                <Select value={form.professional_ref_id || OWNER_VALUE} onValueChange={(v) => setForm({ ...form, professional_ref_id: v === OWNER_VALUE ? "" : v })}>
+                <Select value={form.professional_ref_id || OWNER_VALUE} onValueChange={(v) => { setConflict(null); setForm({ ...form, professional_ref_id: v === OWNER_VALUE ? "" : v }); }}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -385,7 +385,10 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
                 id="start"
                 type="datetime-local"
                 value={form.start_datetime}
-                onChange={(e) => setForm({ ...form, start_datetime: e.target.value })}
+                // Cambiar la hora invalida el aviso ya aceptado: si no, aceptar una
+                // superposición y después mover el turno a otro horario que también choca lo
+                // guardaría sin avisar nada.
+                onChange={(e) => { setConflict(null); setForm({ ...form, start_datetime: e.target.value }); }}
                 required
               />
               {selectedService && (
@@ -465,13 +468,23 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
               />
             </div>
 
+            {conflict && (
+              <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+                <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+                <div>
+                  <p className="font-medium">{conflict}</p>
+                  <p className="text-amber-800/90 mt-0.5">Si querés igual, volvé a tocar Guardar.</p>
+                </div>
+              </div>
+            )}
+
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancelar
               </Button>
               <Button type="submit" disabled={saving}>
                 {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                {appointment ? "Guardar" : "Crear cita"}
+                {conflict ? "Guardar igual" : appointment ? "Guardar" : "Crear cita"}
               </Button>
             </DialogFooter>
           </form>

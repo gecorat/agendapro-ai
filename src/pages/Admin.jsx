@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, UserPlus, Ticket, Plug, ExternalLink, Loader2, ShieldAlert } from "lucide-react";
+import { Shield, UserPlus, Ticket, Plug, ExternalLink, Loader2, ShieldAlert, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AdminUsers from "@/components/admin/AdminUsers";
 import AdminInvitations from "@/components/admin/AdminInvitations";
 import AdminConnections from "@/components/admin/AdminConnections";
+import AdminStats from "@/components/admin/AdminStats";
 
 export default function Admin() {
   const [user, setUser] = useState(null);
@@ -47,20 +48,24 @@ export default function Admin() {
           <h1 className="text-2xl font-heading font-semibold flex items-center gap-2">
             <Shield className="w-6 h-6" /> Administración
           </h1>
-          <p className="text-sm text-muted-foreground">Gestión de profesionales, invitaciones y conexiones de plataforma</p>
+          <p className="text-sm text-muted-foreground">Estadísticas, profesionales, invitaciones y conexiones de plataforma</p>
         </div>
         <Button variant="outline" size="sm" onClick={() => window.open("/landing-preview", "_blank")}>
           <ExternalLink className="w-4 h-4 mr-1" /> Ver landing
         </Button>
       </div>
 
-      <Tabs defaultValue="users">
-        <TabsList className="w-full grid grid-cols-3">
+      <Tabs defaultValue="stats">
+        <TabsList className="w-full grid grid-cols-4">
+          <TabsTrigger value="stats"><BarChart3 className="w-4 h-4 mr-1" /> Estadísticas</TabsTrigger>
           <TabsTrigger value="users"><UserPlus className="w-4 h-4 mr-1" /> Usuarios</TabsTrigger>
           <TabsTrigger value="invitations"><Ticket className="w-4 h-4 mr-1" /> Invitaciones</TabsTrigger>
           <TabsTrigger value="connections"><Plug className="w-4 h-4 mr-1" /> Conexiones</TabsTrigger>
         </TabsList>
 
+        <TabsContent value="stats" className="mt-4">
+          <AdminStats />
+        </TabsContent>
         <TabsContent value="users" className="mt-4">
           <AdminUsers />
         </TabsContent>

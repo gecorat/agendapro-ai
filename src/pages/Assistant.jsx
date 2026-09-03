@@ -632,7 +632,26 @@ function FullAssistant({ settings, reloadSettings, save }) {
   const ChatListColumn = (
     <div className={cn("w-full lg:w-[30%] lg:min-w-[280px] lg:max-w-[360px] border-r flex flex-col shrink-0 bg-white", mobileView !== "list" && "hidden lg:flex")} style={{ borderColor: WA.border }}>
       <div className="p-3 border-b space-y-2.5 shrink-0" style={{ borderColor: WA.border, background: WA.panelHeader }}>
-        <h2 className="font-heading font-semibold text-sm px-1">Conversaciones</h2>
+        <div className="flex items-center justify-between gap-2 px-1">
+          <h2 className="font-heading font-semibold text-sm">Conversaciones</h2>
+          {/* Trae los nombres que WhatsApp haya sincronizado de la agenda del celular. Solo
+              actualiza chats que ya existen: no importa la agenda entera. */}
+          <button
+            onClick={handleSyncContacts}
+            disabled={syncingContacts}
+            className="shrink-0 inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-full border transition-colors disabled:opacity-50"
+            style={{ borderColor: WA.border, color: "#54656F", background: "#fff" }}
+            title="Traer los nombres de contacto desde WhatsApp"
+          >
+            {syncingContacts ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+            Contactos
+          </button>
+        </div>
+        {syncResult && (
+          <p className={cn("text-[11px] px-1 leading-snug", syncResult.ok ? "text-emerald-700" : "text-muted-foreground")}>
+            {syncResult.text}
+          </p>
+        )}
         <div className="relative">
           <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nombre o número..." className="pl-8 h-9 text-sm bg-white" />
@@ -689,6 +708,9 @@ function FullAssistant({ settings, reloadSettings, save }) {
                     </span>
                     {convo.isPaused && (
                       <span className="text-[10px] font-medium text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded-full shrink-0">Manual</span>
+                    )}
+                    {waTag(convo) && (
+                      <span className="text-[10px] text-muted-foreground truncate min-w-0" title={`Así figura en WhatsApp: ${waTag(convo)}`}>WA: {waTag(convo)}</span>
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground truncate mt-0.5">{convo.lastText}</p>

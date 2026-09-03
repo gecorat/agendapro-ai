@@ -8,6 +8,8 @@ export function normalizePhone(phone) {
   return (phone || "").replace(/[^\d]/g, "");
 }
 
+import { toWhatsAppNumber } from "./phone-utils.ts";
+
 // Consultado por los webhooks antes de invocar al bot. Si el profesional pausó esta
 // conversación puntual (a mano, o automáticamente al responder él mismo), el bot no debe
 // contestarle a ese paciente hasta que se reanude explícitamente — o hasta que venza el
@@ -30,7 +32,34 @@ export async function isChatPaused(base44, professionalId, phone) {
   }
 }
 
+// Ultima linea de defensa antes de mandar cualquier WhatsApp, sin importar de donde salga
+// (confirmacion, recordatorio, respuesta del bot). Las fichas de paciente viejas quedaron
+// con el telefono a medias — "3541241378", sin codigo de pais — porque la pagina publica lo
+// aceptaba como texto libre. WhatsApp resuelve ese numero incompleto como puede, y ahi es
+// donde una confirmacion termino en el telefono de otra persona (03/09).
+//
+// CRITERIO CONSERVADOR a proposito:
+//  - Si se puede resolver como argentino, se manda al numero completo (arregla las fichas
+//    viejas sin tener que tocarlas una por una).
+//  - Si no se puede resolver pero ya trae 11 digitos o mas, se manda tal cual: es un numero
+//    con codigo de pais (un paciente del exterior, o el numero que ya viene normalizado del
+//    webhook) y no queremos romper lo que hoy funciona.
+//  - Si no se puede resolver y tiene 10 digitos o menos, NO se manda: le falta el codigo de
+//    pais y no hay forma de saber a quien iria a parar.
+function resolveDestination(phone) {
+  const ar = toWhatsAppNumber(phone);
+  if (ar) return ar;
+  const digits = normalizePhone(phone);
+  if (digits.length >= 11) return digits;
+  return null;
+}
+
 export async function sendWhatsAppMessage(base44, practice, phone, text) {
+  const to = resolveDestination(phone);
+  if (!to) {
+    throw new Error(`numero de WhatsApp incompleto, no se envia: "${phone}"`);
+  }
+  phone = to;
   if (practice?.whatsapp_connection_type === "qr") {
     return sendViaEvolution(base44, practice, phone, text);
   }

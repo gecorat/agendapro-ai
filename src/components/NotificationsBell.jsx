@@ -176,12 +176,17 @@ export default function NotificationsBell({ user }) {
         .filter((a) => a.status === "pending")
         .sort((a, b) => new Date(a.start_datetime) - new Date(b.start_datetime));
 
-      const recentResolved = all.filter(
-        (a) =>
-          (a.status === "confirmed" || a.status === "cancelled") &&
-          a.updated_date &&
-          new Date(a.updated_date) >= new Date(since)
-      );
+      // El tope de 50 se mantiene a propósito: las consultas anteriores lo tenían, y sin él
+      // un consultorio con mucho movimiento podría llenar la campanita de ruido.
+      const recentResolved = all
+        .filter(
+          (a) =>
+            (a.status === "confirmed" || a.status === "cancelled") &&
+            a.updated_date &&
+            new Date(a.updated_date) >= new Date(since)
+        )
+        .sort((a, b) => new Date(b.updated_date) - new Date(a.updated_date))
+        .slice(0, 50);
 
       const merged = [...pending, ...recentResolved];
       // dedupe by id

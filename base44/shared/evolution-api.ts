@@ -203,12 +203,25 @@ export async function findContacts(baseUrl, apiKey, instanceName) {
     .filter((c) => c.jid.endsWith('@s.whatsapp.net') && c.name && c.phone.length >= 8);
 }
 
+// Foto de perfil de WhatsApp de un contacto.
+//
+// SE MANDA EL JID COMPLETO (`<numero>@s.whatsapp.net`), NO el numero pelado. Con el numero
+// solo, Evolution lo "normaliza" de su lado y le SACA EL 9 del movil argentino, resolviendo
+// un JID que no existe y devolviendo null. Verificado contra la instancia real el 03/09:
+//
+//   {"number":"5493425526816"}                    -> wuid 543425526816@... , profilePictureUrl: null
+//   {"number":"5493425526816@s.whatsapp.net"}     -> wuid 5493425526816@... , foto OK
+//
+// Por eso la ficha del contacto en Chats mostraba siempre la inicial en vez de la foto.
 export async function fetchProfilePicture(baseUrl, apiKey, instanceName, phone) {
   try {
+    const digits = String(phone || '').replace(/[^0-9]/g, '');
+    if (!digits) return null;
+    const jid = String(phone).includes('@') ? String(phone) : `${digits}@s.whatsapp.net`;
     const res = await fetch(`${baseUrl}/chat/fetchProfilePictureUrl/${instanceName}`, {
       method: 'POST',
       headers: authHeaders(apiKey),
-      body: JSON.stringify({ number: phone }),
+      body: JSON.stringify({ number: jid }),
     });
     if (!res.ok) return null;
     const data = await safeJson(res);

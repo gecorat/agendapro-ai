@@ -43,7 +43,7 @@ export default async function (req: Request): Promise<Response> {
       const success = payload.data?.success;
       if (msgId && success === false) {
         try {
-          const rows = await base44.asServiceRole.entities.Conversation.filter({ professional_id: practice.created_by_id, wasender_msg_id: String(msgId) });
+          const rows = await base44.asServiceRole.entities.Conversation.filter({ professional_id: ownerIdOf(practice), wasender_msg_id: String(msgId) });
           if (rows?.[0]) {
             await base44.asServiceRole.entities.Conversation.update(rows[0].id, { delivery_failed: true });
           }
@@ -71,7 +71,9 @@ export default async function (req: Request): Promise<Response> {
       return Response.json({ ok: true, skipped: "no_text_or_phone" });
     }
 
-    const professionalId = practice.created_by_id;
+    // ownerIdOf, no created_by_id: en las cuentas nuevas ese campo es el id del servicio
+    // y el bot habría mezclado los datos de todas ellas (ver shared/ownership.ts).
+    const professionalId = ownerIdOf(practice);
 
     // Mismo criterio que en el webhook de Evolution: el nombre de perfil de WhatsApp viene
     // en el mensaje entrante y sirve para que la bandeja no muestre un numero pelado.

@@ -12,7 +12,7 @@ const STEPS = [
   { icon: ClipboardList, title: "Cargá tus servicios", desc: "Creá los tipos de consulta que ofrecés, con duración, precio y notas de preparación.", cta: "Gestionar servicios", to: "/configuracion" },
   { icon: CalendarClock, title: "Definí tus horarios", desc: "Configurá tu disponibilidad semanal, pausas y feriados.", cta: "Configurar horarios", to: "/configuracion" },
   { icon: MessageCircle, title: "Probá el bot", desc: "Simulá conversaciones reales con el asistente usando tus propios servicios y agenda.", cta: "Probar el bot", to: "/bot" },
-  { icon: CreditCard, title: "Activá tu plan", desc: "Cuando estés listo, pasá a Pro o Premium para habilitar WhatsApp y funcionalidades premium.", cta: "Ver planes", to: "/upgrade-plan" },
+  { icon: CreditCard, title: "Activá tu plan", desc: "Cuando estés listo, pasá al plan Pro para habilitar WhatsApp y las funciones automáticas.", cta: "Ver planes", to: "/upgrade-plan" },
 ];
 
 export default function WelcomeGuide() {

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CalendarClock, Clock, ArrowRight, Check, Loader2, Calendar, MapPin, Mail, CalendarX, MessageCircle, Instagram, Facebook, Globe, ExternalLink, Navigation, Star } from "lucide-react";
 import { resolveTheme, normalizeSocialUrl, whatsappUrl, googleMapsUrl, googleMapsEmbedSrc, avatarShapeClass, loadThemeFont } from "@/lib/theme-presets";
+import PoweredByKame from "@/components/PoweredByKame";
 
 // TODO EL CÁLCULO DE HORARIOS VA ANCLADO A HORA ARGENTINA, no a la del navegador.
 //

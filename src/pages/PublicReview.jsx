@@ -165,7 +165,9 @@ export default function PublicReview() {
           )}
         </Card>
 
-        <PoweredByKame utm="review_page" />
+        {/* Cuando ya dejó la reseña mostramos la tarjeta de arriba, no el pie también:
+            dos veces la marca en la misma pantalla es de más. */}
+        {!done && <PoweredByKame utm="review_page" />}
       </div>
     </div>
   );

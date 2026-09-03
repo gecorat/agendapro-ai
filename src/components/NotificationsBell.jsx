@@ -162,15 +162,28 @@ export default function NotificationsBell({ user }) {
   const loadPending = useCallback(async () => {
     try {
       const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      const pending = await base44.entities.Appointment.filter({ status: "pending" }, "start_datetime");
-      const confirmed = await base44.entities.Appointment.filter({ status: "confirmed" }, "-updated_date", 50);
-      const cancelled = await base44.entities.Appointment.filter({ status: "cancelled" }, "-updated_date", 50);
 
-      const recentResolved = [...(confirmed || []), ...(cancelled || [])].filter(
-        (a) => a.updated_date && new Date(a.updated_date) >= new Date(since)
+      // Se pide por getScopedAppointments y no consultando la entidad directo. La RLS de
+      // Appointment solo deja ver las filas donde el usuario es `created_by_id` o
+      // `professional_id`, y para un profesional INVITADO ninguna de las dos cosa se cumple
+      // (el `professional_id` de la cita es el del dueño del consultorio). Resultado: a los
+      // invitados les llegaba el push pero abrían la campanita y estaba vacía. Esta función
+      // resuelve el alcance del equipo y ya filtra al invitado a SUS propias citas.
+      const res = await base44.functions.invoke("getScopedAppointments", {});
+      const all = res?.data?.appointments || [];
+
+      const pending = all
+        .filter((a) => a.status === "pending")
+        .sort((a, b) => new Date(a.start_datetime) - new Date(b.start_datetime));
+
+      const recentResolved = all.filter(
+        (a) =>
+          (a.status === "confirmed" || a.status === "cancelled") &&
+          a.updated_date &&
+          new Date(a.updated_date) >= new Date(since)
       );
 
-      const merged = [...(pending || []), ...recentResolved];
+      const merged = [...pending, ...recentResolved];
       // dedupe by id
       const seen = new Set();
       const deduped = merged.filter((a) => {

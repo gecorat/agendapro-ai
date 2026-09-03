@@ -167,6 +167,15 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
     try {
       const patient = patients.find((p) => p.id === form.patient_id);
       const service = services.find((s) => s.id === form.service_id);
+      // `services` viene filtrado por activos (loadData), así que al editar una cita vieja
+      // cuyo servicio fue dado de baja esto quedaba en `undefined` y reventaba con un
+      // TypeError sin catch: el diálogo se quedaba abierto, sin mensaje, y la cita no se
+      // guardaba nunca.
+      if (!service) {
+        setConflict("El servicio de esta cita ya no está activo. Elegí otro para poder guardar.");
+        setSaving(false);
+        return;
+      }
       const end = calcEnd(form.start_datetime, service.duration_minutes);
 
       // Primer intento: si se pisa con otra cita, se avisa y se corta acá. El segundo click

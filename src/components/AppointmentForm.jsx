@@ -56,6 +56,10 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
   const { settings, isOwner, professional: myProfessional } = usePracticeSettings();
   const isClinic = getPlanStatus(settings).canUseMultiProfessional;
 
+  // Aviso de superposición. NO bloquea: el profesional es el dueño de su agenda y a veces
+  // encaja a alguien a propósito. Lo que no puede pasar es que lo haga SIN ENTERARSE, que es
+  // lo que pasaba hasta ahora (este formulario no validaba absolutamente nada).
+  const [conflict, setConflict] = useState(null);
   const [recurring, setRecurring] = useState(false);
   const [frequency, setFrequency] = useState("weekly");
   const [editScope, setEditScope] = useState("this"); // "this" | "future"
@@ -75,6 +79,7 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
   useEffect(() => {
     if (open) {
       loadData();
+      setConflict(null);
       setRecurring(false);
       setFrequency("weekly");
       setEditScope("this");

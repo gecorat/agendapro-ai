@@ -5,6 +5,7 @@ import { sendWhatsAppMessage, isChatPaused } from "../../shared/whatsapp-provide
 import { sendPushToUsers, getPracticeRecipientUserIds } from "../../shared/push.ts";
 import { getBotPauseStatus } from "../../shared/bot-status.ts";
 import { getPracticeSecrets } from "../../shared/secrets.ts";
+import { rememberWhatsAppContact } from "../../shared/whatsapp-contacts.ts";
 
 // Webhook de Evolution API (conexión por QR, self-hosted). Identificamos de qué
 // consultorio es cada mensaje por ?practiceId= en la URL (que nosotros mismos generamos
@@ -109,6 +110,14 @@ export default async function (req: Request): Promise<Response> {
     }
 
     const professionalId = practice.created_by_id;
+
+    // El nombre de perfil de WhatsApp viene en CADA mensaje entrante y hasta ahora se
+    // descartaba. Sin esto, la bandeja de Chats muestra un numero pelado para cualquiera
+    // que todavia no tenga ficha de paciente. waitUntil para no demorar la respuesta al
+    // webhook: si falla, el mensaje se guarda igual.
+    if (msgData.pushName) {
+      waitUntil(rememberWhatsAppContact(base44, { professionalId, phone: fromPhone, name: msgData.pushName, source: "profile" }));
+    }
 
     await base44.asServiceRole.entities.Conversation.create({
       phone: fromPhone,

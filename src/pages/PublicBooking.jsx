@@ -7,22 +7,49 @@ import { Label } from "@/components/ui/label";
 import { CalendarClock, Clock, ArrowRight, Check, Loader2, Calendar, MapPin, Mail, CalendarX, MessageCircle, Instagram, Facebook, Globe, ExternalLink, Navigation, Star } from "lucide-react";
 import { resolveTheme, normalizeSocialUrl, whatsappUrl, googleMapsUrl, googleMapsEmbedSrc, avatarShapeClass, loadThemeFont } from "@/lib/theme-presets";
 
+// TODO EL CÁLCULO DE HORARIOS VA ANCLADO A HORA ARGENTINA, no a la del navegador.
+//
+// Antes acá se usaba `d.setHours()`, `d.getDay()` y `d.getFullYear()` pelados, que trabajan
+// en el huso del DISPOSITIVO. Para un paciente en Argentina daba igual, pero para uno que
+// reserva desde afuera (o un argentino de viaje) los horarios se corrían varias horas: la
+// página le ofrecía "09:00" y en la agenda del profesional el turno caía a las 4 de la
+// mañana. El servidor no revalidaba nada, así que eso se aceptaba tal cual.
+//
+// Desde que `createPublicAppointment` valida con el motor de `shared/scheduling.ts` (que sí
+// está anclado a -03:00), esa diferencia dejaba al paciente en un callejón sin salida: veía
+// horarios en pantalla y el servidor le rechazaba todos. Estas funciones son la copia
+// exacta de las de `scheduling.ts`, para que la página y el servidor cuenten siempre lo
+// mismo. Si se cambia una, hay que cambiar la otra.
+const AR_TZ = "America/Argentina/Buenos_Aires";
+
+function toDateStr(d) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: AR_TZ, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
+}
+
+// Día de la semana (0=domingo..6=sábado) leído en hora argentina. Se arma un instante al
+// mediodía argentino (nunca cruza medianoche en UTC) y se lee con getUTCDay(), que no
+// depende del huso del proceso.
+function argentinaDayOfWeek(date) {
+  return new Date(`${toDateStr(date)}T12:00:00-03:00`).getUTCDay();
+}
+
 function parseTimeToDate(date, time) {
   const [h, m] = time.split(":").map(Number);
-  const d = new Date(date);
-  d.setHours(h, m, 0, 0);
-  return d;
+  const hh = String(h).padStart(2, "0");
+  const mm = String(m).padStart(2, "0");
+  return new Date(`${toDateStr(date)}T${hh}:${mm}:00-03:00`);
+}
+
+function argentinaDayBounds(date) {
+  const ymd = toDateStr(date);
+  return {
+    start: new Date(`${ymd}T00:00:00.000-03:00`),
+    end: new Date(`${ymd}T23:59:59.999-03:00`),
+  };
 }
 
 function rangesOverlap(aStart, aEnd, bStart, bEnd) {
   return aStart < bEnd && bStart < aEnd;
-}
-
-function toDateStr(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
 }
 
 function isBlockedDate(availability, date) {
@@ -52,13 +79,12 @@ function getBreakRanges(availability, dayOfWeek, professionalRefId) {
 function generateSlots(date, service, availability, appointments, professionalRefId, googleBusy) {
   if (!service) return [];
   if (isBlockedDate(availability, date)) return [];
-  const dayOfWeek = date.getDay();
+  const dayOfWeek = argentinaDayOfWeek(date);
   const workRanges = getWorkRanges(availability, dayOfWeek, professionalRefId);
   const breakRanges = getBreakRanges(availability, dayOfWeek, professionalRefId);
   if (!workRanges.length) return [];
 
-  const dayStart = new Date(date); dayStart.setHours(0, 0, 0, 0);
-  const dayEnd = new Date(date); dayEnd.setHours(23, 59, 59, 999);
+  const { start: dayStart, end: dayEnd } = argentinaDayBounds(date);
   // Los choques de horario se chequean SOLO contra las citas de ESE profesional puntual
   // (o, sin preferencia, contra las del dueño) — dos personas del equipo pueden tener
   // turnos a la misma hora sin pisarse.
@@ -427,7 +453,7 @@ export default function PublicBooking() {
     const proId = selectedProRefId;
     for (let i = 0; i < 21; i++) {
       const d = new Date(base.getTime() + i * 86400000);
-      if (getWorkRanges(availability, d.getDay(), proId).length && !isBlockedDate(availability, d)) days.push(d);
+      if (getWorkRanges(availability, argentinaDayOfWeek(d), proId).length && !isBlockedDate(availability, d)) days.push(d);
     }
     return days;
   }, [availability, selectedPro]);

@@ -144,6 +144,9 @@ function FullAssistant({ settings, reloadSettings, save }) {
   const [patients, setPatients] = useState([]);
   const [pauses, setPauses] = useState([]);
   const [templates, setTemplates] = useState([]);
+  const [waNames, setWaNames] = useState([]);
+  const [syncingContacts, setSyncingContacts] = useState(false);
+  const [syncResult, setSyncResult] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activePhone, setActivePhone] = useState(null);
   const [input, setInput] = useState("");
@@ -565,7 +568,44 @@ function FullAssistant({ settings, reloadSettings, save }) {
   };
 
   const fmtPhone = (p) => p || "Número desconocido";
-  const contactName = (convo) => (convo.patient ? `${convo.patient.first_name || ""} ${convo.patient.last_name || ""}`.trim() || fmtPhone(convo.phone) : fmtPhone(convo.phone));
+
+  // Nombre principal del chat: manda la ficha de paciente (es la que cargó el profesional),
+  // después el nombre de WhatsApp, y recién al final el número pelado.
+  const contactName = (convo) => {
+    const fromPatient = convo.patient ? `${convo.patient.first_name || ""} ${convo.patient.last_name || ""}`.trim() : "";
+    return fromPatient || convo.waName || fmtPhone(convo.phone);
+  };
+
+  // El nombre de WhatsApp se muestra APARTE, y solo cuando aporta algo: si ya es el nombre
+  // principal del chat no tiene sentido repetirlo.
+  const waTag = (convo) => {
+    if (!convo.waName) return "";
+    if (contactName(convo) === convo.waName) return "";
+    return convo.waName;
+  };
+
+  const handleSyncContacts = async () => {
+    setSyncingContacts(true);
+    setSyncResult(null);
+    try {
+      const res = await base44.functions.invoke("syncWhatsAppContacts", {});
+      const d = res?.data || {};
+      if (d.chats_matched > 0) {
+        setSyncResult({ ok: true, text: `Listo: ${d.chats_matched} ${d.chats_matched === 1 ? "chat actualizado" : "chats actualizados"}.` });
+      } else {
+        // Que vuelva vacío NO es un error: WhatsApp restringió la sincronización de la
+        // agenda del celular y a veces no manda los nombres. Se explica en vez de mostrar
+        // un éxito engañoso.
+        setSyncResult({ ok: false, text: "WhatsApp no compartió nombres de tu agenda. Los chats siguen mostrando el nombre de perfil de cada persona." });
+      }
+      await load();
+    } catch (err) {
+      const message = err?.response?.data?.message || "No se pudo sincronizar. Probá de nuevo en un rato.";
+      setSyncResult({ ok: false, text: message });
+    } finally {
+      setSyncingContacts(false);
+    }
+  };
 
   if (!connected) {
     return (

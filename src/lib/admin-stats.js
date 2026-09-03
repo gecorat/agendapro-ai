@@ -1,6 +1,6 @@
 // Agregados del panel de admin (planes, trials y facturación). Se mantienen como
 // funciones puras, separadas del componente, para poder probarlas sin renderizar nada.
-import { PLAN_PRICES, getCycleEnd } from "@/lib/plan-utils";
+import { PLAN_PRICES, getCycleEnd, getCycleAnchor } from "@/lib/plan-utils";
 
 export const PLAN_ORDER = ["trial", "basic", "pro", "clinic"];
 
@@ -140,7 +140,11 @@ export function upcomingCharges(practices, now = new Date()) {
 
   for (const p of practices || []) {
     if (!isBillable(p)) continue;
-    const next = getCycleEnd(p, now);
+    // Caso borde: si el ancla todavía no llegó (recién suscripto, el primer cobro está
+    // agendado), el próximo cobro ES el ancla — no el aniversario siguiente. Sin esto ese
+    // primer cobro se saltaba y quedaba fuera de lo esperado del mes.
+    const anchor = getCycleAnchor(p);
+    const next = anchor && anchor > now ? anchor : getCycleEnd(p, now);
     if (!(next < monthEnd)) continue; // el próximo cobro cae recién el mes que viene
 
     const amount = priceOf(p.plan);

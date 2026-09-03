@@ -32,6 +32,12 @@ export default async function (req: Request): Promise<Response> {
         next_payment_date: data.next_payment_date,
         last_charged_amount: data.summarized?.last_charged_amount,
         last_charged_date: data.summarized?.last_charged_date,
+        // Extras para la tarjeta "Tu plan": desde cuándo está activa la suscripción,
+        // cada cuánto se cobra y cuántos cobros lleva.
+        created_at: data.date_created,
+        frequency: data.auto_recurring?.frequency,
+        frequency_type: data.auto_recurring?.frequency_type,
+        charged_quantity: data.summarized?.charged_quantity,
       },
     });
   } catch (error) {

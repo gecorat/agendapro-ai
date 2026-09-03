@@ -14,6 +14,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, Clock, UserPlus, Trash2, Ban, ShieldCheck, Crown, Copy, Check, Mail, XCircle } from "lucide-react";
 import { PLAN_LABELS } from "@/lib/plan-utils";
+import { indexPracticesByOwner } from "@/lib/ownership";
 
 function statusFor(settings) {
   if (!settings) return { label: "Sin configurar", color: "text-muted-foreground" };
@@ -60,11 +61,10 @@ export default function AdminUsers() {
       ]);
       setMe(meRes);
       setUsers(u || []);
-      const map = {};
-      (allSettings || []).forEach((s) => {
-        map[s.created_by_id] = s;
-      });
-      setSettingsByUser(map);
+      // Por dueño real: agrupar por created_by_id metía a TODAS las cuentas creadas por
+      // el onboarding bajo una sola clave (el id del servicio), así que se pisaban entre
+      // sí y ninguna mostraba su plan. Ver src/lib/ownership.js.
+      setSettingsByUser(indexPracticesByOwner(allSettings));
     } finally {
       setLoading(false);
     }

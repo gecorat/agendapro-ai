@@ -1,4 +1,5 @@
 import { PLAN_PRICES } from "./plan.ts";
+import { ownerIdOf } from "./ownership.ts";
 
 // $10.000/mes por cada profesional que supere los 3 incluidos en el plan Clinic.
 // Confirmado con el due\u00f1o de la cuenta.

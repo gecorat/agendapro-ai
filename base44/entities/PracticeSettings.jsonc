@@ -34,6 +34,33 @@
       "default": 15,
       "description": "Cu\u00e1nto espera el bot antes de mandar su respuesta por WhatsApp, para que no se sienta instant\u00e1neo/robotizado."
     },
+    "bot_persona_mode": {
+      "type": "string",
+      "title": "Bot - Quien dice ser",
+      "enum": [
+        "assistant",
+        "professional"
+      ],
+      "default": "assistant",
+      "description": "assistant = el bot se presenta como el asistente del profesional. professional = habla como si fuera el profesional mismo. Se lee en zernio.ts y en botPreviewMessage. FALTABA EN EL SCHEMA: el panel del bot lo guardaba y la entidad lo descartaba en silencio, asi que la eleccion nunca se persistia."
+    },
+    "bot_required_patient_fields": {
+      "type": "array",
+      "title": "Bot - Datos que pide antes de agendar",
+      "items": {
+        "type": "string"
+      },
+      "default": [
+        "last_name"
+      ],
+      "description": "Campos del paciente que el bot exige antes de confirmar un turno (por ejemplo apellido, email). Se lee en zernio.ts y en botPreviewMessage. FALTABA EN EL SCHEMA, misma situacion que bot_persona_mode."
+    },
+    "auto_confirm_public_bookings": {
+      "type": "boolean",
+      "title": "Confirmar automaticamente las reservas de la pagina publica",
+      "default": false,
+      "description": "Solo aplica a los planes Basic y Trial: en Pro y Clinic la confirmacion automatica es siempre. En false, las reservas del link publico nacen 'pending' y esperan la aprobacion del profesional. Se lee en createPublicAppointment. FALTABA EN EL SCHEMA: el switch de PublicPageEditor mostraba el cartel de guardado con exito y la entidad descartaba el valor, asi que las reservas seguian naciendo pendientes para siempre."
+    },
     "bot_enabled": {
       "type": "boolean",
       "title": "Bot \u2014 Activo",

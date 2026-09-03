@@ -99,7 +99,7 @@ export function getPlanStatus(settings) {
 // Ciclo de facturación. Espejo EXACTO de getCycleStart/getCycleEnd en
 // base44/shared/plan.ts — mantener ambos en sync. El cupo se renueva en el aniversario
 // de la suscripción (mismo día en que cobra Mercado Pago), no el 1º de cada mes.
-function cycleAnchor(settings) {
+export function getCycleAnchor(settings) {
   const raw = settings?.plan_cycle_anchor || settings?.whatsapp_usage_period_start || settings?.created_date;
   const d = raw ? new Date(raw) : null;
   return d && !Number.isNaN(d.getTime()) ? d : null;
@@ -115,7 +115,7 @@ function onDayOfMonth(year, month, day, ref) {
 }
 
 export function getCycleStart(settings, now = new Date()) {
-  const anchor = cycleAnchor(settings);
+  const anchor = getCycleAnchor(settings);
   if (!anchor) return now;
   if (anchor >= now) return anchor;
   const thisMonth = onDayOfMonth(now.getFullYear(), now.getMonth(), anchor.getDate(), anchor);
@@ -125,7 +125,7 @@ export function getCycleStart(settings, now = new Date()) {
 
 export function getCycleEnd(settings, now = new Date()) {
   const start = getCycleStart(settings, now);
-  const anchor = cycleAnchor(settings) || start;
+  const anchor = getCycleAnchor(settings) || start;
   return onDayOfMonth(start.getFullYear(), start.getMonth() + 1, anchor.getDate(), anchor);
 }
 

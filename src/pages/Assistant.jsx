@@ -892,6 +892,9 @@ function FullAssistant({ settings, reloadSettings, save }) {
             <ContactAvatar name={contactName(activeConvo)} url={avatarUrl} loading={avatarLoading} size="w-14 h-14" textSize="text-lg" />
           </div>
           <p className="font-semibold text-sm">{contactName(activeConvo)}</p>
+          {waTag(activeConvo) && (
+            <p className="text-[11px] text-muted-foreground mt-0.5">En WhatsApp figura como «{waTag(activeConvo)}»</p>
+          )}
         </div>
 
         <div className="space-y-2">

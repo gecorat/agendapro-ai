@@ -223,16 +223,18 @@ function FullAssistant({ settings, reloadSettings, save }) {
       }
     };
     try {
-      const [msgs, pats, pausesList, tmpl] = await Promise.all([
+      const [msgs, pats, pausesList, tmpl, waContacts] = await Promise.all([
         safeFetch(() => base44.entities.Conversation.filter({ professional_id: user.id }, "-created_date", 800), "conversaciones"),
         safeFetch(() => base44.entities.Patient.filter({ professional_id: user.id }), "pacientes"),
         safeFetch(() => base44.entities.ChatPause.filter({ professional_id: user.id }), "pausas"),
         safeFetch(() => base44.entities.MessageTemplate.filter({ professional_id: user.id }), "plantillas"),
+        safeFetch(() => base44.entities.WhatsAppContact.filter({ professional_id: user.id }), "contactos de WhatsApp"),
       ]);
       setAllMsgs(msgs || []);
       setPatients(pats || []);
       setPauses(pausesList || []);
       setTemplates(tmpl || []);
+      setWaNames(waContacts || []);
     } finally {
       setLoading(false);
     }
@@ -266,6 +268,22 @@ function FullAssistant({ settings, reloadSettings, save }) {
     for (const p of pauses) map.set((p.phone || "").replace(/\D/g, ""), p);
     return map;
   }, [pauses]);
+
+  // Nombre con el que la persona figura en WhatsApp. Sirve para que un chat de alguien que
+  // todavía no tiene ficha de paciente no aparezca como un número pelado. Se compara por
+  // los últimos 10 dígitos, igual que con los pacientes.
+  const waNameByPhone = useMemo(() => {
+    const canonical = (phone) => {
+      const digits = (phone || "").replace(/\D/g, "");
+      return digits.length <= 10 ? digits : digits.slice(-10);
+    };
+    const map = new Map();
+    // Los de la agenda del celular pisan a los de perfil: son los que el profesional
+    // reconoce. Se cargan en segundo lugar para que ganen.
+    for (const c of waNames) if (c.phone && c.source !== "agenda") map.set(canonical(c.phone), c.name);
+    for (const c of waNames) if (c.phone && c.source === "agenda") map.set(canonical(c.phone), c.name);
+    return map;
+  }, [waNames]);
 
   const conversations = useMemo(() => {
     const map = new Map();
@@ -306,9 +324,11 @@ function FullAssistant({ settings, reloadSettings, save }) {
       // haya quedado guardado el teléfono del paciente.
       const canonicalPhone = phone.replace(/\D/g, "").slice(-10);
       const patient = patientByPhone.get(canonicalPhone);
+      const waName = waNameByPhone.get(canonicalPhone) || "";
       result.push({
         phone,
         patient,
+        waName,
         messages: sorted,
         lastText: last?.text || "",
         lastDate: last?.created_date || "",
@@ -319,7 +339,7 @@ function FullAssistant({ settings, reloadSettings, save }) {
     }
     result.sort((a, b) => new Date(b.lastDate) - new Date(a.lastDate));
     return result;
-  }, [allMsgs, pauseByPhone, patientByPhone, lastReadMap]);
+  }, [allMsgs, pauseByPhone, patientByPhone, waNameByPhone, lastReadMap]);
 
   const filteredConversations = useMemo(() => {
     let list = conversations;
@@ -328,7 +348,7 @@ function FullAssistant({ settings, reloadSettings, save }) {
     else if (filter === "manual") list = list.filter((c) => c.isPaused);
     if (search.trim()) {
       const q = search.trim().toLowerCase();
-      list = list.filter((c) => c.phone.includes(q) || (c.patient?.first_name || "").toLowerCase().includes(q) || (c.patient?.last_name || "").toLowerCase().includes(q));
+      list = list.filter((c) => c.phone.includes(q) || (c.patient?.first_name || "").toLowerCase().includes(q) || (c.patient?.last_name || "").toLowerCase().includes(q) || (c.waName || "").toLowerCase().includes(q));
     }
     return list;
   }, [conversations, filter, search]);

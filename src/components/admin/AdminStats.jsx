@@ -7,7 +7,7 @@ import { Loader2, Users, Wallet, Clock, AlertTriangle, TrendingUp, Info, Calenda
 import { PLAN_LABELS, formatDate } from "@/lib/plan-utils";
 import {
   summarizePlans, bucketRevenue, revenueTotals, planRevenue, upcomingCharges,
-  formatARS, PLAN_COLORS, PLAN_ORDER,
+  splitOrphanPractices, formatARS, PLAN_COLORS, PLAN_ORDER,
 } from "@/lib/admin-stats";
 
 const RANGES = {
@@ -187,6 +187,7 @@ function RevenueTooltip({ active, payload, label }) {
 
 export default function AdminStats() {
   const [practices, setPractices] = useState([]);
+  const [users, setUsers] = useState([]);
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [paymentsUnavailable, setPaymentsUnavailable] = useState(false);
@@ -198,11 +199,13 @@ export default function AdminStats() {
       // está desplegada (o falla), las estadísticas de planes y trials — que no dependen
       // de ella — tienen que mostrarse igual en vez de dejar la pantalla en cero.
       try {
-        const [ps, pay] = await Promise.all([
+        const [ps, us, pay] = await Promise.all([
           base44.entities.PracticeSettings.filter({}).catch(() => []),
+          base44.entities.User.list().catch(() => []),
           base44.entities.Payment.filter({}).catch(() => null),
         ]);
         setPractices(ps || []);
+        setUsers(us || []);
         setPayments(pay || []);
         setPaymentsUnavailable(pay === null);
       } finally {
@@ -211,9 +214,12 @@ export default function AdminStats() {
     })();
   }, []);
 
-  const stats = useMemo(() => summarizePlans(practices), [practices]);
-  const revenue = useMemo(() => planRevenue(practices), [practices]);
-  const upcoming = useMemo(() => upcomingCharges(practices), [practices]);
+  // Las fichas sin usuario no cuentan para nada: inflaban totales y trials con cuentas
+  // que ya no existen. Se muestran aparte, abajo, para poder limpiarlas.
+  const { real, orphans } = useMemo(() => splitOrphanPractices(practices, users), [practices, users]);
+  const stats = useMemo(() => summarizePlans(real), [real]);
+  const revenue = useMemo(() => planRevenue(real), [real]);
+  const upcoming = useMemo(() => upcomingCharges(real), [real]);
   const totals = useMemo(() => revenueTotals(payments), [payments]);
   const series = useMemo(
     () => bucketRevenue(payments, range, new Date(), RANGES[range].count),
@@ -256,6 +262,20 @@ export default function AdminStats() {
             <AlertTriangle className="w-4 h-4 shrink-0" />
             <span>
               <strong>{stats.trialsExpiring}</strong> {stats.trialsExpiring === 1 ? "prueba vence" : "pruebas vencen"} en los próximos 3 días.
+            </span>
+          </p>
+        </Card>
+      )}
+
+      {orphans.length > 0 && (
+        <Card className="p-3 border-slate-300 bg-slate-50">
+          <p className="text-sm text-slate-700 flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+            <span>
+              <strong>{orphans.length}</strong> {orphans.length === 1 ? "ficha de consultorio no tiene" : "fichas de consultorio no tienen"} usuario asociado
+              y qued{orphans.length === 1 ? "a" : "an"} fuera de los números de arriba:{" "}
+              {orphans.map((o) => o.practice_name || o.professional_email || o.id).join(", ")}.
+              Son datos que sobrevivieron a una cuenta borrada; conviene eliminarlos.
             </span>
           </p>
         </Card>

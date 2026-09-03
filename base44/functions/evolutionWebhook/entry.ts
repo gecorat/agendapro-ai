@@ -135,7 +135,9 @@ export default async function (req: Request): Promise<Response> {
       return Response.json({ ok: true, skipped: `sin_contenido:${incoming.kind}` });
     }
 
-    const professionalId = practice.created_by_id;
+    // ownerIdOf, no created_by_id: en las cuentas nuevas ese campo es el id del servicio
+    // y el bot habría mezclado los datos de todas ellas (ver shared/ownership.ts).
+    const professionalId = ownerIdOf(practice);
 
     // El nombre de perfil de WhatsApp viene en CADA mensaje entrante y hasta ahora se
     // descartaba. Sin esto, la bandeja de Chats muestra un numero pelado para cualquiera

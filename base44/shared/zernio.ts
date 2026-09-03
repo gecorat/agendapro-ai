@@ -232,7 +232,10 @@ export async function orchestrateConversation(base44, ctx) {
     base44.asServiceRole.entities.Availability.filter({ practice_owner_id: professionalId }),
   ]);
 
-  const myServices = (services || []).filter((s) => s.created_by_id === professionalId);
+  // rowBelongsTo mira practice_owner_id y, si no lo tiene, created_by_id: los servicios
+  // creados por el onboarding llevan el id del servicio en created_by_id, así que
+  // compararlo a secas dejaba al bot sin ningún servicio que ofrecer (ver ownership.ts).
+  const myServices = (services || []).filter((s) => rowBelongsTo(s, professionalId));
   // TODAS las citas de este consultorio (no de toda la plataforma). OJO: el campo
   // correcto para esto es `professional_id` — `created_by_id` en una cita creada por el
   // bot/una función del servidor SIEMPRE es un id genérico interno del sistema, nunca el
@@ -894,8 +897,8 @@ REGLAS ADICIONALES:
       const { isChatPaused } = await import("./whatsapp-providers.ts");
       if (await isChatPaused(base44, professionalId, fromPhone)) return false;
       const { getBotPauseStatus } = await import("./bot-status.ts");
-      const fresh = await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: professionalId });
-      if (getBotPauseStatus(fresh?.[0] || practice).paused) return false;
+      const fresh = await findPracticeByOwner(base44, professionalId);
+      if (getBotPauseStatus(fresh || practice).paused) return false;
       return true;
     } catch (e) {
       // Si el chequeo falla, se mantiene el comportamiento anterior (enviar): el control del

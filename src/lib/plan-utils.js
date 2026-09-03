@@ -8,16 +8,19 @@ export const PLAN_PRICES = {
 };
 
 // Flag para ocultar el plan Premium (clinic) de TODA la UI: landing, centro de planes,
-// pestaña Plan de Configuración, pestaña Equipo y CTAs sueltos. El backend sigue intacto
-// (createMpPreference, canUseMultiProfessional, etc.), así que una cuenta que ya está en
-// clinic sigue funcionando y viendo su propio plan — solo se esconde la posibilidad de
-// verlo/contratarlo para el resto. Poner en true para volver a mostrarlo en todos lados.
+// pestaña Plan de Configuración, pestaña Equipo, panel de admin y CTAs sueltos. El
+// backend sigue intacto (createMpPreference, canUseMultiProfessional, etc.); esto es
+// solo visibilidad. Poner en true para volver a mostrarlo en todos lados.
+//
+// Se oculta para TODOS, sin excepción: las cuentas que estaban en clinic se migraron a
+// pro (2026-09-03), así que no queda nadie que necesite verlo.
 export const CLINIC_PLAN_VISIBLE = false;
 
-// true si hay que mostrar algo del plan Premium: o está habilitado globalmente, o la
-// cuenta actual ya lo tiene contratado.
+// Se mantiene la firma con `plan` para no tocar los llamadores, pero hoy el plan Premium
+// no se muestra a nadie, tenga el plan que tenga.
+// eslint-disable-next-line no-unused-vars
 export function showClinicPlan(plan) {
-  return CLINIC_PLAN_VISIBLE || plan === "clinic";
+  return CLINIC_PLAN_VISIBLE;
 }
 
 export const PLAN_LABELS = {

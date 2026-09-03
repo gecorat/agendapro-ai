@@ -431,7 +431,13 @@
       "type": "string",
       "format": "date-time",
       "title": "Inicio del per\u00edodo de uso actual",
-      "description": "Cuando se reinicia (mensualmente), whatsapp_usage_count vuelve a 0."
+      "description": "Arranque del ciclo de facturaci\u00f3n vigente. Cuando empieza un ciclo nuevo (aniversario de la suscripci\u00f3n, ver getCycleStart en base44/shared/plan.ts), whatsapp_usage_count vuelve a 0."
+    },
+    "plan_cycle_anchor": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Ancla del ciclo de facturaci\u00f3n",
+      "description": "Fecha de alta de la suscripci\u00f3n en Mercado Pago: su d\u00eda del mes es el d\u00eda de cobro y, por lo tanto, el d\u00eda en que se renueva el cupo de conversaciones. Lo escribe syncSubscriptionStatus al activar una suscripci\u00f3n, y AdminUsers al asignar un plan a mano. Vac\u00edo = se cae a whatsapp_usage_period_start y despu\u00e9s a created_date."
     },
     "whatsapp_addon_conversations": {
       "type": "number",

@@ -30,6 +30,10 @@ export default function Settings() {
   const requestedTab = searchParams.get("tab");
   const validTabs = ["profile", "services", ...(showTeamTab ? ["team"] : []), "hours", "templates", "bot", "integrations", ...(canManageBilling ? ["plan"] : [])];
   const initialTab = validTabs.includes(requestedTab) ? requestedTab : "services";
+  // Clases completas y literales: Tailwind no puede purgar bien un `grid-cols-${n}`.
+  const tabsGridClass = showTeamTab
+    ? (canManageBilling ? "grid-cols-8" : "grid-cols-7")
+    : (canManageBilling ? "grid-cols-7" : "grid-cols-6");
 
   return (
     <div className="px-3 py-3 md:p-6 max-w-4xl mx-auto space-y-4">
@@ -39,7 +43,7 @@ export default function Settings() {
       </div>
 
       <Tabs defaultValue={initialTab}>
-        <TabsList className={`grid w-full bg-muted/60 rounded-xl p-1 h-auto grid-cols-${5 + (showTeamTab ? 1 : 0) + (canManageBilling ? 1 : 0)}`}>
+        <TabsList className={`grid w-full bg-muted/60 rounded-xl p-1 h-auto ${tabsGridClass}`}>
           <TabsTrigger value="profile" className="rounded-lg text-xs sm:text-sm py-1.5">Perfil</TabsTrigger>
           <TabsTrigger value="services" className="rounded-lg text-xs sm:text-sm py-1.5">Servicios</TabsTrigger>
           {showTeamTab && <TabsTrigger value="team" className="rounded-lg text-xs sm:text-sm py-1.5">Equipo</TabsTrigger>}
@@ -172,7 +176,7 @@ function PlanSection() {
           <Link to="/upgrade-plan">Ver planes y suscribirme</Link>
         </Button>
       </div>
-      <div className="grid sm:grid-cols-2 gap-4">
+      <div className={`grid gap-4 ${showClinicPlan(status.plan) ? "sm:grid-cols-2" : ""}`}>
         <div className={`bg-card rounded-2xl p-5 border ${status.plan === "pro" ? "border-2 border-primary" : "border-border"}`}>
           <p className="font-heading font-semibold">Pro</p>
           <p className="text-2xl font-heading font-bold mt-1">{PLAN_PRICES.pro}<span className="text-sm font-normal text-muted-foreground">/mes</span></p>

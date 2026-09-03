@@ -1,0 +1,95 @@
+{
+  "name": "WhatsAppContact",
+  "type": "object",
+  "description": "Nombre con el que aparece un numero en WhatsApp, para que la bandeja de Chats no muestre un numero pelado cuando la persona todavia no tiene ficha de paciente. Dos origenes distintos: 'profile' es el nombre que la persona se puso a si misma en su perfil de WhatsApp (llega gratis en cada mensaje entrante, es el confiable); 'agenda' es el nombre que el titular tiene guardado en la agenda del celular que escaneo el QR (se trae a pedido desde Evolution y puede volver vacio).",
+  "properties": {
+    "phone": {
+      "type": "string",
+      "title": "Telefono (solo digitos)"
+    },
+    "professional_id": {
+      "type": "string",
+      "title": "Profesional titular"
+    },
+    "name": {
+      "type": "string",
+      "title": "Nombre en WhatsApp"
+    },
+    "source": {
+      "type": "string",
+      "title": "De donde salio el nombre",
+      "enum": [
+        "profile",
+        "agenda"
+      ],
+      "default": "profile"
+    },
+    "synced_at": {
+      "type": "string",
+      "title": "Ultima actualizacion del nombre"
+    }
+  },
+  "required": [
+    "phone",
+    "name"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.professional_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.professional_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.professional_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

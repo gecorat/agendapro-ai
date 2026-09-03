@@ -118,12 +118,15 @@ function generateSlots(date, service, availability, appointments, professionalRe
   return slots;
 }
 
+// Los horarios se MUESTRAN también en hora argentina, que es la del consultorio. Sin el
+// timeZone explícito, alguien reservando desde afuera veía la hora traducida a su huso y
+// creía estar sacando turno a las 09:00 cuando en el consultorio eran otras.
 function formatSlot(d) {
-  return d.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", hour12: false });
+  return d.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: AR_TZ });
 }
 
 function formatLongDate(d) {
-  return d.toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long" });
+  return d.toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long", timeZone: AR_TZ });
 }
 
 function buildWaMessage(service, date, slot, form) {
@@ -682,7 +685,7 @@ export default function PublicBooking() {
                 const selected = date && d.toDateString() === date.toDateString();
                 return (
                   <button key={d.toISOString()} onClick={() => { setDate(d); setSlot(null); setBookingError(null); }} className={`p-2 border text-center transition-colors ${theme.radiusClass}`} style={selected ? { background: theme.accentCss, borderColor: brand, color: theme.accentText } : { borderColor: theme.cardBorder, color: theme.text }}>
-                    <p className="text-xs capitalize opacity-70">{d.toLocaleDateString("es-AR", { weekday: "short" })}</p>
+                    <p className="text-xs capitalize opacity-70">{d.toLocaleDateString("es-AR", { weekday: "short", timeZone: AR_TZ })}</p>
                     <p className="font-medium text-sm">{d.getDate()}</p>
                   </button>
                 );

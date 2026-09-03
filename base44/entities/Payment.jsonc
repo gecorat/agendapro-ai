@@ -1,0 +1,115 @@
+{
+  "name": "Payment",
+  "type": "object",
+  "properties": {
+    "practice_id": {
+      "type": "string",
+      "title": "Consultorio (PracticeSettings.id)",
+      "description": "A qu\u00e9 cuenta corresponde el cobro. Se resuelve buscando la suscripci\u00f3n del proveedor (mercadopago_subscription_id) o, en los packs adicionales, por la metadata del pago."
+    },
+    "practice_name": {
+      "type": "string",
+      "title": "Nombre del consultorio (copia al momento del cobro)",
+      "description": "Se guarda desnormalizado a prop\u00f3sito: el panel de admin lista cobros hist\u00f3ricos y el nombre pudo haber cambiado (o la cuenta pudo haberse borrado) desde entonces."
+    },
+    "provider": {
+      "type": "string",
+      "title": "Proveedor de pago",
+      "enum": [
+        "mercadopago",
+        "dlocal"
+      ],
+      "default": "mercadopago",
+      "description": "Preparado para convivir con m\u00e1s de un proveedor. Hoy solo escribe 'mercadopago'."
+    },
+    "provider_payment_id": {
+      "type": "string",
+      "title": "ID del pago en el proveedor",
+      "description": "CLAVE DE IDEMPOTENCIA: el webhook de Mercado Pago puede avisar varias veces por el mismo cobro (y el chequeo peri\u00f3dico puede volver a verlo). Antes de crear un Payment se busca por este campo, as\u00ed un cobro nunca se cuenta dos veces en la facturaci\u00f3n."
+    },
+    "subscription_id": {
+      "type": "string",
+      "title": "ID de la suscripci\u00f3n en el proveedor",
+      "description": "preapproval_id en Mercado Pago. Vac\u00edo en los pagos \u00fanicos (packs adicionales)."
+    },
+    "kind": {
+      "type": "string",
+      "title": "Tipo de cobro",
+      "enum": [
+        "subscription",
+        "addon_pack",
+        "other"
+      ],
+      "default": "subscription",
+      "description": "subscription = cuota mensual del plan. addon_pack = pack suelto de conversaciones de WhatsApp."
+    },
+    "plan": {
+      "type": "string",
+      "title": "Plan al momento del cobro",
+      "description": "Copia del plan que ten\u00eda la cuenta cuando se cobr\u00f3. No se deriva de PracticeSettings al mostrar el historial, porque el plan pudo haber cambiado despu\u00e9s."
+    },
+    "amount": {
+      "type": "number",
+      "title": "Monto cobrado"
+    },
+    "currency": {
+      "type": "string",
+      "title": "Moneda",
+      "default": "ARS"
+    },
+    "status": {
+      "type": "string",
+      "title": "Estado normalizado",
+      "enum": [
+        "approved",
+        "pending",
+        "rejected",
+        "refunded",
+        "charged_back",
+        "other"
+      ],
+      "default": "pending",
+      "description": "Estado unificado entre proveedores. SOLO 'approved' suma a la facturaci\u00f3n."
+    },
+    "provider_status_raw": {
+      "type": "string",
+      "title": "Estado crudo del proveedor",
+      "description": "El string tal cual lo devuelve el proveedor, para poder diagnosticar cuando la normalizaci\u00f3n no alcanza."
+    },
+    "paid_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Fecha del cobro",
+      "description": "Fecha que informa el proveedor, NO la fecha en que se guard\u00f3 el registro: si el webhook llega tarde, el cobro tiene que caer en la semana/mes que corresponde."
+    },
+    "description": {
+      "type": "string",
+      "title": "Detalle"
+    }
+  },
+  "required": [
+    "provider_payment_id"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -88,7 +88,10 @@ export default function AdminUsers() {
 
   const setPlan = async (settings, plan) => {
     try {
-      const data = { plan, plan_granted_by_admin: true };
+      // Un plan asignado a mano no tiene suscripción de Mercado Pago detrás, así que no
+      // hay fecha de cobro de dónde sacar el día de renovación del cupo: el ciclo arranca
+      // hoy y se renueva cada mes en esta misma fecha (ver getCycleStart en plan.ts).
+      const data = { plan, plan_granted_by_admin: true, plan_cycle_anchor: new Date().toISOString() };
       if (plan === "trial") {
         const end = new Date(); end.setDate(end.getDate() + 14);
         data.trial_ends_at = end.toISOString();
@@ -162,7 +165,7 @@ export default function AdminUsers() {
     setCreatingOwnPlan(true);
     try {
       const existing = settingsByUser[me.id];
-      const data = { plan, plan_granted_by_admin: true, suspended: false };
+      const data = { plan, plan_granted_by_admin: true, suspended: false, plan_cycle_anchor: new Date().toISOString() };
       if (existing) {
         await base44.entities.PracticeSettings.update(existing.id, data);
       } else {

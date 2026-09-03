@@ -203,7 +203,9 @@ export default function AdminUsers() {
             Plan actual: <strong>{myOwnSettings ? PLAN_LABELS[myOwnSettings.plan] || myOwnSettings.plan : "Sin configurar"}</strong>
           </span>
           <div className="flex gap-1.5 ml-auto">
-            {["trial", "basic", "pro", "clinic"].map((p) => (
+            {/* "clinic" fuera de la lista: el plan Premium está oculto (ver
+                CLINIC_PLAN_VISIBLE en plan-utils.js). */}
+            {["trial", "basic", "pro"].map((p) => (
               <Button key={p} size="sm" variant={myOwnSettings?.plan === p ? "default" : "outline"} disabled={creatingOwnPlan} onClick={() => grantOwnPlan(p)}>
                 {PLAN_LABELS[p]}
               </Button>
@@ -282,7 +284,6 @@ export default function AdminUsers() {
                           <SelectItem value="trial">Trial</SelectItem>
                           <SelectItem value="basic">Básico</SelectItem>
                           <SelectItem value="pro">Pro</SelectItem>
-                          <SelectItem value="clinic">Clinic</SelectItem>
                         </SelectContent>
                       </Select>
                       {s.plan === "trial" && (

@@ -6,6 +6,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="manifest" href="/manifest.json" />
     <title>Kame Agenda</title>
+
+    <!-- Preview al compartir cualquier link de la app (incluido el link de reservas de un
+         profesional) por WhatsApp, Instagram, Telegram, etc. Antes no había ninguna meta,
+         así que el link salía pelado: solo la URL.
+
+         OJO: esto es una SPA, o sea que el HTML es el mismo para todas las rutas y los
+         bots de preview no ejecutan JavaScript. Por eso el texto es genérico y no dice el
+         nombre del consultorio: para que el preview diga "Reservá con Dr. Fulano" habría
+         que prerenderizar /u/:handle del lado del servidor. -->
+    <meta name="description" content="Reservá tu turno online en segundos. Elegí el servicio, el día y el horario — sin llamadas ni esperas." />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Kame Agenda" />
+    <meta property="og:title" content="Reservá tu turno online" />
+    <meta property="og:description" content="Elegí el servicio, el día y el horario en segundos. Sin llamadas ni esperas. Con Kame Agenda." />
+    <meta property="og:image" content="https://kameagenda.com/og-image.png" />
+    <meta property="og:url" content="https://kameagenda.com" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Reservá tu turno online" />
+    <meta name="twitter:description" content="Elegí el servicio, el día y el horario en segundos. Sin llamadas ni esperas. Con Kame Agenda." />
+    <meta name="twitter:image" content="https://kameagenda.com/og-image.png" />
   </head>
   <body>
     <div id="root"></div>

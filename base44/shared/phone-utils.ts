@@ -55,9 +55,18 @@ export function toWhatsAppNumber(raw) {
   // ser el prefijo de movil.
   if (national.length === 11 && national.startsWith("9")) national = national.slice(1);
   // El 15 del viejo formato de celular (342 15 590 2123).
-  national = national.replace(/^(\d{2,4})15(\d{6,8})$/, "$1$2");
+  //
+  // El codigo de area TIENE que empezar con 1, 2 o 3: en el plan de numeracion argentino no
+  // existe ninguno que empiece con 0, 4, 5, 6, 7, 8 o 9. Sin esa restriccion la regla del
+  // "15" pisaba numeros extranjeros de 12 digitos escritos sin "+": un fijo de Brasil como
+  // 551532123456 (area 15 de Sorocaba) se convertia en 5495532123456, o sea el numero de
+  // OTRA persona. Es exactamente el bug que ya paso una vez, al reves.
+  national = national.replace(/^([123]\d{1,3})15(\d{6,8})$/, "$1$2");
 
   if (national.length !== 10) return null;
+  // Mismo criterio como chequeo final: un nacional argentino valido siempre arranca con el
+  // codigo de area, y ninguno empieza con 0, 4, 5, 6, 7, 8 o 9.
+  if (!/^[123]/.test(national)) return null;
   return `549${national}`;
 }
 

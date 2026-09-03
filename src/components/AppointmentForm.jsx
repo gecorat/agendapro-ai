@@ -152,7 +152,12 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
         end_datetime: end,
         status: form.status,
         notes: form.notes,
-        origin: "manual",
+        // El origen se fija UNA sola vez, al crear. Al editar se conserva el que ya tenía:
+        // antes este mismo payload se usaba también para el update, así que abrir una cita
+        // que había entrado por el link público o por WhatsApp y tocarle cualquier cosa la
+        // reescribía como "manual" y se perdía de dónde había salido. Eso no es cosmético:
+        // autoCompleteAppointments trata distinto a las manuales que a las automáticas.
+        origin: appointment?.origin || "manual",
         professional_id: practiceOwnerId,
         professional_ref_id: form.professional_ref_id || "",
       };

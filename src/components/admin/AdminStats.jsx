@@ -94,7 +94,8 @@ function PlanBreakdown({ stats, revenue }) {
           </table>
 
           <p className="text-xs text-muted-foreground">
-            "Facturan" excluye las cuentas suspendidas y las que un admin asignó a mano, que no tienen cobro detrás.
+            "Facturan" excluye las suspendidas y las que un admin asignó a mano: esas no tienen medio de pago adherido,
+            así que no suman a la plata que entra.
           </p>
         </>
       )}
@@ -233,13 +234,19 @@ export default function AdminStats() {
     <div className="space-y-4">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatTile icon={Users} label="Cuentas totales" value={stats.total} hint={`${stats.suspended} suspendidas`} />
-        <StatTile icon={Wallet} label="Pagas activas" value={stats.activePaid} tone="good" hint="Sin contar trials" />
+        <StatTile
+          icon={Wallet}
+          label="Pagas activas"
+          value={stats.activePaid}
+          tone="good"
+          hint={stats.adminGranted > 0 ? `+${stats.adminGranted} sin cobro (admin)` : "Con cobro real detrás"}
+        />
         <StatTile icon={Clock} label="Trials activos" value={stats.trialsActive} hint={`${stats.trialsExpired} ya vencidos`} />
         <StatTile
           icon={TrendingUp}
           label="MRR estimado"
           value={formatARS(stats.mrr)}
-          hint="Planes activos × precio de lista"
+          hint="Solo cuentas con cobro real"
         />
       </div>
 

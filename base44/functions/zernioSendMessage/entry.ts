@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { sendWhatsAppMessage, normalizePhone } from "../../shared/whatsapp-providers.ts";
+import { resolveScope } from "../../shared/team-scope.ts";
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -14,8 +15,16 @@ export default async function(req: Request): Promise<Response> {
       return Response.json({ error: 'phone and message required' }, { status: 400 });
     }
 
-    const practices = await base44.asServiceRole.entities.PracticeSettings.filter({});
-    const practice = practices.find((p) => p.created_by_id === user.id);
+    // El consultorio se resuelve por EQUIPO, no por usuario. Antes se buscaba solo por
+    // `created_by_id === user.id`: un profesional invitado no creó ninguna PracticeSettings,
+    // así que esto quedaba en undefined y le respondía "Tu WhatsApp no está conectado"
+    // AUNQUE SÍ LO ESTUVIERA — o sea que un invitado no podía responder ningún chat.
+    const scope = await resolveScope(base44, user);
+    if (!scope?.practiceOwnerId) {
+      return Response.json({ error: 'No tenemos un consultorio asociado a tu cuenta.' }, { status: 400 });
+    }
+    const practiceOwnerId = scope.practiceOwnerId;
+    const practice = (await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: practiceOwnerId }))?.[0];
     if (!practice?.whatsapp_connected) {
       return Response.json({ error: 'Tu WhatsApp no está conectado' }, { status: 400 });
     }
@@ -31,17 +40,23 @@ export default async function(req: Request): Promise<Response> {
     // se pisan las respuestas. Se reanuda explícitamente con el botón de la bandeja.
     const normalized = normalizePhone(phone);
     try {
-      const existing = await base44.asServiceRole.entities.ChatPause.filter({ professional_id: user.id, phone: normalized });
+      // La pausa se guarda con el id del DUEÑO, que es con el que la lee el webhook. Con
+      // `user.id` un invitado escribía una fila que nadie consultaba nunca: creía haber
+      // pausado el bot y el bot seguía respondiendo.
+      const existing = await base44.asServiceRole.entities.ChatPause.filter({ professional_id: practiceOwnerId, phone: normalized });
       if (existing?.[0]) {
         await base44.asServiceRole.entities.ChatPause.update(existing[0].id, { paused: true });
       } else {
-        await base44.asServiceRole.entities.ChatPause.create({ professional_id: user.id, phone: normalized, paused: true });
+        await base44.asServiceRole.entities.ChatPause.create({ professional_id: practiceOwnerId, phone: normalized, paused: true });
       }
     } catch { /* no bloquear el envío si esto falla */ }
 
+    // Igual que la pausa: la fila va con el id del dueño, que es como guarda el webhook.
+    // Si no, la respuesta escrita a mano por un invitado quedaba en una "conversación"
+    // aparte que no aparecía en ninguna bandeja.
     await base44.asServiceRole.entities.Conversation.create({
       phone: normalized,
-      professional_id: user.id,
+      professional_id: practiceOwnerId,
       role: "assistant",
       text: message,
       conversation_id: conversationId || "",

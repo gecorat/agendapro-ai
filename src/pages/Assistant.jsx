@@ -8,6 +8,7 @@ import {
   Pencil, XCircle, IdCard, BellRing, RefreshCw,
 } from "lucide-react";
 import DemoChat from "@/components/assistant/DemoChat";
+import PatientForm from "@/components/PatientForm";
 import { loadReadState, saveChatLastRead, getLocalChatLastRead } from "@/lib/read-state";
 import WhatsAppConnectCard from "@/components/WhatsAppConnectCard";
 import BotPauseButton from "@/components/BotPauseButton";
@@ -499,6 +500,9 @@ function FullAssistant({ settings, reloadSettings, save }) {
     setActivePhone(phone);
     setMobileView("chat");
     markPhoneRead(phone);
+    // Cerrar la edición del nombre al cambiar de chat: si no, lo que estabas escribiendo para
+    // un contacto quedaba abierto sobre otro y se podía guardar en la ficha equivocada.
+    setEditingName(null);
   };
 
   const handleSend = async (textOverride) => {
@@ -1111,6 +1115,18 @@ function FullAssistant({ settings, reloadSettings, save }) {
         {ChatColumn}
         {DetailsColumn}
       </div>
+
+      {/* Crear la ficha de paciente sin salir del chat, ya con el nombre y el teléfono
+          cargados. Antes la única forma era ir a la Agenda y retipear todo a mano. */}
+      <PatientForm
+        open={newPatientOpen}
+        onClose={() => setNewPatientOpen(false)}
+        defaults={activeConvo ? {
+          first_name: contactName(activeConvo) === fmtPhone(activeConvo.phone) ? "" : contactName(activeConvo),
+          phone: activeConvo.phone,
+        } : undefined}
+        onSaved={async () => { setNewPatientOpen(false); await load(); }}
+      />
     </div>
   );
 }

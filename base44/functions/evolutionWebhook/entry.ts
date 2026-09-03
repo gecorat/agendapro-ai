@@ -6,6 +6,7 @@ import { sendPushToUsers, getPracticeRecipientUserIds } from "../../shared/push.
 import { getBotPauseStatus } from "../../shared/bot-status.ts";
 import { getPracticeSecrets } from "../../shared/secrets.ts";
 import { rememberWhatsAppContact } from "../../shared/whatsapp-contacts.ts";
+import { readIncomingMessage } from "../../shared/incoming-message.ts";
 
 // Webhook de Evolution API (conexión por QR, self-hosted). Identificamos de qué
 // consultorio es cada mensaje por ?practiceId= en la URL (que nosotros mismos generamos
@@ -144,11 +145,14 @@ export default async function (req: Request): Promise<Response> {
       waitUntil(rememberWhatsAppContact(base44, { professionalId, phone: fromPhone, name: msgData.pushName, source: "profile" }));
     }
 
+    // Se guarda SIEMPRE, aunque el bot no vaya a responder. Esta línea es la que faltaba:
+    // antes el `return` de los mensajes sin texto estaba arriba de acá, así que una foto o un
+    // PDF no dejaban ninguna fila y el profesional no se enteraba nunca.
     await base44.asServiceRole.entities.Conversation.create({
       phone: fromPhone,
       professional_id: professionalId,
       role: "user",
-      text,
+      text: display,
       conversation_id: conversationId,
       account_id: practice.evolution_instance_name,
       // Reusamos el campo wasender_msg_id como identificador genérico de mensaje del
@@ -206,6 +210,38 @@ export default async function (req: Request): Promise<Response> {
           .catch((e) => console.error("auto-reply send error:", e?.message || e))
       );
       return Response.json({ ok: true, skipped: "usage_or_plan_blocked" });
+    }
+
+    // Sin texto que interpretar (una foto sin nada escrito, o un audio que no se pudo
+    // transcribir) el bot no tiene a qué responder. El mensaje YA quedó guardado arriba, así
+    // que el profesional lo ve en la bandeja y lo atiende a mano.
+    //
+    // Para las notas de voz se le avisa al paciente, que si no queda esperando una respuesta
+    // que nunca va a llegar. Este aviso ahora sale acá abajo A PROPÓSITO: antes se mandaba
+    // arriba de todo, y por eso seguía contestando con el bot pausado y sin consumir del
+    // cupo del plan. Acá ya pasó la pausa de la conversación, el interruptor general y el
+    // control de cupo, igual que cualquier otra respuesta del bot. Los recordatorios no
+    // pasan por este archivo, así que siguen saliendo como siempre.
+    if (!text) {
+      if (incoming.isAudio) {
+        const aviso = "Uy, no pude escuchar bien tu audio \u{1F64F} ¿Me lo podés escribir en texto, por favor?";
+        waitUntil(
+          sendWhatsAppMessage(base44, practice, fromPhone, aviso)
+            .then(() =>
+              base44.asServiceRole.entities.Conversation.create({
+                phone: fromPhone,
+                professional_id: professionalId,
+                role: "assistant",
+                text: aviso,
+                conversation_id: conversationId,
+                account_id: practice.evolution_instance_name,
+                sent_by: "system",
+              })
+            )
+            .catch((e) => console.error("audio fallback send error (evolution):", e?.message || e))
+        );
+      }
+      return Response.json({ ok: true, skipped: `sin_texto_para_el_bot:${incoming.kind}` });
     }
 
     waitUntil(

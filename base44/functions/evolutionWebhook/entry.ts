@@ -68,8 +68,12 @@ export default async function (req: Request): Promise<Response> {
     // pasaba todos los chequeos como si fuera un teléfono real. Resultado confirmado en
     // datos el 03/09: tres conversaciones de grupo en la bandeja del consultorio, con el bot
     // respondiendo adentro del grupo y consumiendo cupo del plan.
+    // Se decide SOLO por el sufijo del JID, que es inequívoco. A propósito NO se usa
+    // `key.participant`: las versiones nuevas de WhatsApp también lo mandan en chats 1 a 1
+    // (direccionamiento por LID), así que filtrar por ahí dejaría afuera mensajes de
+    // pacientes reales. Los chats normales terminan en @s.whatsapp.net o @lid y siguen de
+    // largo.
     if (
-      msgData.key?.participant ||
       remoteJid.endsWith("@g.us") ||
       remoteJid.endsWith("@broadcast") ||
       remoteJid.endsWith("@newsletter")

@@ -77,8 +77,10 @@ export default async function (req: Request): Promise<Response> {
     // en el mensaje entrante y sirve para que la bandeja no muestre un numero pelado.
     const pushName = msgData.pushName || msgData.key?.pushName || "";
     if (pushName) {
+      // Sin waitUntil acá (este webhook no lo importa): son una o dos operaciones y la
+      // función ya se traga cualquier error, así que no puede frenar el mensaje.
       const { rememberWhatsAppContact } = await import("../../shared/whatsapp-contacts.ts");
-      waitUntil(rememberWhatsAppContact(base44, { professionalId, phone: fromPhone, name: pushName, source: "profile" }));
+      await rememberWhatsAppContact(base44, { professionalId, phone: fromPhone, name: pushName, source: "profile" });
     }
 
     await base44.asServiceRole.entities.Conversation.create({

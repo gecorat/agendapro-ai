@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Loader2, AlertCircle, CalendarClock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
+import PoweredByKame from "@/components/PoweredByKame";
 
 function formatWhen(iso) {
   if (!iso) return "";
@@ -136,6 +137,8 @@ export default function RescheduleAppointment() {
             <p className="text-slate-600">El enlace no es válido o expiró.</p>
           </>
         )}
+
+        <PoweredByKame utm="reschedule_page" className="mt-6" />
       </div>
     </div>
   );

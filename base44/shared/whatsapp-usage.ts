@@ -3,22 +3,27 @@
 // mensaje entrante que el webhook decide procesar.
 import { sendEmail } from "./email-sender.ts";
 import { buildEmailHtml } from "./email-template.ts";
-import { canUseWhatsApp, getWhatsAppQuota, ADDON_PACKS } from "./plan.ts";
+import { canUseWhatsApp, getWhatsAppQuota, getCycleStart, ADDON_PACKS } from "./plan.ts";
 
-function isNewBillingPeriod(periodStart) {
-  if (!periodStart) return true;
-  const start = new Date(periodStart);
-  const now = new Date();
-  return start.getMonth() !== now.getMonth() || start.getFullYear() !== now.getFullYear();
+// ¿El período contado quedó atrás del ciclo vigente? El ciclo va del aniversario de la
+// suscripción al siguiente (ver getCycleStart en plan.ts), NO del 1º al 1º: así el cupo
+// se renueva el mismo día en que Mercado Pago cobra.
+function isNewBillingPeriod(practice, now) {
+  if (!practice?.whatsapp_usage_period_start) return true;
+  return new Date(practice.whatsapp_usage_period_start) < getCycleStart(practice, now);
 }
 
-// Resetea el contador si arrancó un mes nuevo. Devuelve la práctica ya al día (con el
+// Resetea el contador si arrancó un ciclo nuevo. Devuelve la práctica ya al día (con el
 // período actual), para que los cálculos de cupo de esta misma llamada sean correctos.
 async function ensureCurrentPeriod(base44, practice) {
-  if (!isNewBillingPeriod(practice.whatsapp_usage_period_start)) return practice;
+  const now = new Date();
+  if (!isNewBillingPeriod(practice, now)) return practice;
   const updated = await base44.asServiceRole.entities.PracticeSettings.update(practice.id, {
     whatsapp_usage_count: 0,
-    whatsapp_usage_period_start: new Date().toISOString(),
+    // Se guarda el inicio REAL del ciclo (el aniversario), no el momento del reset: si el
+    // primer mensaje del ciclo llega tres días tarde, el período igual arranca el día que
+    // corresponde y el próximo corte cae donde tiene que caer.
+    whatsapp_usage_period_start: getCycleStart(practice, now).toISOString(),
     whatsapp_usage_alert_90_sent: false,
     whatsapp_usage_alert_95_sent: false,
     whatsapp_usage_alert_100_sent: false,

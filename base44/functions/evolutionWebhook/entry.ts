@@ -185,6 +185,43 @@ export default async function (req: Request): Promise<Response> {
       return Response.json({ ok: true, skipped: "bot_paused" });
     }
 
+    // Sin texto que interpretar (una foto sin nada escrito, o un audio que no se pudo
+    // transcribir) el bot no tiene a qué responder. El mensaje YA quedó guardado arriba, así
+    // que el profesional lo ve en la bandeja y lo atiende a mano.
+    //
+    // Para las notas de voz se le avisa al paciente, que si no queda esperando una respuesta
+    // que nunca va a llegar. Ese aviso ahora sale acá A PROPÓSITO: antes se mandaba arriba de
+    // todo, y por eso seguía contestando con el bot pausado. Acá ya pasaron la pausa de la
+    // conversación y el interruptor general. Los recordatorios no pasan por este archivo, así
+    // que siguen saliendo como siempre.
+    //
+    // Va ANTES de checkWhatsAppUsage porque esa función descuenta del cupo del plan: una foto
+    // que no genera ninguna respuesta no tiene por qué gastarle una conversación al
+    // profesional. Para el aviso del audio, que sí es un mensaje saliente, el cupo se
+    // consulta explícitamente ahí adentro.
+    if (!text) {
+      if (incoming.isAudio) {
+        waitUntil(
+          (async () => {
+            const audioUsage = await checkWhatsAppUsage(base44, practice);
+            if (!audioUsage.allowed) return;
+            const aviso = "Uy, no pude escuchar bien tu audio \u{1F64F} ¿Me lo podés escribir en texto, por favor?";
+            await sendWhatsAppMessage(base44, practice, fromPhone, aviso);
+            await base44.asServiceRole.entities.Conversation.create({
+              phone: fromPhone,
+              professional_id: professionalId,
+              role: "assistant",
+              text: aviso,
+              conversation_id: conversationId,
+              account_id: practice.evolution_instance_name,
+              sent_by: "system",
+            });
+          })().catch((e) => console.error("audio fallback send error (evolution):", e?.message || e))
+        );
+      }
+      return Response.json({ ok: true, skipped: `sin_texto_para_el_bot:${incoming.kind}` });
+    }
+
     const usage = await checkWhatsAppUsage(base44, practice);
     if (!usage.allowed) {
       waitUntil(
@@ -222,28 +259,6 @@ export default async function (req: Request): Promise<Response> {
     // cupo del plan. Acá ya pasó la pausa de la conversación, el interruptor general y el
     // control de cupo, igual que cualquier otra respuesta del bot. Los recordatorios no
     // pasan por este archivo, así que siguen saliendo como siempre.
-    if (!text) {
-      if (incoming.isAudio) {
-        const aviso = "Uy, no pude escuchar bien tu audio \u{1F64F} ¿Me lo podés escribir en texto, por favor?";
-        waitUntil(
-          sendWhatsAppMessage(base44, practice, fromPhone, aviso)
-            .then(() =>
-              base44.asServiceRole.entities.Conversation.create({
-                phone: fromPhone,
-                professional_id: professionalId,
-                role: "assistant",
-                text: aviso,
-                conversation_id: conversationId,
-                account_id: practice.evolution_instance_name,
-                sent_by: "system",
-              })
-            )
-            .catch((e) => console.error("audio fallback send error (evolution):", e?.message || e))
-        );
-      }
-      return Response.json({ ok: true, skipped: `sin_texto_para_el_bot:${incoming.kind}` });
-    }
-
     waitUntil(
       base44.asServiceRole.functions.invoke("evolutionConversation", {
         phone: fromPhone,

@@ -382,6 +382,11 @@
       "title": "N\u00famero de WhatsApp del profesional",
       "description": "N\u00famero que usa el profesional para recibir mensajes (con c\u00f3digo de pa\u00eds)"
     },
+    "owner_user_id": {
+      "type": "string",
+      "title": "Usuario due\u00f1o de la cuenta",
+      "description": "Id del usuario due\u00f1o. Reemplaza a created_by_id como criterio de propiedad: Base44 estampa created_by_id con quien EJECUTA el create e ignora el valor que le mandemos, as\u00ed que desde que el onboarding crea con rol de servicio todas las cuentas nuevas quedaban con el mismo id de servicio (ver base44/shared/ownership.ts). Vac\u00edo en las cuentas anteriores al 3/9/2026, que resuelven por created_by_id como respaldo."
+    },
     "plan": {
       "type": "string",
       "title": "Plan",

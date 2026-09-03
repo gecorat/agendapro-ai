@@ -591,7 +591,7 @@ function FullAssistant({ settings, reloadSettings, save }) {
       const res = await base44.functions.invoke("syncWhatsAppContacts", {});
       const d = res?.data || {};
       if (d.chats_matched > 0) {
-        setSyncResult({ ok: true, text: `Listo: ${d.chats_matched} ${d.chats_matched === 1 ? "chat actualizado" : "chats actualizados"}.` });
+        setSyncResult({ ok: true, text: `Listo: ${d.chats_matched} de ${d.chats_total} ${d.chats_total === 1 ? "chat" : "chats"} con el nombre de tu agenda.` });
       } else {
         // Que vuelva vacío NO es un error: WhatsApp restringió la sincronización de la
         // agenda del celular y a veces no manda los nombres. Se explica en vez de mostrar

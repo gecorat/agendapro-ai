@@ -124,6 +124,9 @@ export default function PublicReview() {
               </div>
               <h2 className="font-heading font-semibold text-lg">¡Gracias por tu reseña!</h2>
               <p className="text-sm text-muted-foreground">Tu opinión nos ayuda a seguir mejorando.</p>
+              {/* El paciente recién dejó una reseña: es el momento con mejor predisposición
+                  de todo el flujo, así que acá va la versión visible y no solo el pie. */}
+              <PoweredByKame variant="card" utm="review_done" className="!bg-white" />
             </>
           ) : (
             <>
@@ -161,6 +164,8 @@ export default function PublicReview() {
             </>
           )}
         </Card>
+
+        <PoweredByKame utm="review_page" />
       </div>
     </div>
   );

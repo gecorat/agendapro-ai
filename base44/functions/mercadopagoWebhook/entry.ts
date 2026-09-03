@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { syncSubscriptionStatus } from "../../shared/mercadopago.ts";
+import { recordPayment, normalizeMpStatus, findPracticeBySubscription } from "../../shared/payments.ts";
 
 // Webhook de Mercado Pago para las notificaciones de Suscripciones. IMPORTANTE: para el
 // tópico de suscripciones, MP no ofrece validación por header de firma (a diferencia de
@@ -19,6 +20,39 @@ export default async function(req: Request): Promise<Response> {
     const type = body?.type || body?.topic;
     const resourceId = body?.data?.id || body?.id;
     if (!resourceId) return Response.json({ ok: true, skipped: 'no_id' });
+
+    // COBRO DE UNA SUSCRIPCIÓN. Este tópico se estaba descartando entero: cada cuota
+    // mensual llegaba acá y se iba sin registrarse, por eso no había facturación
+    // histórica. El recurso /authorized_payments/{id} es el único que ata el pago con su
+    // preapproval_id, que es como sabemos de qué cuenta es.
+    if (type === 'subscription_authorized_payment') {
+      const apRes = await fetch(`https://api.mercadopago.com/authorized_payments/${resourceId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!apRes.ok) return Response.json({ ok: true, skipped: 'authorized_payment_fetch_failed' });
+      const ap = await apRes.json();
+
+      const practice = await findPracticeBySubscription(base44, ap.preapproval_id);
+      const rawStatus = ap.payment?.status || ap.status;
+      const result = await recordPayment(base44, {
+        provider: 'mercadopago',
+        // El id del pago real cuando existe; si el cobro todavía no generó pago (agendado
+        // o rechazado), el id del authorized_payment alcanza como clave estable.
+        provider_payment_id: String(ap.payment?.id || ap.id),
+        subscription_id: ap.preapproval_id,
+        practice_id: practice?.id,
+        practice_name: practice?.practice_name,
+        kind: 'subscription',
+        plan: practice?.plan,
+        amount: ap.transaction_amount,
+        currency: ap.currency_id || 'ARS',
+        status: normalizeMpStatus(rawStatus),
+        provider_status_raw: String(rawStatus || ''),
+        paid_at: ap.date_created || ap.debit_date,
+        description: 'Cuota mensual de la suscripción',
+      });
+      return Response.json({ ok: true, recorded: result });
+    }
 
     if (type !== 'subscription_preapproval' && type !== 'preapproval') {
       if (type === 'payment') {

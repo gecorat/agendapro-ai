@@ -33,6 +33,50 @@ export const ADDON_PACKS = {
 // todavía). Mantener en sync con src/lib/plan-utils.js.
 export const CLINIC_MAX_PROFESSIONALS = 3;
 
+// ── Ciclo de facturación ──────────────────────────────────────────────────────────
+// El cupo de conversaciones se renueva en el ANIVERSARIO de la suscripción: quien se
+// suscribió un día 15 renueva todos los 15, el mismo día en que Mercado Pago le cobra
+// (las suscripciones se crean con frequency: 1 / months y sin billing_day, ver
+// mercadopago.ts). Hasta 2026-09-03 el contador se reiniciaba el 1º de cada mes, lo que
+// desalineaba cupo y cobro: el que se suscribía a mitad de mes recibía dos cupos
+// completos dentro del mismo mes pagado.
+//
+// El ancla del ciclo es plan_cycle_anchor (fecha de alta de la suscripción en Mercado
+// Pago, que es el día de cobro). Si falta — cuentas viejas, o planes asignados a mano por
+// un admin — se cae al arranque del último período contado y, en última instancia, a la
+// fecha de creación de la cuenta. Mantener en sync con src/lib/plan-utils.js.
+function cycleAnchor(practice) {
+  const raw = practice?.plan_cycle_anchor || practice?.whatsapp_usage_period_start || practice?.created_date;
+  const d = raw ? new Date(raw) : null;
+  return d && !Number.isNaN(d.getTime()) ? d : null;
+}
+
+// Día `day` del mes (year, month), recortado al último día real de ese mes: un aniversario
+// 31 cae el 28/29 en febrero y el 30 en abril. Conserva la hora del ancla.
+function onDayOfMonth(year, month, day, ref) {
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  const d = new Date(year, month, Math.min(day, lastDay));
+  d.setHours(ref.getHours(), ref.getMinutes(), ref.getSeconds(), 0);
+  return d;
+}
+
+// Inicio del ciclo vigente: la última vez que se cumplió el aniversario.
+export function getCycleStart(practice, now = new Date()) {
+  const anchor = cycleAnchor(practice);
+  if (!anchor) return now;
+  if (anchor >= now) return anchor; // recién suscripto: el ciclo arranca ahí
+  const thisMonth = onDayOfMonth(now.getFullYear(), now.getMonth(), anchor.getDate(), anchor);
+  if (thisMonth <= now) return thisMonth;
+  return onDayOfMonth(now.getFullYear(), now.getMonth() - 1, anchor.getDate(), anchor);
+}
+
+// Cuándo se renueva el cupo: el próximo aniversario después del ciclo vigente.
+export function getCycleEnd(practice, now = new Date()) {
+  const start = getCycleStart(practice, now);
+  const anchor = cycleAnchor(practice) || start;
+  return onDayOfMonth(start.getFullYear(), start.getMonth() + 1, anchor.getDate(), anchor);
+}
+
 export function isPlanActive(practice) {
   if (!practice) return false;
   if (practice.suspended) return false;

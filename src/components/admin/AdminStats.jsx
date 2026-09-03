@@ -91,17 +91,22 @@ export default function AdminStats() {
   const [practices, setPractices] = useState([]);
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [paymentsUnavailable, setPaymentsUnavailable] = useState(false);
   const [range, setRange] = useState("month");
 
   useEffect(() => {
     (async () => {
+      // Cada consulta con su propio catch a propósito: si la entidad Payment todavía no
+      // está desplegada (o falla), las estadísticas de planes y trials — que no dependen
+      // de ella — tienen que mostrarse igual en vez de dejar la pantalla en cero.
       try {
         const [ps, pay] = await Promise.all([
-          base44.entities.PracticeSettings.filter({}),
-          base44.entities.Payment.filter({}),
+          base44.entities.PracticeSettings.filter({}).catch(() => []),
+          base44.entities.Payment.filter({}).catch(() => null),
         ]);
         setPractices(ps || []);
         setPayments(pay || []);
+        setPaymentsUnavailable(pay === null);
       } finally {
         setLoading(false);
       }
@@ -192,11 +197,20 @@ export default function AdminStats() {
           <div className="rounded-xl bg-muted/50 p-4 flex items-start gap-2">
             <Info className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
             <div className="text-sm text-muted-foreground">
-              <p className="font-medium text-foreground">Todavía no hay cobros registrados.</p>
-              <p className="mt-0.5">
-                El registro de pagos empezó el 3/9/2026: los cobros anteriores a esa fecha no quedaron guardados y no se
-                pueden recuperar. A partir de ahora, cada cuota y cada pack se guarda solo y aparece acá.
-              </p>
+              {paymentsUnavailable ? (
+                <>
+                  <p className="font-medium text-foreground">No se pudo leer el registro de cobros.</p>
+                  <p className="mt-0.5">Si recién se publicó el cambio, puede que la entidad Payment todavía no esté desplegada. El resto de las estadísticas de arriba son correctas.</p>
+                </>
+              ) : (
+                <>
+                  <p className="font-medium text-foreground">Todavía no hay cobros registrados.</p>
+                  <p className="mt-0.5">
+                    El registro de pagos empezó el 3/9/2026: los cobros anteriores a esa fecha no quedaron guardados y no se
+                    pueden recuperar. A partir de ahora, cada cuota y cada pack se guarda solo y aparece acá.
+                  </p>
+                </>
+              )}
             </div>
           </div>
         ) : (

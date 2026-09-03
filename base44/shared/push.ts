@@ -1,4 +1,5 @@
 import webpush from 'npm:web-push@3.6.7';
+import { ownerIdOf } from './ownership.ts';
 
 // Helper compartido de Web Push (VAPID). Cualquier función de servidor que quiera avisarle
 // a un profesional algo mientras el teléfono está bloqueado / la app cerrada, usa esto.
@@ -59,10 +60,13 @@ export async function sendPushToUsers(base44, userIds, payload) {
 // del equipo (plan Clinic). Todos reciben las mismas notificaciones por ahora — no hay
 // segmentación por profesional puntual todavía.
 export async function getPracticeRecipientUserIds(base44, practice) {
-  const ids = [practice?.created_by_id];
+  // ownerIdOf, no created_by_id: en las cuentas creadas por el onboarding ese campo es el
+  // id del servicio, así que el aviso push no le llegaba al dueño (ver ownership.ts).
+  const ownerId = ownerIdOf(practice);
+  const ids = [ownerId];
   try {
     const pros = await base44.asServiceRole.entities.Professional.filter({
-      practice_owner_id: practice.created_by_id,
+      practice_owner_id: ownerId,
       active: true,
     });
     for (const p of pros || []) if (p.user_id) ids.push(p.user_id);

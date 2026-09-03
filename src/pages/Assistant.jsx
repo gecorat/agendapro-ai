@@ -914,8 +914,44 @@ function FullAssistant({ settings, reloadSettings, save }) {
           <div className="mx-auto mb-2 w-14 h-14">
             <ContactAvatar name={contactName(activeConvo)} url={avatarUrl} loading={avatarLoading} size="w-14 h-14" textSize="text-lg" />
           </div>
-          <p className="font-semibold text-sm">{contactName(activeConvo)}</p>
-          {waTag(activeConvo) && (
+          {editingName === null ? (
+            <div className="flex items-center justify-center gap-1.5">
+              <p className="font-semibold text-sm">{contactName(activeConvo)}</p>
+              <button
+                onClick={() => setEditingName(activeConvo.waName || (activeConvo.patient ? contactName(activeConvo) : ""))}
+                className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground shrink-0"
+                title="Cambiar el nombre de este contacto"
+              >
+                <Pencil className="w-3 h-3" />
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              <Input
+                autoFocus
+                value={editingName}
+                onChange={(e) => setEditingName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") { e.preventDefault(); handleSaveName(); }
+                  if (e.key === "Escape") setEditingName(null);
+                }}
+                placeholder="Nombre del contacto"
+                className="h-8 text-sm text-center"
+              />
+              <div className="flex items-center justify-center gap-1.5">
+                <Button size="sm" className="h-7 text-xs" onClick={handleSaveName} disabled={savingName}>
+                  {savingName && <Loader2 className="w-3 h-3 mr-1 animate-spin" />}Guardar
+                </Button>
+                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setEditingName(null)} disabled={savingName}>
+                  Cancelar
+                </Button>
+              </div>
+              <p className="text-[10px] text-muted-foreground leading-snug">
+                Vacío vuelve a mostrar el nombre de WhatsApp. Si es un paciente, mejor creá su ficha más abajo.
+              </p>
+            </div>
+          )}
+          {editingName === null && waTag(activeConvo) && (
             <p className="text-[11px] text-muted-foreground mt-0.5">En WhatsApp figura como «{waTag(activeConvo)}»</p>
           )}
         </div>
@@ -955,7 +991,12 @@ function FullAssistant({ settings, reloadSettings, save }) {
               <Button size="icon" variant="outline" className="h-7 w-7 shrink-0" onClick={handleAddTag}><Plus className="w-3.5 h-3.5" /></Button>
             </div>
           ) : (
-            <p className="text-[11px] text-muted-foreground">Este contacto todavía no tiene ficha de paciente (se crea al agendar su primer turno).</p>
+            <div className="space-y-1.5">
+              <p className="text-[11px] text-muted-foreground">Este contacto todavía no tiene ficha de paciente.</p>
+              <Button size="sm" variant="outline" className="h-7 text-xs w-full" onClick={() => setNewPatientOpen(true)}>
+                <Plus className="w-3 h-3 mr-1" /> Crear ficha de paciente
+              </Button>
+            </div>
           )}
         </div>
 

@@ -22,7 +22,11 @@ import { Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 
-export default function PatientForm({ open, onClose, onSaved, patient }) {
+// `defaults` precarga campos al CREAR (no al editar). Se usa desde la bandeja de Chats para
+// abrir el formulario ya con el nombre y el teléfono del contacto, en vez de obligar al
+// profesional a retipearlos. No se pasa como `patient` a propósito: ese prop significa
+// "estoy editando esta ficha" y dispara un update por id.
+export default function PatientForm({ open, onClose, onSaved, patient, defaults }) {
   const { toast } = useToast();
   const { isOwner, professional: myProfessional } = usePracticeSettings();
   const [saving, setSaving] = useState(false);
@@ -66,9 +70,14 @@ export default function PatientForm({ open, onClose, onSaved, patient }) {
           consent_reminders: true,
           no_show_count: 0,
           cancellation_count: 0,
+          ...(defaults || {}),
         });
       }
     }
+    // `defaults` queda fuera de las dependencias a propósito: se pasa como objeto literal
+    // desde el llamador, o sea que cambia de identidad en cada render y volvería a pisar lo
+    // que el usuario esté tipeando. Solo importa su valor al abrir el formulario.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, patient]);
 
   async function handleSubmit(e) {

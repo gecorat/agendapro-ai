@@ -77,7 +77,6 @@ export default function PatientForm({ open, onClose, onSaved, patient, defaults 
     // `defaults` queda fuera de las dependencias a propósito: se pasa como objeto literal
     // desde el llamador, o sea que cambia de identidad en cada render y volvería a pisar lo
     // que el usuario esté tipeando. Solo importa su valor al abrir el formulario.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, patient]);
 
   async function handleSubmit(e) {

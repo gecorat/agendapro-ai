@@ -7,6 +7,7 @@ import { buildConfirmationMessage, buildPublicBookAckMessage, notifyProfessional
 import { getAppointmentContext } from '../../shared/appointment-context.ts';
 import { argentinaDayBounds } from '../../shared/scheduling.ts';
 import { canSendWhatsApp } from '../../shared/plan.ts';
+import { logNotification, logWhatsAppToConversation } from '../../shared/notification-log.ts';
 
 export default async function (req: Request): Promise<Response> {
   try {
@@ -172,13 +173,23 @@ export default async function (req: Request): Promise<Response> {
       // WhatsApp. Solo si hay WhatsApp conectado: sin él, el paciente ya recibió la
       // confirmación por email arriba.
       if (canSendWhatsApp(practice)) {
+        // Se registra el envío (NotificationLog + historial del chat) igual que en el resto
+        // de los avisos. Este camino era el ÚNICO que no dejaba rastro de nada: cuando una
+        // confirmación llegó al teléfono equivocado (03/09) no había forma de reconstruir a
+        // qué número había salido. Ahora queda el número exacto al que se envió.
+        const ackText = buildPublicBookAckMessage(patient.first_name);
+        let waText = null;
         try {
           const { professionalName } = await getAppointmentContext(base44, appointment, practice);
-          await sendWhatsAppMessage(base44, practice, patient.phone, buildPublicBookAckMessage(patient.first_name));
-          const waText = buildConfirmationMessage({ practice, service, start, professionalName });
+          waText = buildConfirmationMessage({ practice, service, start, professionalName });
+          await sendWhatsAppMessage(base44, practice, patient.phone, ackText);
           await sendWhatsAppMessage(base44, practice, patient.phone, waText);
+          await logNotification(base44, { appointment, practice, patient, kind: 'confirmation', channel: 'whatsapp', status: 'sent' });
+          await logWhatsAppToConversation(base44, { practice, phone: patient.phone, text: ackText });
+          if (waText) await logWhatsAppToConversation(base44, { practice, phone: patient.phone, text: waText });
         } catch (e) {
           console.error('sendWhatsAppMessage error (createPublicAppointment):', e?.message || e);
+          await logNotification(base44, { appointment, practice, patient, kind: 'confirmation', channel: 'whatsapp', status: 'failed', error: e });
         }
       }
     }

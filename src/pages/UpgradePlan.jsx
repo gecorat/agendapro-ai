@@ -69,9 +69,9 @@ function CurrentPlanCard({ settings, status, subscription, loadingSub, onCancel,
               {status.trialExpired ? "Prueba expirada" : `${status.daysLeft} días de prueba`}
             </Badge>
           )}
-          {status.suspended
-            ? <Badge className="bg-destructive/10 text-destructive">Suspendido</Badge>
-            : <Badge className="bg-emerald-100 text-emerald-700">Cuenta activa</Badge>}
+          {status.active
+            ? <Badge className="bg-emerald-100 text-emerald-700">Cuenta activa</Badge>
+            : <Badge className="bg-destructive/10 text-destructive">{status.suspended ? "Cuenta suspendida" : "Cuenta inactiva"}</Badge>}
         </div>
       </div>
 

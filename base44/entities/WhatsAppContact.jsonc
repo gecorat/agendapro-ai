@@ -18,9 +18,11 @@
     "source": {
       "type": "string",
       "title": "De donde salio el nombre",
+      "description": "Orden de precedencia, de menor a mayor: profile (el nombre que la persona se puso a si misma en su perfil de WhatsApp, llega solo con cada mensaje) < agenda (el nombre guardado en la agenda del celular que escaneo el QR, se trae con el boton Contactos) < manual (lo escribio el profesional a mano en la ficha del chat). El manual NUNCA lo pisa una sincronizacion.",
       "enum": [
         "profile",
-        "agenda"
+        "agenda",
+        "manual"
       ],
       "default": "profile"
     },

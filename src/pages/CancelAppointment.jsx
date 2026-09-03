@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { CheckCircle2, Loader2, AlertCircle, XCircle, CalendarClock, ShieldQuestion } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
+import PoweredByKame from "@/components/PoweredByKame";
 
 // Antes este link cancelaba el turno apenas se abría — si alguien lo tocaba por error
 // (o dudaba), la cita ya estaba cancelada sin vuelta atrás. Ahora primero mostramos los
@@ -133,6 +134,8 @@ export default function CancelAppointment() {
             <p className="text-slate-600">El enlace no es válido o expiró.</p>
           </>
         )}
+
+        <PoweredByKame utm="cancel_page" className="mt-6" />
       </div>
     </div>
   );

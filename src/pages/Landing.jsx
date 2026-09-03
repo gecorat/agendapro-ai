@@ -7,7 +7,7 @@ import {
   CalendarClock, MessageCircle, Bell, Calendar, Users, Check, Sparkles,
   ArrowRight, Star, ShieldCheck, Zap, Phone, Stethoscope,
 } from "lucide-react";
-import { PLAN_PRICES } from "@/lib/plan-utils";
+import { PLAN_PRICES, CLINIC_PLAN_VISIBLE } from "@/lib/plan-utils";
 import { THEME_PRESETS, resolveTheme, loadThemeFont } from "@/lib/theme-presets";
 
 const BENEFITS = [

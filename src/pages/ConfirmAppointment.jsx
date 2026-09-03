@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { CheckCircle2, Loader2, AlertCircle, CalendarCheck } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import PoweredByKame from "@/components/PoweredByKame";
 
 export default function ConfirmAppointment() {
   const { token } = useParams();
@@ -65,6 +66,8 @@ export default function ConfirmAppointment() {
             <p className="text-slate-600">El enlace no es válido o expiró.</p>
           </>
         )}
+
+        <PoweredByKame utm="confirm_page" className="mt-6" />
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { orchestrateConversation } from "../../shared/zernio.ts";
+import { ownerIdOf } from '../../shared/ownership.ts';
 
 // Equivalente a zernioConversation, pero para consultorios conectados por QR (Evolution
 // API). orchestrateConversation es la misma para ambos proveedores — decide solo/

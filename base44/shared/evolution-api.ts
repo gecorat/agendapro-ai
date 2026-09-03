@@ -161,6 +161,41 @@ export async function getBase64Media(baseUrl, apiKey, instanceName, messageKey) 
   }
 }
 
+// Contactos que Evolution tiene guardados para esta instancia. Vienen de la sincronizacion
+// que hace WhatsApp Web al vincular el QR, asi que incluyen (cuando WhatsApp los manda) los
+// nombres de la AGENDA del celular que escaneo, no solo el nombre de perfil que cada
+// persona se puso a si misma.
+//
+// OJO: esto NO esta garantizado. WhatsApp fue restringiendo esa sincronizacion y hay
+// reportes de que el campo de nombre vuelve vacio (evolution-api issue #2004). Por eso todo
+// el que llame a esto tiene que tolerar una lista vacia o sin nombres, y nunca depender de
+// que haya datos.
+//
+// El nombre aparece con distintas claves segun la version de Evolution, por eso se prueban
+// varias en orden: primero el de agenda, despues el de perfil.
+export async function findContacts(baseUrl, apiKey, instanceName) {
+  const res = await fetch(`${baseUrl}/chat/findContacts/${instanceName}`, {
+    method: 'POST',
+    headers: authHeaders(apiKey),
+    body: JSON.stringify({}),
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '');
+    throw new Error(`findContacts fallo (${res.status}): ${detail.slice(0, 300)}`);
+  }
+  const data = await safeJson(res);
+  const rows = Array.isArray(data) ? data : (data?.contacts || data?.data || []);
+  return (rows || [])
+    .map((c) => {
+      const jid = String(c?.remoteJid || c?.id || c?.jid || '');
+      const phone = jid.split('@')[0].replace(/[^0-9]/g, '');
+      const name = c?.name || c?.contactName || c?.verifiedName || c?.pushName || '';
+      return { phone, name: String(name || '').trim(), jid };
+    })
+    // Los grupos y las difusiones no son personas: se descartan.
+    .filter((c) => c.phone && c.name && !c.jid.includes('@g.us') && !c.jid.includes('broadcast'));
+}
+
 export async function fetchProfilePicture(baseUrl, apiKey, instanceName, phone) {
   try {
     const res = await fetch(`${baseUrl}/chat/fetchProfilePictureUrl/${instanceName}`, {

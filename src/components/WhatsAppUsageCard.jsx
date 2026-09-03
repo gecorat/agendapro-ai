@@ -3,8 +3,8 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
-import { getPlanStatus, getWhatsAppUsage, ADDON_PACKS } from "@/lib/plan-utils";
-import { Gauge, Loader2 } from "lucide-react";
+import { getPlanStatus, getWhatsAppUsage, getUsagePeriod, formatDate, ADDON_PACKS, PLAN_LABELS } from "@/lib/plan-utils";
+import { Gauge, Loader2, RefreshCw, Package } from "lucide-react";
 
 export default function WhatsAppUsageCard() {
   const { settings } = usePracticeSettings();
@@ -15,6 +15,7 @@ export default function WhatsAppUsageCard() {
   if (!status.canUseWhatsApp) return null;
 
   const usage = getWhatsAppUsage(settings);
+  const period = getUsagePeriod(settings);
   const pct = Math.min(100, Math.round(usage.ratio * 100));
   const barColor = pct >= 100 ? "bg-red-500" : pct >= 90 ? "bg-amber-500" : "bg-emerald-500";
 
@@ -38,6 +39,7 @@ export default function WhatsAppUsageCard() {
       <div className="flex items-center gap-2">
         <Gauge className="w-4 h-4 text-muted-foreground" />
         <p className="font-medium text-sm">Uso del bot este mes</p>
+        <span className="ml-auto text-xs text-muted-foreground">Plan {PLAN_LABELS[status.plan] || status.plan}</span>
       </div>
 
       <div>
@@ -48,6 +50,26 @@ export default function WhatsAppUsageCard() {
         <div className="h-2 rounded-full bg-muted overflow-hidden">
           <div className={`h-full rounded-full transition-all ${barColor}`} style={{ width: `${pct}%` }} />
         </div>
+      </div>
+
+      <div className="space-y-1.5 text-xs text-muted-foreground">
+        <p className="flex items-start gap-1.5">
+          <Package className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+          <span>
+            Cupo de {usage.total} conversaciones
+            {usage.addon > 0
+              ? ` (${usage.base} del plan + ${usage.addon} de packs adicionales)`
+              : " incluidas en tu plan"}
+            {" — te quedan "}<strong className="text-foreground font-medium">{usage.remaining}</strong>.
+          </span>
+        </p>
+        <p className="flex items-start gap-1.5">
+          <RefreshCw className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+          <span>
+            Período desde el {formatDate(period.start)} · el contador se reinicia el{" "}
+            {formatDate(period.resetsAt)} ({period.daysToReset === 1 ? "mañana" : `en ${period.daysToReset} días`}).
+          </span>
+        </p>
       </div>
 
       {pct >= 80 && (

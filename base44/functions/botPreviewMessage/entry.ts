@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { DEFAULT_OBJECTIVE_PROMPT, DEFAULT_TONE_PROMPT } from '../../shared/bot-defaults.ts';
-import { findPracticeRowsByOwner } from "../../shared/ownership.ts";
+import { findPracticeRowsByOwner, findOwnedRows } from "../../shared/ownership.ts";
 
 // Simulador del bot para el profesional logueado (/bot) — a diferencia de la versión vieja
 // (que armaba el prompt en el propio frontend, con datos parciales), esto corre en el
@@ -32,7 +32,7 @@ export default async function (req: Request): Promise<Response> {
 
     const [practices, services, availability, appts] = await Promise.all([
       findPracticeRowsByOwner(base44, professionalId),
-      base44.asServiceRole.entities.Service.filter({ created_by_id: professionalId, active: true }),
+      findOwnedRows(base44, 'Service', professionalId, { active: true }),
       base44.asServiceRole.entities.Availability.filter({ practice_owner_id: professionalId }),
       base44.asServiceRole.entities.Appointment.filter({ professional_id: professionalId }),
     ]);

@@ -35,10 +35,7 @@ export default async function (req: Request): Promise<Response> {
     }
 
     const scope = await resolveScope(base44, user);
-    const existing = scope
-      ? await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: scope.practiceOwnerId })
-      : [];
-    const current = existing?.[0];
+    const current = scope ? await findPracticeByOwner(base44, scope.practiceOwnerId) : null;
 
     if (scope && !scope.canManageTeam) {
       return Response.json({ error: "No tenes permiso para editar la configuracion del consultorio" }, { status: 403 });
@@ -55,6 +52,9 @@ export default async function (req: Request): Promise<Response> {
     trialEnds.setDate(trialEnds.getDate() + 14);
     const created = await base44.asServiceRole.entities.PracticeSettings.create({
       ...safeData,
+      // El dueño va en un campo nuestro: Base44 pisa created_by_id con el id del servicio
+      // (ver base44/shared/ownership.ts).
+      owner_user_id: user.id,
       plan: 'trial',
       trial_ends_at: trialEnds.toISOString(),
       trial_origin: 'landing',

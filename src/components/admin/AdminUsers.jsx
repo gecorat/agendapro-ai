@@ -75,8 +75,11 @@ export default function AdminUsers() {
   const deleteUser = async (u, settings) => {
     if (!window.confirm(`¿Eliminar a ${u.full_name || u.email}? Se borrarán sus datos de configuración. Esta acción no se puede deshacer.`)) return;
     try {
+      // Primero la ficha del consultorio: si esto falla y borramos igual el usuario, queda
+      // una ficha huérfana con el @usuario tomado y la página pública viva, sin ninguna
+      // señal. Antes el error se tragaba en silencio; ahora se corta acá.
       if (settings?.id) {
-        try { await base44.entities.PracticeSettings.delete(settings.id); } catch {}
+        await base44.entities.PracticeSettings.delete(settings.id);
       }
       await base44.entities.User.delete(u.id);
       toast({ title: "Profesional eliminado" });

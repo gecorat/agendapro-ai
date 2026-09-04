@@ -1,58 +1,57 @@
 {
   "name": "Service",
-  "type": "object",
   "properties": {
-    "name": {
-      "type": "string",
-      "title": "Nombre del servicio"
-    },
-    "description": {
-      "type": "string",
-      "title": "Descripci\u00f3n"
-    },
-    "prep_notes": {
-      "type": "string",
-      "title": "Notas de preparaci\u00f3n para el paciente",
-      "description": "Indicaciones que el paciente debe seguir antes de la consulta (ayuno, radiograf\u00edas, etc.)"
-    },
-    "duration_minutes": {
-      "type": "number",
-      "title": "Duraci\u00f3n (minutos)",
-      "default": 30
-    },
-    "margin_minutes": {
-      "type": "number",
-      "title": "Margen entre citas (minutos)",
-      "default": 0
+    "active": {
+      "default": true,
+      "title": "Activo",
+      "type": "boolean"
     },
     "color": {
-      "type": "string",
+      "default": "#3b82f6",
       "title": "Color para la agenda",
-      "default": "#3b82f6"
+      "type": "string"
     },
-    "price": {
-      "type": "number",
-      "title": "Precio (opcional)"
+    "description": {
+      "title": "Descripci\u00f3n",
+      "type": "string"
+    },
+    "duration_minutes": {
+      "default": 30,
+      "title": "Duraci\u00f3n (minutos)",
+      "type": "number"
     },
     "follow_up_days": {
-      "type": "number",
+      "default": 0,
       "title": "D\u00edas para seguimiento/recordatorio de control",
-      "default": 0
+      "type": "number"
     },
-    "active": {
-      "type": "boolean",
-      "title": "Activo",
-      "default": true
+    "margin_minutes": {
+      "default": 0,
+      "title": "Margen entre citas (minutos)",
+      "type": "number"
     },
-    "professional_ref_id": {
-      "type": "string",
-      "title": "Profesional (plan Clinic)",
-      "description": "ID de Professional al que pertenece este servicio. Vac\u00edo = lo ofrece el due\u00f1o de la cuenta (comportamiento normal en planes Base/Pro)."
+    "name": {
+      "title": "Nombre del servicio",
+      "type": "string"
     },
     "practice_owner_id": {
-      "type": "string",
+      "description": "Id del usuario due\u00f1o del consultorio. Mismo criterio y mismo nombre que en Availability. Reemplaza a created_by_id, que Base44 estampa con quien ejecuta el create: los servicios creados por el onboarding con rol de servicio quedaban todos con el mismo id de servicio y se mezclaban entre cuentas distintas (ver base44/shared/ownership.ts). Vac\u00edo en los servicios anteriores al 3/9/2026, que resuelven por created_by_id como respaldo.",
       "title": "Consultorio al que pertenece",
-      "description": "Id del usuario due\u00f1o del consultorio. Mismo criterio y mismo nombre que en Availability. Reemplaza a created_by_id, que Base44 estampa con quien ejecuta el create: los servicios creados por el onboarding con rol de servicio quedaban todos con el mismo id de servicio y se mezclaban entre cuentas distintas (ver base44/shared/ownership.ts). Vac\u00edo en los servicios anteriores al 3/9/2026, que resuelven por created_by_id como respaldo."
+      "type": "string"
+    },
+    "prep_notes": {
+      "description": "Indicaciones que el paciente debe seguir antes de la consulta (ayuno, radiograf\u00edas, etc.)",
+      "title": "Notas de preparaci\u00f3n para el paciente",
+      "type": "string"
+    },
+    "price": {
+      "title": "Precio (opcional)",
+      "type": "number"
+    },
+    "professional_ref_id": {
+      "description": "ID de Professional al que pertenece este servicio. Vac\u00edo = lo ofrece el due\u00f1o de la cuenta (comportamiento normal en planes Base/Pro).",
+      "title": "Profesional (plan Clinic)",
+      "type": "string"
     }
   },
   "required": [
@@ -60,23 +59,13 @@
     "duration_minutes"
   ],
   "rls": {
-    "read": {},
     "create": {
       "$or": [
         {
           "created_by_id": "{{user.id}}"
         },
         {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
-    "update": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
+          "data.practice_owner_id": "{{user.id}}"
         },
         {
           "user_condition": {
@@ -91,11 +80,31 @@
           "created_by_id": "{{user.id}}"
         },
         {
+          "data.practice_owner_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {},
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.practice_owner_id": "{{user.id}}"
+        },
+        {
           "user_condition": {
             "role": "admin"
           }
         }
       ]
     }
-  }
+  },
+  "type": "object"
 }

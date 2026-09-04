@@ -15,6 +15,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Loader2, Clock, UserPlus, Trash2, Ban, ShieldCheck, Crown, Copy, Check, Mail, XCircle } from "lucide-react";
 import { PLAN_LABELS } from "@/lib/plan-utils";
 import { indexPracticesByOwner } from "@/lib/ownership";
+import { formatArDate } from "@/lib/timezone";
 
 function statusFor(settings) {
   if (!settings) return { label: "Sin configurar", color: "text-muted-foreground" };

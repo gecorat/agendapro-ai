@@ -10,6 +10,7 @@ import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import { getPlanStatus } from "@/lib/plan-utils";
 import PlanGate from "@/components/PlanGate";
 import { Loader2, Star, Send, Plus, MessageCircle, Mail, Ban, RotateCcw, Check, ExternalLink } from "lucide-react";
+import { formatArDate } from "@/lib/timezone";
 
 const STATUS_CONFIG = {
   pending: { label: "Pendiente", bgSoft: "bg-slate-100", text: "text-slate-600" },

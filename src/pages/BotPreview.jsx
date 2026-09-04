@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { MessageCircle, Send, Loader2, Lock, Sparkles, RefreshCw, CalendarCheck2, Info } from "lucide-react";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import { getPlanStatus, PLAN_PRICES, PLAN_LABELS } from "@/lib/plan-utils";
+import { formatArTime } from "@/lib/timezone";
 
 const DEMO_TTL_MS = 5 * 60 * 1000;
 

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { MessageCircle, Send, Loader2, RefreshCw, Sparkles } from "lucide-react";
 import { PLAN_PRICES } from "@/lib/plan-utils";
 import { getTypeLabel } from "@/lib/professional-presets";
+import { formatArTime } from "@/lib/timezone";
 
 const DAYS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 

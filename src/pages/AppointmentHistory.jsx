@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Loader2, Search, CalendarX2 } from "lucide-react";
+import { formatArDateTimeStyle } from "@/lib/timezone";
 
 const STATUS_STYLES = {
   confirmed: "bg-blue-100 text-blue-700",
@@ -75,7 +76,7 @@ export default function AppointmentHistory() {
                   <p className="font-medium truncate">{a.patient_name || "Paciente"}</p>
                   <p className="text-sm text-muted-foreground">{a.service_name}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {formatArDateTime(a.start_datetime, { dateStyle: "medium", timeStyle: "short", day: undefined, month: undefined, hour: undefined, minute: undefined, hour12: undefined })}
+                    {formatArDateTimeStyle(a.start_datetime)}
                   </p>
                   {a.notes && <p className="text-xs text-muted-foreground mt-2 italic bg-accent/50 rounded px-2 py-1">📝 {a.notes}</p>}
                 </div>

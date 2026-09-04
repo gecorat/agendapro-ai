@@ -29,13 +29,11 @@ const STATUS_VARIANT = {
 };
 
 function formatDate(d) {
-  return new Date(d).toLocaleDateString("es-AR", {
+  return formatArDateTime(d, {
     weekday: "short",
     day: "numeric",
     month: "short",
     year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
   });
 }
 

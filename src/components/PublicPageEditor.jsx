@@ -17,6 +17,7 @@ import {
 } from "@/lib/theme-presets";
 import { useToast } from "@/components/ui/use-toast";
 import { Link } from "react-router-dom";
+import { normalizeHandle } from "@/lib/ownership";
 
 const STEPS = [
   { num: 1, label: "Perfil" },
@@ -261,6 +262,10 @@ export default function PublicPageEditor() {
       await save({ ...form, handle: cleanHandle });
       await reload();
       toast({ title: "Página pública actualizada" });
+    } catch (e) {
+      // Antes no habia catch: si el guardado fallaba (por ejemplo un usuario publico ya
+      // tomado), no salia ningun aviso y parecia que se habia guardado bien.
+      toast({ title: e?.message || "No se pudo guardar la pagina", variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -356,7 +361,7 @@ export default function PublicPageEditor() {
                   <Label htmlFor="handle">Usuario público (@)</Label>
                   <div className="flex items-center gap-2">
                     <span className="text-muted-foreground text-sm">@</span>
-                    <Input id="handle" value={form.handle} onChange={(e) => set("handle", e.target.value)} placeholder="drmartinez" className="flex-1" />
+                    <Input id="handle" value={form.handle} onChange={(e) => set("handle", normalizeHandle(e.target.value))} placeholder="drmartinez" className="flex-1" />
                   </div>
                 </div>
 

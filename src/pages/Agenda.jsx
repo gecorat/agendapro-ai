@@ -104,38 +104,25 @@ export default function Agenda() {
     }
   }
 
+  // Los rangos son de DIA ARGENTINO, no del huso del navegador. Es lo que se le manda al
+  // backend para pedir las citas del periodo: con `setHours(0,0,0,0)` local, un
+  // profesional en otro huso pedia una ventana corrida y le faltaban las citas del borde
+  // (las primeras de la manana o las ultimas de la noche).
   function getRange() {
-    const start = new Date(currentDate);
-    const end = new Date(currentDate);
     if (view === "day") {
-      start.setHours(0, 0, 0, 0);
-      end.setHours(23, 59, 59, 999);
-    } else if (view === "week") {
-      const day = start.getDay();
-      start.setDate(start.getDate() - day);
-      start.setHours(0, 0, 0, 0);
-      // Clonamos desde `start` (ya ajustado) en vez de reusar `end`, que todavía tiene el
-      // mes original de currentDate: si la semana cruza de mes, sumar días sobre ese mes
-      // viejo daba una fecha de fin incorrecta.
-      end.setTime(start.getTime());
-      end.setDate(start.getDate() + 6);
-      end.setHours(23, 59, 59, 999);
-    } else {
-      start.setDate(1);
-      start.setHours(0, 0, 0, 0);
-      end.setMonth(end.getMonth() + 1);
-      end.setDate(0);
-      end.setHours(23, 59, 59, 999);
+      return argentinaDayBounds(currentDate);
     }
-    return { start, end };
+    if (view === "week") {
+      const start = argentinaStartOfWeek(currentDate); // la grilla arranca domingo
+      return { start, end: argentinaEndOfDay(addArgentinaDays(start, 6)) };
+    }
+    return { start: argentinaStartOfMonth(currentDate), end: argentinaEndOfMonth(currentDate) };
   }
 
   function shift(n) {
-    const next = new Date(currentDate);
-    if (view === "day") next.setDate(next.getDate() + n);
-    else if (view === "week") next.setDate(next.getDate() + n * 7);
-    else next.setMonth(next.getMonth() + n);
-    setCurrentDate(next);
+    if (view === "day") setCurrentDate(addArgentinaDays(currentDate, n));
+    else if (view === "week") setCurrentDate(addArgentinaDays(currentDate, n * 7));
+    else setCurrentDate(addArgentinaMonths(currentDate, n));
   }
 
   function today() {
@@ -154,22 +141,18 @@ export default function Agenda() {
 
   const dateLabel = useMemo(() => {
     if (view === "day") {
-      return currentDate.toLocaleDateString("es", { weekday: "long", day: "numeric", month: "long" });
+      return formatArDate(currentDate, { weekday: "long", day: "numeric", month: "long" });
     }
     if (view === "week") {
       const { start, end } = getRange();
-      return `${start.toLocaleDateString("es", { day: "numeric", month: "short" })} - ${end.toLocaleDateString("es", { day: "numeric", month: "short" })}`;
+      return `${formatArDate(start, { day: "numeric", month: "short" })} - ${formatArDate(end, { day: "numeric", month: "short" })}`;
     }
-    return currentDate.toLocaleDateString("es", { month: "long", year: "numeric" });
+    return formatArDate(currentDate, { month: "long", year: "numeric" });
   }, [currentDate, view]);
 
   const weekDays = useMemo(() => {
     const { start } = getRange();
-    return Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(start);
-      d.setDate(d.getDate() + i);
-      return d;
-    });
+    return Array.from({ length: 7 }, (_, i) => addArgentinaDays(start, i));
   }, [currentDate, view]);
 
   function openNew(date) {

@@ -41,10 +41,13 @@ const statusOptions = [
   { value: "no_show", label: "Ausencia" },
 ];
 
+// El campo <input type="datetime-local"> de este formulario significa SIEMPRE hora
+// argentina, igual que el resto del sistema (ver src/lib/timezone.js). Antes se convertia
+// con el offset del NAVEGADOR: desde un dispositivo en otro huso, el profesional escribia
+// "15:00", se guardaba otra hora, y el bot y los recordatorios (que si anclan a -03:00)
+// avisaban al paciente un horario distinto del que el profesional habia visto.
 function toLocalInput(date) {
-  const d = new Date(date);
-  const tzOffset = d.getTimezoneOffset() * 60000;
-  return new Date(d.getTime() - tzOffset).toISOString().slice(0, 16);
+  return toArgentinaInputValue(date);
 }
 
 export default function AppointmentForm({ open, onClose, onSaved, appointment, defaultDate }) {
@@ -95,8 +98,12 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
           professional_ref_id: appointment.professional_ref_id || "",
         });
       } else {
-        const base = defaultDate ? new Date(defaultDate) : new Date();
-        base.setMinutes(0, 0, 0);
+        // La hora sugerida se redondea a la hora en punto ARGENTINA. setMinutes(0) sobre el
+        // instante da lo mismo en Argentina (offset entero), pero se deja explicito para
+        // que la sugerencia no dependa del huso del dispositivo.
+        const ref = defaultDate ? new Date(defaultDate) : new Date();
+        const p = argentinaParts(ref);
+        const base = argentinaDate(p.year, p.month, p.day, p.hour, 0, 0, 0);
         setForm({
           patient_id: "",
           service_id: "",
@@ -128,7 +135,7 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
   const selectedService = services.find((s) => s.id === form.service_id);
 
   function calcEnd(startISO, duration) {
-    const start = new Date(startISO);
+    const start = fromArgentinaInputValue(startISO);
     start.setMinutes(start.getMinutes() + (duration || 30));
     return start.toISOString();
   }
@@ -183,9 +190,9 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
       // Primer intento: si se pisa con otra cita, se avisa y se corta acá. El segundo click
       // (con el aviso ya en pantalla) guarda igual.
       if (!conflict) {
-        const clash = await findOverlap(new Date(form.start_datetime).toISOString(), end);
+        const clash = await findOverlap(fromArgentinaInputValue(form.start_datetime).toISOString(), end);
         if (clash) {
-          const hora = new Date(clash.start_datetime).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
+          const hora = formatArTime(clash.start_datetime);
           setConflict(`Se superpone con ${clash.patient_name || "otro turno"} (${clash.service_name || "turno"}) a las ${hora}.`);
           setSaving(false);
           return;
@@ -205,7 +212,7 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
         patient_name: `${patient.first_name} ${patient.last_name || ""}`.trim(),
         service_id: form.service_id,
         service_name: service.name,
-        start_datetime: new Date(form.start_datetime).toISOString(),
+        start_datetime: fromArgentinaInputValue(form.start_datetime).toISOString(),
         end_datetime: end,
         status: form.status,
         notes: form.notes,
@@ -230,14 +237,18 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
         apptId = savedAppt.id;
 
         if (recurring) {
-          const startDate = new Date(form.start_datetime);
+          // day_of_week / start_date / time son de PARED ARGENTINA: es el mismo criterio
+          // con el que el backend genera las citas de la regla y con el que Availability
+          // guarda los horarios de atencion. Con getDay()/getHours() del navegador, una
+          // regla creada desde otro huso quedaba un dia y una hora corridos.
+          const startDate = fromArgentinaInputValue(form.start_datetime);
           const rule = await base44.entities.RecurringRule.create({
             patient_id: form.patient_id,
             service_id: form.service_id,
             frequency,
-            day_of_week: startDate.getDay(),
-            start_date: startDate.toISOString().slice(0, 10),
-            time: `${String(startDate.getHours()).padStart(2, "0")}:${String(startDate.getMinutes()).padStart(2, "0")}`,
+            day_of_week: argentinaDayOfWeek(startDate),
+            start_date: argentinaYMD(startDate),
+            time: argentinaTimeString(startDate),
             active: true,
           });
           await base44.entities.Appointment.update(apptId, { recurring_rule_id: rule.id });

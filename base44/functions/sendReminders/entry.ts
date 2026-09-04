@@ -58,14 +58,19 @@ export default async function(req) {
       .map((a) => ({ appt: a, stage: reminderStage(a) }))
       .filter((x) => x.stage !== null);
 
-    // Cache de PracticeSettings para evitar consultas repetidas
-    let practices = null;
+    // Cache de PracticeSettings por dueno, para no repetir la consulta en cada cita del
+    // mismo consultorio (esta funcion recorre todas las citas por recordar).
+    const practiceCache = new Map();
     const getPracticeFor = async (appt) => {
       const profId = appt.professional_id || appt.created_by_id;
+      if (!profId) return null;
+      if (practiceCache.has(profId)) return practiceCache.get(profId);
       // findPracticeByOwner en vez de comparar created_by_id: en las cuentas creadas por el
       // onboarding ese campo es el id del servicio, asi que la practice salia null y no se
       // enviaba nada. Ver base44/shared/ownership.ts.
-      return await findPracticeByOwner(base44, profId);
+      const found = await findPracticeByOwner(base44, profId);
+      practiceCache.set(profId, found);
+      return found;
     };
 
     let sent = 0;

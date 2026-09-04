@@ -2,6 +2,11 @@
 // src/lib/plan-utils.js (que es la versión para el frontend) — mantener ambas en sync
 // si cambian precios o límites.
 
+import {
+  argentinaDate, argentinaParts, argentinaYear, argentinaMonth, argentinaDayOfMonth,
+  argentinaDaysInMonth,
+} from './timezone.ts';
+
 export const PLAN_PRICES = {
   basic: 29000,
   pro: 49000,
@@ -53,11 +58,16 @@ function cycleAnchor(practice) {
 
 // Día `day` del mes (year, month), recortado al último día real de ese mes: un aniversario
 // 31 cae el 28/29 en febrero y el 30 en abril. Conserva la hora del ancla.
+//
+// OJO ZONA HORARIA: esto corre en Deno, que NO esta en huso argentino. Con
+// `new Date(year, month, day)` y `.getHours()` la fecha se armaba en la hora del SERVIDOR
+// (UTC), asi que entre las 21:00 y las 23:59 argentinas el aniversario del ciclo caia un
+// dia mas adelante que el real: la fecha de renovacion que veia el profesional y la que
+// usaba el corte del cupo no coincidian. Ver base44/shared/timezone.ts.
 function onDayOfMonth(year, month, day, ref) {
-  const lastDay = new Date(year, month + 1, 0).getDate();
-  const d = new Date(year, month, Math.min(day, lastDay));
-  d.setHours(ref.getHours(), ref.getMinutes(), ref.getSeconds(), 0);
-  return d;
+  const lastDay = argentinaDaysInMonth(argentinaDate(year, month, 1));
+  const r = argentinaParts(ref);
+  return argentinaDate(year, month, Math.min(day, lastDay), r.hour, r.minute, r.second);
 }
 
 // Inicio del ciclo vigente: la última vez que se cumplió el aniversario.
@@ -65,16 +75,16 @@ export function getCycleStart(practice, now = new Date()) {
   const anchor = cycleAnchor(practice);
   if (!anchor) return now;
   if (anchor >= now) return anchor; // recién suscripto: el ciclo arranca ahí
-  const thisMonth = onDayOfMonth(now.getFullYear(), now.getMonth(), anchor.getDate(), anchor);
+  const thisMonth = onDayOfMonth(argentinaYear(now), argentinaMonth(now), argentinaDayOfMonth(anchor), anchor);
   if (thisMonth <= now) return thisMonth;
-  return onDayOfMonth(now.getFullYear(), now.getMonth() - 1, anchor.getDate(), anchor);
+  return onDayOfMonth(argentinaYear(now), argentinaMonth(now) - 1, argentinaDayOfMonth(anchor), anchor);
 }
 
 // Cuándo se renueva el cupo: el próximo aniversario después del ciclo vigente.
 export function getCycleEnd(practice, now = new Date()) {
   const start = getCycleStart(practice, now);
   const anchor = cycleAnchor(practice) || start;
-  return onDayOfMonth(start.getFullYear(), start.getMonth() + 1, anchor.getDate(), anchor);
+  return onDayOfMonth(argentinaYear(start), argentinaMonth(start) + 1, argentinaDayOfMonth(anchor), anchor);
 }
 
 export function isPlanActive(practice) {

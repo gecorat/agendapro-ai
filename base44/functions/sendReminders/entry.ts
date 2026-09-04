@@ -61,11 +61,11 @@ export default async function(req) {
     // Cache de PracticeSettings para evitar consultas repetidas
     let practices = null;
     const getPracticeFor = async (appt) => {
-      if (!practices) {
-        practices = await base44.asServiceRole.entities.PracticeSettings.filter({});
-      }
       const profId = appt.professional_id || appt.created_by_id;
-      return (practices || []).find((p) => p.created_by_id === profId) || null;
+      // findPracticeByOwner en vez de comparar created_by_id: en las cuentas creadas por el
+      // onboarding ese campo es el id del servicio, asi que la practice salia null y no se
+      // enviaba nada. Ver base44/shared/ownership.ts.
+      return await findPracticeByOwner(base44, profId);
     };
 
     let sent = 0;

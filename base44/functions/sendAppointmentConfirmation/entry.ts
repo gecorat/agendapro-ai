@@ -71,8 +71,10 @@ export default async function(req: Request): Promise<Response> {
     let handle = "";
     let practice = null;
     try {
-      const practices = await base44.asServiceRole.entities.PracticeSettings.filter({});
-      practice = practices?.find((p) => p.created_by_id === professionalId) || null;
+      // findPracticeByOwner en vez de comparar created_by_id: en las cuentas creadas por el
+      // onboarding ese campo es el id del servicio, asi que la practice salia null y no se
+      // enviaba nada. Ver base44/shared/ownership.ts.
+      practice = await findPracticeByOwner(base44, professionalId);
       if (practice?.handle) handle = practice.handle;
     } catch {}
 

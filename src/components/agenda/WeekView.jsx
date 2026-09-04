@@ -1,5 +1,6 @@
 import React from "react";
 import { statusConfig, apptsForDay, formatTime } from "@/lib/agenda-utils";
+import { isArgentinaToday, argentinaDayOfMonth, formatArDate } from "@/lib/timezone";
 
 const MAX_INLINE = 3;
 

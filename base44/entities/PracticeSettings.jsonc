@@ -476,6 +476,11 @@
       "title": "Mercado Pago \u2014 ID de suscripci\u00f3n",
       "description": "preapproval_id devuelto por Mercado Pago al crear la suscripci\u00f3n recurrente. Lo usa el webhook para identificar a qu\u00e9 consultorio corresponde cada notificaci\u00f3n de pago."
     },
+    "mercadopago_pending_plan": {
+      "type": "string",
+      "title": "Mercado Pago \u2014 Plan que se esta intentando contratar",
+      "description": "Que plan eligio el profesional antes de irse al checkout. Al volver, linkMpSubscription lo usa como guardia para vincular el preapproval_id real a esta cuenta y despues lo limpia. FALTABA EN EL SCHEMA: createMpPreference lo escribia, la entidad lo descartaba en silencio, y por eso la guardia daba siempre negativo y NINGUNA suscripcion quedaba vinculada al volver del pago."
+    },
     "plan_granted_by_admin": {
       "type": "boolean",
       "title": "Plan asignado manualmente por un admin (el sync automatico de Mercado Pago no lo toca)",

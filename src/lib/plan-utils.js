@@ -107,26 +107,29 @@ export function getCycleAnchor(settings) {
 
 // Día `day` del mes indicado, recortado al último día real de ese mes (un aniversario 31
 // cae el 28/29 en febrero y el 30 en abril).
+// Todo el ciclo de facturacion se razona en HORA ARGENTINA (ver src/lib/timezone.js), que
+// es la del negocio y la que usa el espejo del backend en base44/shared/plan.ts. Con los
+// getters del navegador, la fecha de renovacion se mostraba corrida un dia para cualquiera
+// que abriera la app desde otro huso.
 function onDayOfMonth(year, month, day, ref) {
-  const lastDay = new Date(year, month + 1, 0).getDate();
-  const d = new Date(year, month, Math.min(day, lastDay));
-  d.setHours(ref.getHours(), ref.getMinutes(), ref.getSeconds(), 0);
-  return d;
+  const lastDay = argentinaDayOfMonth(argentinaEndOfMonth(argentinaDate(year, month, 1)));
+  const r = argentinaParts(ref);
+  return argentinaDate(year, month, Math.min(day, lastDay), r.hour, r.minute, r.second);
 }
 
 export function getCycleStart(settings, now = new Date()) {
   const anchor = getCycleAnchor(settings);
   if (!anchor) return now;
   if (anchor >= now) return anchor;
-  const thisMonth = onDayOfMonth(now.getFullYear(), now.getMonth(), anchor.getDate(), anchor);
+  const thisMonth = onDayOfMonth(argentinaYear(now), argentinaMonth(now), argentinaDayOfMonth(anchor), anchor);
   if (thisMonth <= now) return thisMonth;
-  return onDayOfMonth(now.getFullYear(), now.getMonth() - 1, anchor.getDate(), anchor);
+  return onDayOfMonth(argentinaYear(now), argentinaMonth(now) - 1, argentinaDayOfMonth(anchor), anchor);
 }
 
 export function getCycleEnd(settings, now = new Date()) {
   const start = getCycleStart(settings, now);
   const anchor = getCycleAnchor(settings) || start;
-  return onDayOfMonth(start.getFullYear(), start.getMonth() + 1, anchor.getDate(), anchor);
+  return onDayOfMonth(argentinaYear(start), argentinaMonth(start) + 1, argentinaDayOfMonth(anchor), anchor);
 }
 
 // Período de uso vigente, listo para mostrar: desde cuándo corre, cuándo se renueva el
@@ -144,7 +147,7 @@ export function formatDate(value, opts = { day: "numeric", month: "long" }) {
   if (!value) return "—";
   const d = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("es-AR", opts);
+  return formatArDate(d, opts);
 }
 
 // Cupo total (límite del plan + packs adicionales comprados) y cuánto se usó en el

@@ -45,14 +45,11 @@ function priceOf(plan) {
 const DAY = 24 * 60 * 60 * 1000;
 
 // Lunes como primer día de la semana (convención local, no la de EE.UU.).
-export function startOfWeek(d) {
-  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const dow = (x.getDay() + 6) % 7; // 0 = lunes
-  x.setDate(x.getDate() - dow);
-  return x;
-}
-export function startOfMonth(d) { return new Date(d.getFullYear(), d.getMonth(), 1); }
-export function startOfYear(d) { return new Date(d.getFullYear(), 0, 1); }
+// Los periodos son ARGENTINOS (ver src/lib/timezone.js): la facturacion de una semana
+// tiene que dar lo mismo abra quien abra el panel, desde donde lo abra.
+export function startOfWeek(d) { return argentinaStartOfWeek(d, { mondayStart: true }); }
+export function startOfMonth(d) { return argentinaStartOfMonth(d); }
+export function startOfYear(d) { return argentinaDate(argentinaYear(d), 0, 1); }
 
 // Estado de la cartera de cuentas. `suspended` y el vencimiento del trial se miran acá
 // igual que en getPlanStatus, para que el panel no cuente como activa una cuenta que la
@@ -151,7 +148,7 @@ export function planRevenue(practices) {
 // fecha es una ESTIMACIÓN: se marca como tal (`estimated`) en vez de mostrarla como si
 // fuera certera. El sync horario completa el ancla sola, así que se corrige con el tiempo.
 export function upcomingCharges(practices, now = new Date()) {
-  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const monthEnd = argentinaDate(argentinaYear(now), argentinaMonth(now) + 1, 1);
   const rows = [];
   const byPlan = {};
   let total = 0;
@@ -201,15 +198,15 @@ function bucketStart(date, granularity) {
 }
 
 function shiftBucket(date, granularity, steps) {
-  if (granularity === "week") return new Date(date.getFullYear(), date.getMonth(), date.getDate() + steps * 7);
-  if (granularity === "year") return new Date(date.getFullYear() + steps, 0, 1);
-  return new Date(date.getFullYear(), date.getMonth() + steps, 1);
+  if (granularity === "week") return addArgentinaDays(date, steps * 7);
+  if (granularity === "year") return argentinaDate(argentinaYear(date) + steps, 0, 1);
+  return argentinaDate(argentinaYear(date), argentinaMonth(date) + steps, 1);
 }
 
 function bucketLabel(date, granularity) {
-  if (granularity === "week") return date.toLocaleDateString("es-AR", { day: "numeric", month: "short" });
-  if (granularity === "year") return String(date.getFullYear());
-  return date.toLocaleDateString("es-AR", { month: "short", year: "2-digit" });
+  if (granularity === "week") return formatArDate(date, { day: "numeric", month: "short" });
+  if (granularity === "year") return String(argentinaYear(date));
+  return formatArDate(date, { month: "short", year: "2-digit" });
 }
 
 // Serie temporal lista para graficar. Devuelve SIEMPRE los `count` períodos completos

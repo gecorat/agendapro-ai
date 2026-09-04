@@ -136,8 +136,10 @@ export default function AvailabilityEditor() {
   }
 
   async function addHoliday() {
-    const now = new Date();
-    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    // El feriado se guarda como dia ARGENTINO: el backend compara Availability.date contra
+    // el dia argentino de la cita, asi que armarlo con el huso del navegador podia bloquear
+    // el dia anterior o el siguiente al que el profesional queria.
+    const today = argentinaYMD(new Date());
     await base44.entities.Availability.create({ day_of_week: 0, start_time: "00:00", end_time: "23:59", type: "holiday", date: today, label: "Feriado", professional_ref_id: proFilter || undefined, practice_owner_id: practiceOwnerId });
     load();
   }

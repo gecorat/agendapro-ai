@@ -16,6 +16,11 @@
       "type": "string",
       "title": "Mercado Pago \u2014 Public Key"
     },
+    "mercadopago_plan_ids": {
+      "type": "string",
+      "title": "Mercado Pago - Cache de preapproval_plan por plan (JSON)",
+      "description": "JSON { plan: { id, init_point } } con los planes de suscripcion ya creados en Mercado Pago. Lo escribe y lo lee getOrCreateMpPlanLinks en base44/shared/mercadopago.ts. FALTABA EN EL SCHEMA: como no persistia, CADA llamada a createMpPreference creaba tres preapproval_plan nuevos en la cuenta real de Mercado Pago, y ademas syncSubscriptionStatus no podia resolver a que plan corresponde un pago (se quedaba con el plan viejo del profesional)."
+    },
     "zernio_api_key": {
       "type": "string",
       "title": "Zernio \u2014 API Key (proveedor de WhatsApp)"

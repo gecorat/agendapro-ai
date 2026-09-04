@@ -15,7 +15,16 @@ export async function getOrCreateMpPlanLinks(base44, accessToken, origin) {
     planIds = JSON.parse(platformConfig?.mercadopago_plan_ids || '{}');
   } catch { /* ignore */ }
 
-  const backUrl = `${origin || 'https://kameagenda.com'}/upgrade-plan?status=success`;
+  // A DONDE VUELVE EL USUARIO DESPUES DE PAGAR. Va el dominio configurado en
+  // PlatformConfig (app_base_url), NO el `origin` del navegador que disparo el pago.
+  //
+  // Por que importa: los planes de Mercado Pago se crean UNA sola vez y quedan cacheados
+  // con su back_url para siempre. Si el primer pago de la plataforma salia desde una
+  // preview de Base44 (o desde localhost), TODOS los checkouts posteriores volvian a esa
+  // URL — y como es ahi donde corre linkMpSubscription, la suscripcion nunca quedaba
+  // vinculada a la cuenta: el profesional pagaba y se quedaba sin plan.
+  const base = (platformConfig?.app_base_url || '').trim().replace(/\/+$/, '') || origin || 'https://kameagenda.com';
+  const backUrl = `${base}/upgrade-plan?status=success`;
   let changed = false;
 
   for (const plan of Object.keys(PLAN_PRICES)) {

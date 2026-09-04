@@ -11,6 +11,11 @@ import MonthView from "@/components/agenda/MonthView";
 import DayDetailSheet from "@/components/agenda/DayDetailSheet";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import { getPlanStatus } from "@/lib/plan-utils";
+import {
+  argentinaDayBounds, argentinaStartOfWeek, argentinaStartOfMonth, argentinaEndOfMonth,
+  argentinaEndOfDay, addArgentinaDays, addArgentinaMonths, formatArDate,
+  fromArgentinaInputValue,
+} from "@/lib/timezone";
 
 const OWNER_VALUE = "__owner__";
 
@@ -26,7 +31,10 @@ export default function Agenda() {
     const d = searchParams.get("date");
     if (!d) return new Date();
     if (d === "today") return new Date();
-    const parsed = new Date(d + "T00:00:00");
+    // El ?date=YYYY-MM-DD de la URL es un dia ARGENTINO. Con `new Date(d+"T00:00:00")` se
+    // interpretaba en el huso del navegador y desde otra zona la agenda abria el dia
+    // anterior o el siguiente.
+    const parsed = fromArgentinaInputValue(`${d}T00:00`);
     return isNaN(parsed.getTime()) ? new Date() : parsed;
   })();
   const initialStatus = ["confirmed", "pending", "cancelled", "completed", "no_show"].includes(searchParams.get("status")) ? searchParams.get("status") : null;

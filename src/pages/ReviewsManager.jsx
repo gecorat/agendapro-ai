@@ -324,7 +324,7 @@ function ReviewCard({ review, onReload }) {
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <p className="font-medium truncate">{review.patient_name}</p>
-          <p className="text-xs text-muted-foreground">{review.service_name} · {review.appointment_date ? new Date(review.appointment_date).toLocaleDateString("es-AR") : "—"}</p>
+          <p className="text-xs text-muted-foreground">{review.service_name} · {review.appointment_date ? formatArDate(review.appointment_date, { day: "numeric", month: "numeric", year: "numeric" }) : "—"}</p>
         </div>
         <span className={`text-[11px] font-medium px-2 py-1 rounded-full shrink-0 ${cfg.bgSoft} ${cfg.text}`}>{cfg.label}</span>
       </div>
@@ -339,7 +339,7 @@ function ReviewCard({ review, onReload }) {
           {review.review_text && <p className="text-sm italic text-foreground/80">"{review.review_text}"</p>}
           {review.google_review_clicked && (
             <p className="text-xs text-emerald-700 flex items-center gap-1 mt-2 pt-2 border-t border-border/60">
-              <ExternalLink className="w-3 h-3" /> Tocó el botón para dejarla en Google también {review.google_review_clicked_at ? `· ${new Date(review.google_review_clicked_at).toLocaleDateString("es-AR")}` : ""}
+              <ExternalLink className="w-3 h-3" /> Tocó el botón para dejarla en Google también {review.google_review_clicked_at ? `· ${formatArDate(review.google_review_clicked_at, { day: "numeric", month: "numeric", year: "numeric" })}` : ""}
             </p>
           )}
         </div>

@@ -441,7 +441,7 @@ export default function PublicBooking() {
           }
         }
         try {
-          const now = new Date(); now.setHours(0, 0, 0, 0);
+          const now = argentinaStartOfDay(new Date());
           const toDate = new Date(now.getTime() + 21 * 86400000);
           const res = await base44.functions.invoke("getBookedSlots", {
             professional_id: pid,
@@ -462,7 +462,7 @@ export default function PublicBooking() {
 
   const upcomingDays = useMemo(() => {
     const days = [];
-    const base = new Date(); base.setHours(0, 0, 0, 0);
+    const base = argentinaStartOfDay(new Date());
     const proId = selectedProRefId;
     for (let i = 0; i < 21; i++) {
       const d = new Date(base.getTime() + i * 86400000);
@@ -480,7 +480,7 @@ export default function PublicBooking() {
     if (!professionalId) return;
     (async () => {
       try {
-        const now = new Date(); now.setHours(0, 0, 0, 0);
+        const now = argentinaStartOfDay(new Date());
         const toDate = new Date(now.getTime() + 21 * 86400000);
         const res = await base44.functions.invoke('getGoogleBusySlots', {
           professional_id: professionalId,
@@ -518,7 +518,7 @@ export default function PublicBooking() {
       setSlot(null);
       setStep(DATE_STEP);
       try {
-        const now = new Date(); now.setHours(0, 0, 0, 0);
+        const now = argentinaStartOfDay(new Date());
         const toDate = new Date(now.getTime() + 21 * 86400000);
         const refreshed = await base44.functions.invoke("getBookedSlots", {
           professional_id: professionalId,
@@ -708,7 +708,7 @@ export default function PublicBooking() {
             </p>
             <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
               {upcomingDays.map((d) => {
-                const selected = date && d.toDateString() === date.toDateString();
+                const selected = date && isSameArgentinaDay(d, date);
                 return (
                   <button key={d.toISOString()} onClick={() => { setDate(d); setSlot(null); setBookingError(null); }} className={`p-2 border text-center transition-colors ${theme.radiusClass}`} style={selected ? { background: theme.accentCss, borderColor: brand, color: theme.accentText } : { borderColor: theme.cardBorder, color: theme.text }}>
                     <p className="text-xs capitalize opacity-70">{d.toLocaleDateString("es-AR", { weekday: "short", timeZone: AR_TZ })}</p>

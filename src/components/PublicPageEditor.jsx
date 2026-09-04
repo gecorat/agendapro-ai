@@ -17,7 +17,7 @@ import {
 } from "@/lib/theme-presets";
 import { useToast } from "@/components/ui/use-toast";
 import { Link } from "react-router-dom";
-import { normalizeHandle } from "@/lib/ownership";
+import { normalizeHandle, normalizeHandleTyping } from "@/lib/ownership";
 
 const STEPS = [
   { num: 1, label: "Perfil" },
@@ -361,7 +361,7 @@ export default function PublicPageEditor() {
                   <Label htmlFor="handle">Usuario público (@)</Label>
                   <div className="flex items-center gap-2">
                     <span className="text-muted-foreground text-sm">@</span>
-                    <Input id="handle" value={form.handle} onChange={(e) => set("handle", normalizeHandle(e.target.value))} placeholder="drmartinez" className="flex-1" />
+                    <Input id="handle" value={form.handle} onChange={(e) => set("handle", normalizeHandleTyping(e.target.value))} placeholder="drmartinez" className="flex-1" />
                   </div>
                 </div>
 

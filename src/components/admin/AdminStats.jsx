@@ -3,7 +3,9 @@ import { base44 } from "@/api/base44Client";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
-import { Loader2, Users, Wallet, Clock, AlertTriangle, TrendingUp, Info, CalendarClock } from "lucide-react";
+import { Loader2, Users, Wallet, Clock, AlertTriangle, TrendingUp, Info, CalendarClock, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 import { PLAN_LABELS, formatDate } from "@/lib/plan-utils";
 import {
   summarizePlans, bucketRevenue, revenueTotals, planRevenue, upcomingCharges,
@@ -192,6 +194,8 @@ export default function AdminStats() {
   const [loading, setLoading] = useState(true);
   const [paymentsUnavailable, setPaymentsUnavailable] = useState(false);
   const [range, setRange] = useState("month");
+  const [deletingId, setDeletingId] = useState(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     (async () => {
@@ -217,6 +221,28 @@ export default function AdminStats() {
   // Las fichas sin usuario no cuentan para nada: inflaban totales y trials con cuentas
   // que ya no existen. Se muestran aparte, abajo, para poder limpiarlas.
   const { real, orphans } = useMemo(() => splitOrphanPractices(practices, users), [practices, users]);
+  // El borrado se hace en el backend, que vuelve a verificar que la ficha no tenga dueno
+  // antes de tocar nada — esta pantalla nunca puede borrar la cuenta de alguien activo.
+  async function deleteOrphan(orphan) {
+    const name = orphan.practice_name || orphan.professional_email || orphan.id;
+    if (!confirm(`¿Eliminar la ficha "${name}"? No tiene ningún usuario detrás. Esta acción no se puede deshacer.`)) return;
+    setDeletingId(orphan.id);
+    try {
+      const res = await base44.functions.invoke("adminDeleteOrphanPractice", { practice_id: orphan.id });
+      if (res?.data?.error) throw new Error(res.data.error);
+      setPractices((prev) => prev.filter((p) => p.id !== orphan.id));
+      toast({ title: "Ficha eliminada", description: name });
+    } catch (err) {
+      toast({
+        title: "No se pudo eliminar",
+        description: err?.response?.data?.error || err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   const stats = useMemo(() => summarizePlans(real), [real]);
   const revenue = useMemo(() => planRevenue(real), [real]);
   const upcoming = useMemo(() => upcomingCharges(real), [real]);
@@ -268,16 +294,36 @@ export default function AdminStats() {
       )}
 
       {orphans.length > 0 && (
-        <Card className="p-3 border-slate-300 bg-slate-50">
+        <Card className="p-4 border-slate-300 bg-slate-50 space-y-3">
           <p className="text-sm text-slate-700 flex items-start gap-2">
             <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
             <span>
               <strong>{orphans.length}</strong> {orphans.length === 1 ? "ficha de consultorio no tiene" : "fichas de consultorio no tienen"} usuario asociado
-              y qued{orphans.length === 1 ? "a" : "an"} fuera de los números de arriba:{" "}
-              {orphans.map((o) => o.practice_name || o.professional_email || o.id).join(", ")}.
-              Son datos que sobrevivieron a una cuenta borrada; conviene eliminarlos.
+              y qued{orphans.length === 1 ? "a" : "an"} fuera de los números de arriba. Son datos que sobrevivieron a una
+              cuenta borrada o a un alta que falló. Podés eliminarlas acá.
             </span>
           </p>
+          <div className="space-y-1.5">
+            {orphans.map((o) => (
+              <div key={o.id} className="flex items-center justify-between gap-2 text-sm bg-white rounded-lg border border-slate-200 px-3 py-2">
+                <span className="min-w-0">
+                  <span className="font-medium">{o.practice_name || "Sin nombre"}</span>
+                  {o.professional_email && <span className="text-muted-foreground"> · {o.professional_email}</span>}
+                  <span className="text-xs text-muted-foreground block">Creada el {formatDate(o.created_date)}</span>
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1 text-destructive hover:text-destructive shrink-0"
+                  disabled={deletingId === o.id}
+                  onClick={() => deleteOrphan(o)}
+                >
+                  {deletingId === o.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                  Eliminar
+                </Button>
+              </div>
+            ))}
+          </div>
         </Card>
       )}
 

@@ -2,6 +2,10 @@ import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { fetchScopedProfessionals } from "@/lib/professionals";
 import {
+  toArgentinaInputValue, fromArgentinaInputValue, argentinaParts, argentinaDate,
+  argentinaDayOfWeek, argentinaYMD, argentinaTimeString, formatArTime,
+} from "@/lib/timezone";
+import {
   Dialog,
   DialogContent,
   DialogHeader,

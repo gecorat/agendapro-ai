@@ -21,6 +21,15 @@
 // bien. Por eso este cambio no necesita migrar nada: las cuentas sanas siguen resolviendo
 // igual que antes.
 
+// El respaldo por created_by_id SOLO vale para ids de personas reales. Los registros
+// creados con rol de servicio llevan "service_<uuid>" (el MISMO para todas las cuentas) y
+// los de la página pública llevan "anonymous": filtrar por esos valores mezcla las filas de
+// consultorios distintos. Verificado en vivo: hay 15 filas de Availability de 3 cuentas
+// diferentes compartiendo created_by_id = "service_38f44a12-...".
+function isRealUserId(id) {
+  return !!id && typeof id === "string" && id !== "anonymous" && !id.startsWith("service_");
+}
+
 // Id del dueño de un consultorio. Nunca leer practice.created_by_id directo: usar esto.
 export function ownerIdOf(practice) {
   return practice?.owner_user_id || practice?.created_by_id || null;
@@ -32,6 +41,7 @@ export async function findPracticeByOwner(base44, ownerId) {
   if (!ownerId) return null;
   const byOwn = await base44.asServiceRole.entities.PracticeSettings.filter({ owner_user_id: ownerId });
   if (byOwn?.[0]) return byOwn[0];
+  if (!isRealUserId(ownerId)) return null;
   const byCreated = await base44.asServiceRole.entities.PracticeSettings.filter({ created_by_id: ownerId });
   // Del respaldo se descartan las filas que YA declaran otro dueño: si una fila tiene
   // owner_user_id de otra persona, que created_by_id coincida es una casualidad (el mismo
@@ -55,7 +65,9 @@ export async function findOwnedRows(base44, entityName, ownerId, extraFilter = {
   if (!ownerId) return [];
   const [byOwn, byCreated] = await Promise.all([
     base44.asServiceRole.entities[entityName].filter({ ...extraFilter, practice_owner_id: ownerId }),
-    base44.asServiceRole.entities[entityName].filter({ ...extraFilter, created_by_id: ownerId }),
+    isRealUserId(ownerId)
+      ? base44.asServiceRole.entities[entityName].filter({ ...extraFilter, created_by_id: ownerId })
+      : Promise.resolve([]),
   ]);
   const seen = new Map();
   for (const row of byOwn || []) {
@@ -74,5 +86,6 @@ export async function findOwnedRows(base44, entityName, ownerId, extraFilter = {
 // ¿Esta fila (Service / Availability) pertenece a este consultorio?
 export function rowBelongsTo(row, ownerId) {
   if (!row || !ownerId) return false;
-  return row.practice_owner_id === ownerId || (!row.practice_owner_id && row.created_by_id === ownerId);
+  if (row.practice_owner_id) return row.practice_owner_id === ownerId;
+  return isRealUserId(ownerId) && row.created_by_id === ownerId;
 }

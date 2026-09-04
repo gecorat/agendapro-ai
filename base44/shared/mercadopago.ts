@@ -66,6 +66,55 @@ export async function getOrCreateMpPlanLinks(base44, accessToken, origin) {
   return planIds;
 }
 
+// SUSCRIPCION PAGADA QUE NUNCA QUEDO VINCULADA A UNA CUENTA.
+//
+// El checkout "con plan asociado" no manda external_reference (el link es publico y lo
+// comparten todos los suscriptores de ese plan), asi que lo unico que ataba la suscripcion
+// a una cuenta era linkMpSubscription, que corre cuando el usuario VUELVE a /upgrade-plan.
+// Si cerraba la pestana en Mercado Pago despues de pagar, no volvia nunca: el webhook no
+// encontraba consultorio, el chequeo horario solo mira los que YA tienen
+// mercadopago_subscription_id, y el profesional quedaba pagando sin plan activo, en
+// silencio.
+//
+// Acá lo rescatamos por el email del pagador real (el que devuelve la API de Mercado
+// Pago), entre las cuentas que tienen un intento de suscripcion pendiente
+// (mercadopago_pending_plan) y todavia ninguna suscripcion vinculada. Solo se vincula si
+// hay UNA sola coincidencia: ante cualquier ambiguedad preferimos no tocar nada antes que
+// darle un plan a quien no pago.
+async function rescuePracticeByPayerEmail(base44, preapproval) {
+  const payerEmail = String(preapproval?.payer_email || "").trim().toLowerCase();
+  if (!payerEmail) return null;
+
+  let all = [];
+  try {
+    all = await base44.asServiceRole.entities.PracticeSettings.filter({}) || [];
+  } catch {
+    return null;
+  }
+  const pending = all.filter((p) => p.mercadopago_pending_plan && !p.mercadopago_subscription_id);
+  if (!pending.length) return null;
+
+  // 1) por el email de contacto que cargo el profesional en su consultorio
+  let matches = pending.filter((p) => String(p.professional_email || "").trim().toLowerCase() === payerEmail);
+
+  // 2) si no, por el email de la cuenta con la que inicia sesion
+  if (!matches.length) {
+    const owners = await Promise.all(pending.map(async (p) => {
+      const ownerId = p.owner_user_id || p.created_by_id;
+      if (!ownerId || String(ownerId).startsWith("service_")) return null;
+      try {
+        const rows = await base44.asServiceRole.entities.User.filter({ id: ownerId });
+        return String(rows?.[0]?.email || "").trim().toLowerCase();
+      } catch {
+        return null;
+      }
+    }));
+    matches = pending.filter((_, i) => owners[i] && owners[i] === payerEmail);
+  }
+
+  return matches.length === 1 ? matches[0] : null;
+}
+
 // Lógica compartida entre el webhook de Mercado Pago (reacciona al toque, cuando llega el
 // aviso) y el chequeo periódico (red de seguridad, por si el aviso nunca llega — confirmado
 // en vivo que puede pasar: un pago se acreditó y Mercado Pago nunca mandó la notificación).

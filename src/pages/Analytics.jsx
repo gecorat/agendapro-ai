@@ -2,9 +2,17 @@ import React, { useEffect, useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { CalendarCheck, UserPlus, TrendingUp } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from "recharts";
+import {
+  argentinaStartOfMonth, argentinaEndOfMonth, argentinaDaysInMonth, argentinaDate,
+  argentinaYear, argentinaMonth, argentinaDayOfWeek, argentinaDayOfMonth, formatArDate,
+} from "@/lib/timezone";
 
-function startOfMonth(d) { return new Date(d.getFullYear(), d.getMonth(), 1); }
-function endOfMonth(d) { return new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59); }
+// El mes que se reporta es el mes ARGENTINO, y el dia de la semana con el que se cruzan los
+// horarios de atencion (Availability.day_of_week) tambien: ese campo lo guarda el backend
+// en hora argentina, asi que compararlo contra un getDay() del navegador daba una ocupacion
+// calculada contra los dias equivocados.
+const startOfMonth = argentinaStartOfMonth;
+const endOfMonth = argentinaEndOfMonth;
 
 // Mismos colores de estado que usa la Agenda (agenda-utils.js), pero en hex porque
 // recharts necesita un valor de color real, no una clase de Tailwind.
@@ -61,11 +69,11 @@ export default function Analytics() {
     });
 
     let availableMin = 0;
-    const daysInMonth = eom.getDate();
+    const daysInMonth = argentinaDaysInMonth(now);
     for (let day = 1; day <= daysInMonth; day++) {
-      const d = new Date(now.getFullYear(), now.getMonth(), day);
+      const d = argentinaDate(argentinaYear(now), argentinaMonth(now), day);
       if (d > now) break;
-      const dow = d.getDay();
+      const dow = argentinaDayOfWeek(d);
       availability.filter((a) => a.type === "work" && a.day_of_week === dow).forEach((a) => {
         const [sh, sm] = a.start_time.split(":").map(Number);
         const [eh, em] = a.end_time.split(":").map(Number);
@@ -82,8 +90,7 @@ export default function Analytics() {
 
     const weeks = [0, 0, 0, 0, 0];
     monthAppts.forEach((a) => {
-      const d = new Date(a.start_datetime);
-      const w = Math.min(4, Math.floor((d.getDate() - 1) / 7));
+      const w = Math.min(4, Math.floor((argentinaDayOfMonth(a.start_datetime) - 1) / 7));
       weeks[w]++;
     });
 
@@ -109,7 +116,7 @@ export default function Analytics() {
     <div className="px-3 py-3 md:p-6 max-w-4xl mx-auto space-y-5">
       <div>
         <h1 className="text-2xl font-heading font-semibold tracking-tight">Reportes y métricas</h1>
-        <p className="text-muted-foreground text-sm capitalize">{new Date().toLocaleDateString("es-AR", { month: "long", year: "numeric" })}</p>
+        <p className="text-muted-foreground text-sm capitalize">{formatArDate(new Date(), { month: "long", year: "numeric" })}</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

@@ -26,6 +26,24 @@ export default async function (req: Request): Promise<Response> {
     const manualCutoff = new Date(now.getTime() - MANUAL_GRACE_HOURS * 60 * 60 * 1000);
 
     const appts = await base44.asServiceRole.entities.Appointment.filter({ status: 'confirmed' });
+
+    // Red de seguridad para las citas del simulador del bot. Se borran solas por dos
+    // caminos (un temporizador en el frontend a los 5 minutos, y una limpieza en cada
+    // mensaje nuevo de botPreviewMessage), pero los dos dependen de que el profesional
+    // siga en la app: si cerraba la pestana justo despues de probar y no volvia mas, la
+    // cita de prueba se quedaba en su Agenda para siempre. Ahora tambien la barre este
+    // proceso, que ya corre solo.
+    let demosDeleted = 0;
+    for (const a of (appts || [])) {
+      if (!a.is_demo || !a.demo_expires_at) continue;
+      const expires = new Date(a.demo_expires_at);
+      if (isNaN(expires.getTime()) || expires > now) continue;
+      try {
+        await base44.asServiceRole.entities.Appointment.delete(a.id);
+        demosDeleted++;
+      } catch { /* best-effort: nunca puede frenar el completado de citas reales */ }
+    }
+
     const due = (appts || []).filter((a) => {
       if (a.is_demo || !a.end_datetime) return false;
       const end = new Date(a.end_datetime);

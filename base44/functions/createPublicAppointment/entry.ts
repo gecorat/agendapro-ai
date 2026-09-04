@@ -10,6 +10,8 @@ import { argentinaDayBounds, isTimeAvailable } from '../../shared/scheduling.ts'
 import { getGoogleBusyRanges } from '../../shared/google-calendar.ts';
 import { canSendWhatsApp } from '../../shared/plan.ts';
 import { logNotification, logWhatsAppToConversation } from '../../shared/notification-log.ts';
+import { sendEmail, replyToFor } from '../../shared/email-sender.ts';
+import { buildEmailHtml } from '../../shared/email-template.ts';
 
 export default async function (req: Request): Promise<Response> {
   try {
@@ -267,6 +269,51 @@ export default async function (req: Request): Promise<Response> {
         } catch (e) {
           console.error('sendWhatsAppMessage error (createPublicAppointment):', e?.message || e);
           await logNotification(base44, { appointment, practice, patient, kind: 'confirmation', channel: 'whatsapp', status: 'failed', error: e });
+        }
+      }
+    }
+
+    // RESERVA QUE QUEDA PENDIENTE DE APROBACION. El paciente ve "listo" en pantalla y
+    // despues no recibia absolutamente nada: ni un mail, ni un WhatsApp, ni aviso de que su
+    // turno todavia no estaba confirmado. Se enteraba (o no) recien cuando el profesional lo
+    // aprobaba a mano. Ahora le avisamos que lo recibimos y que le confirmamos enseguida.
+    if (!autoConfirm) {
+      const startText = start.toLocaleString('es-AR', {
+        weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit',
+        timeZone: 'America/Argentina/Buenos_Aires',
+      });
+      try {
+        await sendEmail(base44, {
+          to: patient.email || email,
+          replyTo: replyToFor(practice),
+          subject: `Recibimos tu solicitud de turno — ${service.name}`,
+          body: buildEmailHtml({
+            title: 'Solicitud recibida',
+            greeting: `Hola ${patient.first_name || first_name}`,
+            lines: [
+              'Recibimos tu solicitud de turno. Queda pendiente de confirmación del consultorio.',
+              'Te avisamos apenas quede confirmado.',
+            ],
+            details: [
+              { label: 'Servicio', value: service.name },
+              { label: 'Día y horario solicitado', value: startText },
+            ],
+          }),
+        });
+        await logNotification(base44, { appointment, practice, patient, kind: 'pending', channel: 'email', status: 'sent' });
+      } catch (e) {
+        console.error('aviso de reserva pendiente (email) error:', e?.message || e);
+        await logNotification(base44, { appointment, practice, patient, kind: 'pending', channel: 'email', status: 'failed', error: e });
+      }
+      if (canSendWhatsApp(practice) && patient.phone) {
+        const pendingText = `¡Hola ${patient.first_name || first_name}! 👋 Recibimos tu solicitud de turno para *${service.name}* el ${startText}.\n\nQueda pendiente de confirmación: te avisamos por acá apenas esté confirmado 🙌`;
+        try {
+          await sendWhatsAppMessage(base44, practice, patient.phone, pendingText);
+          await logWhatsAppToConversation(base44, { practice, phone: patient.phone, text: pendingText });
+          await logNotification(base44, { appointment, practice, patient, kind: 'pending', channel: 'whatsapp', status: 'sent' });
+        } catch (e) {
+          console.error('aviso de reserva pendiente (WhatsApp) error:', e?.message || e);
+          await logNotification(base44, { appointment, practice, patient, kind: 'pending', channel: 'whatsapp', status: 'failed', error: e });
         }
       }
     }

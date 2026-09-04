@@ -1,46 +1,45 @@
 {
   "name": "Availability",
-  "type": "object",
   "properties": {
-    "day_of_week": {
-      "type": "number",
-      "title": "Día de la semana (0=domingo, 6=sábado)"
+    "date": {
+      "format": "date",
+      "title": "Fecha espec\u00edfica (para feriados/bloqueos)",
+      "type": "string"
     },
-    "start_time": {
-      "type": "string",
-      "title": "Hora de inicio (HH:mm)"
+    "day_of_week": {
+      "title": "D\u00eda de la semana (0=domingo, 6=s\u00e1bado)",
+      "type": "number"
     },
     "end_time": {
-      "type": "string",
-      "title": "Hora de fin (HH:mm)"
+      "title": "Hora de fin (HH:mm)",
+      "type": "string"
+    },
+    "label": {
+      "title": "Etiqueta (ej. Feriado, Almuerzo)",
+      "type": "string"
+    },
+    "practice_owner_id": {
+      "title": "Consultorio al que pertenece este horario",
+      "type": "string"
+    },
+    "professional_ref_id": {
+      "title": "Profesional (vacio = horario del dueno de la cuenta)",
+      "type": "string"
+    },
+    "start_time": {
+      "title": "Hora de inicio (HH:mm)",
+      "type": "string"
     },
     "type": {
-      "type": "string",
-      "title": "Tipo",
+      "default": "work",
       "enum": [
         "work",
         "break",
         "holiday",
         "block"
       ],
-      "default": "work"
-    },
-    "date": {
-      "type": "string",
-      "format": "date",
-      "title": "Fecha específica (para feriados/bloqueos)"
-    },
-    "label": {
-      "type": "string",
-      "title": "Etiqueta (ej. Feriado, Almuerzo)"
-    },
-    "professional_ref_id": {
-      "type": "string",
-      "title": "Profesional (vacio = horario del dueno de la cuenta)"
-    },
-    "practice_owner_id": {
-      "type": "string",
-      "title": "Consultorio al que pertenece este horario"
+      "title": "Tipo",
+      "type": "string"
     }
   },
   "required": [
@@ -50,23 +49,13 @@
     "type"
   ],
   "rls": {
-    "read": {},
     "create": {
       "$or": [
         {
           "created_by_id": "{{user.id}}"
         },
         {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
-    "update": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
+          "data.practice_owner_id": "{{user.id}}"
         },
         {
           "user_condition": {
@@ -81,11 +70,31 @@
           "created_by_id": "{{user.id}}"
         },
         {
+          "data.practice_owner_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {},
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.practice_owner_id": "{{user.id}}"
+        },
+        {
           "user_condition": {
             "role": "admin"
           }
         }
       ]
     }
-  }
+  },
+  "type": "object"
 }

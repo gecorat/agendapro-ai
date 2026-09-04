@@ -230,7 +230,10 @@ export async function orchestrateConversation(base44, ctx) {
     base44.asServiceRole.entities.Appointment.filter({}),
     base44.asServiceRole.entities.Conversation.filter({ professional_id: professionalId, phone: fromPhone }),
     isClinic ? base44.asServiceRole.entities.Professional.filter({ practice_owner_id: professionalId, active: true }) : Promise.resolve([]),
-    base44.asServiceRole.entities.Availability.filter({ practice_owner_id: professionalId }),
+    // Con respaldo por created_by_id: las cuentas anteriores al cambio de propiedad no
+    // tienen practice_owner_id en sus horarios y quedaban con lista vacia -> el bot
+    // ofrecia el horario por defecto L-V 09-18 en lugar del real.
+    findOwnedRows(base44, 'Availability', professionalId),
   ]);
 
   // rowBelongsTo mira practice_owner_id y, si no lo tiene, created_by_id: los servicios

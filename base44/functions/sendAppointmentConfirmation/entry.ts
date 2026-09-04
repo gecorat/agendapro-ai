@@ -65,7 +65,11 @@ export default async function(req: Request): Promise<Response> {
         email = patient.email;
         patientName = `${patient.first_name} ${patient.last_name || ""}`.trim() || patientName;
       }
-    } catch {}
+    } catch (e) {
+      // Se loguea: con el catch vacio, una falla al leer el paciente dejaba la confirmacion
+      // sin email ni telefono y el envio degradaba en silencio, sin rastro en ningun lado.
+      console.error("sendAppointmentConfirmation: no se pudo leer el paciente:", e?.message || e);
+    }
 
     // Configuración del profesional (nombre del consultorio + handle + teléfono/dirección)
     const professionalId = appt.professional_id || appt.created_by_id;
@@ -77,7 +81,11 @@ export default async function(req: Request): Promise<Response> {
       // enviaba nada. Ver base44/shared/ownership.ts.
       practice = await findPracticeByOwner(base44, professionalId);
       if (practice?.handle) handle = practice.handle;
-    } catch {}
+    } catch (e) {
+      // Idem: sin practice no hay WhatsApp ni remitente correcto, y con el catch vacio eso
+      // se veia igual que "el consultorio no tiene WhatsApp conectado".
+      console.error("sendAppointmentConfirmation: no se pudo leer el consultorio:", e?.message || e);
+    }
 
     const { professionalName, address } = await getAppointmentContext(base44, appt, practice);
     const mapsLink = buildMapsLink(practice);

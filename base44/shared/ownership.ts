@@ -58,8 +58,15 @@ export async function findOwnedRows(base44, entityName, ownerId, extraFilter = {
     base44.asServiceRole.entities[entityName].filter({ ...extraFilter, created_by_id: ownerId }),
   ]);
   const seen = new Map();
-  for (const row of [...(byOwn || []), ...(byCreated || [])]) {
+  for (const row of byOwn || []) {
     if (row?.id && !seen.has(row.id)) seen.set(row.id, row);
+  }
+  // Del respaldo se descartan las filas que YA declaran otro dueno (misma razon que en
+  // findPracticeByOwner: created_by_id compartido entre cuentas creadas por el servicio).
+  for (const row of byCreated || []) {
+    if (!row?.id || seen.has(row.id)) continue;
+    if (row.practice_owner_id && row.practice_owner_id !== ownerId) continue;
+    seen.set(row.id, row);
   }
   return [...seen.values()];
 }

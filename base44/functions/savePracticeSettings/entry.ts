@@ -60,7 +60,10 @@ export default async function (req: Request): Promise<Response> {
       if (!check.ok) {
         return Response.json({ error: check.reason }, { status: 400 });
       }
-      const taken = await base44.asServiceRole.entities.PracticeSettings.filter({ handle: check.handle });
+      // La unicidad se chequea solo si hay handle: varias cuentas pueden convivir sin uno.
+      const taken = check.handle
+        ? await base44.asServiceRole.entities.PracticeSettings.filter({ handle: check.handle })
+        : [];
       const otherOwner = (taken || []).find((p) => p.id !== current?.id);
       if (otherOwner) {
         return Response.json(

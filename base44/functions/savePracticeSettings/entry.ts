@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { resolveScope } from '../../shared/team-scope.ts';
 import { findPracticeByOwner } from '../../shared/ownership.ts';
+import { validateHandle } from '../../shared/handle.ts';
 
 // Único camino legítimo para que un profesional edite su propio perfil de consultorio.
 // PracticeSettings.update/create quedaron bloqueados por RLS para todos salvo admins
@@ -46,6 +47,28 @@ export default async function (req: Request): Promise<Response> {
 
     if (scope && !scope.canManageTeam) {
       return Response.json({ error: "No tenes permiso para editar la configuracion del consultorio" }, { status: 403 });
+    }
+
+    // El handle es la URL publica del consultorio: se normaliza y valida ACA, que es lo
+    // unico que el cliente no puede saltear. Antes se guardaba practicamente tal cual y
+    // quedaron handles con mayusculas y emojis, que dan un link que no se puede dictar.
+    // Ademas se chequea que no lo tenga ya otro consultorio: el handle resuelve con un
+    // filter exacto que devuelve la primera fila, asi que dos iguales significaban que uno
+    // de los dos profesionales perdia su pagina publica sin enterarse.
+    if (Object.prototype.hasOwnProperty.call(safeData, 'handle')) {
+      const check = validateHandle(safeData.handle);
+      if (!check.ok) {
+        return Response.json({ error: check.reason }, { status: 400 });
+      }
+      const taken = await base44.asServiceRole.entities.PracticeSettings.filter({ handle: check.handle });
+      const otherOwner = (taken || []).find((p) => p.id !== current?.id);
+      if (otherOwner) {
+        return Response.json(
+          { error: `El usuario publico "${check.handle}" ya esta en uso. Proba con otro.` },
+          { status: 409 }
+        );
+      }
+      safeData.handle = check.handle;
     }
 
     if (current) {

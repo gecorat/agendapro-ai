@@ -575,6 +575,22 @@ export default function PublicBooking() {
     boxShadow: theme.neon ? theme.neonGlow : undefined,
   };
 
+  // Campos y botones secundarios SIEMPRE claros, con texto oscuro propio.
+  //
+  // Los componentes <Input> y <Button variant="outline"> de la app usan bg-transparent y
+  // heredan el color de texto del tema de la APLICACIÓN (oscuro). En una página pública con
+  // tema oscuro (Executive Gold, OLED Obsidian, etc.) eso daba texto oscuro sobre fondo
+  // oscuro: los recuadros de datos y el botón "Cambiar fecha u hora" quedaban ilegibles.
+  // Fijándolos acá se ven igual de bien en los ocho temas, sin tocar los componentes
+  // compartidos (que en el resto de la app funcionan bien).
+  const fieldStyle = {
+    background: "#FFFFFF",
+    color: "#0F172A",
+    borderColor: "#CBD5E1",
+  };
+  // Las etiquetas sí acompañan al tema: sobre fondo oscuro tienen que ser claras.
+  const labelStyle = { color: theme.text };
+
   const BookingSteps = (
     <>
       {step < CONFIRM_STEP && (
@@ -730,11 +746,11 @@ export default function PublicBooking() {
             <p className="capitalize" style={{ color: theme.muted }}>{date && formatLongDate(date)} · {slot && formatSlot(slot)}</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2"><Label htmlFor="first_name">Nombre *</Label><Input id="first_name" value={form.first_name} onChange={(e) => setForm({ ...form, first_name: e.target.value })} required /></div>
-            <div className="space-y-2"><Label htmlFor="last_name">Apellido *</Label><Input id="last_name" value={form.last_name} onChange={(e) => setForm({ ...form, last_name: e.target.value })} required /></div>
+            <div className="space-y-2"><Label htmlFor="first_name" style={labelStyle}>Nombre *</Label><Input id="first_name" style={fieldStyle} value={form.first_name} onChange={(e) => setForm({ ...form, first_name: e.target.value })} required /></div>
+            <div className="space-y-2"><Label htmlFor="last_name" style={labelStyle}>Apellido *</Label><Input id="last_name" style={fieldStyle} value={form.last_name} onChange={(e) => setForm({ ...form, last_name: e.target.value })} required /></div>
           </div>
-          <div className="space-y-2"><Label htmlFor="phone">Teléfono (WhatsApp) *</Label><Input id="phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+54 9 11 1234 5678" required /></div>
-          <div className="space-y-2"><Label htmlFor="email">Email *</Label><Input id="email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></div>
+          <div className="space-y-2"><Label htmlFor="phone" style={labelStyle}>Teléfono (WhatsApp) *</Label><Input id="phone" style={fieldStyle} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+54 9 11 1234 5678" required /></div>
+          <div className="space-y-2"><Label htmlFor="email" style={labelStyle}>Email *</Label><Input id="email" type="email" style={fieldStyle} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></div>
           <Button className="w-full font-semibold" style={primaryBtnStyle} disabled={!form.first_name || !form.last_name || !form.phone || !form.email} onClick={() => setStep(CONFIRM_STEP)}>
             Continuar
           </Button>
@@ -755,7 +771,7 @@ export default function PublicBooking() {
             <div className="flex justify-between gap-2 py-1.5"><span style={{ color: theme.muted }}>A nombre de</span><span className="font-medium text-right" style={{ color: theme.text }}>{form.first_name} {form.last_name}</span></div>
           </div>
           <div className="flex flex-col gap-2">
-            <Button variant="outline" className="w-full" onClick={() => setStep(DATE_STEP)}>
+            <Button variant="outline" className="w-full" style={fieldStyle} onClick={() => setStep(DATE_STEP)}>
               ← Cambiar fecha u hora
             </Button>
             <Button className="w-full font-semibold" style={primaryBtnStyle} disabled={saving} onClick={handleConfirm}>
@@ -794,7 +810,7 @@ export default function PublicBooking() {
             ) : (
               <p className="text-sm pt-1" style={{ color: theme.muted }}>El profesional confirmará tu turno. Guardá esta referencia: <span className="font-mono">{created.appointment.id.slice(-8)}</span></p>
             )}
-            <Button variant="outline" className="mt-2" onClick={() => { setStep(1); setService(null); setSelectedPro(null); setDate(null); setSlot(null); setForm({ first_name: "", last_name: "", phone: "", email: "" }); setCreated(null); }}>Reservar otro turno</Button>
+            <Button variant="outline" className="mt-2" style={fieldStyle} onClick={() => { setStep(1); setService(null); setSelectedPro(null); setDate(null); setSlot(null); setForm({ first_name: "", last_name: "", phone: "", email: "" }); setCreated(null); }}>Reservar otro turno</Button>
             <PoweredByKame variant="card" utm="booking_success" className="mt-5 text-left sm:text-center" />
           </div>
         );

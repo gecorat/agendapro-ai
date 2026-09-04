@@ -34,7 +34,9 @@ export default async function (req: Request): Promise<Response> {
     const [practices, services, availability, appts] = await Promise.all([
       findPracticeRowsByOwner(base44, professionalId),
       findOwnedRows(base44, 'Service', professionalId, { active: true }),
-      base44.asServiceRole.entities.Availability.filter({ practice_owner_id: professionalId }),
+      // Con respaldo por created_by_id, igual que Service: sin esto una cuenta anterior al
+      // cambio de propiedad simulaba con el horario por defecto L-V 09-18, no con el suyo.
+      findOwnedRows(base44, 'Availability', professionalId),
       base44.asServiceRole.entities.Appointment.filter({ professional_id: professionalId }),
     ]);
     const practice = practices?.[0];

@@ -200,7 +200,12 @@ export default async function (req: Request): Promise<Response> {
     // confirmación por email (sendAppointmentConfirmation, más abajo).
     const practice = await findPracticeByOwner(base44, professional_id);
     const isProOrClinic = practice?.plan === 'pro' || practice?.plan === 'clinic';
-    const autoConfirm = isProOrClinic || practice?.auto_confirm_public_bookings === true;
+    // !== false, no === true: la confirmacion automatica ahora viene ACTIVADA por defecto
+    // en todos los planes, y solo se apaga si el profesional la apago a proposito desde
+    // Configuracion > Notificaciones. Antes, una cuenta que nunca toco el switch dejaba
+    // todas las reservas en 'pending' esperando una aprobacion manual que el paciente no
+    // tiene forma de saber que hace falta.
+    const autoConfirm = isProOrClinic || practice?.auto_confirm_public_bookings !== false;
 
     const appointment = await base44.asServiceRole.entities.Appointment.create({
       patient_id: patient.id,

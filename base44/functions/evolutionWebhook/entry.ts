@@ -8,6 +8,7 @@ import { getPracticeSecrets } from "../../shared/secrets.ts";
 import { rememberWhatsAppContact } from "../../shared/whatsapp-contacts.ts";
 import { readIncomingMessage } from "../../shared/incoming-message.ts";
 import { ownerIdOf } from "../../shared/ownership.ts";
+import { formatArTime } from "../../shared/timezone.ts";
 
 // Webhook de Evolution API (conexión por QR, self-hosted). Identificamos de qué
 // consultorio es cada mensaje por ?practiceId= en la URL (que nosotros mismos generamos
@@ -180,7 +181,7 @@ export default async function (req: Request): Promise<Response> {
           title: "Mensaje nuevo (bot pausado)",
           body: pauseStatus.indefinite
             ? "Llegó un mensaje de WhatsApp y el bot está pausado indefinidamente — nadie le va a responder."
-            : `Llegó un mensaje de WhatsApp y el bot está pausado hasta las ${pauseStatus.until.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}.`,
+            : `Llegó un mensaje de WhatsApp y el bot está pausado hasta las ${formatArTime(pauseStatus.until)}.`,
           url: "/asistente",
           tag: `wa-${fromPhone}`,
         }).catch((e) => console.error("push bot_paused error:", e?.message || e))

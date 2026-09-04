@@ -6,6 +6,7 @@ import { normalizePhone, isChatPaused } from "../../shared/whatsapp-providers.ts
 import { sendPushToUsers, getPracticeRecipientUserIds } from "../../shared/push.ts";
 import { getBotPauseStatus } from "../../shared/bot-status.ts";
 import { ownerIdOf } from "../../shared/ownership.ts";
+import { formatArTime } from "../../shared/timezone.ts";
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -131,7 +132,7 @@ export default async function(req: Request): Promise<Response> {
           title: "Mensaje nuevo (bot pausado)",
           body: pauseStatus.indefinite
             ? "Llegó un mensaje de WhatsApp y el bot está pausado indefinidamente — nadie le va a responder."
-            : `Llegó un mensaje de WhatsApp y el bot está pausado hasta las ${pauseStatus.until.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}.`,
+            : `Llegó un mensaje de WhatsApp y el bot está pausado hasta las ${formatArTime(pauseStatus.until)}.`,
           url: "/asistente",
           tag: `wa-${fromPhone}`,
         }).catch((e) => console.error("push bot_paused error:", e?.message || e))

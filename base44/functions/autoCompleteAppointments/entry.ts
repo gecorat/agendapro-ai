@@ -88,7 +88,7 @@ export default async function (req: Request): Promise<Response> {
       }
     }
 
-    return Response.json({ ok: true, checked: due.length, completed, reviewRequestsCreated });
+    return Response.json({ ok: true, checked: due.length, completed, reviewRequestsCreated, demosDeleted });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

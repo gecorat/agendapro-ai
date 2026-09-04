@@ -221,7 +221,7 @@ export default function ReviewsManager() {
               <SelectContent>
                 {eligibleAppts.map((a) => (
                   <SelectItem key={a.id} value={a.id}>
-                    {a.patient_name} — {a.service_name} ({new Date(a.start_datetime).toLocaleDateString("es-AR")})
+                    {a.patient_name} — {a.service_name} ({formatArDate(a.start_datetime, { day: "numeric", month: "numeric", year: "numeric" })})
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -268,7 +268,7 @@ export default function AdminUsers() {
                     {s ? `Origen: ${s.trial_origin || "landing"}` : "Sin onboarding"}{" · "}
                     <span className={st.color}>{st.label}</span>
                     {s?.trial_ends_at && s.plan === "trial" && (
-                      <span> · hasta {new Date(s.trial_ends_at).toLocaleDateString("es-AR")}</span>
+                      <span> · hasta {formatArDate(s.trial_ends_at, { day: "numeric", month: "numeric", year: "numeric" })}</span>
                     )}
                     {s?.plan_granted_by_admin && (
                       <span className="text-primary font-medium"> · Vos controlás el plan a mano</span>

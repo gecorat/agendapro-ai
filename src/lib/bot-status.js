@@ -1,3 +1,5 @@
+import { formatArTime } from "@/lib/timezone";
+
 // Mismo criterio que base44/shared/bot-status.ts del lado del servidor — si se cambia acá,
 // cambiar ahí también. Se calcula al vuelo (sin escribir nada) para que el switch/badge
 // siempre muestre el estado real, incluso si el bot_paused_until ya venció y nadie volvió
@@ -25,5 +27,5 @@ export function formatRemaining(until) {
 }
 
 export function formatClockTime(d) {
-  return d.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
+  return formatArTime(d);
 }

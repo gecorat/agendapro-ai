@@ -11,7 +11,7 @@ import { getPlanStatus, PLAN_PRICES, PLAN_LABELS } from "@/lib/plan-utils";
 const DEMO_TTL_MS = 5 * 60 * 1000;
 
 function formatTime() {
-  return new Date().toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
+  return formatArTime(new Date());
 }
 
 export default function BotPreview() {

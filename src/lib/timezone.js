@@ -176,6 +176,14 @@ export function formatArDateTime(date, opts = {}) {
   });
 }
 
+// Variante con dateStyle/timeStyle. Va aparte porque Intl NO deja combinar dateStyle o
+// timeStyle con opciones sueltas como day/hour: mezclarlas tira RangeError.
+export function formatArDateTimeStyle(date, { dateStyle = "medium", timeStyle = "short" } = {}) {
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleString("es-AR", { dateStyle, timeStyle, timeZone: AR_TZ });
+}
+
 // ---- Campos <input type="datetime-local"> ---------------------------------------------
 // El input no maneja zonas: entrega y espera un texto "YYYY-MM-DDTHH:mm" sin offset. Estas
 // dos funciones son las que hacen que ese texto SIEMPRE signifique hora argentina, tanto

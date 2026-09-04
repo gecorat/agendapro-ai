@@ -75,7 +75,7 @@ export default function AppointmentHistory() {
                   <p className="font-medium truncate">{a.patient_name || "Paciente"}</p>
                   <p className="text-sm text-muted-foreground">{a.service_name}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {new Date(a.start_datetime).toLocaleString("es-AR", { dateStyle: "medium", timeStyle: "short" })}
+                    {formatArDateTime(a.start_datetime, { dateStyle: "medium", timeStyle: "short", day: undefined, month: undefined, hour: undefined, minute: undefined, hour12: undefined })}
                   </p>
                   {a.notes && <p className="text-xs text-muted-foreground mt-2 italic bg-accent/50 rounded px-2 py-1">📝 {a.notes}</p>}
                 </div>

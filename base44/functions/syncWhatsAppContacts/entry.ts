@@ -3,7 +3,7 @@ import { resolveScope } from '../../shared/team-scope.ts';
 import { findContacts } from '../../shared/evolution-api.ts';
 import { planContactWrite } from '../../shared/whatsapp-contacts.ts';
 import { canonicalPhone } from '../../shared/phone-utils.ts';
-import { findPracticeRowsByOwner } from "../../shared/ownership.ts";
+import { findPracticeRowsByOwner, ownerIdOf } from "../../shared/ownership.ts";
 
 // Trae los nombres de contacto que WhatsApp le sincronizo a Evolution al vincular el QR, y
 // los guarda para que la bandeja de Chats muestre un nombre en vez de un numero pelado.
@@ -68,7 +68,7 @@ export default async function (req: Request): Promise<Response> {
     const apiKey = cfg?.evolution_api_key;
     if (!baseUrl || !apiKey) return Response.json({ error: 'Evolution API no está configurada.' }, { status: 500 });
 
-    const professionalId = practice.created_by_id;
+    const professionalId = ownerIdOf(practice);
 
     let contacts = [];
     try {

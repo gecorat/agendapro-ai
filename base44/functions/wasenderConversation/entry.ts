@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { orchestrateConversation } from "../../shared/zernio.ts";
+import { ownerIdOf } from "../../shared/ownership.ts";
 
 // [DEPRECADO] Reemplazado por evolutionConversation.ts — ver wasenderWebhook.ts.
 // Equivalente a zernioConversation, pero para consultorios conectados por QR
@@ -28,7 +29,7 @@ export default async function(req: Request): Promise<Response> {
 
     const result = await orchestrateConversation(base44, {
       fromPhone: phone,
-      professionalId: practice.created_by_id,
+      professionalId: ownerIdOf(practice),
       conversationId: conversationId || "",
       accountId: practice.wasender_session_id,
       practice,

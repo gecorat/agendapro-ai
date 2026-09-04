@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { orchestrateConversation, findPracticeByAccount, getPlatformConfig } from "../../shared/zernio.ts";
+import { ownerIdOf } from "../../shared/ownership.ts";
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -18,7 +19,7 @@ export default async function(req: Request): Promise<Response> {
     }
 
     const practice = accountId ? await findPracticeByAccount(base44, accountId) : null;
-    const professionalId = practice?.created_by_id || null;
+    const professionalId = ownerIdOf(practice);
 
     if (!professionalId) {
       return Response.json({ error: 'No se encontró un profesional para este accountId' }, { status: 400 });

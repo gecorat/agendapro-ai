@@ -5,6 +5,7 @@ import { checkWhatsAppUsage } from "../../shared/whatsapp-usage.ts";
 import { normalizePhone, isChatPaused } from "../../shared/whatsapp-providers.ts";
 import { sendPushToUsers, getPracticeRecipientUserIds } from "../../shared/push.ts";
 import { getBotPauseStatus } from "../../shared/bot-status.ts";
+import { ownerIdOf } from "../../shared/ownership.ts";
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -105,7 +106,7 @@ export default async function(req: Request): Promise<Response> {
       return Response.json({ ok: true, skipped: "no_matching_professional" });
     }
 
-    const professionalId = practice.created_by_id;
+    const professionalId = ownerIdOf(practice);
 
     await base44.asServiceRole.entities.Conversation.create({
       phone: fromPhone,

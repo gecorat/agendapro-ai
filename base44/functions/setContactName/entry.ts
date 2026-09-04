@@ -2,7 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { resolveScope } from '../../shared/team-scope.ts';
 import { rememberWhatsAppContact } from '../../shared/whatsapp-contacts.ts';
 import { canonicalPhone } from '../../shared/phone-utils.ts';
-import { findPracticeRowsByOwner } from "../../shared/ownership.ts";
+import { findPracticeRowsByOwner, ownerIdOf } from "../../shared/ownership.ts";
 
 // Renombrar un contacto de la bandeja de Chats a mano.
 //
@@ -37,7 +37,7 @@ export default async function (req: Request): Promise<Response> {
     }
     if (!practice) return Response.json({ error: 'no_practice' }, { status: 404 });
 
-    const professionalId = practice.created_by_id;
+    const professionalId = ownerIdOf(practice);
 
     if (!name) {
       // Borrar el nombre manual: se baja a "profile" para que el proximo mensaje entrante o

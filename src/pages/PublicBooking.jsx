@@ -418,18 +418,32 @@ export default function PublicBooking() {
         // Los servicios se piden por los DOS campos de propiedad y se unen por id: los
         // creados por el onboarding llevan practice_owner_id (created_by_id es el id del
         // servidor, ver base44/shared/ownership.ts) y los anteriores solo created_by_id.
-        const [servsOwned, servsLegacy, avail, profs] = await Promise.all([
+        // Los horarios se leen igual que los servicios, por los DOS campos: leerlos solo
+        // por practice_owner_id dejaba a las cuentas anteriores con la lista vacía, y la
+        // página caía al horario por defecto L-V 09-18 ofreciendo turnos inexistentes.
+        const [servsOwned, servsLegacy, availOwned, availLegacy, profs] = await Promise.all([
           base44.entities.Service.filter({ practice_owner_id: pid, active: true }),
           base44.entities.Service.filter({ created_by_id: pid, active: true }),
           base44.entities.Availability.filter({ practice_owner_id: pid }),
+          base44.entities.Availability.filter({ created_by_id: pid }),
           s.plan === "clinic" ? base44.entities.Professional.filter({ practice_owner_id: pid, active: true }) : Promise.resolve([]),
         ]);
-        const servsById = new Map();
-        for (const row of [...(servsOwned || []), ...(servsLegacy || [])]) {
-          if (row?.id && !servsById.has(row.id)) servsById.set(row.id, row);
-        }
-        setServices([...servsById.values()]);
-        setAvailability(avail || []);
+        const mergeOwned = (owned, legacy) => {
+          const byId = new Map();
+          for (const row of owned || []) {
+            if (row?.id && !byId.has(row.id)) byId.set(row.id, row);
+          }
+          for (const row of legacy || []) {
+            if (!row?.id || byId.has(row.id)) continue;
+            // Una fila que ya declara otro dueño no es de este consultorio aunque comparta
+            // created_by_id (ver base44/shared/ownership.ts).
+            if (row.practice_owner_id && row.practice_owner_id !== pid) continue;
+            byId.set(row.id, row);
+          }
+          return [...byId.values()];
+        };
+        setServices(mergeOwned(servsOwned, servsLegacy));
+        setAvailability(mergeOwned(availOwned, availLegacy));
         setProfessionals((profs || []).filter((p) => p.invite_status !== "pending" && p.first_name));
         if (s.show_reviews_public !== false) {
           try {

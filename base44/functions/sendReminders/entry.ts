@@ -54,7 +54,17 @@ export default async function(req) {
       return null;
     }
 
-    const all = await base44.asServiceRole.entities.Appointment.filter({ status: "confirmed" });
+    // Solo las citas confirmadas que caen en las proximas 25 horas: son las unicas que
+    // pueden llegar a necesitar un recordatorio (24hs o 3hs antes). Antes esto pedia TODAS
+    // las citas confirmadas de la historia de la plataforma y filtraba en memoria: con la
+    // agenda vacia funcionaba, pero a medida que se acumulan turnos esa consulta crece sin
+    // techo y, si el listado se corta por pagina, los turnos de manana podian quedar
+    // afuera y no salir ni un recordatorio, sin ningun error visible.
+    const windowEnd = new Date(now.getTime() + 25 * 60 * 60 * 1000);
+    const all = await base44.asServiceRole.entities.Appointment.filter({
+      status: "confirmed",
+      start_datetime: { $gte: now.toISOString(), $lte: windowEnd.toISOString() },
+    });
     const toRemind = (all || [])
       .map((a) => ({ appt: a, stage: reminderStage(a) }))
       .filter((x) => x.stage !== null);

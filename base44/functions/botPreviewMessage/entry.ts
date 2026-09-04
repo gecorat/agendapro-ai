@@ -232,7 +232,7 @@ Instrucciones sobre la reserva: si el paciente eligió un servicio y un día/hor
           // pasar.
           secondaryReply = buildConfirmationMessage({ practice, service, start });
         } else {
-          replyText = `${replyText}\n\n(En la simulación ese horario ya está ocupado por otra cita real tuya — probá con otro.)`;
+          replyText = `${replyText}\n\n(En la simulación ese horario no está disponible: está fuera de tu horario de atención, en un descanso, en un día bloqueado, o ya ocupado por otra cita real tuya — probá con otro.)`;
         }
       }
     }

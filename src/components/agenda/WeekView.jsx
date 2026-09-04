@@ -11,7 +11,7 @@ export default function WeekView({ days, appts, onDayClick, onEdit }) {
     <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm divide-y divide-border">
       {days.map((d) => {
         const dayAppts = apptsForDay(appts, d);
-        const isToday = d.toDateString() === new Date().toDateString();
+        const isToday = isArgentinaToday(d);
         return (
           <div
             key={d.toISOString()}
@@ -20,9 +20,9 @@ export default function WeekView({ days, appts, onDayClick, onEdit }) {
             className="w-full flex items-stretch gap-3 px-3 py-3 text-left cursor-pointer hover:bg-muted/30 active:bg-muted/50 transition-colors"
           >
             <div className="w-12 shrink-0 flex flex-col items-center pt-0.5">
-              <span className="text-[10.5px] uppercase tracking-wide text-muted-foreground">{d.toLocaleDateString("es-AR", { weekday: "short" })}</span>
+              <span className="text-[10.5px] uppercase tracking-wide text-muted-foreground">{formatArDate(d, { weekday: "short" })}</span>
               <span className={`mt-1 inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-heading font-semibold ${isToday ? "bg-primary text-primary-foreground" : "text-foreground"}`}>
-                {d.getDate()}
+                {argentinaDayOfMonth(d)}
               </span>
             </div>
             <div className="flex-1 min-w-0 py-1.5 space-y-1">

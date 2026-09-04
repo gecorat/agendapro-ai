@@ -170,7 +170,9 @@ export default function PublicPageEditor() {
     custom_bg_pattern: "none", custom_bg_image_url: "", custom_bg_overlay_opacity: 40,
     custom_border_radius: "auto", custom_card_opacity: 100, custom_blur_enabled: false,
     avatar_border_radius: "auto", show_reviews_public: true,
-    auto_confirm_public_bookings: false,
+    // auto_confirm_public_bookings NO va en este formulario: se edita en Configuracion >
+    // Avisos. Si viviera acá, guardar la página pública mandaría la copia vieja del valor
+    // y le pisaría al profesional lo que hubiera cambiado en la otra pantalla.
   });
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -227,7 +229,6 @@ export default function PublicPageEditor() {
         custom_blur_enabled: !!settings.custom_blur_enabled,
         avatar_border_radius: settings.avatar_border_radius || "auto",
         show_reviews_public: settings.show_reviews_public !== false,
-        auto_confirm_public_bookings: settings.auto_confirm_public_bookings === true,
       });
     }
   }, [settings]);

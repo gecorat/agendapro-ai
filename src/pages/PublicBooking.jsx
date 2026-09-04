@@ -428,22 +428,8 @@ export default function PublicBooking() {
           base44.entities.Availability.filter({ created_by_id: pid }),
           s.plan === "clinic" ? base44.entities.Professional.filter({ practice_owner_id: pid, active: true }) : Promise.resolve([]),
         ]);
-        const mergeOwned = (owned, legacy) => {
-          const byId = new Map();
-          for (const row of owned || []) {
-            if (row?.id && !byId.has(row.id)) byId.set(row.id, row);
-          }
-          for (const row of legacy || []) {
-            if (!row?.id || byId.has(row.id)) continue;
-            // Una fila que ya declara otro dueño no es de este consultorio aunque comparta
-            // created_by_id (ver base44/shared/ownership.ts).
-            if (row.practice_owner_id && row.practice_owner_id !== pid) continue;
-            byId.set(row.id, row);
-          }
-          return [...byId.values()];
-        };
-        setServices(mergeOwned(servsOwned, servsLegacy));
-        setAvailability(mergeOwned(availOwned, availLegacy));
+        setServices(mergeOwnedRows(servsOwned, servsLegacy, pid));
+        setAvailability(mergeOwnedRows(availOwned, availLegacy, pid));
         setProfessionals((profs || []).filter((p) => p.invite_status !== "pending" && p.first_name));
         if (s.show_reviews_public !== false) {
           try {

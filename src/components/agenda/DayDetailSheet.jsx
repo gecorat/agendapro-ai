@@ -11,6 +11,7 @@ import { statusConfig, apptsForDay, formatTime, formatDayHeading } from "@/lib/a
 // un console.error del backend.
 const KIND_LABELS = {
   confirmation: "Confirmación",
+  pending: "Aviso de solicitud recibida",
   reminder_24h: "Recordatorio 24hs",
   reminder_3h: "Recordatorio 3hs",
   rescheduled: "Aviso de reprogramación",

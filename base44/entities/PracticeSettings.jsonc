@@ -58,8 +58,14 @@
     "auto_confirm_public_bookings": {
       "type": "boolean",
       "title": "Confirmar automaticamente las reservas de la pagina publica",
-      "default": false,
-      "description": "Solo aplica a los planes Basic y Trial: en Pro y Clinic la confirmacion automatica es siempre. En false, las reservas del link publico nacen 'pending' y esperan la aprobacion del profesional. Se lee en createPublicAppointment. FALTABA EN EL SCHEMA: el switch de PublicPageEditor mostraba el cartel de guardado con exito y la entidad descartaba el valor, asi que las reservas seguian naciendo pendientes para siempre."
+      "default": true,
+      "description": "Solo aplica a los planes Basic y Trial: en Pro y Clinic la confirmacion automatica es siempre. ACTIVADO POR DEFECTO desde el 3/9/2026 (antes nacia en false): que una reserva quede pendiente hasta que el profesional la apruebe a mano es una friccion que el paciente no espera. En false, las reservas del link publico nacen 'pending'. Se lee en createPublicAppointment, que trata null/undefined como activado. Se configura en Configuracion > Notificaciones."
+    },
+    "reminders_enabled": {
+      "type": "boolean",
+      "title": "Recordatorios automaticos al paciente",
+      "default": true,
+      "description": "Interruptor general de los recordatorios previos al turno (24h y 3h antes). En false, sendReminders saltea este consultorio por completo. Se lee tratando null/undefined como activado, para no cambiarle el comportamiento a las cuentas anteriores al campo."
     },
     "bot_enabled": {
       "type": "boolean",

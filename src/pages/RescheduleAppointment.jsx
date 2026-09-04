@@ -61,7 +61,9 @@ export default function RescheduleAppointment() {
   const handleConfirm = async () => {
     setWorking(true);
     try {
-      const res = await base44.functions.invoke("cancelAppointmentByToken", { token, confirm: true });
+      // reason: "reschedule" — el turno se libera igual, pero el aviso que le llega al
+      // profesional dice que el paciente esta REAGENDANDO, no que cancelo y se fue.
+      const res = await base44.functions.invoke("cancelAppointmentByToken", { token, confirm: true, reason: "reschedule" });
       const data = res.data;
       if (data?.resolved && data?.handle) {
         navigate(`/u/${data.handle}`, { replace: true });

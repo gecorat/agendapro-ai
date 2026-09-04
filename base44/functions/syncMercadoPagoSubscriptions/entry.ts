@@ -38,6 +38,56 @@ async function syncPaymentsOf(base44, accessToken, practice) {
   return recorded;
 }
 
+// Emails con los que esta cuenta pudo haber pagado en Mercado Pago: el de contacto del
+// consultorio y el de la cuenta con la que inicia sesion.
+async function emailsOf(base44, practice) {
+  const out = [];
+  const contact = String(practice.professional_email || '').trim();
+  if (contact) out.push(contact);
+  const ownerId = practice.owner_user_id || practice.created_by_id;
+  if (ownerId && !String(ownerId).startsWith('service_')) {
+    try {
+      const rows = await base44.asServiceRole.entities.User.filter({ id: ownerId });
+      const email = String(rows?.[0]?.email || '').trim();
+      if (email && !out.includes(email)) out.push(email);
+    } catch { /* sin email de cuenta, seguimos con el de contacto */ }
+  }
+  return out;
+}
+
+// SUSCRIPCIONES PAGADAS QUE NUNCA SE VINCULARON. El checkout con plan asociado se ata a
+// la cuenta recién cuando el usuario VUELVE a /upgrade-plan (linkMpSubscription). Si
+// cerraba la pestana en Mercado Pago despues de pagar, la suscripcion existia alla y acá
+// no la conocia nadie: sin mercadopago_subscription_id, ni el webhook ni este mismo
+// chequeo la miraban, y el profesional pagaba sin recibir el plan.
+//
+// Para cada cuenta con un intento pendiente, le preguntamos a Mercado Pago si hay una
+// suscripcion autorizada a nombre de sus emails. Si la hay, la sincronizamos: el propio
+// syncSubscriptionStatus se encarga de vincularla (rescate por email) y activar el plan.
+async function rescuePendingSubscriptions(base44, accessToken, practices) {
+  const pending = (practices || []).filter((p) => p.mercadopago_pending_plan && !p.mercadopago_subscription_id);
+  let rescued = 0;
+  for (const practice of pending) {
+    for (const email of await emailsOf(base44, practice)) {
+      try {
+        const res = await fetch(
+          `https://api.mercadopago.com/preapproval/search?payer_email=${encodeURIComponent(email)}&status=authorized`,
+          { headers: { Authorization: `Bearer ${accessToken}` } },
+        );
+        if (!res.ok) continue;
+        const data = await res.json();
+        const found = (data?.results || [])[0];
+        if (!found?.id) continue;
+        const result = await syncSubscriptionStatus(base44, accessToken, found.id);
+        if (result.synced) { rescued++; break; }
+      } catch (e) {
+        console.error('rescuePendingSubscriptions error:', practice.id, e?.message || e);
+      }
+    }
+  }
+  return rescued;
+}
+
 // Red de seguridad: corre cada hora y revisa TODAS las suscripciones activas contra el
 // estado real de Mercado Pago, sin depender de que el webhook haya avisado. Confirmado en
 // vivo que el webhook de MP puede simplemente no llegar (un pago se acreditó y nunca
@@ -58,6 +108,15 @@ export default async function (req: Request): Promise<Response> {
     let paymentsRecorded = 0;
     const errors: any[] = [];
 
+    // Primero rescatamos las que pagaron y quedaron sin vincular: si alguna se vincula
+    // ahora, entra en el barrido normal en la proxima corrida.
+    let rescued = 0;
+    try {
+      rescued = await rescuePendingSubscriptions(base44, accessToken, practices);
+    } catch (e) {
+      errors.push({ stage: 'rescue', error: e?.message || String(e) });
+    }
+
     for (const practice of withSubscription) {
       checked++;
       try {
@@ -75,7 +134,7 @@ export default async function (req: Request): Promise<Response> {
       }
     }
 
-    return Response.json({ ok: true, checked, changed, paymentsRecorded, errors });
+    return Response.json({ ok: true, checked, changed, rescued, paymentsRecorded, errors });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

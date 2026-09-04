@@ -4,6 +4,7 @@ import { deleteGoogleEvent } from "../../shared/google-calendar.ts";
 import { sendWhatsAppMessage } from "../../shared/whatsapp-providers.ts";
 import { sendPushToUsers, getPracticeRecipientUserIds } from "../../shared/push.ts";
 import { canSendWhatsApp } from "../../shared/plan.ts";
+import { findPracticeByOwner } from "../../shared/ownership.ts";
 
 export default async function(req: Request): Promise<Response> {
   try {

@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { getPlatformConfig, createZernioProfile, getWhatsAppConnectUrl } from "../../shared/zernio.ts";
 import { canUseWhatsApp } from "../../shared/plan.ts";
+import { findPracticeByOwner } from "../../shared/ownership.ts";
 
 export default async function(req: Request): Promise<Response> {
   try {

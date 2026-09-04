@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { instanceNameFor, ensureInstance, connectInstance, getConnectionState, getConnectedPhone } from '../../shared/evolution-api.ts';
 import { getPracticeSecrets, setPracticeSecrets } from '../../shared/secrets.ts';
+import { findPracticeByOwner } from "../../shared/ownership.ts";
 
 function randomSecret() {
   return crypto.randomUUID().replace(/-/g, '');

@@ -3,6 +3,7 @@ import { waitUntil } from "base44:runtime";
 import { checkWhatsAppUsage } from "../../shared/whatsapp-usage.ts";
 import { sendWhatsAppMessage, isChatPaused } from "../../shared/whatsapp-providers.ts";
 import { getPracticeSecrets } from "../../shared/secrets.ts";
+import { ownerIdOf } from "../../shared/ownership.ts";
 
 // [DEPRECADO] Reemplazado por evolutionWebhook.ts — la conexión por QR ahora corre sobre
 // Evolution API en vez de WasenderAPI. Se deja este archivo sin borrar por si hace falta

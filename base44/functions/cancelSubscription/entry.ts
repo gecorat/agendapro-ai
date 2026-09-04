@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { syncSubscriptionStatus } from '../../shared/mercadopago.ts';
+import { findPracticeByOwner } from "../../shared/ownership.ts";
 
 // Cancela la suscripción REAL en Mercado Pago (PUT /preapproval/{id} con status:
 // cancelled — confirmado en la documentación oficial, mismo endpoint que usamos para

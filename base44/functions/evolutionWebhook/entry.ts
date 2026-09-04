@@ -7,6 +7,7 @@ import { getBotPauseStatus } from "../../shared/bot-status.ts";
 import { getPracticeSecrets } from "../../shared/secrets.ts";
 import { rememberWhatsAppContact } from "../../shared/whatsapp-contacts.ts";
 import { readIncomingMessage } from "../../shared/incoming-message.ts";
+import { ownerIdOf } from "../../shared/ownership.ts";
 
 // Webhook de Evolution API (conexión por QR, self-hosted). Identificamos de qué
 // consultorio es cada mensaje por ?practiceId= en la URL (que nosotros mismos generamos

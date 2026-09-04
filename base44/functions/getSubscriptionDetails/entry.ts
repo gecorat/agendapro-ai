@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
+import { findPracticeByOwner } from "../../shared/ownership.ts";
 
 // Trae el estado REAL de la suscripción directo de Mercado Pago (próximo cobro, monto,
 // estado) para mostrarlo en /upgrade-plan — nunca confiamos en datos guardados que

@@ -5,6 +5,7 @@ import { buildEmailHtml, getAppUrl } from "../../shared/email-template.ts";
 import { getAppointmentContext } from "../../shared/appointment-context.ts";
 import { buildWhenLabel, formatApptDate, resolveChannels, bookedWithEnoughMargin, MIN_HOURS_BEFORE_FOR_REMINDERS, buildReminderWhatsAppMessage } from "../../shared/reminders.ts";
 import { logNotification, logWhatsAppToConversation, notifyProfessionalOfDeliveryFailure } from "../../shared/notification-log.ts";
+import { findPracticeByOwner } from "../../shared/ownership.ts";
 
 export default async function(req) {
   try {

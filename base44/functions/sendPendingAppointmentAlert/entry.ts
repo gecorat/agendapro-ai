@@ -3,6 +3,7 @@ import { buildEmailHtml, getAppUrl } from "../../shared/email-template.ts";
 import { sendEmail } from "../../shared/email-sender.ts";
 import { sendWhatsAppMessage } from "../../shared/whatsapp-providers.ts";
 import { canSendWhatsApp } from "../../shared/plan.ts";
+import { findPracticeByOwner } from "../../shared/ownership.ts";
 
 export default async function(req: Request): Promise<Response> {
   try {

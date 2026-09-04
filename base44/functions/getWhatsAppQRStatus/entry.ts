@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { getConnectionState, getConnectedPhone } from '../../shared/evolution-api.ts';
+import { findPracticeByOwner } from "../../shared/ownership.ts";
 
 // Polling de estado para la conexión por QR (Evolution API). El frontend llama esto cada
 // 2-3 segundos mientras espera que el usuario escanee.

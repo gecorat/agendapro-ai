@@ -7,6 +7,7 @@ import { sendWhatsAppMessage } from "../../shared/whatsapp-providers.ts";
 import { remindersCoveredByNotice } from "../../shared/reminders.ts";
 import { canSendWhatsApp } from "../../shared/plan.ts";
 import { logNotification, logWhatsAppToConversation } from "../../shared/notification-log.ts";
+import { findPracticeByOwner } from "../../shared/ownership.ts";
 
 export default async function(req: Request): Promise<Response> {
   try {

@@ -561,21 +561,18 @@ export default function PublicPageEditor() {
                   <Switch checked={form.show_reviews_public} onCheckedChange={(v) => set("show_reviews_public", v)} />
                 </div>
 
-                {/* Solo Basic/Trial: en Pro/Clinic el auto-confirmado está siempre activo
-                    (no tiene sentido ofrecer la opción si no se puede desactivar). */}
-                {(settings?.plan === "basic" || settings?.plan === "trial") && (
-                  <div className="flex items-center justify-between p-3 rounded-lg border border-border">
-                    <div className="pr-3">
-                      <p className="text-sm font-medium">Confirmar reservas automáticamente</p>
-                      <p className="text-xs text-muted-foreground">
-                        {form.auto_confirm_public_bookings
-                          ? "Las reservas de tu página quedan confirmadas al instante y el paciente recibe el aviso solo."
-                          : "Las reservas de tu página quedan pendientes hasta que las aprobés desde la campanita o la Agenda."}
-                      </p>
-                    </div>
-                    <Switch checked={form.auto_confirm_public_bookings} onCheckedChange={(v) => set("auto_confirm_public_bookings", v)} />
-                  </div>
-                )}
+                {/* La confirmación automática se mudó a Configuración > Avisos, junto al
+                    resto de las notificaciones. Tenía que salir de acá: este asistente
+                    guarda una copia del formulario entera, así que si alguien cambiaba el
+                    switch en Avisos y después guardaba la página pública, el valor viejo de
+                    esta copia le pisaba el cambio sin avisar. */}
+                <div className="p-3 rounded-lg border border-border">
+                  <p className="text-sm font-medium">¿Cómo llegan las reservas?</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Quedan confirmadas al instante. Podés cambiarlo, y configurar los recordatorios, en{" "}
+                    <Link to="/configuracion?tab=notifications" className="underline font-medium text-foreground">Configuración › Avisos</Link>.
+                  </p>
+                </div>
 
                 <div className="flex items-center justify-between p-3 rounded-lg border border-border">
                   <div>

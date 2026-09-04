@@ -12,6 +12,7 @@ import WhatsAppUsageCard from "@/components/WhatsAppUsageCard";
 import ServiceManagerPanel from "@/components/ServiceManagerPanel";
 import ProfessionalsPanel from "@/components/ProfessionalsPanel";
 import MessageTemplatesPanel from "@/components/MessageTemplatesPanel";
+import NotificationsPanel from "@/components/NotificationsPanel";
 import BotSettingsPanel from "@/components/BotSettingsPanel";
 import PlanGate from "@/components/PlanGate";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
@@ -28,12 +29,12 @@ export default function Settings() {
   // la pestaña por defecto (Servicios) y el profesional tenía que buscar Perfil a mano.
   const [searchParams] = useSearchParams();
   const requestedTab = searchParams.get("tab");
-  const validTabs = ["profile", "services", ...(showTeamTab ? ["team"] : []), "hours", "templates", "bot", "integrations", ...(canManageBilling ? ["plan"] : [])];
+  const validTabs = ["profile", "services", ...(showTeamTab ? ["team"] : []), "hours", "notifications", "templates", "bot", "integrations", ...(canManageBilling ? ["plan"] : [])];
   const initialTab = validTabs.includes(requestedTab) ? requestedTab : "services";
   // Clases completas y literales: Tailwind no puede purgar bien un `grid-cols-${n}`.
   const tabsGridClass = showTeamTab
-    ? (canManageBilling ? "grid-cols-8" : "grid-cols-7")
-    : (canManageBilling ? "grid-cols-7" : "grid-cols-6");
+    ? (canManageBilling ? "grid-cols-9" : "grid-cols-8")
+    : (canManageBilling ? "grid-cols-8" : "grid-cols-7");
 
   return (
     <div className="px-3 py-3 md:p-6 max-w-4xl mx-auto space-y-4">
@@ -48,6 +49,7 @@ export default function Settings() {
           <TabsTrigger value="services" className="rounded-lg text-xs sm:text-sm py-1.5">Servicios</TabsTrigger>
           {showTeamTab && <TabsTrigger value="team" className="rounded-lg text-xs sm:text-sm py-1.5">Equipo</TabsTrigger>}
           <TabsTrigger value="hours" className="rounded-lg text-xs sm:text-sm py-1.5">Horarios</TabsTrigger>
+          <TabsTrigger value="notifications" className="rounded-lg text-xs sm:text-sm py-1.5">Avisos</TabsTrigger>
           <TabsTrigger value="templates" className="rounded-lg text-xs sm:text-sm py-1.5">Plantillas</TabsTrigger>
           <TabsTrigger value="bot" className="rounded-lg text-xs sm:text-sm py-1.5">Bot</TabsTrigger>
           <TabsTrigger value="integrations" className="rounded-lg text-xs sm:text-sm py-1.5">Integraciones</TabsTrigger>
@@ -74,6 +76,10 @@ export default function Settings() {
 
         <TabsContent value="hours" className="mt-4">
           <AvailabilityEditor />
+        </TabsContent>
+
+        <TabsContent value="notifications" className="mt-4">
+          <NotificationsPanel />
         </TabsContent>
 
         <TabsContent value="templates" className="mt-4">

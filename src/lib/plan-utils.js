@@ -1,3 +1,8 @@
+import {
+  argentinaDate, argentinaParts, argentinaYear, argentinaMonth, argentinaDayOfMonth,
+  argentinaEndOfMonth, formatArDate,
+} from "@/lib/timezone";
+
 export const TRIAL_DAYS = 14;
 
 // Mantener en sync con base44/shared/plan.ts (versión backend de esta misma lógica).

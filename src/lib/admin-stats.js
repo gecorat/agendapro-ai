@@ -1,3 +1,8 @@
+import {
+  argentinaDate, argentinaStartOfWeek, argentinaStartOfMonth, argentinaYear,
+  argentinaMonth, addArgentinaDays, formatArDate,
+} from "@/lib/timezone";
+
 // Agregados del panel de admin (planes, trials y facturación). Se mantienen como
 // funciones puras, separadas del componente, para poder probarlas sin renderizar nada.
 import { PLAN_PRICES, getCycleEnd, getCycleAnchor } from "@/lib/plan-utils";

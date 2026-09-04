@@ -77,10 +77,13 @@ export default function BotPreview() {
       const reply = res?.data?.reply || "Disculpá, no entendí. ¿Podés repetirlo?";
       const booked = !!res?.data?.booked;
       const appointment = res?.data?.appointment;
+      // Segundo mensaje con la confirmación, igual que hace el bot real por WhatsApp.
+      const secondaryReply = res?.data?.secondaryReply;
 
       setMessages([
         ...history,
         { role: "assistant", content: reply, time: formatTime() },
+        ...(secondaryReply ? [{ role: "assistant", content: secondaryReply, time: formatTime() }] : []),
         ...(booked && appointment ? [{ role: "system", appointment, time: formatTime() }] : []),
       ]);
       if (booked && appointment?.id) scheduleDemoCleanup(appointment.id);

@@ -22,6 +22,7 @@ import {
 import { Loader2, Plus, Repeat, AlertTriangle } from "lucide-react";
 import PatientForm from "@/components/PatientForm";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
+import { useToast } from "@/components/ui/use-toast";
 import { getPlanStatus } from "@/lib/plan-utils";
 
 const OWNER_VALUE = "__owner__";
@@ -52,6 +53,7 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
   const [professionals, setProfessionals] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
   const [patientFormOpen, setPatientFormOpen] = useState(false);
   const { settings, isOwner, professional: myProfessional } = usePracticeSettings();
   const isClinic = getPlanStatus(settings).canUseMultiProfessional;

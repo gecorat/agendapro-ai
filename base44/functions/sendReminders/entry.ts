@@ -234,8 +234,23 @@ export default async function(req) {
           channels: [waOk ? "whatsapp" : null, mailOk ? "email" : null].filter(Boolean),
         });
       } catch (e) {
+        // Se loguea ADEMAS de acumularlo. Sin esto, un error que rompia todas las citas por
+        // igual (por ejemplo un import faltante) quedaba solo dentro del JSON de respuesta,
+        // que el cron descarta: la funcion devolvia 200 y no se enviaba un solo
+        // recordatorio sin que nada lo delatara. Paso de verdad el 3/9/2026.
+        console.error(`sendReminders error en cita ${appt.id}:`, e?.message || e);
         errors.push({ appointment_id: appt.id, error: e?.message || String(e) });
       }
+    }
+
+    // Si habia citas por recordar y TODAS fallaron, es una falla de la funcion, no un caso
+    // borde: se devuelve error para que el cron lo registre como corrida fallida.
+    if (toRemind.length > 0 && errors.length === toRemind.length) {
+      console.error(`sendReminders: fallaron las ${errors.length} citas de esta corrida.`);
+      return Response.json(
+        { error: 'todos_los_recordatorios_fallaron', sent, skipped, total: toRemind.length, errors },
+        { status: 500 }
+      );
     }
 
     return Response.json({ sent, skipped, total: toRemind.length, sentDetail, errors });

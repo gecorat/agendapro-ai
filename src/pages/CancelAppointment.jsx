@@ -59,7 +59,7 @@ export default function CancelAppointment() {
   }
 
   const dateStr = appt?.start_datetime
-    ? new Date(appt.start_datetime).toLocaleString("es-AR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })
+    ? formatArDateTime(appt.start_datetime, { weekday: "long", day: "numeric", month: "long" })
     : "";
 
   return (

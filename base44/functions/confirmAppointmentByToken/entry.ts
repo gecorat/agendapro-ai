@@ -22,17 +22,11 @@ export default async function(req: Request): Promise<Response> {
 
     await base44.asServiceRole.entities.Appointment.update(appt.id, { status: 'confirmed' });
 
-    // Avisarle al PACIENTE que su turno quedo confirmado. Antes esto solo cambiaba el
-    // estado: el profesional tocaba "Confirmar" en el mail de turno pendiente, la cita
-    // pasaba a confirmada en la agenda, y el paciente nunca se enteraba de nada — se
-    // quedaba con el "tu solicitud quedo pendiente de confirmacion" del primer mensaje.
-    // Va sin skip_whatsapp para que salga por el canal que el paciente eligio.
-    // Best-effort: si el aviso falla, la confirmacion igual quedo hecha.
-    try {
-      await base44.asServiceRole.functions.invoke('sendAppointmentConfirmation', { appointment_id: appt.id });
-    } catch (e) {
-      console.error('confirmAppointmentByToken: no se pudo avisar al paciente:', e?.message || e);
-    }
+    // El aviso al PACIENTE no se dispara aca a proposito: el update de arriba activa el
+    // workflow "Email de confirmacion al paciente" (dispara ante cualquier update de
+    // Appointment con status confirmed y confirmation_email_sent != true), que invoca
+    // sendAppointmentConfirmation. Llamarla ademas desde aca abriria una ventana de carrera
+    // con ese workflow y el paciente podria recibir la confirmacion dos veces.
 
     return Response.json({ ok: true, resolved: true, status: 'confirmed' });
   } catch (error) {

@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { DEFAULT_OBJECTIVE_PROMPT, DEFAULT_TONE_PROMPT } from '../../shared/bot-defaults.ts';
 import { findPracticeRowsByOwner, findOwnedRows } from "../../shared/ownership.ts";
+import { buildConfirmationMessage } from "../../shared/zernio.ts";
 
 // Simulador del bot para el profesional logueado (/bot) — a diferencia de la versión vieja
 // (que armaba el prompt en el propio frontend, con datos parciales), esto corre en el
@@ -152,6 +153,7 @@ Instrucciones sobre la reserva: si el paciente eligió un servicio y un día/hor
     let replyText = parsed?.reply || 'Disculpá, no entendí. ¿Podés repetirlo?';
     let booked = false;
     let appointment = null;
+    let secondaryReply = null;
 
     if (parsed?.book && parsed?.service_name && parsed?.datetime) {
       const service = myServices.find(
@@ -211,13 +213,21 @@ Instrucciones sobre la reserva: si el paciente eligió un servicio y un día/hor
             demo_expires_at: demoExpiresAt,
           });
           booked = true;
+          // MISMA tarjeta de confirmación que manda el bot real por WhatsApp, como segundo
+          // mensaje. Antes el simulador agendaba y no confirmaba nada: la última respuesta
+          // era la que el modelo había escrito ANTES de saber si el turno se había podido
+          // crear (típicamente un "dale, te agendo"), así que había que preguntarle si
+          // realmente había quedado. Y como el bot de WhatsApp sí confirma, el simulador
+          // mostraba una conversación distinta de la real, que es justo lo que no tenía que
+          // pasar.
+          secondaryReply = buildConfirmationMessage({ practice, service, start });
         } else {
           replyText = `${replyText}\n\n(En la simulación ese horario ya está ocupado por otra cita real tuya — probá con otro.)`;
         }
       }
     }
 
-    return Response.json({ reply: replyText, booked, appointment });
+    return Response.json({ reply: replyText, secondaryReply, booked, appointment });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

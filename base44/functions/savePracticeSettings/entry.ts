@@ -18,6 +18,11 @@ const EDITABLE_FIELDS = [
   'bot_objective_prompt', 'bot_tone_prompt', 'bot_response_delay_seconds', 'bot_assistant_name', 'bot_persona_mode', 'bot_required_patient_fields', 'owner_display_name',
   'bot_enabled', 'bot_paused_until', 'google_review_link', 'auto_confirm_public_bookings',
   'reminders_enabled',
+  // Lo escribe BotPreview al gastar un mensaje del simulador. Faltaba en la lista, asi que
+  // se descartaba en silencio: el contador nunca subia, el tope de mensajes de la demo no
+  // se alcanzaba nunca (uso ilimitado del modelo) y el paso "Proba el bot" de la guia no
+  // se marcaba jamas como completado.
+  'bot_preview_count',
 ];
 
 export default async function (req: Request): Promise<Response> {

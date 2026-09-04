@@ -8,6 +8,10 @@ import { CalendarClock, Clock, ArrowRight, Check, Loader2, Calendar, MapPin, Mai
 import { resolveTheme, normalizeSocialUrl, whatsappUrl, googleMapsUrl, googleMapsEmbedSrc, avatarShapeClass, loadThemeFont } from "@/lib/theme-presets";
 import PoweredByKame from "@/components/PoweredByKame";
 import { mergeOwnedRows } from "@/lib/ownership";
+import {
+  AR_TZ, AR_OFFSET, argentinaYMD, argentinaDayOfWeek, argentinaDayBounds,
+  argentinaStartOfDay, isSameArgentinaDay,
+} from "@/lib/timezone";
 
 // TODO EL CÁLCULO DE HORARIOS VA ANCLADO A HORA ARGENTINA, no a la del navegador.
 //
@@ -22,32 +26,18 @@ import { mergeOwnedRows } from "@/lib/ownership";
 // horarios en pantalla y el servidor le rechazaba todos. Estas funciones son la copia
 // exacta de las de `scheduling.ts`, para que la página y el servidor cuenten siempre lo
 // mismo. Si se cambia una, hay que cambiar la otra.
-const AR_TZ = "America/Argentina/Buenos_Aires";
+//
+// Los helpers de zona horaria ya no viven acá: están en src/lib/timezone.js, que es la
+// unica fuente de verdad del frontend y la que usa también el panel del profesional. Así
+// la página pública y la agenda no pueden volver a divergir.
 
-function toDateStr(d) {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: AR_TZ, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
-}
-
-// Día de la semana (0=domingo..6=sábado) leído en hora argentina. Se arma un instante al
-// mediodía argentino (nunca cruza medianoche en UTC) y se lee con getUTCDay(), que no
-// depende del huso del proceso.
-function argentinaDayOfWeek(date) {
-  return new Date(`${toDateStr(date)}T12:00:00-03:00`).getUTCDay();
-}
+const toDateStr = argentinaYMD;
 
 function parseTimeToDate(date, time) {
   const [h, m] = time.split(":").map(Number);
   const hh = String(h).padStart(2, "0");
   const mm = String(m).padStart(2, "0");
-  return new Date(`${toDateStr(date)}T${hh}:${mm}:00-03:00`);
-}
-
-function argentinaDayBounds(date) {
-  const ymd = toDateStr(date);
-  return {
-    start: new Date(`${ymd}T00:00:00.000-03:00`),
-    end: new Date(`${ymd}T23:59:59.999-03:00`),
-  };
+  return new Date(`${toDateStr(date)}T${hh}:${mm}:00${AR_OFFSET}`);
 }
 
 function rangesOverlap(aStart, aEnd, bStart, bEnd) {

@@ -295,6 +295,10 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
         try {
           const firstName = patient.first_name || "";
           await base44.entities.ReviewRequest.create({
+            // professional_id explicito: sin esto, publicReview cae a created_by_id, y si
+            // la cita la cierra un profesional INVITADO la pagina publica de la resena sale
+            // sin nombre de consultorio ni color de marca.
+            professional_id: appointment?.professional_id || payload.professional_id || undefined,
             patient_id: patient.id,
             patient_name: `${patient.first_name} ${patient.last_name || ""}`.trim(),
             patient_phone: patient.phone || "",
@@ -307,7 +311,17 @@ export default function AppointmentForm({ open, onClose, onSaved, appointment, d
             token: crypto.randomUUID(),
             disabled: false,
           });
-        } catch {}
+        } catch (e) {
+          // Antes esto era un catch vacio: si fallaba, el profesional veia "guardado" y la
+          // solicitud de resena simplemente no existia, sin ninguna senal. La cita ya quedo
+          // completada igual, asi que esto avisa sin deshacer nada.
+          console.error("ReviewRequest.create error:", e);
+          toast({
+            title: "La cita se guardó, pero no se creó la solicitud de reseña",
+            description: "Podés crearla a mano desde Reseñas.",
+            variant: "destructive",
+          });
+        }
       }
       onSaved();
       onClose();

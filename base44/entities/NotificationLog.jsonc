@@ -1,60 +1,60 @@
 {
-  "name": "NotificationLog",
-  "type": "object",
   "description": "Registro de cada aviso enviado (o intentado) a un paciente. Es la fuente de verdad para el historial que se muestra en la Agenda y para diagnosticar por que un aviso no llego: antes, si el envio por WhatsApp fallaba, el error solo quedaba en un console.error que nadie miraba.",
+  "name": "NotificationLog",
   "properties": {
     "appointment_id": {
-      "type": "string",
-      "title": "Cita"
+      "title": "Cita",
+      "type": "string"
     },
-    "patient_id": {
-      "type": "string",
-      "title": "Paciente"
+    "channel": {
+      "enum": [
+        "whatsapp",
+        "email"
+      ],
+      "title": "Canal",
+      "type": "string"
     },
-    "professional_id": {
-      "type": "string",
-      "title": "Consultorio (dueno de la cuenta)"
+    "error": {
+      "title": "Detalle del error, si fallo",
+      "type": "string"
     },
     "kind": {
-      "type": "string",
-      "title": "Tipo de aviso",
       "enum": [
         "confirmation",
+        "pending",
         "reminder_24h",
         "reminder_3h",
         "rescheduled",
         "cancelled"
-      ]
+      ],
+      "title": "Tipo de aviso",
+      "type": "string"
     },
-    "channel": {
-      "type": "string",
-      "title": "Canal",
-      "enum": [
-        "whatsapp",
-        "email"
-      ]
+    "patient_id": {
+      "title": "Paciente",
+      "type": "string"
+    },
+    "professional_id": {
+      "title": "Consultorio (dueno de la cuenta)",
+      "type": "string"
+    },
+    "sent_at": {
+      "format": "date-time",
+      "title": "Momento del envio",
+      "type": "string"
     },
     "status": {
-      "type": "string",
-      "title": "Resultado",
       "enum": [
         "sent",
         "failed",
         "skipped"
-      ]
+      ],
+      "title": "Resultado",
+      "type": "string"
     },
     "to": {
-      "type": "string",
-      "title": "Destino (telefono o email)"
-    },
-    "error": {
-      "type": "string",
-      "title": "Detalle del error, si fallo"
-    },
-    "sent_at": {
-      "type": "string",
-      "format": "date-time",
-      "title": "Momento del envio"
+      "title": "Destino (telefono o email)",
+      "type": "string"
     }
   },
   "required": [
@@ -62,6 +62,7 @@
     "channel",
     "status"
   ],
+  "type": "object",
   "rls": {
     "read": {
       "$or": [

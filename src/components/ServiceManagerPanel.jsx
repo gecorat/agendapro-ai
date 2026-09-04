@@ -60,7 +60,10 @@ export default function ServiceManagerPanel({ showHeader = true }) {
     }
   };
 
-  useEffect(() => { load(); }, [isClinic]);
+  // Se recarga tambien cuando termina de resolverse quien soy: en el primer render
+  // `professional` todavia es null y un profesional invitado se veria a si mismo como
+  // dueno, quedandose con el practice_owner_id equivocado.
+  useEffect(() => { load(); }, [isClinic, isOwner, professional?.practice_owner_id]);
 
   const proById = useMemo(() => Object.fromEntries(professionals.map((p) => [p.id, p])), [professionals]);
 

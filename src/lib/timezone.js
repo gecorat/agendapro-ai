@@ -151,10 +151,13 @@ export function isArgentinaToday(date) {
 // es-AR para el IDIOMA pero el huso del dispositivo para la HORA: se ve en castellano y
 // con el horario equivocado, que es la peor combinacion porque no parece un error.
 
+// hour12: false a proposito. `toLocaleTimeString("es-AR")` devuelve "03:30 p. m.", que en
+// Argentina nadie usa para un turno y ademas se lee distinto a la pagina publica y a los
+// avisos por WhatsApp/email, que ya mostraban 24hs. Ahora las dos caras dicen "15:30".
 export function formatArTime(date, opts = {}) {
   const d = new Date(date);
   if (isNaN(d.getTime())) return "";
-  return d.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", ...opts, timeZone: AR_TZ });
+  return d.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", hour12: false, ...opts, timeZone: AR_TZ });
 }
 
 export function formatArDate(date, opts = { day: "numeric", month: "long" }) {
@@ -167,7 +170,7 @@ export function formatArDateTime(date, opts = {}) {
   const d = new Date(date);
   if (isNaN(d.getTime())) return "";
   return d.toLocaleString("es-AR", {
-    day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
+    day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false,
     ...opts,
     timeZone: AR_TZ,
   });

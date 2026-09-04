@@ -154,12 +154,19 @@ export default async function(req: Request): Promise<Response> {
       return Response.json({ skipped: !waSent, reason: waSent ? undefined : 'no patient email', waSent });
     }
 
-    // Asegurar cancel_token para el botón de cancelar/reagendar. No lo guardamos con un
-    // update aparte: dos updates seguidos sobre el mismo turno en la misma corrida pueden
-    // pisarse entre sí (ya pasó con reminders_sent). Se combina en un único update al final.
+    // Asegurar cancel_token para los botones de cancelar/reagendar. Se guarda ANTES de
+    // mandar el mail, no despues: si el guardado fallaba (o la funcion moria en el medio),
+    // el paciente recibia un mail con botones que apuntaban a un token que no existia en
+    // ninguna cita, y al tocarlos veia "el enlace no es valido".
     let cancelToken = appt.cancel_token;
-    const needsTokenSave = !cancelToken;
-    if (!cancelToken) cancelToken = crypto.randomUUID();
+    if (!cancelToken) {
+      cancelToken = crypto.randomUUID();
+      try {
+        await base44.asServiceRole.entities.Appointment.update(appt.id, { cancel_token: cancelToken });
+      } catch (e) {
+        console.error('sendAppointmentConfirmation cancel_token save error:', e?.message || e);
+      }
+    }
 
     const appUrl = await getAppUrl(base44, req);
     const dateStr = startDate.toLocaleString("es-AR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "America/Argentina/Buenos_Aires" });
@@ -168,7 +175,8 @@ export default async function(req: Request): Promise<Response> {
     const rescheduleUrl = handle ? `${appUrl}/reschedule/${cancelToken}` : null;
     const cancelUrl = `${appUrl}/x/${cancelToken}`;
 
-    await sendEmail(base44, {
+    try {
+      await sendEmail(base44, {
       to: email,
       // Si el paciente responde la confirmación, que le llegue al profesional.
       replyTo: replyToFor(practice),
@@ -190,15 +198,26 @@ export default async function(req: Request): Promise<Response> {
         secondaryButton: { label: "Cancelar cita", url: cancelUrl },
         mapsButton: mapsLink ? { label: "Cómo llegar", url: mapsLink } : null,
       }),
-    });
+      });
+    } catch (e) {
+      // El envio fallo (Resend caido, remitente sin verificar, direccion rebotada). Antes
+      // esto salia por el catch general como un 500 mudo y, peor, dejaba
+      // confirmation_email_sent en true: la cita quedaba marcada como avisada para siempre
+      // y ningun reintento volvia a mandar nada. Ahora queda registrado como envio fallido
+      // y, si tampoco salio el WhatsApp, se libera la marca para poder reintentar.
+      console.error('sendAppointmentConfirmation email error:', e?.message || e);
+      await logNotification(base44, { ...logArgs, channel: "email", status: "failed", error: e });
+      if (!waSent) {
+        try {
+          await base44.asServiceRole.entities.Appointment.update(appt.id, { confirmation_email_sent: false });
+        } catch (releaseError) {
+          console.error('sendAppointmentConfirmation release error:', releaseError?.message || releaseError);
+        }
+      }
+      return Response.json({ ok: false, sent: false, waSent, error: 'email_failed' });
+    }
 
     await logNotification(base44, { ...logArgs, channel: "email", status: "sent" });
-
-    // confirmation_email_sent ya quedó en true arriba (la reserva); acá solo falta guardar
-    // el cancel_token si hubo que generarlo.
-    if (needsTokenSave) {
-      await base44.asServiceRole.entities.Appointment.update(appt.id, { cancel_token: cancelToken });
-    }
 
     return Response.json({ ok: true, sent: true });
   } catch (error) {

@@ -89,8 +89,22 @@ export async function syncSubscriptionStatus(base44, accessToken, resourceId) {
   const practices = ref.practice_id
     ? await base44.asServiceRole.entities.PracticeSettings.filter({ id: ref.practice_id })
     : await base44.asServiceRole.entities.PracticeSettings.filter({ mercadopago_subscription_id: resourceId });
-  const practice = practices?.[0];
-  if (!practice) return { synced: false, reason: "no_matching_practice" };
+  let practice = practices?.[0];
+
+  // Rescate: suscripcion pagada que nunca quedo vinculada a una cuenta (ver
+  // rescuePracticeByPayerEmail, mas arriba en este archivo).
+  let rescuedPlan = null;
+  if (!practice) {
+    const rescued = await rescuePracticeByPayerEmail(base44, preapproval);
+    if (!rescued) return { synced: false, reason: "no_matching_practice" };
+    practice = rescued;
+    rescuedPlan = rescued.mercadopago_pending_plan || null;
+    await base44.asServiceRole.entities.PracticeSettings.update(practice.id, {
+      mercadopago_subscription_id: resourceId,
+      mercadopago_pending_plan: null,
+    });
+    practice = { ...practice, mercadopago_subscription_id: resourceId, mercadopago_pending_plan: null };
+  }
 
   // Si un admin le asigno el plan a mano (por ejemplo, para probar sin cobrarse a si
   // mismo), el sync automatico NUNCA debe pisarlo — sin esto, una suscripcion vieja de
@@ -110,7 +124,7 @@ export async function syncSubscriptionStatus(base44, accessToken, resourceId) {
     try { planIds = JSON.parse(platform?.mercadopago_plan_ids || "{}"); } catch { /* ignore */ }
     targetPlan = Object.keys(planIds).find((p) => planIds[p]?.id === preapproval.preapproval_plan_id);
   }
-  targetPlan = targetPlan || practice.plan;
+  targetPlan = targetPlan || rescuedPlan || practice.plan;
 
   if (preapproval.status === "authorized") {
     // El día de alta de la suscripción es el día en que Mercado Pago cobra todos los

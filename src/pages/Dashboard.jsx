@@ -36,18 +36,13 @@ export default function Dashboard() {
   useEffect(() => {
     async function load() {
       try {
+        // "Hoy" y "esta semana" son de dia ARGENTINO, igual que la Agenda: con
+        // setHours(0,0,0,0) del navegador, desde otro huso los numeros del panel no
+        // coincidian con los turnos que se ven en la agenda.
         const today = new Date();
-        const start = new Date(today);
-        start.setHours(0, 0, 0, 0);
-        const end = new Date(today);
-        end.setHours(23, 59, 59, 999);
-
-        const weekStart = new Date(today);
-        weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-        weekStart.setHours(0, 0, 0, 0);
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekStart.getDate() + 6);
-        weekEnd.setHours(23, 59, 59, 999);
+        const { start, end } = argentinaDayBounds(today);
+        const weekStart = argentinaStartOfWeek(today);
+        const weekEnd = argentinaEndOfDay(addArgentinaDays(weekStart, 6));
 
         // Antes llamaba Appointment.filter({})/Patient.filter({}) directo, que un
         // profesional invitado no puede leer (las reglas de acceso comparan contra el
@@ -104,7 +99,7 @@ export default function Dashboard() {
         <div className="relative flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
           <div>
             <p className="text-xs sm:text-sm font-medium text-blue-200/70 capitalize">
-              {new Date().toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long" })}
+              {formatArDate(new Date(), { weekday: "long", day: "numeric", month: "long" })}
             </p>
             <h1 className="text-2xl sm:text-3xl font-heading font-semibold mt-1.5 tracking-tight">
               Hola{firstName ? `, ${firstName}` : ""} 👋

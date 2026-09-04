@@ -17,6 +17,7 @@ const EDITABLE_FIELDS = [
   'avatar_border_radius', 'show_reviews_public',
   'bot_objective_prompt', 'bot_tone_prompt', 'bot_response_delay_seconds', 'bot_assistant_name', 'bot_persona_mode', 'bot_required_patient_fields', 'owner_display_name',
   'bot_enabled', 'bot_paused_until', 'google_review_link', 'auto_confirm_public_bookings',
+  'reminders_enabled',
 ];
 
 export default async function (req: Request): Promise<Response> {

@@ -88,13 +88,17 @@ export default function DemoChat({ settings }) {
 
   const loadContext = useCallback(async () => {
     try {
+      // Servicios y horarios por las funciones con alcance: los que crea el onboarding
+      // llevan el id del servidor en created_by_id (ver base44/shared/ownership.ts), así
+      // que una consulta directa desde el cliente devolvía vacío y el simulador del bot
+      // arrancaba sin ningún servicio ni horario que ofrecer.
       const [servs, avail, botCfg] = await Promise.all([
-        base44.entities.Service.filter({ active: true }),
-        base44.entities.Availability.filter({}),
+        base44.functions.invoke("getScopedServices", {}).catch(() => null),
+        base44.functions.invoke("getScopedAvailability", {}).catch(() => null),
         base44.entities.BotConfig.filter({}),
       ]);
-      setServices(servs || []);
-      setAvailability(avail || []);
+      setServices((servs?.data?.services || []).filter((s) => s.active !== false));
+      setAvailability(avail?.data?.availability || []);
       setMasterPrompt(botCfg?.[0]?.system_prompt || "");
       setLimit(botCfg?.[0]?.bot_preview_limit || 20);
     } finally {

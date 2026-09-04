@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { findPatientByCanonicalPhone, toWhatsAppNumber } from '../../shared/phone-utils.ts';
-import { findPracticeByOwner, rowBelongsTo } from '../../shared/ownership.ts';
+import { findPracticeByOwner, findOwnedRows, rowBelongsTo } from '../../shared/ownership.ts';
 import { pushAppointmentToGoogle } from '../../shared/google-calendar.ts';
 import { sendPushToUsers, getPracticeRecipientUserIds } from '../../shared/push.ts';
 import { sendWhatsAppMessage } from '../../shared/whatsapp-providers.ts';
@@ -126,7 +126,11 @@ export default async function (req: Request): Promise<Response> {
     // Si el chequeo falla por un error nuestro (no por el horario), se deja pasar: preferimos
     // aceptar una reserva a perderla por una consulta que fallo.
     try {
-      const availability = await base44.asServiceRole.entities.Availability.filter({ practice_owner_id: professional_id });
+      // Se lee con el respaldo por created_by_id: las cuentas anteriores al cambio de
+      // propiedad tienen sus horarios sin practice_owner_id, y filtrar solo por ese campo
+      // devolvia lista vacia -> isTimeAvailable caia al horario por defecto L-V 09-18 y
+      // aceptaba turnos fuera del horario real del profesional.
+      const availability = await findOwnedRows(base44, 'Availability', professional_id);
       let googleBusy = [];
       try {
         googleBusy = await getGoogleBusyRanges(

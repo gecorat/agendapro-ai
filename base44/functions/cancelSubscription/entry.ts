@@ -11,8 +11,10 @@ export default async function (req: Request): Promise<Response> {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const practices = await base44.asServiceRole.entities.PracticeSettings.filter({});
-    const practice = practices.find((p) => p.created_by_id === user.id);
+    // Por el criterio de propiedad real (owner_user_id con respaldo a created_by_id):
+    // comparar created_by_id a secas dejaba a toda cuenta creada por el onboarding sin
+    // encontrar su propio consultorio. Ver base44/shared/ownership.ts.
+    const practice = await findPracticeByOwner(base44, user.id);
     if (!practice) return Response.json({ error: 'No se encontró tu consultorio' }, { status: 404 });
     if (!practice.mercadopago_subscription_id) {
       return Response.json({ error: 'No tenés una suscripción activa de Mercado Pago para cancelar.' }, { status: 400 });

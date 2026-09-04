@@ -5,14 +5,57 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import { getPlanStatus } from "@/lib/plan-utils";
-import { UserCircle, ClipboardList, CalendarClock, MessageCircle, CreditCard, Check, ArrowRight } from "lucide-react";
+import { UserCircle, ClipboardList, CalendarClock, MessageCircle, CreditCard, Check, ArrowRight, Globe } from "lucide-react";
 
+// OJO con el primer paso: antes decía "Configurá tu perfil", llevaba a /profile-editor
+// (que edita los datos del consultorio) y sin embargo se daba por cumplido con handle +
+// publicada + foto/descripción, que se cargan en OTRA pantalla (la página pública). O sea
+// que el profesional completaba todo lo que esa pantalla le pedía y el paso seguía
+// pendiente, sin ninguna pista de qué faltaba. Ahora son dos pasos distintos, cada uno
+// apuntando a donde se hace de verdad, y cada uno se marca con lo que esa pantalla guarda.
 const STEPS = [
-  { icon: UserCircle, title: "Configurá tu perfil", desc: "Subí tu foto, escribí una descripción y elegí tu @usuario para tu página de reservas pública.", cta: "Ir a mi perfil", to: "/profile-editor" },
-  { icon: ClipboardList, title: "Cargá tus servicios", desc: "Creá los tipos de consulta que ofrecés, con duración, precio y notas de preparación.", cta: "Gestionar servicios", to: "/configuracion" },
-  { icon: CalendarClock, title: "Definí tus horarios", desc: "Configurá tu disponibilidad semanal, pausas y feriados.", cta: "Configurar horarios", to: "/configuracion" },
-  { icon: MessageCircle, title: "Probá el bot", desc: "Simulá conversaciones reales con el asistente usando tus propios servicios y agenda.", cta: "Probar el bot", to: "/bot" },
-  { icon: CreditCard, title: "Activá tu plan", desc: "Cuando estés listo, pasá al plan Pro para habilitar WhatsApp y las funciones automáticas.", cta: "Ver planes", to: "/upgrade-plan" },
+  {
+    icon: UserCircle,
+    title: "Completá los datos de tu consultorio",
+    desc: "Tu nombre, teléfono y dirección. Es lo que aparece en las confirmaciones y recordatorios que reciben tus pacientes.",
+    cta: "Ir a Configuración",
+    to: "/configuracion?tab=profile",
+  },
+  {
+    icon: ClipboardList,
+    title: "Cargá tus servicios",
+    desc: "Creá los tipos de consulta que ofrecés, con duración, precio y notas de preparación.",
+    cta: "Gestionar servicios",
+    to: "/configuracion?tab=services",
+  },
+  {
+    icon: CalendarClock,
+    title: "Definí tus horarios",
+    desc: "Configurá tu disponibilidad semanal, pausas y feriados.",
+    cta: "Configurar horarios",
+    to: "/configuracion?tab=hours",
+  },
+  {
+    icon: Globe,
+    title: "Prepará tu página de reservas",
+    desc: "Elegí tu @usuario, subí tu foto y escribí una descripción. Ese es el link que compartís con tus pacientes.",
+    cta: "Editar mi página",
+    to: "/public-page-editor",
+  },
+  {
+    icon: MessageCircle,
+    title: "Probá el bot",
+    desc: "Simulá conversaciones reales con el asistente usando tus propios servicios y agenda.",
+    cta: "Probar el bot",
+    to: "/bot",
+  },
+  {
+    icon: CreditCard,
+    title: "Activá tu plan",
+    desc: "Cuando estés listo, pasá al plan Pro para habilitar WhatsApp y las funciones automáticas.",
+    cta: "Ver planes",
+    to: "/upgrade-plan",
+  },
 ];
 
 export default function WelcomeGuide() {
@@ -23,13 +66,18 @@ export default function WelcomeGuide() {
 
   useEffect(() => {
     (async () => {
+      // Por las funciones con alcance, NO leyendo las entidades directo: los servicios y
+      // horarios que crea el onboarding quedan con el id del servidor en created_by_id
+      // (ver base44/shared/ownership.ts), así que una consulta directa desde el cliente no
+      // devolvía ninguno y los pasos "Cargá tus servicios" y "Definí tus horarios" nunca se
+      // marcaban como completos, por más que estuvieran cargados.
       try {
         const [s, a] = await Promise.all([
-          base44.entities.Service.filter({ active: true }),
-          base44.entities.Availability.filter({}),
+          base44.functions.invoke("getScopedServices", {}).catch(() => null),
+          base44.functions.invoke("getScopedAvailability", {}).catch(() => null),
         ]);
-        setServices(s || []);
-        setAvailability(a || []);
+        setServices(s?.data?.services || []);
+        setAvailability(a?.data?.availability || []);
       } finally {
         setLoadingData(false);
       }
@@ -38,12 +86,14 @@ export default function WelcomeGuide() {
 
   const status = getPlanStatus(settings);
 
+  // Cada paso se da por cumplido con lo que guarda SU pantalla, ni más ni menos.
   const done = {
-    0: !!(settings?.handle && settings?.published && (settings?.photo_url || settings?.description)),
-    1: services.length > 0,
+    0: !!(settings?.practice_name && (settings?.phone || settings?.address)),
+    1: services.filter((s) => s.active !== false).length > 0,
     2: availability.some((a) => a.type === "work"),
-    3: (settings?.bot_preview_count || 0) > 0,
-    4: status.hasPaidPlan,
+    3: !!(settings?.handle && settings?.published),
+    4: (settings?.bot_preview_count || 0) > 0,
+    5: status.hasPaidPlan,
   };
 
   const completedCount = Object.values(done).filter(Boolean).length;

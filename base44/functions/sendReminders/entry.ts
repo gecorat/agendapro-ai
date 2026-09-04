@@ -101,6 +101,10 @@ export default async function(req) {
         const whenLabel = buildWhenLabel(startDate, now);
 
         const practice = await getPracticeFor(appt);
+        // Interruptor general de recordatorios (Configuracion > Notificaciones). Se compara
+        // contra false a proposito: null/undefined = activado, para que las cuentas
+        // anteriores al campo sigan recibiendo recordatorios como hasta ahora.
+        if (practice?.reminders_enabled === false) continue;
         const { professionalName, address } = await getAppointmentContext(base44, appt, practice);
         // Si el paciente responde el recordatorio, que le llegue al profesional.
         const replyTo = replyToFor(practice);

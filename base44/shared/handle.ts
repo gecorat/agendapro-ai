@@ -34,10 +34,19 @@ const RESERVED = new Set([
 ]);
 
 // ¿Este handle se puede guardar? Devuelve el handle normalizado o un motivo de rechazo.
+//
+// Un handle VACIO se acepta y se guarda como "": es el estado normal de una cuenta que
+// todavia no eligio su usuario publico, y el editor de la pagina manda el campo en cada
+// guardado. Rechazarlo habria roto el guardado entero de esas cuentas. Solo se rechaza
+// cuando el profesional escribio algo y no queda NADA utilizable (por ejemplo solo emojis).
+// Tampoco hay minimo de largo, para no bloquearle el guardado a quien ya tiene uno corto.
 export function validateHandle(raw) {
+  const typed = String(raw || "").trim();
   const handle = normalizeHandle(raw);
-  if (!handle) return { ok: false, reason: "El usuario publico no puede quedar vacio." };
-  if (handle.length < 3) return { ok: false, reason: "El usuario publico necesita al menos 3 caracteres." };
+  if (!handle) {
+    if (!typed) return { ok: true, handle: "" };
+    return { ok: false, reason: "El usuario publico solo puede tener letras, numeros, guion y guion bajo." };
+  }
   if (handle.length > 40) return { ok: false, reason: "El usuario publico no puede superar los 40 caracteres." };
   if (RESERVED.has(handle)) return { ok: false, reason: `"${handle}" es un nombre reservado. Elegi otro.` };
   return { ok: true, handle };

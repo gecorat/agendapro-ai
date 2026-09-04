@@ -1,12 +1,13 @@
 import React from "react";
 import { Plus, CalendarX2 } from "lucide-react";
 import { statusConfig, apptsForDay, formatTime } from "@/lib/agenda-utils";
+import { isArgentinaToday, formatArDate } from "@/lib/timezone";
 
 // Lista de agenda (solo los horarios que tienen turnos, no una grilla de 14 horas vacías)
 // con un marcador de "ahora" en su posición cronológica si es el día de hoy.
 export default function DayView({ date, appts, onNew, onEdit }) {
   const dayAppts = apptsForDay(appts, date);
-  const isToday = date.toDateString() === new Date().toDateString();
+  const isToday = isArgentinaToday(date);
   const now = new Date();
 
   const items = [];
@@ -25,7 +26,7 @@ export default function DayView({ date, appts, onNew, onEdit }) {
       <div className="border-b border-border px-4 py-3 flex items-center justify-between bg-muted/30">
         <div>
           <span className="text-sm font-heading font-semibold capitalize">
-            {date.toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long" })}
+            {formatArDate(date, { weekday: "long", day: "numeric", month: "long" })}
           </span>
           {dayAppts.length > 0 && (
             <span className="ml-2 text-xs text-muted-foreground">{dayAppts.length} turno{dayAppts.length > 1 ? "s" : ""}</span>

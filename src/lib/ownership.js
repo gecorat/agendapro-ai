@@ -6,6 +6,21 @@
 // vive en `owner_user_id` (PracticeSettings) y `practice_owner_id` (Service, Availability),
 // con el campo de la plataforma como respaldo para las cuentas anteriores al 3/9/2026.
 
+// Handle publico (la URL del consultorio) normalizado a algo escribible y compartible:
+// minusculas, sin tildes, sin "@" y solo [a-z0-9-_]. Espejo de normalizeHandle en
+// base44/shared/handle.ts, que es la que manda: el servidor vuelve a aplicarla al guardar.
+export function normalizeHandle(raw) {
+  return String(raw || "")
+    .trim()
+    .replace(/^@+/, "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, "-")
+    .replace(/-{2,}/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 // El respaldo por created_by_id SOLO vale para ids de personas reales: los registros
 // creados con rol de servicio llevan "service_<uuid>" (el mismo para todas las cuentas) y
 // los de la página pública llevan "anonymous". Espejo de isRealUserId en ownership.ts.

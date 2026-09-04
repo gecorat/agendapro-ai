@@ -1,5 +1,9 @@
 import React from "react";
 import { statusConfig, apptsForDay, formatTime } from "@/lib/agenda-utils";
+import {
+  argentinaStartOfMonth, argentinaStartOfWeek, addArgentinaDays,
+  argentinaMonth, argentinaDayOfMonth, isArgentinaToday,
+} from "@/lib/timezone";
 
 const WEEKDAYS = ["D", "L", "M", "M", "J", "V", "S"];
 const MAX_PILLS = 3;
@@ -9,17 +13,14 @@ const NAVY = "#1C2541";
 // según estado — mucho más útil de un vistazo que un punto sin información. Las celdas
 // son más altas para que entren 2-3 píldoras sin desbordar.
 export default function MonthView({ currentDate, appts, onDayClick }) {
-  const first = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-  const startDay = first.getDay();
-  const gridStart = new Date(first);
-  gridStart.setDate(first.getDate() - startDay);
+  // La grilla se arma con dias ARGENTINOS (ver src/lib/timezone.js): con getMonth/getDay
+  // del navegador, desde otro huso el mes empezaba en la casilla equivocada y "hoy" se
+  // marcaba en el dia de al lado.
+  const first = argentinaStartOfMonth(currentDate);
+  const gridStart = argentinaStartOfWeek(first);
 
   const weeks = Array.from({ length: 6 }, (_, w) =>
-    Array.from({ length: 7 }, (_, d) => {
-      const date = new Date(gridStart);
-      date.setDate(gridStart.getDate() + w * 7 + d);
-      return date;
-    })
+    Array.from({ length: 7 }, (_, d) => addArgentinaDays(gridStart, w * 7 + d))
   );
 
   return (
@@ -31,8 +32,8 @@ export default function MonthView({ currentDate, appts, onDayClick }) {
       </div>
       <div className="grid grid-cols-7">
         {weeks.flat().map((date, i) => {
-          const inMonth = date.getMonth() === currentDate.getMonth();
-          const isToday = date.toDateString() === new Date().toDateString();
+          const inMonth = argentinaMonth(date) === argentinaMonth(currentDate);
+          const isToday = isArgentinaToday(date);
           const dayAppts = apptsForDay(appts, date);
           const isLastCol = (i + 1) % 7 === 0;
           const isLastRow = i >= 35;
@@ -49,7 +50,7 @@ export default function MonthView({ currentDate, appts, onDayClick }) {
                 className="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold self-start"
                 style={isToday ? { background: NAVY, color: "#fff" } : { color: inMonth ? undefined : "rgba(100,116,139,0.4)" }}
               >
-                {date.getDate()}
+                {argentinaDayOfMonth(date)}
               </span>
               <div className="flex flex-col gap-1 mt-0.5 overflow-hidden">
                 {dayAppts.slice(0, MAX_PILLS).map((a) => {

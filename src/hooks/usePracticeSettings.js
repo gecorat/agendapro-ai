@@ -76,6 +76,13 @@ export function usePracticeSettings() {
     // Un profesional invitado no puede llamar esto (no es dueño del consultorio).
     const res = await base44.functions.invoke("savePracticeSettings", { data });
     const updated = res?.data?.settings;
+    // Si el backend rechazó el guardado (por ejemplo un usuario público ya en uso), la
+    // respuesta trae `error` y NO trae settings. Sin este chequeo se hacía
+    // setSettings(undefined) y la pantalla se vaciaba entera como si la cuenta no existiera,
+    // sin decir nunca cual fue el problema.
+    if (!updated) {
+      throw new Error(res?.data?.error || "No se pudo guardar la configuracion. Intenta de nuevo.");
+    }
     setSettings(updated);
     return updated;
   }

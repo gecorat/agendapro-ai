@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { DEFAULT_OBJECTIVE_PROMPT, DEFAULT_TONE_PROMPT } from '../../shared/bot-defaults.ts';
 import { findPracticeRowsByOwner, findOwnedRows } from "../../shared/ownership.ts";
 import { buildConfirmationMessage } from "../../shared/zernio.ts";
+import { isTimeAvailable } from "../../shared/scheduling.ts";
 
 // Simulador del bot para el profesional logueado (/bot) — a diferencia de la versión vieja
 // (que armaba el prompt en el propio frontend, con datos parciales), esto corre en el
@@ -161,17 +162,24 @@ Instrucciones sobre la reserva: si el paciente eligió un servicio y un día/hor
       const service = myServices.find(
         (s: any) => s.name.trim().toLowerCase() === String(parsed.service_name).trim().toLowerCase()
       );
-      const start = new Date(parsed.datetime);
+      // Mismo anclaje que el bot real (ver zernio.ts): la IA suele devolver el datetime sin
+      // offset y JavaScript lo interpretaria como UTC, guardando la cita 3 horas antes de la
+      // hora pedida. Si no viene offset explicito, se asume hora Argentina.
+      let rawDatetime = parsed.datetime;
+      if (rawDatetime && !/(Z|[+-]\d{2}:\d{2})$/.test(String(rawDatetime))) {
+        rawDatetime = `${rawDatetime}-03:00`;
+      }
+      const start = new Date(rawDatetime);
 
       if (service && !isNaN(start.getTime()) && start.getTime() > Date.now()) {
         const end = new Date(start.getTime() + (service.duration_minutes || 30) * 60000);
-        const overlaps = activeAppts.some((a: any) => {
-          const aS = new Date(a.start_datetime).getTime();
-          const aE = new Date(a.end_datetime).getTime();
-          return start.getTime() < aE && aS < end.getTime();
-        });
+        // Antes esto solo miraba si chocaba con otra cita: el simulador agendaba domingos o
+        // de madrugada, o sea que no reflejaba lo que haria el bot real. Ahora valida contra
+        // el horario de atencion real, descansos y dias bloqueados, con el mismo motor.
+        // (Google Calendar no se consulta acá a proposito: es una simulacion descartable.)
+        const free = isTimeAvailable(start, end, service, availability || [], activeAppts || [], null, []);
 
-        if (!overlaps) {
+        if (free) {
           const demoPatients = await base44.asServiceRole.entities.Patient.filter({
             professional_id: professionalId,
             is_demo: true,

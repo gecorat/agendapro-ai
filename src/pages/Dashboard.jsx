@@ -4,6 +4,9 @@ import { Users, CalendarRange, CalendarClock, ArrowRight, Calendar } from "lucid
 import { Link, useNavigate } from "react-router-dom";
 import { usePracticeSettings } from "@/hooks/usePracticeSettings";
 import { statusConfig, formatTime } from "@/lib/agenda-utils";
+import {
+  argentinaDayBounds, argentinaStartOfWeek, argentinaEndOfDay, addArgentinaDays, formatArDate,
+} from "@/lib/timezone";
 
 function StatCard({ icon: Icon, label, value, accent, onClick }) {
   return (

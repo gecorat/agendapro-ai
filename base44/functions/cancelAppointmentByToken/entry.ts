@@ -10,7 +10,12 @@ export default async function(req: Request): Promise<Response> {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
-    const { token, confirm } = body;
+    // reason: "reschedule" lo manda la pantalla de reagendar. La cita se libera igual (el
+    // paciente va a elegir otro horario), pero el aviso al profesional tiene que decir eso
+    // y no "cancelo": antes los dos caminos mandaban el mismo mail de cancelacion, asi que
+    // un reagendamiento se leia como que el paciente se habia ido.
+    const { token, confirm, reason } = body;
+    const isReschedule = reason === 'reschedule';
 
     if (!token) {
       return Response.json({ error: 'token required' }, { status: 400 });
@@ -79,11 +84,20 @@ export default async function(req: Request): Promise<Response> {
         try {
           await base44.asServiceRole.integrations.Core.SendEmail({
             to: practice.professional_email,
-            subject: `Cita cancelada por el paciente — ${patientName}`,
+            subject: isReschedule
+              ? `${patientName} está reagendando su turno`
+              : `Cita cancelada por el paciente — ${patientName}`,
             body: buildEmailHtml({
-              title: "Cita cancelada",
+              title: isReschedule ? "Turno liberado para reagendar" : "Cita cancelada",
               greeting: `Hola${practice.practice_name ? " " + practice.practice_name : ""}`,
-              lines: [
+              lines: isReschedule
+                ? [
+                    `${patientName} está reagendando su turno: liberó este horario y está eligiendo uno nuevo en tu página de reservas.`,
+                    `Servicio: ${serviceName}`,
+                    `Horario liberado: ${dateStr}`,
+                    'Si no completa la nueva reserva, ese horario queda disponible.',
+                  ]
+                : [
                 `${patientName} canceló la siguiente cita:`,
                 `Servicio: ${serviceName}`,
                 `Fecha: ${dateStr}`,
@@ -101,7 +115,7 @@ export default async function(req: Request): Promise<Response> {
       try {
         const recipients = await getPracticeRecipientUserIds(base44, practice);
         await sendPushToUsers(base44, recipients, {
-          title: 'Cita cancelada por el paciente',
+          title: isReschedule ? 'Un paciente está reagendando' : 'Cita cancelada por el paciente',
           body: `${patientName} — ${serviceName}`,
           url: '/agenda',
           tag: `appt-${appt.id}`,
@@ -115,7 +129,14 @@ export default async function(req: Request): Promise<Response> {
       // patrón genérico que en sendPendingAppointmentAlert.
       if (canSendWhatsApp(practice) && practice.whatsapp_phone_number) {
         try {
-          await sendWhatsAppMessage(base44, practice, practice.whatsapp_phone_number, `❌ Cita cancelada por el paciente\n\nPaciente: ${patientName}\nServicio: ${serviceName}\nFecha: ${dateStr}`);
+          await sendWhatsAppMessage(
+            base44,
+            practice,
+            practice.whatsapp_phone_number,
+            isReschedule
+              ? `🔁 Un paciente está reagendando\n\nPaciente: ${patientName}\nServicio: ${serviceName}\nHorario liberado: ${dateStr}\n\nEstá eligiendo un horario nuevo en tu página de reservas.`
+              : `❌ Cita cancelada por el paciente\n\nPaciente: ${patientName}\nServicio: ${serviceName}\nFecha: ${dateStr}`,
+          );
         } catch { /* notificación no interrumpe la cancelación */ }
       }
     }

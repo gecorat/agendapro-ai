@@ -22,12 +22,18 @@ const OWNER_VALUE = "__owner__";
 // formularios/listas distintas que terminan desincronizadas (a una le faltaban campos).
 export default function ServiceManagerPanel({ showHeader = true }) {
   const { toast } = useToast();
-  const { settings } = usePracticeSettings();
+  const { settings, professional, isOwner } = usePracticeSettings();
   const status = getPlanStatus(settings);
   const isClinic = status.canUseMultiProfessional;
 
   const [services, setServices] = useState([]);
   const [professionals, setProfessionals] = useState([]);
+  // A que consultorio pertenece lo que se cree aca. Sin este campo, un servicio nuevo
+  // quedaba identificado solo por created_by_id (lo que estampa Base44), y eso ya rompio
+  // dos veces: los servicios del onboarding (creados con rol de servicio) no se reconocian
+  // como propios, y los creados por un profesional invitado quedaban invisibles para el
+  // consultorio. Ver base44/shared/ownership.ts.
+  const [practiceOwnerId, setPracticeOwnerId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -40,6 +46,9 @@ export default function ServiceManagerPanel({ showHeader = true }) {
     try {
       // Antes Service.list() traía servicios de TODAS las cuentas mezclados — confirmado
       // en vivo, y era la causa de que a veces no se pudiera borrar (no eran tuyos).
+      const me = await base44.auth.me();
+      setPracticeOwnerId(isOwner ? me.id : (professional?.practice_owner_id || null));
+
       const [svcsRes, pros] = await Promise.all([
         base44.functions.invoke("getScopedServices", {}),
         isClinic ? fetchScopedProfessionals() : Promise.resolve([]),
@@ -73,7 +82,7 @@ export default function ServiceManagerPanel({ showHeader = true }) {
       if (editing) {
         await base44.entities.Service.update(editing.id, data);
       } else {
-        await base44.entities.Service.create(data);
+        await base44.entities.Service.create({ ...data, practice_owner_id: practiceOwnerId || undefined });
       }
       toast({ title: editing ? "Servicio actualizado" : "Servicio creado" });
       setOpen(false);

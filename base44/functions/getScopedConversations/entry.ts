@@ -34,17 +34,30 @@ export default async function (req: Request): Promise<Response> {
 
     // El limite de mensajes se mantiene igual al que tenia la pantalla (800), para no
     // cambiar el comportamiento ni el peso de la respuesta.
-    const [conversations, pauses, templates, contacts] = await Promise.all([
+    const [conversations, pauses, templates, ownTemplates, contacts] = await Promise.all([
       base44.asServiceRole.entities.Conversation.filter({ professional_id: ownerId }, '-created_date', 800),
       base44.asServiceRole.entities.ChatPause.filter({ professional_id: ownerId }),
+      // Las plantillas se piden por el dueno Y por el propio usuario: la RLS de
+      // MessageTemplate obliga a crearlas con professional_id = quien las crea, asi que un
+      // profesional invitado guardaba plantillas con SU id y despues no le aparecian nunca
+      // en el selector de respuestas rapidas (se buscaban solo por el id del dueno).
       base44.asServiceRole.entities.MessageTemplate.filter({ professional_id: ownerId }),
+      ownerId === user.id
+        ? Promise.resolve([])
+        : base44.asServiceRole.entities.MessageTemplate.filter({ professional_id: user.id }),
       base44.asServiceRole.entities.WhatsAppContact.filter({ professional_id: ownerId }),
     ]);
+
+    // Union sin duplicados por id (el dueno matchea las dos consultas cuando ownerId = user.id).
+    const templatesById = new Map();
+    for (const t of [...(templates || []), ...(ownTemplates || [])]) {
+      if (t?.id && !templatesById.has(t.id)) templatesById.set(t.id, t);
+    }
 
     return Response.json({
       conversations: conversations || [],
       pauses: pauses || [],
-      templates: templates || [],
+      templates: [...templatesById.values()],
       contacts: contacts || [],
       isOwner: scope.isOwner,
     });

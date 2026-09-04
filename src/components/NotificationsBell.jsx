@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { registerServiceWorker, subscribeToPush } from "@/lib/push-notifications";
 import { loadReadState, saveBellLastSeen, getLocalBellLastSeen } from "@/lib/read-state";
+import { argentinaYMD, formatArDateTime } from "@/lib/timezone";
 
 const EXTERNAL_ORIGINS = ["whatsapp", "public_link"];
 
@@ -57,7 +58,10 @@ function PendingList({ pending, onConfirm, onConfirmWhatsApp, onCancel, onOpenAp
         const Icon = originIcon(a.origin);
         const start = a.start_datetime ? new Date(a.start_datetime) : null;
         const isPending = a.status === "pending";
-        const dateStr = start ? `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}-${String(start.getDate()).padStart(2, "0")}` : null;
+        // El ?date= con el que se abre la Agenda es un dia ARGENTINO: armandolo con
+        // getFullYear/getMonth/getDate del navegador, tocar una cita de la noche desde otro
+        // huso abria la agenda en el dia equivocado y la cita no aparecia.
+        const dateStr = start ? argentinaYMD(start) : null;
         return (
           <div
             key={a.id}
@@ -76,7 +80,7 @@ function PendingList({ pending, onConfirm, onConfirmWhatsApp, onCancel, onOpenAp
                 <p className="text-xs text-muted-foreground truncate">{a.service_name || "Consulta"}</p>
                 {start && (
                   <p className="text-xs text-muted-foreground/80 mt-0.5 capitalize">
-                    {start.toLocaleString("es-AR", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                    {formatArDateTime(start, { weekday: "short", day: "numeric", month: "short" })}
                   </p>
                 )}
                 {isPending ? (
@@ -334,7 +338,7 @@ export default function NotificationsBell({ user }) {
       await base44.entities.Appointment.update(a.id, { status: "confirmed" });
       const start = a.start_datetime ? new Date(a.start_datetime) : null;
       const fecha = start
-        ? start.toLocaleString("es-AR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })
+        ? formatArDateTime(start, { weekday: "long", day: "numeric", month: "long" })
         : "";
       const msg = `Hola ${a.patient_name || ""}, te confirmo tu cita de ${a.service_name || "consulta"} para el ${fecha}. ¡Te esperamos!`;
       window.open(`https://wa.me/${digits}?text=${encodeURIComponent(msg)}`, "_blank");

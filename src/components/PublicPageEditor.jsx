@@ -180,7 +180,13 @@ export default function PublicPageEditor() {
   const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(false);
 
-  const cleanHandle = (form.handle || "").trim().replace(/^@/, "").replace(/\s+/g, "");
+  // El handle es la URL pública del consultorio, así que se normaliza a algo que se pueda
+  // escribir, copiar y mandar por WhatsApp: minúsculas, sin tildes y solo letras, números,
+  // guión y guion bajo. Antes solo se sacaban el "@" y los espacios, y quedaban guardados
+  // handles con emojis y mayúsculas (hay uno así en producción: "Alisadosjazz❤️"), que dan
+  // un link imposible de dictar y que muchas apps rompen al enlazarlo. Se aplica en vivo
+  // mientras se escribe, y el link de abajo muestra siempre el resultado final.
+  const cleanHandle = normalizeHandle(form.handle);
   const publicLink = cleanHandle ? (typeof window !== "undefined" ? window.location.origin : "") + `/u/${cleanHandle}` : "";
 
   // Se sincroniza el form desde `settings` UNA SOLA VEZ (la primera vez que llegan datos

@@ -27,14 +27,18 @@ export default function Analytics() {
       try {
         const now = new Date();
         const startISO = startOfMonth(now).toISOString();
+        // La disponibilidad va por la función con alcance: las filas que crea el
+        // onboarding llevan el id del servidor en created_by_id (ver
+        // base44/shared/ownership.ts), y leídas directo desde el cliente venían vacías — con
+        // lo cual las métricas de ocupación daban siempre sobre cero horas disponibles.
         const [appts, pats, avail] = await Promise.all([
           base44.entities.Appointment.filter({ start_datetime: { $gte: startISO } }),
           base44.entities.Patient.filter({}),
-          base44.entities.Availability.filter({}),
+          base44.functions.invoke("getScopedAvailability", {}).catch(() => null),
         ]);
         setAppointments(appts || []);
         setPatients(pats || []);
-        setAvailability(avail || []);
+        setAvailability(avail?.data?.availability || []);
       } finally {
         setLoading(false);
       }
